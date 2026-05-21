@@ -217,6 +217,9 @@ model users {
   permissions_history_permissions_history_user_idTousers             permissions_history[]                      @relation("permissions_history_user_idTousers")
   product_types_history_product_types_history_action_byTousers       product_types_history[]                    @relation("product_types_history_action_byTousers")
   products_history_products_history_action_byTousers                 products_history[]                         @relation("products_history_action_byTousers")
+  rdl_invoice_details_history                                        rdl_invoice_details_history[]
+  rdl_invoice_history                                                rdl_invoice_history[]
+  rdl_invoice_shiment_details_histroy                                rdl_invoice_shiment_details_histroy[]
   sales_contract_amendment_details_history                           sales_contract_amendment_details_history[]
   sales_contract_amendment_history                                   sales_contract_amendment_history[]
   sales_contract_consignees_history                                  sales_contract_consignees_history[]
@@ -384,6 +387,7 @@ model terms {
   exfactory       exfactory[]
   factory_invoice factory_invoice[]
   payment_terms   payment_terms[]
+  rdl_invoice     rdl_invoice[]
 }
 
 model banks {
@@ -952,6 +956,7 @@ model buyers {
   factory_invoice          factory_invoice[]
   handover_dates           handover_dates?
   lc_master                lc_master[]
+  rdl_invoice              rdl_invoice[]
   sales_contracts          sales_contracts[]
   seasons                  seasons[]
   shipment_tolerance_level shipment_tolerance_level?
@@ -1323,6 +1328,7 @@ model shipment_details {
   factory_shipment_details         factory_shipment_details[]
   lc_amendment_shipments           lc_amendment_shipments[]
   lc_shipments                     lc_shipments[]
+  rdl_invoice_shipment_details     rdl_invoice_shipment_details[]
   destinations                     destinations                      @relation(fields: [destination_id], references: [id], onUpdate: NoAction)
   order_styles                     order_styles                      @relation(fields: [order_style_id], references: [id], onUpdate: NoAction)
   payment_terms                    payment_terms                     @relation(fields: [payment_term_id], references: [id], onUpdate: NoAction)
@@ -1764,6 +1770,7 @@ model sales_contracts {
   company_id                                                       Int?
   factory_invoice                                                  factory_invoice[]
   lc_transfer_details                                              lc_transfer_details[]
+  rdl_invoice                                                      rdl_invoice[]
   sales_contract_amendment                                         sales_contract_amendment[]
   sales_contract_amendment_no_metadata                             sales_contract_amendment_no_metadata?
   sales_contract_consignees                                        sales_contract_consignees[]
@@ -1901,6 +1908,7 @@ model lc_master {
   company_banks         company_banks          @relation(fields: [rdl_bank_id], references: [id], onUpdate: NoAction)
   lc_orders             lc_orders[]
   lc_transfer           lc_transfer[]
+  rdl_invoice           rdl_invoice[]
 }
 
 model lc_master_history {
@@ -2283,6 +2291,7 @@ model factory_invoice {
   factory_invoice_consignee    factory_invoice_consignee[]
   factory_invoice_details      factory_invoice_details[]
   factory_invoice_notify_party factory_invoice_notify_party[]
+  rdl_invoice_details          rdl_invoice_details[]
 }
 
 model factory_invoice_details {
@@ -2366,6 +2375,93 @@ model factory_invoice_notify_party_history {
   action_by                       String?   @db.Uuid
   action_at                       DateTime? @default(now()) @db.Timestamp(6)
   users                           users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model rdl_invoice {
+  id                    String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  buyer_id              Int?
+  term_id               Int?
+  invoice_no            String                @db.VarChar(50)
+  invoice_date          DateTime              @db.Date
+  sales_contract_id     String?               @db.Uuid
+  lc_id                 String?               @db.Uuid
+  invoice_type          Boolean?              @default(false)
+  pi_no                 String?               @db.VarChar(50)
+  old_buyer_id          Int?
+  old_sales_contract_id Int?
+  old_lc_id             Int?
+  added_at              DateTime?             @default(now()) @db.Timestamp(6)
+  old_pk                Int?
+  buyers                buyers?               @relation(fields: [buyer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  lc_master             lc_master?            @relation(fields: [lc_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  sales_contracts       sales_contracts?      @relation(fields: [sales_contract_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  terms                 terms?                @relation(fields: [term_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  rdl_invoice_details   rdl_invoice_details[]
+}
+
+model rdl_invoice_details {
+  id                           String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rdl_invoice_id               String?                        @db.Uuid
+  factory_invoice_id           String?                        @db.Uuid
+  old_pk                       Int?
+  old_rdl_invoice_id           Int?
+  old_factory_invoice_id       Int?
+  added_at                     DateTime?                      @default(now()) @db.Timestamp(6)
+  factory_invoice              factory_invoice?               @relation(fields: [factory_invoice_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  rdl_invoice                  rdl_invoice?                   @relation(fields: [rdl_invoice_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  rdl_invoice_shipment_details rdl_invoice_shipment_details[]
+}
+
+model rdl_invoice_details_history {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rdl_invoice_details String?   @db.Uuid
+  rdl_invoice_id      String?   @db.Uuid
+  factory_invoice_id  String?   @db.Uuid
+  action_type         actions?
+  action_by           String?   @db.Uuid
+  action_at           DateTime? @default(now()) @db.Timestamp(6)
+  users               users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model rdl_invoice_history {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rdl_invoice_id    String?   @db.Uuid
+  buyer_id          Int?
+  term_id           Int?
+  invoice_no        String?   @db.VarChar(50)
+  invoice_date      DateTime? @db.Date
+  sales_contract_id String?   @db.Uuid
+  lc_id             String?   @db.Uuid
+  invoice_type      Boolean?
+  pi_no             String?   @db.VarChar(50)
+  action_type       actions?
+  action_by         String?   @db.Uuid
+  action_at         DateTime? @default(now()) @db.Timestamp(6)
+  users             users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model rdl_invoice_shiment_details_histroy {
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rdl_invoice_details_id String?   @db.Uuid
+  shipment_details_id    String?   @db.Uuid
+  invoice_quantity       Int?
+  action_type            actions?
+  action_by              String?   @db.Uuid
+  action_at              DateTime? @default(now()) @db.Timestamp(6)
+  users                  users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model rdl_invoice_shipment_details {
+  id                         String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rdl_invoice_details_id     String?              @db.Uuid
+  shipment_details_id        String?              @db.Uuid
+  invoice_quantity           Int?
+  old_pk                     Int?
+  old_rdl_invoice_details_id Int?
+  old_shipment_details_id    Int?
+  added_at                   DateTime?            @default(now()) @db.Timestamp(6)
+  rdl_invoice_details        rdl_invoice_details? @relation(fields: [rdl_invoice_details_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  shipment_details           shipment_details?    @relation(fields: [shipment_details_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
 }
 
 enum actions {
