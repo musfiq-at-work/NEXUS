@@ -46,7 +46,9 @@ const EditLCAmendmentPage = ({ params }: EditLCAmendmentPageProp) => {
                 utils.lcAmendment.getLcAmendments.invalidate(),
                 utils.lcAmendment.getLcAmendmentById.invalidate({ id }),
                 utils.lcAmendment.searchLcAmendments.invalidate(),
-                utils.buyerOrders.getBuyerOrders.invalidate()
+                utils.buyerOrders.getBuyerOrders.invalidate(),
+                utils.lcMaster.getOrdersForLc.invalidate(),
+                utils.lcAmendment.getLcDetailsForAmendment.invalidate(),
             ]);
             toast.success("LC Amendment updated successfully!");
         }
