@@ -901,7 +901,9 @@ export const commissionDistributionRouter = createTRPCRouter({
                 }
 
                 const isFactoryOrderUnauthorized = await ctx.db.$queryRaw<{approval_status: boolean}[]>`
-                    SELECT FO.approval_status <> 2 AS approval_status FROM commission_distributions AS CD
+                    SELECT 
+                        FO.approval_status <> 2 AS approval_status 
+                    FROM commission_distributions AS CD
                         INNER JOIN factory_orders AS FO ON FO.order_id = CD.order_id
                     WHERE CD.id = ${input.id};
                 `;
@@ -929,7 +931,9 @@ export const commissionDistributionRouter = createTRPCRouter({
                 }
 
                 const isSalesContractApproved = await ctx.db.$queryRaw<{approved: boolean}[]>`
-                    SELECT sc.approval_status = 2 AS approved FROM commission_distributions AS cd
+                    SELECT 
+                        sc.approval_status = 2 AS approved 
+                    FROM commission_distributions AS cd
                         INNER JOIN sales_contract_details AS scd on scd.order_id = cd.order_id
                         INNER JOIN sales_contracts AS sc ON sc.id = scd.sales_contract_id
                     WHERE cd.id = ${input.id};   

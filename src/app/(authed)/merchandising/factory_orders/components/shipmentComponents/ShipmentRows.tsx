@@ -21,11 +21,13 @@ const ShipmentRows = (props: Props) => {
 
     const exfactoryExists = useWatch({ control: methods.control, name: `factoryOrder.styles.${styleIndex}.shipments.${index}.ex_factory_exists` });
 
+    console.log('ShipmentRows render', { name, index, exfactoryExists, disabled });
+
     return (
         <GenericFormTableRow
-            fields={shipmentTableFormFields(canViewTransferRate)}
+            fields={shipmentTableFormFields(canViewTransferRate, disabled)}
             register={methods.register}
-            disabled={disabled || exfactoryExists}
+            disabled={exfactoryExists}
             validationError={validationError?.styles?.[styleIndex]?.shipments ?? {}}
             name={name}
             control={methods.control}

@@ -54,7 +54,6 @@ export const useMembersForm = (userMap: UserMap, memberData?: GetTeamByIdTypes['
         }
     }, [memberData, reset, userMap]);
 
-
     const addRow = () => {
         append({
             user_id: "",
@@ -70,7 +69,7 @@ export const useMembersForm = (userMap: UserMap, memberData?: GetTeamByIdTypes['
 
     const members = useMemo(() => {
         return watchedMembers ?? [];
-    }, [watchedMembers]);
+    }, [JSON.stringify(watchedMembers)]);
     
     const userIds = (useWatch({
         control,
@@ -81,6 +80,8 @@ export const useMembersForm = (userMap: UserMap, memberData?: GetTeamByIdTypes['
 
     useEffect(() => {
         if (!members?.length) return;
+        // console.log('useTeamsForm teamData changed', members);
+
 
         members.forEach((member, index) => {
             if (!member?.user_id) return;

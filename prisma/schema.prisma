@@ -176,6 +176,8 @@ model users {
   courier_history_courier_history_action_byTousers                   courier_history[]                          @relation("courier_history_action_byTousers")
   currencies_history_currencies_history_action_byTousers             currencies_history[]                       @relation("currencies_history_action_byTousers")
   destinations_history_destinations_history_action_byTousers         destinations_history[]                     @relation("destinations_history_action_byTousers")
+  ev_permission_history                                              ev_permission_history[]
+  ev_permissions                                                     ev_permissions[]
   exfactory_history                                                  exfactory_history[]
   exfactory_orders_history                                           exfactory_orders_history[]
   exfactory_shipments_history                                        exfactory_shipments_history[]
@@ -666,6 +668,7 @@ model factories {
   factory_bank        factory_bank[]
   factory_invoice     factory_invoice[]
   lc_transfer_details lc_transfer_details[]
+  rdl_invoice_details rdl_invoice_details[]
   sales_contracts     sales_contracts[]
 }
 
@@ -952,6 +955,7 @@ model buyers {
   buyer_payment_term       buyer_payment_term[]
   countries                countries?                @relation(fields: [country_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   overseas_offices         overseas_offices?         @relation(fields: [overseas_office_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ev_permissions           ev_permissions[]
   exfactory                exfactory[]
   factory_invoice          factory_invoice[]
   handover_dates           handover_dates?
@@ -2379,7 +2383,7 @@ model factory_invoice_notify_party_history {
 
 model rdl_invoice {
   id                    String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  buyer_id              Int?
+  buyer_id              Int
   term_id               Int?
   invoice_no            String                @db.VarChar(50)
   invoice_date          DateTime              @db.Date
@@ -2392,7 +2396,7 @@ model rdl_invoice {
   old_lc_id             Int?
   added_at              DateTime?             @default(now()) @db.Timestamp(6)
   old_pk                Int?
-  buyers                buyers?               @relation(fields: [buyer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  buyers                buyers                @relation(fields: [buyer_id], references: [id], onUpdate: NoAction)
   lc_master             lc_master?            @relation(fields: [lc_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   sales_contracts       sales_contracts?      @relation(fields: [sales_contract_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   terms                 terms?                @relation(fields: [term_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
@@ -2407,6 +2411,9 @@ model rdl_invoice_details {
   old_rdl_invoice_id           Int?
   old_factory_invoice_id       Int?
   added_at                     DateTime?                      @default(now()) @db.Timestamp(6)
+  factory_id                   Int?
+  old_factory_id               Int?
+  factories                    factories?                     @relation(fields: [factory_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   factory_invoice              factory_invoice?               @relation(fields: [factory_invoice_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   rdl_invoice                  rdl_invoice?                   @relation(fields: [rdl_invoice_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   rdl_invoice_shipment_details rdl_invoice_shipment_details[]
@@ -2462,6 +2469,26 @@ model rdl_invoice_shipment_details {
   added_at                   DateTime?            @default(now()) @db.Timestamp(6)
   rdl_invoice_details        rdl_invoice_details? @relation(fields: [rdl_invoice_details_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   shipment_details           shipment_details?    @relation(fields: [shipment_details_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+}
+
+model ev_permission_history {
+  id               Int       @id @default(autoincrement())
+  ev_permission_id Int?
+  buyer_id         Int?
+  user_id          String?   @db.Uuid
+  action_type      actions?
+  action_by        String?   @db.Uuid
+  action_at        DateTime? @default(now()) @db.Timestamp(6)
+  users            users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model ev_permissions {
+  id       Int       @id @default(autoincrement())
+  buyer_id Int?
+  user_id  String?   @db.Uuid
+  added_at DateTime? @default(now()) @db.Timestamp(6)
+  buyers   buyers?   @relation(fields: [buyer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  users    users?    @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
 }
 
 enum actions {

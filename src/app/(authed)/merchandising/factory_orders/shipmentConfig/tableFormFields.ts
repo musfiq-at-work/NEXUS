@@ -3,7 +3,7 @@ import type { ShipmentFormValues } from "../config/formSchema";
 
 export type Field<T extends keyof ShipmentFormValues> = BaseField<T>;
 
-export const formFields = (canViewTransferRate: Boolean) => {
+export const formFields = (canViewTransferRate: Boolean, disabled: boolean) => {
     const fields = [
         {
             name: 'buyer_po',
@@ -16,6 +16,8 @@ export const formFields = (canViewTransferRate: Boolean) => {
             label: 'Exfactory Date',
             placeholder: 'Select Exfactory date',
             type: 'date',
+            disabled: disabled,
+            optional: true,
         },
         {
             name: 'etd_date',
@@ -70,6 +72,8 @@ export const formFields = (canViewTransferRate: Boolean) => {
             label: 'Factory FOB Rate',
             placeholder: 'Enter Factory FOB Rate',
             type: 'number',
+            disabled: disabled,
+            optional: true,
         },
         {
             name: 'factory_value',

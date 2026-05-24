@@ -1,7 +1,7 @@
 'use client';
 
 import { Button, Form, Wrapper } from "~/components";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { api } from "~/trpc/react";
 import { toast } from "sonner";
 import { parseTRPCError } from "~/utils/parseTRPCError";
@@ -36,24 +36,31 @@ const EditTeamPage = ({ params }: BuyersDetailsPageProps) => {
     const { can_update } = permissions ?? {};
 
     const users = api.users.getAllUsers.useQuery();
-    const userMap = new Map<string, { 
-        id: string; 
-        user_id: string; 
-        department_name: string; 
-        level_name: string; 
-    }>();
 
-    // Create a map of user ID to user details for easy lookup
-    users.data?.forEach((user) => {
-        if (user.id !== undefined && user.user_id !== null) {
-            userMap.set(String(user.id), {
-                id: user.id,
-                user_id: user.user_id,
-                department_name: user.department_name,
-                level_name: user.level_name ?? '',
-            });
-        }
-    });
+    const userMap = useMemo(() => {
+        const map = new Map<
+            string,
+            {
+                id: string;
+                user_id: string;
+                department_name: string;
+                level_name: string;
+            }
+        >();
+
+        users.data?.forEach((user) => {
+            if (user.id !== undefined && user.user_id !== null) {
+                map.set(String(user.id), {
+                    id: user.id,
+                    user_id: user.user_id,
+                    department_name: user.department_name,
+                    level_name: user.level_name ?? '',
+                });
+            }
+        });
+
+        return map;
+    }, [users.data]);
 
     const { data: teamData, isLoading: isLoadingTeam } = api.teams.getTeamById.useQuery({ id: safeNumber(id) });
     // Form setup
