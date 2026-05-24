@@ -4,6 +4,9 @@ import { formFields as shipmentTableFormFields } from "../../shipmentConfig/tabl
 import { useWatch, type FieldErrors } from "react-hook-form";
 import type { FactoryOrderFormValues } from "../../config/formSchema";
 import React from "react";
+import { api } from "~/trpc/react";
+import { skipToken } from "@tanstack/react-query";
+import { useDecodedUser } from "~/hooks";
 
 type Props = {
     register: ReturnType<typeof useFactoryOrderForm>['methods']['register'];
@@ -21,11 +24,19 @@ const ShipmentRows = (props: Props) => {
 
     const exfactoryExists = useWatch({ control: methods.control, name: `factoryOrder.styles.${styleIndex}.shipments.${index}.ex_factory_exists` });
 
-    console.log('ShipmentRows render', { name, index, exfactoryExists, disabled });
+    const factoryOrderId = useWatch({ control: methods.control, name: 'factoryOrder.db_id' });
+
+    const hasPermission = api.evPermissions.getEvPermissions.useQuery(
+        factoryOrderId ? { factoryOrderID: factoryOrderId } : skipToken,
+    );
+
+    const {user} = useDecodedUser();
+
+    const isAdmin = Number(user?.department_id) === 5 && Number(user?.level_id) === 5;
 
     return (
         <GenericFormTableRow
-            fields={shipmentTableFormFields(canViewTransferRate, disabled)}
+            fields={shipmentTableFormFields(canViewTransferRate, disabled, !!hasPermission.data || isAdmin)}
             register={methods.register}
             disabled={exfactoryExists}
             validationError={validationError?.styles?.[styleIndex]?.shipments ?? {}}

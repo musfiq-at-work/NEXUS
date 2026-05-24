@@ -2489,6 +2489,8 @@ model ev_permissions {
   added_at DateTime? @default(now()) @db.Timestamp(6)
   buyers   buyers?   @relation(fields: [buyer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   users    users?    @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@unique([buyer_id, user_id], map: "unique_buyer_user")
 }
 
 enum actions {

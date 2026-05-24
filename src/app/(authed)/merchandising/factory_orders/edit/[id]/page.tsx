@@ -10,6 +10,7 @@ import { useNavigationStore, usePermissionStore } from "~/store";
 import { useDecodedUser, useModulePath } from "~/hooks";
 import StylesDetails from "../../components/styleComponents/styles";
 import { printingWhiteIcon } from "~/assets";
+import { skipToken } from "@tanstack/react-query";
 
 type EditFactoryOrderPageProp = {
     params: Promise<{ id: string }>
@@ -128,6 +129,11 @@ const EditFactoryOrderPage = ({ params }: EditFactoryOrderPageProp) => {
     });
 
 
+    const hasPermission = api.evPermissions.getEvPermissions.useQuery(
+        !!id ? { factoryOrderID: id } : skipToken,
+    );
+
+
     const onSetAuthorization = async (status: number) => {
         try {
             await setAuthorization.mutateAsync({
@@ -142,6 +148,8 @@ const EditFactoryOrderPage = ({ params }: EditFactoryOrderPageProp) => {
             setError(message);
         }
     };
+
+    console.log(hasPermission.data)
 
     return (
         <Wrapper heading='Update Factory Order'
@@ -211,9 +219,12 @@ const EditFactoryOrderPage = ({ params }: EditFactoryOrderPageProp) => {
                     disabled={
                         isLoading 
                         || isLoadingSubmit 
-                        || authorizations?.authorizations?.approval_status === 2 
                         || !can_update 
-                        || (isCommissionDistributionAuthorized ?? false)
+                        || !hasPermission.data
+                        && (
+                            authorizations?.authorizations?.approval_status === 2 
+                            || (isCommissionDistributionAuthorized ?? false)
+                        )
                     }
                 />
             </div>

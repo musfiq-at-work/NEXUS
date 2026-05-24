@@ -124,7 +124,7 @@ export const userRouter = createTRPCRouter({
           department_id: z.string(),
           password: z.string(),
           level_id: z.string(),
-          is_active: boolean(),
+          is_active: z.boolean(),
           email: z.string(),
           phone_no: z.string(),
         })

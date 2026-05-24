@@ -6,6 +6,7 @@ export { userRouter } from "./routers/admin/users";
 export { teamsRouter } from "./routers/admin/teams";
 export { authorizationsRouter } from "./routers/admin/authorizations";
 export { permissionRouter } from "./routers/admin/permissions";
+export { evPermissionRouter } from "./routers/admin/evPermissions";
 
 // Library routers
 export { departmentsRouter } from "./routers/library/departments";

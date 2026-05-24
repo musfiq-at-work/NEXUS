@@ -9,11 +9,11 @@ import { parseTRPCError } from "~/utils/parseTRPCError";
 import { useNavigationStore, usePermissionStore } from "~/store";
 import { useModulePath } from "~/hooks";
 
-type EditFabricPageProps = {
+type EditFobTypePageProps = {
     params: Promise<{ id: string }>
 };
 
-const EditFobTypePage = ({ params }: EditFabricPageProps) => {
+const EditFobTypePage = ({ params }: EditFobTypePageProps) => {
     const { id } = React.use(params)
     const [error, setError] = useState<string | null>(null);
 

@@ -3,7 +3,7 @@ import type { ShipmentFormValues } from "../config/formSchema";
 
 export type Field<T extends keyof ShipmentFormValues> = BaseField<T>;
 
-export const formFields = (canViewTransferRate: Boolean, disabled: boolean) => {
+export const formFields = (canViewTransferRate: Boolean, disabled: boolean, hasPermission: boolean) => {
     const fields = [
         {
             name: 'buyer_po',
@@ -86,6 +86,7 @@ export const formFields = (canViewTransferRate: Boolean, disabled: boolean) => {
             label: 'Transfer Value',
             placeholder: 'Enter Transfer Value',
             type: 'number',
+            disabled: !hasPermission,
         },
         {
             name: 'transfer_value',

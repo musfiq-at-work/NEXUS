@@ -72,6 +72,7 @@ const sideBarConfig: Record<number, {href: string;}> = {
     [m.PERMISSIONS]: { href: "/admin/permissions" },
     [m.TEAMS]: { href: "/admin/teams" },
     [m.AUTHORIZATIONS]: { href: "/admin/authorizations" },
+    [m.EV_PERMISSIONS]: { href: "/admin/ev_permissions" },
 
     // Commercial Module
     [m.COMMERCIAL]: { href: "/commercial" },

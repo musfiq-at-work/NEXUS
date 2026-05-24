@@ -122,8 +122,7 @@ export const factoryOrderRouter = createTRPCRouter({
                     OFFSET ${input.offset};
                 `;
 
-                const totalCount =
-                    rows.length > 0 && rows[0] ? Number(rows[0].total_count) : 0;
+                const totalCount = rows.length > 0 && rows[0] ? Number(rows[0].total_count) : 0;
 
                 const factoryOrders = rows.map(({ total_count: _, ...rest }) => rest);
 
@@ -751,7 +750,16 @@ export const factoryOrderRouter = createTRPCRouter({
                     select: { approval_status: true },
                 });
 
-                if (isFactoryOrderAuthorized && (isFactoryOrderAuthorized?.approval_status ?? 0) === 2) {
+                const hasPermission = await ctx.db.$queryRaw<{ ID: number | null }[]>`
+                    SELECT 
+                        EVP.ID
+                    FROM ev_permissions AS EVP
+                        INNER JOIN buyer_orders AS BO ON BO.buyer_id = EVP.buyer_id
+                        INNER JOIN FACTORY_ORDERS AS FO ON FO.order_id = BO.id
+                    WHERE FO.ID = ${input.factoryOrderId} AND EVP.user_id = ${ctx.user.id};
+                `;
+
+                if (!hasPermission && isFactoryOrderAuthorized && (isFactoryOrderAuthorized?.approval_status ?? 0) === 2) {
                     throw new TRPCError({
                         code: "FORBIDDEN",
                         message: "Authorized Factory Orders cannot be updated.",
