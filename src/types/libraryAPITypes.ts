@@ -3,7 +3,8 @@ import type {
     fabricsSuppliersRouter, countriesRouter, currenciesRouter, overseasOfficesRouter, scContactPersonRouter,
     destinationsRouter, banksRouter, companiesRouter, paymentTermsRouter, productTypeRouter,
     fabricsRouter, colorsRouter, fobTypesRouter, freightTermsRouter, courierRouter, tnaActionsRouter,
-    buyerRouter ,seasonsRouter, handoverDatesRouter,tnaBaseActionRouter, factoryRouter, productsRouter
+    buyerRouter ,seasonsRouter, handoverDatesRouter,tnaBaseActionRouter, factoryRouter, productsRouter,
+    toleranceLevelRouter
 } from "~/server/api";
 
 // Bank types
@@ -116,3 +117,8 @@ export type GetCourierByIdTypes = CourierRouterOutput['getCourierById'];
 type ScContactPersonRouterOutput = inferRouterOutputs<typeof scContactPersonRouter>;
 
 export type GetScContactPersonByIdTypes = ScContactPersonRouterOutput['getContactPersonById'];
+
+// Tolerance Level types
+type ToleranceLevelRouterOutput = inferRouterOutputs<typeof toleranceLevelRouter>;
+
+export type GetToleranceLevelByIdTypes = ToleranceLevelRouterOutput['getToleranceByID'];

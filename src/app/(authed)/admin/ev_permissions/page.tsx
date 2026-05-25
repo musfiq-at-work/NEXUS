@@ -96,7 +96,7 @@ const EvPermissionsPage = () => {
     return (
         <>
             <Wrapper
-                heading="EV Permissions"
+                heading="Excess Value Permissions"
                 subSectionLeft={
                     <SearchField
                         placeholder="Search EV Permissions..."

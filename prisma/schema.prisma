@@ -2205,6 +2205,7 @@ model shipment_tolerance_level_history {
   tolerance_level             Float?
   action_by                   String?   @db.Uuid
   action_at                   DateTime? @default(now()) @db.Timestamp(6)
+  action_type                 actions?
   users                       users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 

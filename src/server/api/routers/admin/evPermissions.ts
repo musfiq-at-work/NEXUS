@@ -100,25 +100,9 @@ export const evPermissionRouter = createTRPCRouter({
                 FROM EV_PERMISSIONS AS EVP
                     INNER JOIN BUYERS AS B ON B.ID = EVP.BUYER_ID
                     INNER JOIN USERS AS U ON U.ID = EVP.USER_ID
-                WHERE (
-                    EXISTS (
-                        SELECT 1
-                        FROM USERS U
-                        WHERE U.ID = ${ctx.user.id}
-                        AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
-                        AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
-                    )
-                    OR EXISTS (
-                        SELECT 1
-                        FROM TEAM_MEMBERS TM
-                        WHERE TM.TEAM_ID = BO.TEAM_ID
-                        AND TM.USER_ID = ${ctx.user.id}
-                    )
-                )
-                AND (
-                    B.BUYER_NAME ILIKE '%' || ${input.query} || '%'
+                WHERE B.BUYER_NAME ILIKE '%' || ${input.query} || '%'
                     OR CONCAT(U.FIRST_NAME, ' ', U.last_name) ILIKE '%' || ${input.query} || '%'
-                )
+                    OR U.user_id ILIKE '%' || ${input.query} || '%'
                 ORDER BY EVP.added_at DESC
                 LIMIT ${input.limit}
                 OFFSET ${input.offset};
@@ -151,7 +135,7 @@ export const evPermissionRouter = createTRPCRouter({
                 await ctx.db.ev_permission_history.create({
                     data: {
                         ev_permission_id: deletedPermission.id,
-                        action: 'DELETE',
+                        action_type: 'DELETE',
                         action_by: ctx.user.id,
                         user_id: deletedPermission.user_id,
                         buyer_id: deletedPermission.buyer_id,

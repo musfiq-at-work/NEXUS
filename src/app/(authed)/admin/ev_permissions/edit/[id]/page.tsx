@@ -67,7 +67,7 @@ const EditEvPermissionPage = ({ params }: EditEvPermissionPageProps) => {
         }), [handleSubmit, id, updateEvPermission]);
 
     return (
-        <Wrapper heading='Edit EV Permission' >
+        <Wrapper heading='Edit Excess Value Permission' >
             <Form fields={formFields}
                 onSubmit={onSubmit}
                 buttonLabel="Update EV Permission"
