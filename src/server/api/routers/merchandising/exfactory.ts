@@ -1076,7 +1076,7 @@ export const exFactoryRouter = createTRPCRouter({
             try {
                 const userLevel = ctx.user.level_id;
                 const userDepartment = ctx.user.department_id;
-                const isAdmin = userLevel === 5 && userDepartment === 5;
+                const isAdmin = userLevel === ADMIN_LEVEL_ID && userDepartment === ADMIN_DEPARTMENT_ID;
 
                 const can_approve = await ctx.db.$queryRaw<{ can_approve: boolean }[]>`
                     SELECT 

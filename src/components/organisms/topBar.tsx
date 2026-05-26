@@ -6,6 +6,7 @@ import { api } from "~/trpc/react";
 import { logoutIcon, notificationIcon } from "~/assets";
 import Popup from "../templates/Popup";
 import Image from "next/image";
+import { useAdminStore } from "~/store";
 
 const TopBar = () => {        
     const { user } = useDecodedUser();
@@ -24,11 +25,14 @@ const TopBar = () => {
         },
     });
 
+    const clearIsAdmin = useAdminStore((state) => state.clearIsAdmin);
+
     const logOut = async () => {
         setLogOutClicked(true);
         toast.info("Logging out...", { duration: 2000 });
         try {
             await signOutMutation.mutateAsync();
+            clearIsAdmin();
         } catch (error) {
             toast.error("Error during logout: " + (error as Error).message);
             localStorage.removeItem("token"); // Fallback logout

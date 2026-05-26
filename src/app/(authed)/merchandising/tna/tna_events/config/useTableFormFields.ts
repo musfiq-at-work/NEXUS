@@ -1,14 +1,11 @@
-import { useDecodedUser } from "~/hooks";
 import type { ActionFormValues } from "./formSchema";
 import type { BaseField } from "~/types/form";
+import { useAdminStore } from "~/store/useAdminStore";
 
 export type Field<T extends keyof ActionFormValues> = BaseField<T>;
 
 export const useFormFields = (): Field<keyof ActionFormValues>[] => {
-
-    const user = useDecodedUser().user;
-    
-    const isAdmin = Number(user?.department_id) === 5 && Number(user?.level_id) === 5;
+    const isAdmin = useAdminStore((state) => state.isAdmin);
 
     return [
         {

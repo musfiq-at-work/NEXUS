@@ -436,7 +436,7 @@ export const commissionDistributionRouter = createTRPCRouter({
                 },
             });
 
-            if(!isATeamMember && !(ctx.user.department_id === 5 && ctx.user.level_id === 5)){
+            if(!isATeamMember && !(ctx.user.department_id === ADMIN_DEPARTMENT_ID && ctx.user.level_id === ADMIN_LEVEL_ID)){
                 throw new TRPCError({
                     code: "FORBIDDEN",
                     message: "You do not have permission to view this commission distribution."
@@ -681,7 +681,7 @@ export const commissionDistributionRouter = createTRPCRouter({
             try {
                 const userLevel = ctx.user.level_id;
                 const userDepartment = ctx.user.department_id;
-                const isAdmin = userLevel === 5 && userDepartment === 5;
+                const isAdmin = userLevel === ADMIN_LEVEL_ID && userDepartment === ADMIN_DEPARTMENT_ID;
 
                 const isCommissionDistributionAuthorized = await ctx.db.$queryRaw<{approval_status: boolean}[]>`
                     SELECT FO.approval_status = 2 AS approval_status FROM commission_distributions AS CD
@@ -768,7 +768,7 @@ export const commissionDistributionRouter = createTRPCRouter({
                 },
             });
 
-            if(!isATeamMember && !(ctx.user.department_id === 5 && ctx.user.level_id === 5)){
+            if(!isATeamMember && !(ctx.user.department_id === ADMIN_DEPARTMENT_ID && ctx.user.level_id === ADMIN_LEVEL_ID)){
                 throw new TRPCError({
                     code: "FORBIDDEN",
                     message: "You do not have permission to view this commission distribution."

@@ -10,6 +10,7 @@ import { useNavigationStore, usePermissionStore } from "~/store";
 import { useDecodedUser, useModulePath } from "~/hooks";
 import CommissionDetails from "../../detailsComponent/commissionDetails";
 import { printingWhiteIcon } from "~/assets";
+import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 
 type EditCommissionDistributionPageProp = {
     params: Promise<{ id: string }>
@@ -125,8 +126,8 @@ const EditCommissionDistributionPage = ({ params }: EditCommissionDistributionPa
                         && user?.level_id === authorizations?.permission?.level_id
                     ) && 
                     !(
-                        Number(user?.department_id) === 5 
-                        && Number(user?.level_id) === 5
+                        Number(user?.department_id) === ADMIN_DEPARTMENT_ID
+                        && Number(user?.level_id) === ADMIN_LEVEL_ID
                     )
                 )
             )

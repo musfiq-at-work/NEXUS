@@ -3,6 +3,7 @@ import type { useTnaPlanningForm } from "../config/useTnaPlanningForm";
 import { formFields } from "../actionConfig/tableFormFields";
 import React from "react";
 import { useDecodedUser } from "~/hooks";
+import { useAdminStore } from "~/store";
 
 type Props = {
     register: ReturnType<typeof useTnaPlanningForm>['methods']['register'];
@@ -19,8 +20,7 @@ const ActionRow = (props: Props) => {
     const action = methods.getValues(`actions.${index}.action_name`) ?? '';
 
     const user_department = useDecodedUser().user?.department_id;
-    const user_level = useDecodedUser().user?.level_id;
-    const isAdmin = Number(user_department) === 5 && Number(user_level) === 5;
+    const isAdmin = useAdminStore((state) => state.isAdmin);
 
     return (
         <>

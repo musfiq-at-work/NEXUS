@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import z, { symbol } from "zod";
+import z from "zod";
 import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";

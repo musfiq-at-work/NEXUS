@@ -10,6 +10,8 @@ import { useRouter } from "next/navigation";
 import { useDecodedUser } from "~/hooks/useDecodedUser";
 import { toast } from "sonner";
 import { parseTRPCError } from "~/utils/parseTRPCError";
+import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
+import { useAdminStore } from "~/store";
 
 const formSchema = z.object({
   name: z.string().min(4, "Name must be at least 4 characters long"),
@@ -37,6 +39,8 @@ const SignInPage = () => {
     // Redirect if already signed in
     const { user } = useDecodedUser();
 
+    const setIsAdmin = useAdminStore((state) => state.setIsAdmin);
+
     useEffect(() => {
         if (!!user) {
             router.push("/dashboard");
@@ -47,6 +51,14 @@ const SignInPage = () => {
     const signInMutation = api.auth.login.useMutation({
         onSuccess: (data) => {
             localStorage.setItem("token", data.token);
+            const deptId = Array.isArray(data.user?.departments)
+                ? Number(data.user?.departments[0]?.id)
+                : Number(data.user?.departments?.id);
+            const levelId = Array.isArray(data.user?.levels)
+                ? Number(data.user?.levels[0]?.id)
+                : Number(data.user?.levels?.id);
+            const isAdmin = deptId === ADMIN_DEPARTMENT_ID && levelId === ADMIN_LEVEL_ID;
+            setIsAdmin(isAdmin);
             router.push("/dashboard");
         },
         onError: (error) => {

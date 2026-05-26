@@ -9,6 +9,7 @@ import ShipmentSummaryRow from "./ShipmentSummaryRow";
 import TableHeader, { type TableHeaderType } from "~/components/organisms/table/TableHeader";
 import { useDecodedUser } from "~/hooks";
 import type { FactoryOrderFormValues } from "../../config/formSchema";
+import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID, MERCHANDISING_DEPARTMENT_ID } from "~/utils/config";
 
 type Props = {
     isLoading?: boolean;
@@ -33,8 +34,8 @@ const TableForm = (props: Props) => {
     useEffect(() => {
         if(user) {
             if(
-                (Number(user.level_id) === 5 && Number(user.department_id) === 5) ||
-                (Number(user.level_id) === 3 && Number(user.department_id) === 1)
+                (Number(user.level_id) === ADMIN_LEVEL_ID && Number(user.department_id) === ADMIN_DEPARTMENT_ID) ||
+                (Number(user.level_id) === 3 && Number(user.department_id) === MERCHANDISING_DEPARTMENT_ID)
             ) {
                 setCanViewTransferRate(true);
             }

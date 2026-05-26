@@ -1194,7 +1194,7 @@ export const lcMasterRouter = createTRPCRouter({
                 return await ctx.db.$transaction(async (tx) => {
                     const userLevel = ctx.user.level_id;
                     const userDepartment = ctx.user.department_id;
-                    const isAdmin = userLevel === 5 && userDepartment === 5;
+                    const isAdmin = userLevel === ADMIN_LEVEL_ID && userDepartment === ADMIN_DEPARTMENT_ID;
 
                     const can_approve = await tx.$queryRaw<{ can_approve: boolean }[]>`
                         SELECT 

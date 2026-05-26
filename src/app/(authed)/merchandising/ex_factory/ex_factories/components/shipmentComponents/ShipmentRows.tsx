@@ -4,7 +4,7 @@ import { formFields as shipmentTableFormFields } from "../../shipmentConfig/tabl
 import { useWatch, type FieldErrors } from "react-hook-form";
 import React from "react";
 import type { ExFactoryFormValues } from "../../config/formSchema";
-import { useDecodedUser } from "~/hooks";
+import { useAdminStore } from "~/store";
 
 type Props = {
     register: ReturnType<typeof useExfactoryForm>['methods']['register'];
@@ -22,9 +22,7 @@ const ShipmentRows = (props: Props) => {
 
     const exfactory_id = useWatch({ control: methods.control, name: `exfactory.db_id` });
 
-    const {user} = useDecodedUser();
-
-    const isAdmin = Number(user?.department_id) === 5 && Number(user?.level_id) === 5;
+    const isAdmin = useAdminStore((state) => state.isAdmin);
 
     return (
         <>

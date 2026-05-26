@@ -10,6 +10,7 @@ import { useNavigationStore, usePermissionStore } from "~/store";
 import { useDecodedUser, useModulePath } from "~/hooks";
 import OrderDetails from "../../components/orderComponents/orderDetails";
 import ShipmentDetails from "../../components/shipmentComponents/ShipmentDetails";
+import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 
 type EditMasterLCPageProp = {
     params: Promise<{ id: string }>
@@ -142,8 +143,8 @@ const EditLCMasterPage = ({ params }: EditMasterLCPageProp) => {
                        && user?.level_id === authorizations?.permission?.level_id
                    ) && 
                    !(
-                       Number(user?.department_id) === 5 
-                       && Number(user?.level_id) === 5
+                       Number(user?.department_id) === ADMIN_DEPARTMENT_ID
+                       && Number(user?.level_id) === ADMIN_LEVEL_ID
                    )
                )
            )
