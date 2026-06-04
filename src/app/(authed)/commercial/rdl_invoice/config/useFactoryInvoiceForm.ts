@@ -8,11 +8,11 @@ import { formatDateForInput } from "~/utils/localDateString";
 import { api } from "~/trpc/react";
 import { skipToken } from "@tanstack/react-query";
 import { safeNumber } from "~/utils/numbers";
-import type { GetFactoryInvoiceByIdTypes } from "~/types/commercialAPITypes";
+// import type { GetFactoryInvoiceByIdTypes } from "~/types/commercialAPITypes";
 
-type FactoryInvoiceDetails = NonNullable<GetFactoryInvoiceByIdTypes>['factory_invoice_details'][number];
+// type FactoryInvoiceDetails = NonNullable<GetFactoryInvoiceByIdTypes>['factory_invoice_details'][number];
 
-export const useFactoryInvoiceForm = (initialData?: GetFactoryInvoiceByIdTypes) => {
+export const useFactoryInvoiceForm = (initialData?: any) => {
     const transformedInitialData = useMemo(() => {
         return initialData ? {
             db_id: initialData.id,
@@ -23,12 +23,13 @@ export const useFactoryInvoiceForm = (initialData?: GetFactoryInvoiceByIdTypes) 
             invoice_no: initialData.invoice_no ?? '',
             invoice_date: initialData.invoice_date ? formatDateForInput(new Date(initialData.invoice_date)) : '',
             remarks: initialData.remarks ?? '',
+            pi_no: initialData.pi_no ?? '',
             discount: initialData.discount ?? undefined,
             notifyParties: initialData.notifyPartyIds?.map((notifyParty) => notifyParty.notify_party_id ?? undefined) ?? [],
             consignee_ids: initialData.consignee_ids?.map((consignee) => consignee.consignee_id ?? undefined) ?? [],
             freight_term_id: initialData.freight_term_id ?? undefined,
             port_of_loading: initialData.port_of_loading ?? undefined,
-            details: initialData.factory_invoice_details?.map((detail: FactoryInvoiceDetails) => ({
+            details: initialData.factory_invoice_details?.map((detail: any) => ({
                 db_id: detail.id,
                 exfactory_shipment_id: detail.exfactory_shipment_id ?? undefined,
             })) ?? [],
@@ -43,6 +44,7 @@ export const useFactoryInvoiceForm = (initialData?: GetFactoryInvoiceByIdTypes) 
             term_id: undefined,
             lc_sc_id: undefined,
             invoice_no: undefined,
+            pi_no: undefined,
             invoice_date: formatDateForInput(new Date()),
             remarks: "",
             discount: undefined,
@@ -65,11 +67,11 @@ export const useFactoryInvoiceForm = (initialData?: GetFactoryInvoiceByIdTypes) 
     useEffect(() => {
         if (invoiceNoValue && invoiceNoValue !== invoiceNoValue.toUpperCase()) {
             setValue("invoice_no", invoiceNoValue.toUpperCase(), {
-            shouldValidate: true,
-            shouldDirty: true,
+                shouldValidate: true,
+                shouldDirty: true,
             });
         }
-        }, [invoiceNoValue, setValue]);
+    }, [invoiceNoValue, setValue]);
 
     const isEdit = !!initialData;
 

@@ -221,7 +221,7 @@ model users {
   products_history_products_history_action_byTousers                 products_history[]                         @relation("products_history_action_byTousers")
   rdl_invoice_details_history                                        rdl_invoice_details_history[]
   rdl_invoice_history                                                rdl_invoice_history[]
-  rdl_invoice_shiment_details_histroy                                rdl_invoice_shiment_details_histroy[]
+  rdl_invoice_shipment_details_history                               rdl_invoice_shipment_details_history[]
   sales_contract_amendment_details_history                           sales_contract_amendment_details_history[]
   sales_contract_amendment_history                                   sales_contract_amendment_history[]
   sales_contract_consignees_history                                  sales_contract_consignees_history[]
@@ -2397,6 +2397,7 @@ model rdl_invoice {
   old_lc_id             Int?
   added_at              DateTime?             @default(now()) @db.Timestamp(6)
   old_pk                Int?
+  is_authorized         Boolean?              @default(false)
   buyers                buyers                @relation(fields: [buyer_id], references: [id], onUpdate: NoAction)
   lc_master             lc_master?            @relation(fields: [lc_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   sales_contracts       sales_contracts?      @relation(fields: [sales_contract_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
@@ -2448,17 +2449,6 @@ model rdl_invoice_history {
   users             users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
-model rdl_invoice_shiment_details_histroy {
-  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  rdl_invoice_details_id String?   @db.Uuid
-  shipment_details_id    String?   @db.Uuid
-  invoice_quantity       Int?
-  action_type            actions?
-  action_by              String?   @db.Uuid
-  action_at              DateTime? @default(now()) @db.Timestamp(6)
-  users                  users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-}
-
 model rdl_invoice_shipment_details {
   id                         String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   rdl_invoice_details_id     String?              @db.Uuid
@@ -2492,6 +2482,17 @@ model ev_permissions {
   users    users?    @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
 
   @@unique([buyer_id, user_id], map: "unique_buyer_user")
+}
+
+model rdl_invoice_shipment_details_history {
+  id                     String    @id(map: "rdl_invoice_shiment_details_histroy_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rdl_invoice_details_id String?   @db.Uuid
+  shipment_details_id    String?   @db.Uuid
+  invoice_quantity       Int?
+  action_type            actions?
+  action_by              String?   @db.Uuid
+  action_at              DateTime? @default(now()) @db.Timestamp(6)
+  users                  users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "rdl_invoice_shiment_details_histroy_action_by_fkey")
 }
 
 enum actions {

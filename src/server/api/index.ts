@@ -50,3 +50,4 @@ export { exFactoryRouter } from "./routers/merchandising/exfactory";
 // Commercial routers
 export { lcTransferRouter } from "./routers/commercial/lcTransfer";
 export { factoryInvoiceRouter } from "./routers/commercial/factoryInvoice";
+export { rdlInvoiceRouter } from "./routers/commercial/rdlInvoice";

@@ -1,13 +1,3 @@
-/**
- * @description
- * This file defines the form schema for the factory invoice form in the commercial module of the application. 
- * It uses Zod, a TypeScript-first schema declaration and validation library, to define the structure and validation rules for the form data.
- * The `FactoryInvoiceDetails` schema represents the details of each invoice, including an optional `db_id` and a required `exfactory_shipment_id`.
- * The `FactoryInvoiceFormSchema` schema represents the main form data, 
- * including fields such as `factory_id`, `buyer_id`, `term_id`, `lc_sc_id`, `invoice_no`, `invoice_date`, and optional fields like `remarks`, `discount`, `invoice_quantity`, `invoice_value`, and `total_value`. 
- * It also includes an optional array of `details` which follows the structure defined in the `FactoryInvoiceDetails` schema.
- * The use of Zod allows for robust validation of form data, ensuring that required fields are present and that the data types are correct before submission.
- */
 import z from 'zod';
 
 export const FactoryInvoiceDetails = z.object({

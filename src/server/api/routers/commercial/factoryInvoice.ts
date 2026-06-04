@@ -121,14 +121,14 @@ export const factoryInvoiceRouter = createTRPCRouter({
                     SELECT *,
                         COUNT(*) OVER() AS TOTAL_COUNT
                     FROM FACTORY_INVOICES
-                    ORDER BY INVOICE_DATE DESC, ADDED_AT DESC
+                    ORDER BY ADDED_AT DESC, INVOICE_DATE DESC
                     LIMIT ${input.limit}
                     OFFSET ${input.offset};
                 `;
 
                 const total = result.length > 0 ? Number(result[0]?.total_count) : 0;
-                const factoryInvoices = result.map(({ total_count: _,  value, symbol, ...lc}) => (
-                    { ...lc, value: currencyFormatter(value, symbol) })
+                const factoryInvoices = result.map(({ total_count: _,  value, symbol, ...invoice}) => (
+                    { ...invoice, value: currencyFormatter(value, symbol) })
                 );
 
                 return { factoryInvoices, total };
