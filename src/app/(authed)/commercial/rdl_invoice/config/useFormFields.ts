@@ -25,11 +25,8 @@ interface PropsType {
 }
 
 export const useFormFields = ({lcList, isEdit, buyer_id}: PropsType): Field<keyof RDLInvoiceFormValues>[] => {
-    const factories = api.factory.getAllFactories.useQuery().data ?? [];
     const terms = api.terms.getAllTerms.useQuery().data ?? [];
     const buyers = api.buyers.getAllBuyersByTeam.useQuery().data ?? [];
-    const { data: destinations } = api.destinations.getAll.useQuery();
-    const { data: freightTerms } = api.freightTerms.getAll.useQuery();
     const { data: consignees } = api.buyers.getBuyerConsignees.useQuery(!!buyer_id ? buyer_id : skipToken);
 
     return [
@@ -60,10 +57,10 @@ export const useFormFields = ({lcList, isEdit, buyer_id}: PropsType): Field<keyo
         },
         {
             name: "invoice_no",
-            label: "Invoice No",
+            label: "Invoice No (Auto)",
             type: "text",
-            disabled: isEdit,
-            optional: isEdit
+            disabled: true,
+            optional: true
         },
         {
             name: "invoice_date",
@@ -74,7 +71,7 @@ export const useFormFields = ({lcList, isEdit, buyer_id}: PropsType): Field<keyo
         },
         {
             name: "invoice_type",
-            label: "Is Proforma Invoice?",
+            label: "Invoice Type",
             type: "select",
             options: [
                 { label: "Single", value: false },
@@ -88,32 +85,38 @@ export const useFormFields = ({lcList, isEdit, buyer_id}: PropsType): Field<keyo
             optional: true,
         },
         {
-            name: "freight_term_id",
-            label: "Select Freight Term",
-            placeholder: "Select freight term",
-            type: "select",
-            options: freightTerms ? freightTerms.map((term) => ({ label: term.name, value: term.id })) : [],
+            name: "container_no",
+            label: "Container No",
+            type: "text",
+            optional: true,
+        },
+        {
+            name: "freight_terms",
+            label: "Freight Term (Auto)",
+            placeholder: "Auto filled based on Factory Invoice",
+            type: "text",
+            disabled: true,
             optional: true,
         },
         {
             name: "port_of_loading",
-            label: "Port of Loading",
-            placeholder: "Select port of loading",
-            type: "select",
-            options: destinations ? destinations.map((dest) => ({ label: dest.name, value: dest.id })) : [],
+            label: "Port of Loading (Auto)",
+            placeholder: "Auto filled based on Factory Invoice",
+            type: "text",
+            disabled: true,
             optional: true,
         },
         {
             name: "invoice_quantity",
-            label: "Shipment Quantity",
-            placeholder: "Enter total quantity for the invoice",
+            label: "Shipment Quantity (Auto)",
+            placeholder: "Auto calculated total quantity for the invoice",
             optional: true,
             disabled: true,
         },
         {
             name: "invoice_value",
-            label: "Shipment Value",
-            placeholder: "Enter total value for the invoice",
+            label: "Shipment Value (Auto)",
+            placeholder: "Auto calculated total value for the invoice",
             optional: true,
             disabled: true,
         },
@@ -126,28 +129,34 @@ export const useFormFields = ({lcList, isEdit, buyer_id}: PropsType): Field<keyo
         },
         {
             name: "total_value",
-            label: "Total Value",
-            placeholder: "Enter total value after discount",
+            label: "Total Value (Auto)",
+            placeholder: "Auto calculated total value after discount",
             optional: true,
             disabled: true,
         },
         {
             name: 'consignee_ids',
-            label: 'Consignees',
+            label: 'Consignees (Auto)',
             type: 'multiselect',
             options: consignees ? consignees.map(consignee => ({
                 label: consignee.consignee_name,
                 value: consignee.id
             })) : [],
+            placeholder: "Auto filled based on Factory Invoice",
+            optional: true,
+            disabled: true,
         },
         {
             name: 'notifyParties',
-            label: 'Notify Parties',
+            label: 'Notify Parties (Auto)',
             type: 'multiselect',
             options: consignees ? consignees.map(consignee => ({
                 label: consignee.consignee_name,
                 value: consignee.id
             })) : [],
+            placeholder: "Auto filled based on Factory Invoice",
+            optional: true,
+            disabled: true,
         },
         {
             name: "remarks",

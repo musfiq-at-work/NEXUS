@@ -1,0 +1,95 @@
+'use client';
+
+import { Button, Form, Wrapper } from "~/components";
+import React, { useEffect, useState } from "react";
+import { api } from "~/trpc/react";
+import { toast } from "sonner";
+import { parseTRPCError } from "~/utils/parseTRPCError";
+import { useRDLInvoiceForm } from "../config/useRDLInvoiceForm";
+import { useRouter } from "next/navigation";
+import { safeNumber } from "~/utils/numbers";
+
+const NewRDLInvoicePage = () => {
+    const router = useRouter();
+
+    // Form setup
+    const { methods, handleSubmit, formFields, validationError, control } = useRDLInvoiceForm();
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    // TRPC utils    
+    const utils = api.useUtils();
+
+    const addRDLInvoice = api.rdlInvoice.addRdlInvoice.useMutation({
+        onSuccess: async () => {
+            setError(null);
+            toast.success("RDL Invoice added successfully!");
+            await utils.rdlInvoice.getRdlInvoice.invalidate();
+        }
+    });
+
+    // Handle form submission for all fields
+    const onSubmitAll =  handleSubmit(async (rdlInvoiceData) => {
+        try {
+            setIsLoading(true);
+            const payload = {
+                buyer_id: safeNumber(rdlInvoiceData.buyer_id),
+                term_id: safeNumber(rdlInvoiceData.term_id),
+                lc_sc_id: rdlInvoiceData.lc_sc_id,
+                invoice_date: new Date(rdlInvoiceData.invoice_date ?? new Date()),
+                invoice_type: rdlInvoiceData.invoice_type,
+                pi_no: rdlInvoiceData.pi_no,
+                remarks: rdlInvoiceData.remarks,
+                container_no: rdlInvoiceData.container_no,
+                discount: rdlInvoiceData.discount ? safeNumber(rdlInvoiceData.discount) : undefined,
+                details: (rdlInvoiceData.details ?? []).map((detail) => ({
+                    factory_id: detail.factory_id,
+                    factory_invoice_id: detail.factory_invoice_id ?? "",
+                    shipments: detail.details?.map((shipment) => ({
+                        shipment_details_id: shipment.shipment_details_id ?? "",
+                        invoice_quantity: shipment.invoice_quantity ? safeNumber(shipment.invoice_quantity) : 0,
+                    })) ?? [],
+                })),
+            };
+
+            const res = await addRDLInvoice.mutateAsync(payload);
+            // router.push(`/commercial/rdl_invoice/edit/${res.id}`);
+        }   
+        catch (error) {
+            const message = parseTRPCError(error);
+            toast.error(`Failed to add RDL Invoice: ${message}`);
+        }
+        finally {
+            setIsLoading(false);
+        }
+    });
+
+    useEffect(() => {
+        console.log("RDL Invoice Form Errors:", validationError);
+    }, [validationError]);
+
+    return (
+        <Wrapper heading='Add RDL Invoice' >
+            <Form 
+                fields={formFields} 
+                buttonLabel="Add New RDL Invoice" 
+                register={methods.register}
+                isLoading={isLoading}
+                validationError={validationError ?? {}}
+                error={error}
+                control={control}
+            />
+
+            <div className="w-full flex flex-row justify-end">
+                <Button type="button" 
+                    onClick={() => onSubmitAll()}
+                    label={"Add RDL Invoice"} 
+                    className="text-lg tracking-wide mt-6 max-w-80 m-8"
+                    disabled={isLoading}
+                />
+            </div>
+        </Wrapper>
+    )
+}
+
+export default NewRDLInvoicePage;

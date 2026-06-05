@@ -5,6 +5,7 @@ export const FactoryInvoiceDetails = z.object({
     order_no: z.string().optional(),
     style: z.string().optional(),
     po: z.string().optional(),
+    shipment_details_id: z.string().optional(),
     order_quantity: z.number().optional(),
     invoice_quantity: z.preprocess(
         (val) => {
@@ -26,6 +27,7 @@ export const RDLInvoiceDetails = z.object({
     factory_invoice_id: z.string().optional(),
     quantity: z.number().optional(),
     factory_value: z.number().optional(),
+    details: z.array(FactoryInvoiceDetails).optional(),
 });
 
 export type RDLInvoiceDetailsFormValues = z.infer<typeof RDLInvoiceDetails>;
@@ -36,15 +38,16 @@ export const RDLInvoiceSchema = z.object({
     buyer_id: z.number().min(1, "Buyer is required"),
     term_id: z.number().min(1, "Term is required"),
     lc_sc_id: z.string().min(1, "LC/SC is required"),
-    invoice_no: z.string().min(1, "Invoice No is required"),
+    invoice_no: z.string().optional(),
     invoice_date: z.string().min(1, "Invoice Date is required"),
     invoice_type: z.boolean().optional(),
     pi_no: z.string().optional(),
+    container_no: z.string().optional(),
     remarks: z.string().optional(),
-    freight_term_id: z.number().optional(),
+    freight_terms: z.string().optional(),
     consignee_ids: z.array(z.number()).optional(),
     notifyParties: z.array(z.number()).optional(),
-    port_of_loading: z.number().optional(),
+    port_of_loading: z.string().optional(),
     discount: z.preprocess(
         (val) => {
             if (val === "" || val === null || val === undefined) return undefined;

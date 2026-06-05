@@ -8,30 +8,40 @@ import { formatDateForInput } from "~/utils/localDateString";
 import { api } from "~/trpc/react";
 import { skipToken } from "@tanstack/react-query";
 import { safeNumber } from "~/utils/numbers";
-// import type { GetFactoryInvoiceByIdTypes } from "~/types/commercialAPITypes";
+import type { GetRdlInvoiceByIdTypes } from "~/types/commercialAPITypes";
 
-// type FactoryInvoiceDetails = NonNullable<GetFactoryInvoiceByIdTypes>['factory_invoice_details'][number];
+type RDLInvoiceDetails = NonNullable<GetRdlInvoiceByIdTypes>['rdl_invoice_details'][number];
 
-export const useFactoryInvoiceForm = (initialData?: any) => {
+type RDLInvoiceShipments = NonNullable<RDLInvoiceDetails>['rdl_invoice_shipment_details'][number];
+
+export const useRDLInvoiceForm = (initialData?: GetRdlInvoiceByIdTypes) => {
     const transformedInitialData = useMemo(() => {
         return initialData ? {
             db_id: initialData.id,
-            factory_id: initialData.factory_id,
+            factory_id: initialData.rdl_invoice_details?.[0]?.factory_id ?? undefined,
             buyer_id: initialData.buyer_id ?? undefined,
-            term_id: initialData.term_id,
-            lc_sc_id: initialData.sales_contract_id?.toString() ? initialData.sales_contract_id?.toString() : initialData.lc_id?.toString() ?? '',
+            term_id: initialData.term_id ?? undefined,
+            lc_sc_id: initialData.sales_contracts?.id?.toString() 
+                ? initialData.sales_contracts?.id?.toString() 
+                : initialData.lc_master?.id?.toString() ?? '',
             invoice_no: initialData.invoice_no ?? '',
             invoice_date: initialData.invoice_date ? formatDateForInput(new Date(initialData.invoice_date)) : '',
-            remarks: initialData.remarks ?? '',
+            remarks: initialData.remark ?? '',
             pi_no: initialData.pi_no ?? '',
+            container_no: initialData.container_no ?? '',
             discount: initialData.discount ?? undefined,
-            notifyParties: initialData.notifyPartyIds?.map((notifyParty) => notifyParty.notify_party_id ?? undefined) ?? [],
-            consignee_ids: initialData.consignee_ids?.map((consignee) => consignee.consignee_id ?? undefined) ?? [],
-            freight_term_id: initialData.freight_term_id ?? undefined,
+            notifyParties: initialData.notify_parties?.map((notifyParty) => notifyParty.notify_party_id ?? undefined) ?? [],
+            consignee_ids: initialData.consignees?.map((consignee) => consignee.consignee_id ?? undefined) ?? [],
+            freight_terms: initialData.freightTerms ?? undefined,
             port_of_loading: initialData.port_of_loading ?? undefined,
-            details: initialData.factory_invoice_details?.map((detail: any) => ({
+            details: initialData.rdl_invoice_details?.map((detail: RDLInvoiceDetails) => ({
                 db_id: detail.id,
-                exfactory_shipment_id: detail.exfactory_shipment_id ?? undefined,
+                factory_id: detail.factory_id ?? undefined,
+                FactoryInvoiceDetails: detail.rdl_invoice_shipment_details?.map((shipment: RDLInvoiceShipments) => ({
+                    db_id: shipment.id,
+                    shipment_details_id: shipment.shipment_details_id,
+                    invoice_quantity: shipment.invoice_quantity,
+                })) ?? [],
             })) ?? [],
         } : undefined;
     }, [initialData]);
@@ -48,7 +58,7 @@ export const useFactoryInvoiceForm = (initialData?: any) => {
             invoice_date: formatDateForInput(new Date()),
             remarks: "",
             discount: undefined,
-            freight_term_id: undefined,
+            freight_terms: undefined,
             port_of_loading: undefined,
             details: [],
         },
@@ -78,24 +88,26 @@ export const useFactoryInvoiceForm = (initialData?: any) => {
     const term_id = useWatch({ control, name: 'term_id' });
     const buyer_id = useWatch({ control, name: 'buyer_id' });
 
-    // const lcList = api.factoryInvoice.getScLcForFactoryInvoice.useQuery(
-    //    (!!term_id && !!buyer_id && !!factory_id && !isEdit) ? {
-    //         term_id: safeNumber(term_id),
-    //         buyer_id: safeNumber(buyer_id),
-    //         factory_id: safeNumber(factory_id),
-    //     } : skipToken
-    // ).data || [];
+    const lcList = api.rdlInvoice.getScLcForRDLInvoice.useQuery(
+       (!!term_id && !!buyer_id && !isEdit) ? {
+            term_id: safeNumber(term_id),
+            buyer_id: safeNumber(buyer_id),
+        } : skipToken
+    ).data || [];
 
-    // let lcScList;
+    let lcScList: { id: string; sc_lc_no: string }[];
 
-    // if(isEdit) {
-    //     lcScList = [{ id: initialData.sales_contract_id ?? initialData.lc_id, sc_lc_no: initialData.sales_contract_no ?? initialData.lc_no }]
-    // }
-    // else {
-    //     lcScList = lcList;
-    // }
+    if(isEdit) {
+        const id = initialData.sales_contracts?.id ?? initialData.lc_master?.id;
+        const sc_lc_no = initialData.sales_contracts?.sales_contract_no ?? initialData.lc_master?.lc_no;
+
+        lcScList = id && sc_lc_no ? [{ id: String(id), sc_lc_no: String(sc_lc_no) }] : [];
+    }
+    else {
+        lcScList = lcList;
+    }
     
-    // const formFields = useFormFields({lcList: lcScList, isEdit, buyer_id});
+    const formFields = useFormFields({lcList: lcScList, isEdit, buyer_id});
 
     const invoiceValue = useWatch({ control, name: 'details' })?.reduce((total, detail) => {
         const value = safeNumber(detail.factory_value);
@@ -121,7 +133,7 @@ export const useFactoryInvoiceForm = (initialData?: any) => {
     return {
         methods,
         handleSubmit,
-        // formFields,
+        formFields,
         validationError,
         trigger,
         watch,

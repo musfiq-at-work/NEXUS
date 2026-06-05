@@ -300,20 +300,338 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         },
                         invoice_no: true,
                         invoice_date: true,
+                        invoice_type: true,
+                        pi_no: true,
+                        container_no: true,
+                        is_authorized: true,
+                        discount: true,
+                        remark: true,
+                        rdl_invoice_details: {
+                            select: {
+                                id: true,
+                                factory_id: true,
+                                factory_invoice: {
+                                    select: {
+                                        id: true,
+                                        factory_invoice_consignee: {
+                                            select: {
+                                                consignee_id: true,
+                                            }
+                                        },
+                                        factory_invoice_notify_party: {
+                                            select: {
+                                                notify_party_id: true,
+                                            }
+                                        },
+                                        freight_term: {
+                                            select: {
+                                                id: true,
+                                                term_name: true,
+                                            }
+                                        },
+                                        destinations: {
+                                            select: {
+                                                id: true,
+                                                name: true,
+                                            }
+                                        }
+                                    },
+                                },
+                                rdl_invoice_shipment_details: {
+                                    select: {
+                                        id: true,
+                                        shipment_details_id: true,
+                                        invoice_quantity: true,
+                                    }
+                                }
+                            }
+                        }
                     }
                 });
 
-                if (!rdlInvoice) {
-                    throw new TRPCError({ 
-                        code: "NOT_FOUND", 
-                        message: "RDL Invoice not found." 
-                    });
-                }
+                const consignees = [
+                    ...new Map(
+                        rdlInvoice?.rdl_invoice_details.flatMap(
+                            (detail) => detail.factory_invoice?.factory_invoice_consignee ?? []
+                        ).map((item) => [item.consignee_id, item])
+                    ).values(),
+                ];
 
-                return rdlInvoice;
+                const notifyParties = [
+                    ...new Map(
+                        rdlInvoice?.rdl_invoice_details.flatMap(
+                            (detail) => detail.factory_invoice?.factory_invoice_notify_party ?? []
+                        ).map((item) => [item.notify_party_id, item])
+                    ).values(),
+                ];
+
+                const freightTerms = [
+                    ...new Set(
+                        rdlInvoice?.rdl_invoice_details
+                            .map((detail) => detail.factory_invoice?.freight_term?.term_name)
+                            .filter(Boolean)
+                    ),
+                ].join(", ");
+
+                const destinations = [
+                    ...new Set(
+                        rdlInvoice?.rdl_invoice_details
+                            .map((detail) => detail.factory_invoice?.destinations?.name)
+                            .filter(Boolean)
+                    ),
+                ].join(", ");
+
+                const result = {
+                    ...rdlInvoice,
+                    consignees,
+                    notify_parties: notifyParties,
+                    freightTerms,
+                    port_of_loading: destinations,
+                    rdl_invoice_details:
+                    rdlInvoice?.rdl_invoice_details.map((detail) => ({
+                        ...detail,
+                        factory_invoice: detail.factory_invoice ? {
+                            id: detail.factory_invoice.id,
+                        } : null,
+                    })) ?? [],
+                };
+
+                return result;
             }
             catch (error) {
                 handlePrismaError(error);
             }
         }),
+
+    getScLcForRDLInvoice: protectedProcedure
+        .input(z.object({
+            buyer_id: z.number(),
+            term_id: z.number(),
+        }))
+        .query(async ({ ctx, input }) => {
+            try {
+                const can_view = ctx.permissions[m.RDL_INVOICE]?.can_view;
+
+                if (!can_view) {
+                    throw new TRPCError({ 
+                        code: 'FORBIDDEN', 
+                        message: "You don't have permission to view LC and Sales Contract details." 
+                    });
+                }
+
+                const terms = await ctx.db.terms.findUnique({
+                    where: { id: input.term_id },
+                    select: { name: true },
+                });
+
+                if (!terms) {
+                    throw new TRPCError({ 
+                        code: 'NOT_FOUND', 
+                        message: "Terms not found." 
+                    });
+                }
+
+                let scLcList: { id: string, sc_lc_no: string}[] = [];
+
+                if (terms.name.toLowerCase() === 'tt') {
+                    scLcList = await ctx.db.$queryRaw<{ id: string, sc_lc_no: string }[]>`
+                        SELECT DISTINCT
+                            SC.ID,
+                            SC.SALES_CONTRACT_NO AS SC_LC_NO
+                        FROM sales_contracts AS SC
+                            INNER JOIN factory_invoice AS FI ON FI.sales_contract_id = SC.id
+                        WHERE NOT EXISTS (
+                            SELECT 1
+                            FROM rdl_invoice_details AS RID
+                            WHERE RID.FACTORY_INVOICE_ID = FI.ID
+                        )
+                        AND SC.buyer_id = ${input.buyer_id}
+                    `;
+                }
+                else {
+                    scLcList = await ctx.db.$queryRaw<{ id: string, sc_lc_no: string }[]>`
+                        SELECT DISTINCT
+                            LC.id,
+                            LC.lc_no AS SC_LC_NO
+                        FROM lc_master AS LC
+                            INNER JOIN factory_invoice AS FI ON FI.lc_id = LC.id
+                        WHERE NOT EXISTS (
+                            SELECT 1
+                            FROM rdl_invoice_details AS RID
+                            WHERE RID.FACTORY_INVOICE_ID = FI.ID
+                        )
+                        AND LC.buyer_id = ${input.buyer_id}
+                    `;
+                }
+
+                return scLcList;
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    addRdlInvoice: protectedProcedure
+        .input(z.object({
+            buyer_id: z.number(),
+            term_id: z.number(),
+            lc_sc_id: z.string(),
+            invoice_date: z.date(),
+            invoice_type: z.boolean().optional(),
+            pi_no: z.string().optional(),
+            remarks: z.string().optional(),
+            container_no: z.string().optional(),
+            discount: z.number().optional(),
+            details: z.array(z.object({
+                factory_id: z.number(),
+                factory_invoice_id: z.string(),
+                shipments: z.array(z.object({
+                    shipment_details_id: z.string(),
+                    invoice_quantity: z.number(),
+                })),
+            }))
+        }))
+        .mutation(async ({ ctx, input }) => {
+            try {
+                const can_create = ctx.permissions[m.RDL_INVOICE]?.can_add;
+
+                if (!can_create) {
+                    throw new TRPCError({ 
+                        code: "FORBIDDEN", 
+                        message: "You do not have permission to create RDL Invoices." 
+                    });
+                }
+
+                const terms = await ctx.db.terms.findUnique({
+                    where: { id: input.term_id },
+                    select: { name: true },
+                });
+
+                if (!terms) {
+                    throw new TRPCError({ 
+                        code: 'NOT_FOUND', 
+                        message: "Terms not found." 
+                    });
+                }
+
+                const isTT = terms.name.toLowerCase() === 'tt';
+
+                const buyerPrefix = await ctx.db.buyers.findUnique({
+                    where: { id: input.buyer_id },
+                    select: { prefix: true },
+                });
+
+                const currentYear = new Date().getFullYear();
+
+                const meta = await ctx.db.rdl_invoice_metadata.upsert({
+                    where: { 
+                        buyer_id_year: {
+                            buyer_id: input.buyer_id,
+                            year: currentYear,
+                        },
+                    },
+                    update: {
+                        last_ref: {
+                            increment: 1,
+                        },
+                    },
+                    create: {
+                        buyer_id: input.buyer_id,
+                        year: currentYear,
+                        last_ref: 1,
+                    },
+                });
+
+                const invoiceRef = `RDL/${buyerPrefix?.prefix || 'BUYER'}/${currentYear}/${String(meta.last_ref).padStart(4, '0')}`;
+
+                return await ctx.db.$transaction(async (tx) => {
+                    const rdlInvoice = await tx.rdl_invoice.create({
+                        data: {
+                            buyer_id: input.buyer_id,
+                            term_id: input.term_id,
+                            lc_id: isTT ? null : input.lc_sc_id,
+                            sales_contract_id: isTT ? input.lc_sc_id : null,
+                            invoice_no: invoiceRef,
+                            invoice_date: input.invoice_date,
+                            invoice_type: input.invoice_type,
+                            pi_no: input.pi_no,
+                            container_no: input.container_no,
+                            discount: input.discount,
+                            remark: input.remarks,
+                        },
+                    });
+
+                    await tx.rdl_invoice_history.create({
+                        data: {
+                            rdl_invoice_id: rdlInvoice.id,
+                            buyer_id: rdlInvoice.buyer_id,
+                            term_id: rdlInvoice.term_id,
+                            invoice_no: rdlInvoice.invoice_no,
+                            invoice_date: rdlInvoice.invoice_date,
+                            sales_contract_id: rdlInvoice.sales_contract_id,
+                            lc_id: rdlInvoice.lc_id,
+                            invoice_type: rdlInvoice.invoice_type,
+                            pi_no: rdlInvoice.pi_no,
+                            container_no: rdlInvoice.container_no,
+                            discount: rdlInvoice.discount,
+                            remark: rdlInvoice.remarks,
+                            action_type: actions.ADDED,
+                            action_by: ctx.user.id,
+                        },
+                    });
+
+                    await Promise.all(
+                        input.details.map(async (detail) => {
+                            const rdlInvoiceDetail = await tx.rdl_invoice_details.create({
+                                data: {
+                                    rdl_invoice_id: rdlInvoice.id,
+                                    factory_id: detail.factory_id,
+                                    factory_invoice_id: detail.factory_invoice_id,
+                                },
+                            });
+
+                            await Promise.all(
+                                detail.shipments.map(async (shipment) => {
+                                    const shipmentDetail = await tx.rdl_invoice_shipment_details.create({
+                                        data: {
+                                            rdl_invoice_details_id: rdlInvoiceDetail.id,
+                                            shipment_details_id: shipment.shipment_details_id,
+                                            invoice_quantity: shipment.invoice_quantity,
+                                        },
+                                    });
+
+                                    tx.rdl_invoice_shipment_details_history.create({
+                                        data: {
+                                            rdl_invoice_details_id: shipmentDetail.rdl_invoice_details_id,
+                                            shipment_details_id: shipmentDetail.shipment_details_id,
+                                            invoice_quantity: shipmentDetail.invoice_quantity,
+                                            action_type: actions.ADDED,
+                                            action_by: ctx.user.id,
+                                        },
+                                    })
+                                })
+                            );
+
+                            tx.rdl_invoice_details_history.create({
+                                data: {
+                                    rdl_invoice_details: rdlInvoiceDetail.id,
+                                    rdl_invoice_id: rdlInvoiceDetail.rdl_invoice_id,
+                                    factory_id: rdlInvoiceDetail.factory_id,
+                                    factory_invoice_id: rdlInvoiceDetail.factory_invoice_id,
+                                    action_type: actions.ADDED,
+                                    action_by: ctx.user.id,
+                                },
+                            });
+                        })
+                    );
+
+                    return rdlInvoice;
+                });
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+
 });
