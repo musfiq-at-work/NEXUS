@@ -18,6 +18,23 @@ interface RdlInvoiceListItem {
     total_count: bigint;
 }
 
+interface ShipmentDetailForFactoryInvoice {
+    id: string;
+    order_no: string;
+    styles: string;
+    po: string;
+    destination: string;
+    order_quantity: number;
+    fob_rate: number;
+}
+
+interface FactoryInvoiceForRDLInvoice {
+    id: string; 
+    invoice_no: string;
+    total_quantity: bigint;
+    factory_value: bigint; 
+};
+
 export const rdlInvoiceRouter = createTRPCRouter({
     getRdlInvoice: protectedProcedure
         .input(z.object({
@@ -633,5 +650,210 @@ export const rdlInvoiceRouter = createTRPCRouter({
             }
         }),
 
+    getFactoryInvoiceForRDLInvoice: protectedProcedure
+        .input(z.object({
+            factory_id: z.number(),
+            term_id: z.number(),
+            lc_sc_id: z.string(),
+            rdl_invoice_id: z.string().optional(),
+        }))
+        .query(async ({ ctx, input }) => {
+            try {
+                const can_view = ctx.permissions[m.RDL_INVOICE]?.can_view;
 
+                if (!can_view) {
+                    throw new TRPCError({ 
+                        code: "FORBIDDEN", 
+                        message: "You do not have permission to view Factory Invoices." 
+                    });
+                }
+
+                const terms = await ctx.db.terms.findUnique({
+                    where: { id: input.term_id },
+                    select: { name: true },
+                });
+
+                if (!terms) {
+                    throw new TRPCError({ 
+                        code: 'NOT_FOUND', 
+                        message: "Terms not found." 
+                    });
+                }
+
+                const isTT = terms.name.toLowerCase() === 'tt';
+
+                const whereClause = isTT
+                    ? Prisma.sql`FI.sales_contract_id = ${input.lc_sc_id}`
+                    : Prisma.sql`FI.lc_id = ${input.lc_sc_id}`;
+
+                const excludeCurrentInvoiceClause = input.rdl_invoice_id
+                    ? Prisma.sql`WHERE RI.ID <> ${input.rdl_invoice_id}`
+                    : Prisma.sql``;
+
+                const factoryInvoiceList = await ctx.db.$queryRaw<FactoryInvoiceForRDLInvoice[]>`
+                    WITH PREVIOUS_INVOICE AS (
+                        SELECT
+                            RID.factory_invoice_id AS FACTORY_INVOICE_ID,
+                            SUM(RISD.INVOICE_QUANTITY) AS PREVIOUS_QUANTITY
+                        FROM RDL_INVOICE AS RI
+                            INNER JOIN rdl_invoice_details AS RID ON RI.id = RID.rdl_invoice_id
+                            INNER JOIN RDL_INVOICE_SHIPMENT_DETAILS AS RISD
+                                ON RISD.rdl_invoice_details_id = RID.id
+                        ${excludeCurrentInvoiceClause}
+                        GROUP BY RID.factory_invoice_id
+                    ),
+                    INVOICE AS (
+                        SELECT 
+                            SD.id AS SHIPMENT_DETAILS_ID,
+                            CASE
+                                WHEN FSD.TRANSFER_RATE IS NOT NULL
+                                    THEN FSD.TRANSFER_RATE * SUM(SID.QUANTITY)
+                                ELSE FSD.FACTORY_RATE * SUM(SID.QUANTITY)
+                            END AS FACTORY_VALUE,
+                            SUM(SID.QUANTITY) AS TOTAL_QUANTITY
+                        FROM factory_shipment_details AS FSD
+                            INNER JOIN shipment_details AS SD ON SD.id = FSD.shipment_detail_id
+                            INNER JOIN shipment_item_details AS SID ON SID.shipment_detail_id = SD.id
+                        GROUP BY FSD.id, SD.id
+                    )
+                    SELECT
+                        FI.ID AS ID,
+                        FI.INVOICE_NO,
+                        I.TOTAL_QUANTITY,
+                        I.FACTORY_VALUE
+                    FROM FACTORY_INVOICE AS FI
+                        INNER JOIN factory_invoice_details AS FID ON FID.factory_invoice_id = FI.id
+                        INNER JOIN exfactory_shipments AS ES ON ES.id = FID.exfactory_shipment_id
+                        INNER JOIN INVOICE AS I ON I.SHIPMENT_DETAILS_ID = ES.shipment_details_id
+                        INNER JOIN PREVIOUS_INVOICE AS PI ON PI.FACTORY_INVOICE_ID = FI.ID
+                    WHERE FI.factory_id = ${input.factory_id}
+                        AND ${whereClause}
+                        AND PI.PREVIOUS_QUANTITY < I.TOTAL_QUANTITY
+                    GROUP BY FI.ID, PI.PREVIOUS_QUANTITY, I.TOTAL_QUANTITY, I.FACTORY_VALUE
+                `;
+
+                const factoryInvoice = factoryInvoiceList.map(invoice => ({
+                    ...invoice,
+                    total_quantity: Number(invoice.total_quantity),
+                    factory_value: Number(invoice.factory_value),
+                }));
+
+                return factoryInvoice;
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    deleteFactoryInvoice: protectedProcedure
+        .input(z.object({
+            db_id: z.string(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            try {
+                const can_delete = ctx.permissions[m.RDL_INVOICE]?.can_delete;
+
+                if (!can_delete) {
+                    throw new TRPCError({ 
+                        code: "FORBIDDEN", 
+                        message: "You do not have permission to delete Factory Invoices from RDL Invoices." 
+                    });
+                }
+
+                await ctx.db.$transaction(async (tx) => {
+                    const rdlInvoiceDetail = await tx.rdl_invoice_details.findUnique({
+                        where: { id: input.db_id },
+                    });
+
+                    const rdlInvoiceShipmentDetails = await tx.rdl_invoice_shipment_details.findMany({
+                        where: { rdl_invoice_details_id: input.db_id },
+                    });
+
+                    await tx.rdl_invoice_shipment_details_history.createMany({
+                        data: rdlInvoiceShipmentDetails.map(detail => ({
+                            rdl_invoice_details_id: detail.rdl_invoice_details_id,
+                            shipment_details_id: detail.shipment_details_id,
+                            invoice_quantity: detail.invoice_quantity,
+                            action_type: actions.DELETE,
+                            action_by: ctx.user.id,
+                        })),
+                    });
+
+                    await tx.rdl_invoice_details_history.create({
+                        data: {
+                            rdl_invoice_details: rdlInvoiceDetail?.id ?? "",
+                            rdl_invoice_id: rdlInvoiceDetail?.rdl_invoice_id ?? "",
+                            factory_id: rdlInvoiceDetail?.factory_id ?? 0,
+                            factory_invoice_id: rdlInvoiceDetail?.factory_invoice_id ?? "",
+                            action_type: actions.DELETE,
+                            action_by: ctx.user.id,
+                        },
+                    });
+
+                    await tx.rdl_invoice_shipment_details.deleteMany({
+                        where: { rdl_invoice_details_id: input.db_id },
+                    });
+
+                    await tx.rdl_invoice_details.delete({
+                        where: { id: input.db_id },
+                    });
+                });
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    getShipmentDetailsForFactoryInvoice: protectedProcedure
+        .input(z.object({
+            factory_invoice_id: z.string(),
+        }))
+        .query(async ({ ctx, input }) => {
+            try {
+                const can_view = ctx.permissions[m.RDL_INVOICE]?.can_view;
+
+                if (!can_view) {
+                    throw new TRPCError({ 
+                        code: "FORBIDDEN", 
+                        message: "You do not have permission to view Shipment Details for Factory Invoices." 
+                    });
+                }
+
+                const shipmentDetailsObj = await ctx.db.$queryRaw<ShipmentDetailForFactoryInvoice[]>`
+                    SELECT 
+                        FID.id AS id,
+                        BO.ref_no AS ORDER_NO,
+                        OS.STYLE AS STYLES,
+                        SD.BUYER_PO AS PO,
+                        D.NAME AS DESTINATION,
+                        SUM(SID.QUANTITY) AS ORDER_QUANTITY,
+                        SD.FOB_RATE / BO.CURRENCY_RATE AS FOB_RATE
+                    FROM factory_invoice AS fi
+                        INNER JOIN factory_invoice_details AS FID ON FID.factory_invoice_id = fi.id
+                        INNER JOIN exfactory_shipments AS ES ON ES.id = FID.exfactory_shipment_id
+                        INNER JOIN SHIPMENT_DETAILS AS SD ON SD.id = ES.shipment_details_id
+                        INNER JOIN ORDER_STYLES AS OS ON OS.id = SD.order_style_id
+                        INNER JOIN BUYER_ORDERS AS BO ON BO.id = OS.order_id
+                        INNER JOIN DESTINATIONS AS D ON D.id = SD.destination_id
+                        INNER JOIN SHIPMENT_ITEM_DETAILS AS SID ON SID.shipment_detail_id = SD.id
+                    WHERE FI.ID = ${input.factory_invoice_id}
+                    GROUP BY BO.ID, OS.ID, SD.ID, FID.ID, D.ID;
+                `;
+
+                const shipmentDetails = shipmentDetailsObj.map(detail => ({
+                    id: detail.id,
+                    order_no: detail.order_no,
+                    styles: detail.styles,
+                    po: detail.po,
+                    destination: detail.destination,
+                    order_quantity: Number(detail.order_quantity),
+                    fob_rate: Number(detail.fob_rate),
+                }));
+
+                return shipmentDetails;
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
 });

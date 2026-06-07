@@ -7,6 +7,7 @@ export const FactoryInvoiceDetails = z.object({
     po: z.string().optional(),
     shipment_details_id: z.string().optional(),
     order_quantity: z.number().optional(),
+    destination_port: z.string().optional(),
     invoice_quantity: z.preprocess(
         (val) => {
             if (val === "" || val === null || val === undefined) return undefined;

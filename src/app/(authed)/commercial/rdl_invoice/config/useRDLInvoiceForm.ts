@@ -30,8 +30,10 @@ export const useRDLInvoiceForm = (initialData?: GetRdlInvoiceByIdTypes) => {
             pi_no: initialData.pi_no ?? '',
             container_no: initialData.container_no ?? '',
             discount: initialData.discount ?? undefined,
-            notifyParties: initialData.notify_parties?.map((notifyParty) => notifyParty.notify_party_id ?? undefined) ?? [],
-            consignee_ids: initialData.consignees?.map((consignee) => consignee.consignee_id ?? undefined) ?? [],
+            notifyParties: initialData.notify_parties
+                ?.map((notifyParty) => notifyParty.notify_party_id ?? undefined) ?? [],
+            consignee_ids: initialData.consignees
+                ?.map((consignee) => consignee.consignee_id ?? undefined) ?? [],
             freight_terms: initialData.freightTerms ?? undefined,
             port_of_loading: initialData.port_of_loading ?? undefined,
             details: initialData.rdl_invoice_details?.map((detail: RDLInvoiceDetails) => ({
@@ -109,34 +111,59 @@ export const useRDLInvoiceForm = (initialData?: GetRdlInvoiceByIdTypes) => {
     
     const formFields = useFormFields({lcList: lcScList, isEdit, buyer_id});
 
-    const invoiceValue = useWatch({ control, name: 'details' })?.reduce((total, detail) => {
-        const value = safeNumber(detail.factory_value);
-        return total + (isNaN(value) ? 0 : value);
-    }, 0);
-
-    useEffect(() => {
-        if (invoiceValue !== undefined) {
-            methods.setValue('invoice_value', invoiceValue.toFixed(2));
-        }
-    }, [invoiceValue, methods]);
-
-    const totalValue = useWatch({ control, name: 'discount' }) !== undefined
-        ? (invoiceValue || 0) - (safeNumber(methods.getValues('discount')) || 0)
-        : invoiceValue;
-
-    useEffect(() => {
-        if (totalValue !== undefined) {
-            methods.setValue('total_value', totalValue.toFixed(2));
-        }
-    }, [totalValue, methods]);
-
-    return {
-        methods,
-        handleSubmit,
-        formFields,
-        validationError,
-        trigger,
-        watch,
+    const details = useWatch({
         control,
-    };
+        name: "details",
+    });
+
+    const discount = useWatch({
+        control,
+        name: "discount",
+    });
+
+    const { invoiceQuantity, invoiceValue } = useMemo(() => {
+        return (details ?? []).reduce(
+            (acc, factory) => {
+                (factory.details ?? []).forEach((shipment) => {
+                    acc.invoiceQuantity += safeNumber(shipment.invoice_quantity);
+                    acc.invoiceValue += safeNumber(shipment.invoice_value);
+                });
+
+                return acc;
+            },
+            {
+                invoiceQuantity: 0,
+                invoiceValue: 0,
+            }
+        );
+    }, [details]);
+
+    const totalValue = useMemo(
+        () => invoiceValue - safeNumber(discount),
+        [invoiceValue, discount]
+    );
+
+    useEffect(() => {
+        methods.setValue(
+            "invoice_quantity",
+            invoiceQuantity ? invoiceQuantity.toString() : "0"
+        );
+
+        methods.setValue(
+            "invoice_value",
+            invoiceValue ? invoiceValue.toFixed(2) : "0.00"
+        );
+
+        methods.setValue(
+            "total_value",
+            totalValue.toFixed(2)
+        );
+    }, [
+        invoiceQuantity,
+        invoiceValue,
+        totalValue,
+        methods,
+    ]);
+
+    return { methods, handleSubmit, formFields, validationError, trigger, watch, control };
 }

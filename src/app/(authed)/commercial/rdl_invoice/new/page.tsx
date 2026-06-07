@@ -8,6 +8,7 @@ import { parseTRPCError } from "~/utils/parseTRPCError";
 import { useRDLInvoiceForm } from "../config/useRDLInvoiceForm";
 import { useRouter } from "next/navigation";
 import { safeNumber } from "~/utils/numbers";
+import FactoryInvoiceDetails from "../components/factoryInvoiceComponents/FactoryInvoiceDetails";
 
 const NewRDLInvoicePage = () => {
     const router = useRouter();
@@ -52,7 +53,9 @@ const NewRDLInvoicePage = () => {
                 })),
             };
 
-            const res = await addRDLInvoice.mutateAsync(payload);
+            console.log("Submitting RDL Invoice with payload:", payload);
+
+            // const res = await addRDLInvoice.mutateAsync(payload);
             // router.push(`/commercial/rdl_invoice/edit/${res.id}`);
         }   
         catch (error) {
@@ -79,6 +82,15 @@ const NewRDLInvoicePage = () => {
                 error={error}
                 control={control}
             />
+
+            <FactoryInvoiceDetails 
+                methods={methods}
+                validationError={validationError.details ?? {}}
+                disabled={isLoading}
+            />
+
+            {/* Shipment Portal anchor */}
+            <div id='rdl_invoice_shipment_details_portal'/> 
 
             <div className="w-full flex flex-row justify-end">
                 <Button type="button" 

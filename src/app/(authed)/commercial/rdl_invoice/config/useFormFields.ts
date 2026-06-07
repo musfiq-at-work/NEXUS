@@ -1,11 +1,3 @@
-/**
- * @description
- * This file defines the form fields for the RDL invoice form in the commercial module of the application. 
- * It uses data fetched from the API to populate select options for fields like buyer, payment terms, and LC/SC. 
- * The `useFormFields` hook returns an array of field configurations that can be used to render the form dynamically. 
- * Each field configuration includes properties such as `name`, `label`, `type`, `options`, `disabled`, and `optional` to control the behavior and appearance of the form fields.
- */
-
 import { api } from "~/trpc/react";
 import type { RDLInvoiceFormValues } from "./formSchema";
 import type { BaseField } from "~/types/form";
