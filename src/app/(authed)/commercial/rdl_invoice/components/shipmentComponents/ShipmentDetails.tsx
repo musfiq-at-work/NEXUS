@@ -32,10 +32,15 @@ const ShipmentDetails = (props: props) => {
         name: `details.${invoiceIndex}.factory_invoice_id`,
     });
 
-    const shipmentDetails = api.rdlInvoice.getShipmentDetailsForFactoryInvoice.useQuery(
-        !!selectedFactoryInvoice ? { factory_invoice_id: selectedFactoryInvoice } : skipToken
-    );
+    const rdlInvoiceDbId = useWatch({
+        control: methods.control,
+        name: `db_id`,
+    });
 
+    const shipmentDetails = api.rdlInvoice.getShipmentDetailsForFactoryInvoice.useQuery(
+        !!selectedFactoryInvoice ? { factory_invoice_id: selectedFactoryInvoice, rdl_invoice_id: rdlInvoiceDbId } : skipToken
+    );
+    
     useEffect(() => {
         if (!shipmentDetails.data) return;
 
@@ -46,9 +51,9 @@ const ShipmentDetails = (props: props) => {
                 style: shipmentDetail.styles ?? undefined,
                 po: shipmentDetail.po ?? undefined,
                 order_quantity: shipmentDetail.order_quantity ?? 0,
-                shipment_details_id: shipmentDetail.id,
+                shipment_details_id: shipmentDetail.shipment_details_id,
                 destination_port: shipmentDetail.destination ?? undefined,
-                invoice_quantity: undefined,
+                previous_quantity: shipmentDetail.previous_quantity ?? 0,
                 invoice_fob: shipmentDetail.fob_rate?.toFixed(2) ?? undefined,
                 invoice_value: undefined,
             }))

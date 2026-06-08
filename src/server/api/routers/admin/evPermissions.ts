@@ -34,8 +34,6 @@ export const evPermissionRouter = createTRPCRouter({
                 WHERE FO.ID = ${input.factoryOrderID} AND EVP.user_id = ${ctx.user.id};
             `;
 
-            console.log('hasPermission', hasPermission);
-
             return hasPermission.length > 0 ? true : false; // Return true if user has permission, false otherwise
         }),
 

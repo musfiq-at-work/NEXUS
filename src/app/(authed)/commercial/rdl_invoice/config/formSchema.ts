@@ -14,18 +14,33 @@ export const FactoryInvoiceDetails = z.object({
             const num = Number(val);
             return isNaN(num) ? undefined : num;
         },
-        z.number().optional()
+        z.number().min(0, "Invoice quantity cannot be negative").optional()
     ) as z.ZodType<number | undefined>,
+    previous_quantity: z.number().optional(),
     invoice_fob: z.string().optional(),
     invoice_value: z.string().optional(),
+})    
+.superRefine((data, ctx) => {
+    if (data.invoice_quantity !== undefined && data.order_quantity !== undefined) {
+        const remainingQty = data.order_quantity - (data.previous_quantity ?? 0);
+
+        if (data.invoice_quantity > remainingQty) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["invoice_quantity"],
+                message: `Invoice quantity cannot exceed remaining quantity (${remainingQty}).`,
+            });
+        }
+    }
 });
 
 export type FactoryInvoiceDetailsFormValues = z.infer<typeof FactoryInvoiceDetails>;
 
 export const RDLInvoiceDetails = z.object({
     db_id: z.string().optional(),
-    factory_id: z.number().min(1, "Factory is required"),
-    factory_invoice_id: z.string().optional(),
+    factory_id: z.string().min(1, "Factory is required"),
+    factory_invoice_id: z.string().min(1, "Factory is required"),
+    factory_invoice_no: z.string().optional(),
     quantity: z.number().optional(),
     factory_value: z.number().optional(),
     details: z.array(FactoryInvoiceDetails).optional(),
@@ -41,14 +56,10 @@ export const RDLInvoiceSchema = z.object({
     lc_sc_id: z.string().min(1, "LC/SC is required"),
     invoice_no: z.string().optional(),
     invoice_date: z.string().min(1, "Invoice Date is required"),
-    invoice_type: z.boolean().optional(),
+    invoice_type: z.boolean(),
     pi_no: z.string().optional(),
     container_no: z.string().optional(),
     remarks: z.string().optional(),
-    freight_terms: z.string().optional(),
-    consignee_ids: z.array(z.number()).optional(),
-    notifyParties: z.array(z.number()).optional(),
-    port_of_loading: z.string().optional(),
     discount: z.preprocess(
         (val) => {
             if (val === "" || val === null || val === undefined) return undefined;

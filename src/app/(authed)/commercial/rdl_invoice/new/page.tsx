@@ -44,19 +44,17 @@ const NewRDLInvoicePage = () => {
                 container_no: rdlInvoiceData.container_no,
                 discount: rdlInvoiceData.discount ? safeNumber(rdlInvoiceData.discount) : undefined,
                 details: (rdlInvoiceData.details ?? []).map((detail) => ({
-                    factory_id: detail.factory_id,
+                    factory_id: safeNumber(detail.factory_id),
                     factory_invoice_id: detail.factory_invoice_id ?? "",
                     shipments: detail.details?.map((shipment) => ({
                         shipment_details_id: shipment.shipment_details_id ?? "",
-                        invoice_quantity: shipment.invoice_quantity ? safeNumber(shipment.invoice_quantity) : 0,
+                        invoice_quantity: safeNumber(shipment.invoice_quantity),
                     })) ?? [],
                 })),
             };
 
-            console.log("Submitting RDL Invoice with payload:", payload);
-
-            // const res = await addRDLInvoice.mutateAsync(payload);
-            // router.push(`/commercial/rdl_invoice/edit/${res.id}`);
+            const res = await addRDLInvoice.mutateAsync(payload);
+            router.push(`/commercial/rdl_invoice/edit/${res.id}`);
         }   
         catch (error) {
             const message = parseTRPCError(error);
@@ -85,7 +83,7 @@ const NewRDLInvoicePage = () => {
 
             <FactoryInvoiceDetails 
                 methods={methods}
-                validationError={validationError.details ?? {}}
+                validationError={validationError ?? {}}
                 disabled={isLoading}
             />
 

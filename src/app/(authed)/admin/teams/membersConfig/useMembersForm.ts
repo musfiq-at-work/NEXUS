@@ -80,8 +80,6 @@ export const useMembersForm = (userMap: UserMap, memberData?: GetTeamByIdTypes['
 
     useEffect(() => {
         if (!members?.length) return;
-        // console.log('useTeamsForm teamData changed', members);
-
 
         members.forEach((member, index) => {
             if (!member?.user_id) return;

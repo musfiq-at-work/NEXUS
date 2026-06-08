@@ -29,10 +29,6 @@ const NewExFactoryPage = () => {
         }
     });
 
-    useEffect(() => {
-    console.log('validationError', validationError);
-    }, [validationError])
-
     // Handle form submission for all fields
     const onSubmitAll =  handleSubmit(async (exFactoryData) => {
         try {

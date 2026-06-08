@@ -25,7 +25,7 @@ const FactoryInvoiceRow = (props: Props) => {
 
     const termId = useWatch({ control: methods.control, name: `term_id`});
 
-    const rdlInvoiceDetailsDbId = useWatch({ control: methods.control, name: `details.${index}.db_id`});
+    const rdlInvoiceDbId = useWatch({ control: methods.control, name: `db_id`});
 
     const lc_sc_id = useWatch({ control: methods.control, name: `lc_sc_id`});
 
@@ -34,7 +34,7 @@ const FactoryInvoiceRow = (props: Props) => {
             factory_id: safeNumber(factoryId), 
             term_id: safeNumber(termId),
             lc_sc_id: lc_sc_id,
-            rdl_invoice_id: rdlInvoiceDetailsDbId,
+            rdl_invoice_id: rdlInvoiceDbId,
         } : skipToken
     ).data;
 
@@ -58,6 +58,8 @@ const FactoryInvoiceRow = (props: Props) => {
     });
 
     const selectedFactoryInvoiceNo = factoryInvoices?.find(invoice => invoice.id === selectedFactoryInvoice)?.invoice_no;
+
+    // const isEdit = useWatch({ control: methods.control, name: `details.${index}.db_id` }) !== undefined;
 
     useEffect(() => {
         if (!selectedFactoryInvoice || !factoryInvoices) return;

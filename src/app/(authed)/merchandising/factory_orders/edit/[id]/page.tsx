@@ -149,8 +149,6 @@ const EditFactoryOrderPage = ({ params }: EditFactoryOrderPageProp) => {
         }
     };
 
-    console.log(hasPermission.data)
-
     return (
         <Wrapper heading='Update Factory Order'
             subSectionRight={

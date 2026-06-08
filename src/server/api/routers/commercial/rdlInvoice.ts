@@ -25,6 +25,8 @@ interface ShipmentDetailForFactoryInvoice {
     po: string;
     destination: string;
     order_quantity: number;
+    previous_quantity: number;
+    shipment_details_id: string;
     fob_rate: number;
 }
 
@@ -322,7 +324,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         container_no: true,
                         is_authorized: true,
                         discount: true,
-                        remark: true,
+                        remarks: true,
                         rdl_invoice_details: {
                             select: {
                                 id: true,
@@ -330,28 +332,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                                 factory_invoice: {
                                     select: {
                                         id: true,
-                                        factory_invoice_consignee: {
-                                            select: {
-                                                consignee_id: true,
-                                            }
-                                        },
-                                        factory_invoice_notify_party: {
-                                            select: {
-                                                notify_party_id: true,
-                                            }
-                                        },
-                                        freight_term: {
-                                            select: {
-                                                id: true,
-                                                term_name: true,
-                                            }
-                                        },
-                                        destinations: {
-                                            select: {
-                                                id: true,
-                                                name: true,
-                                            }
-                                        }
+                                        invoice_no: true,
                                     },
                                 },
                                 rdl_invoice_shipment_details: {
@@ -366,49 +347,13 @@ export const rdlInvoiceRouter = createTRPCRouter({
                     }
                 });
 
-                const consignees = [
-                    ...new Map(
-                        rdlInvoice?.rdl_invoice_details.flatMap(
-                            (detail) => detail.factory_invoice?.factory_invoice_consignee ?? []
-                        ).map((item) => [item.consignee_id, item])
-                    ).values(),
-                ];
-
-                const notifyParties = [
-                    ...new Map(
-                        rdlInvoice?.rdl_invoice_details.flatMap(
-                            (detail) => detail.factory_invoice?.factory_invoice_notify_party ?? []
-                        ).map((item) => [item.notify_party_id, item])
-                    ).values(),
-                ];
-
-                const freightTerms = [
-                    ...new Set(
-                        rdlInvoice?.rdl_invoice_details
-                            .map((detail) => detail.factory_invoice?.freight_term?.term_name)
-                            .filter(Boolean)
-                    ),
-                ].join(", ");
-
-                const destinations = [
-                    ...new Set(
-                        rdlInvoice?.rdl_invoice_details
-                            .map((detail) => detail.factory_invoice?.destinations?.name)
-                            .filter(Boolean)
-                    ),
-                ].join(", ");
-
                 const result = {
                     ...rdlInvoice,
-                    consignees,
-                    notify_parties: notifyParties,
-                    freightTerms,
-                    port_of_loading: destinations,
-                    rdl_invoice_details:
-                    rdlInvoice?.rdl_invoice_details.map((detail) => ({
+                    rdl_invoice_details: rdlInvoice?.rdl_invoice_details.map((detail) => ({
                         ...detail,
                         factory_invoice: detail.factory_invoice ? {
                             id: detail.factory_invoice.id,
+                            invoice_no: detail.factory_invoice?.invoice_no,
                         } : null,
                     })) ?? [],
                 };
@@ -574,7 +519,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             pi_no: input.pi_no,
                             container_no: input.container_no,
                             discount: input.discount,
-                            remark: input.remarks,
+                            remarks: input.remarks,
                         },
                     });
 
@@ -591,7 +536,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             pi_no: rdlInvoice.pi_no,
                             container_no: rdlInvoice.container_no,
                             discount: rdlInvoice.discount,
-                            remark: rdlInvoice.remarks,
+                            remarks: rdlInvoice.remarks,
                             action_type: actions.ADDED,
                             action_by: ctx.user.id,
                         },
@@ -686,8 +631,30 @@ export const rdlInvoiceRouter = createTRPCRouter({
                     ? Prisma.sql`FI.sales_contract_id = ${input.lc_sc_id}`
                     : Prisma.sql`FI.lc_id = ${input.lc_sc_id}`;
 
-                const excludeCurrentInvoiceClause = input.rdl_invoice_id
-                    ? Prisma.sql`WHERE RI.ID <> ${input.rdl_invoice_id}`
+                const currentInvoiceJoin = input.rdl_invoice_id
+                    ? Prisma.sql`
+                        LEFT JOIN rdl_invoice_details CRID ON CRID.factory_invoice_id = FI.ID
+                        AND CRID.rdl_invoice_id = ${input.rdl_invoice_id}
+                    `
+                    : Prisma.sql``;
+
+                const invoiceFilter = input.rdl_invoice_id
+                    ? Prisma.sql`
+                        AND (
+                            CRID.ID IS NOT NULL
+                            OR PI.FACTORY_INVOICE_ID IS NULL
+                            OR PI.PREVIOUS_QUANTITY < I.TOTAL_QUANTITY
+                        )
+                    `
+                    : Prisma.sql`
+                        AND (
+                            PI.FACTORY_INVOICE_ID IS NULL
+                            OR PI.PREVIOUS_QUANTITY < I.TOTAL_QUANTITY
+                        )
+                    `;
+
+                const excludeCurrentInvoiceClause = input.rdl_invoice_id 
+                    ? Prisma.sql`WHERE RI.ID <> ${input.rdl_invoice_id}` 
                     : Prisma.sql``;
 
                 const factoryInvoiceList = await ctx.db.$queryRaw<FactoryInvoiceForRDLInvoice[]>`
@@ -695,41 +662,40 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         SELECT
                             RID.factory_invoice_id AS FACTORY_INVOICE_ID,
                             SUM(RISD.INVOICE_QUANTITY) AS PREVIOUS_QUANTITY
-                        FROM RDL_INVOICE AS RI
-                            INNER JOIN rdl_invoice_details AS RID ON RI.id = RID.rdl_invoice_id
-                            INNER JOIN RDL_INVOICE_SHIPMENT_DETAILS AS RISD
-                                ON RISD.rdl_invoice_details_id = RID.id
-                        ${excludeCurrentInvoiceClause}
+                        FROM RDL_INVOICE RI
+                            INNER JOIN rdl_invoice_details RID ON RID.rdl_invoice_id = RI.ID
+                            INNER JOIN RDL_INVOICE_SHIPMENT_DETAILS RISD ON RISD.rdl_invoice_details_id = RID.ID
+                            ${excludeCurrentInvoiceClause}
                         GROUP BY RID.factory_invoice_id
                     ),
                     INVOICE AS (
-                        SELECT 
-                            SD.id AS SHIPMENT_DETAILS_ID,
+                        SELECT
+                            ES.id AS EFSD_ID,
                             CASE
                                 WHEN FSD.TRANSFER_RATE IS NOT NULL
-                                    THEN FSD.TRANSFER_RATE * SUM(SID.QUANTITY)
-                                ELSE FSD.FACTORY_RATE * SUM(SID.QUANTITY)
+                                    THEN FSD.TRANSFER_RATE * SUM(ES.delivery_quantity)
+                                ELSE FSD.FACTORY_RATE * SUM(ES.delivery_quantity)
                             END AS FACTORY_VALUE,
-                            SUM(SID.QUANTITY) AS TOTAL_QUANTITY
-                        FROM factory_shipment_details AS FSD
-                            INNER JOIN shipment_details AS SD ON SD.id = FSD.shipment_detail_id
-                            INNER JOIN shipment_item_details AS SID ON SID.shipment_detail_id = SD.id
-                        GROUP BY FSD.id, SD.id
+                            SUM(ES.delivery_quantity) AS TOTAL_QUANTITY
+                        FROM exfactory_shipments ES
+                            INNER JOIN factory_shipment_details FSD ON FSD.shipment_detail_id = ES.shipment_details_id
+                        GROUP BY ES.id, FSD.ID, FSD.TRANSFER_RATE, FSD.FACTORY_RATE
                     )
                     SELECT
-                        FI.ID AS ID,
+                        FI.ID,
                         FI.INVOICE_NO,
                         I.TOTAL_QUANTITY,
                         I.FACTORY_VALUE
-                    FROM FACTORY_INVOICE AS FI
-                        INNER JOIN factory_invoice_details AS FID ON FID.factory_invoice_id = FI.id
-                        INNER JOIN exfactory_shipments AS ES ON ES.id = FID.exfactory_shipment_id
-                        INNER JOIN INVOICE AS I ON I.SHIPMENT_DETAILS_ID = ES.shipment_details_id
-                        INNER JOIN PREVIOUS_INVOICE AS PI ON PI.FACTORY_INVOICE_ID = FI.ID
-                    WHERE FI.factory_id = ${input.factory_id}
+                    FROM FACTORY_INVOICE FI
+                        INNER JOIN factory_invoice_details FID ON FID.factory_invoice_id = FI.ID
+                        INNER JOIN INVOICE I ON I.EFSD_ID = FID.exfactory_shipment_id
+                        LEFT JOIN PREVIOUS_INVOICE PI ON PI.FACTORY_INVOICE_ID = FI.ID
+                        ${currentInvoiceJoin}
+                    WHERE
+                        FI.factory_id = ${input.factory_id}
                         AND ${whereClause}
-                        AND PI.PREVIOUS_QUANTITY < I.TOTAL_QUANTITY
-                    GROUP BY FI.ID, PI.PREVIOUS_QUANTITY, I.TOTAL_QUANTITY, I.FACTORY_VALUE
+                        ${invoiceFilter}
+                    GROUP BY FI.ID, FI.INVOICE_NO, I.TOTAL_QUANTITY, I.FACTORY_VALUE, PI.FACTORY_INVOICE_ID, PI.PREVIOUS_QUANTITY
                 `;
 
                 const factoryInvoice = factoryInvoiceList.map(invoice => ({
@@ -807,6 +773,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
     getShipmentDetailsForFactoryInvoice: protectedProcedure
         .input(z.object({
             factory_invoice_id: z.string(),
+            rdl_invoice_id: z.string().optional(),
         }))
         .query(async ({ ctx, input }) => {
             try {
@@ -818,26 +785,41 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         message: "You do not have permission to view Shipment Details for Factory Invoices." 
                     });
                 }
+                const excludeCurrentInvoiceClause = input.rdl_invoice_id 
+                    ? Prisma.sql`WHERE RI.ID <> ${input.rdl_invoice_id}` 
+                    : Prisma.sql``;
 
                 const shipmentDetailsObj = await ctx.db.$queryRaw<ShipmentDetailForFactoryInvoice[]>`
+                    WITH PREVIOUS_INVOICE AS (
+                        SELECT
+                            RID.factory_invoice_id AS FACTORY_INVOICE_ID,
+                            SUM(RISD.INVOICE_QUANTITY) AS PREVIOUS_QUANTITY
+                        FROM RDL_INVOICE RI
+                            INNER JOIN rdl_invoice_details RID ON RID.rdl_invoice_id = RI.ID
+                            INNER JOIN RDL_INVOICE_SHIPMENT_DETAILS RISD ON RISD.rdl_invoice_details_id = RID.ID
+                            ${excludeCurrentInvoiceClause}
+                        GROUP BY RID.factory_invoice_id
+                    )
                     SELECT 
                         FID.id AS id,
                         BO.ref_no AS ORDER_NO,
                         OS.STYLE AS STYLES,
                         SD.BUYER_PO AS PO,
+                        SD.id AS SHIPMENT_DETAILS_ID,
                         D.NAME AS DESTINATION,
-                        SUM(SID.QUANTITY) AS ORDER_QUANTITY,
+                        SUM(ES.delivery_quantity) AS ORDER_QUANTITY,
+                        PI.PREVIOUS_QUANTITY,
                         SD.FOB_RATE / BO.CURRENCY_RATE AS FOB_RATE
-                    FROM factory_invoice AS fi
-                        INNER JOIN factory_invoice_details AS FID ON FID.factory_invoice_id = fi.id
+                    FROM factory_invoice AS FI
+                        INNER JOIN factory_invoice_details AS FID ON FID.factory_invoice_id = FI.id
                         INNER JOIN exfactory_shipments AS ES ON ES.id = FID.exfactory_shipment_id
                         INNER JOIN SHIPMENT_DETAILS AS SD ON SD.id = ES.shipment_details_id
                         INNER JOIN ORDER_STYLES AS OS ON OS.id = SD.order_style_id
                         INNER JOIN BUYER_ORDERS AS BO ON BO.id = OS.order_id
                         INNER JOIN DESTINATIONS AS D ON D.id = SD.destination_id
-                        INNER JOIN SHIPMENT_ITEM_DETAILS AS SID ON SID.shipment_detail_id = SD.id
+                        LEFT JOIN PREVIOUS_INVOICE PI ON PI.FACTORY_INVOICE_ID = FI.ID
                     WHERE FI.ID = ${input.factory_invoice_id}
-                    GROUP BY BO.ID, OS.ID, SD.ID, FID.ID, D.ID;
+                    GROUP BY BO.ID, OS.ID, SD.ID, FID.ID, D.ID, PI.PREVIOUS_QUANTITY;
                 `;
 
                 const shipmentDetails = shipmentDetailsObj.map(detail => ({
@@ -846,11 +828,171 @@ export const rdlInvoiceRouter = createTRPCRouter({
                     styles: detail.styles,
                     po: detail.po,
                     destination: detail.destination,
+                    shipment_details_id: detail.shipment_details_id,
+                    previous_quantity: Number(detail.previous_quantity),
                     order_quantity: Number(detail.order_quantity),
                     fob_rate: Number(detail.fob_rate),
                 }));
 
                 return shipmentDetails;
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    updateRdlInvoice: protectedProcedure
+        .input(z.object({
+            id: z.string(),
+            invoice_date: z.date(),
+            pi_no: z.string().optional(),
+            remarks: z.string().optional(),
+            container_no: z.string().optional(),
+            discount: z.number().optional(),
+            details: z.array(z.object({
+                db_id: z.string().optional(),
+                factory_id: z.number(),
+                factory_invoice_id: z.string(),
+                shipments: z.array(z.object({
+                    db_id: z.string().optional(),
+                    shipment_details_id: z.string(),
+                    invoice_quantity: z.number(),
+                })),
+            }))
+        }))
+        .mutation(async ({ ctx, input }) => {
+            try {
+                const can_update = ctx.permissions[m.RDL_INVOICE]?.can_update;
+
+                if (!can_update) {
+                    throw new TRPCError({ 
+                        code: "FORBIDDEN", 
+                        message: "You do not have permission to update RDL Invoices." 
+                    });
+                }
+
+                await ctx.db.$transaction(async (tx) => {
+                    const updated = await tx.rdl_invoice.update({
+                        where: { id: input.id },
+                        data: {
+                            invoice_date: input.invoice_date,
+                            pi_no: input.pi_no,
+                            remarks: input.remarks,
+                            container_no: input.container_no,
+                            discount: input.discount,
+                        }
+                    });
+
+                    await tx.rdl_invoice_history.create({
+                        data: {
+                            rdl_invoice_id: updated.id,
+                            buyer_id: updated.buyer_id,
+                            term_id: updated.term_id,
+                            invoice_no: updated.invoice_no,
+                            invoice_date: updated.invoice_date,
+                            sales_contract_id: updated.sales_contract_id,
+                            lc_id: updated.lc_id,
+                            invoice_type: updated.invoice_type,
+                            pi_no: updated.pi_no,
+                            container_no: updated.container_no,
+                            discount: updated.discount,
+                            remarks: updated.remarks,
+                            action_type: actions.UPDATE,
+                            action_by: ctx.user.id,
+                        },
+                    });
+
+                    await Promise.all(
+                        input.details.map(async (detail) => {
+                            if (!detail.db_id) {
+                                // New detail - create it
+                                const newDetail = await tx.rdl_invoice_details.create({
+                                    data: {
+                                        rdl_invoice_id: input.id,
+                                        factory_id: detail.factory_id,
+                                        factory_invoice_id: detail.factory_invoice_id,
+                                    },
+                                });
+
+                                await Promise.all(
+                                    detail.shipments.map(async (shipment) => {
+                                        const newShipment = await tx.rdl_invoice_shipment_details.create({
+                                            data: {
+                                                rdl_invoice_details_id: newDetail.id,
+                                                shipment_details_id: shipment.shipment_details_id,
+                                                invoice_quantity: shipment.invoice_quantity,
+                                            },
+                                        });
+                                        tx.rdl_invoice_shipment_details_history.create({
+                                            data: {
+                                                rdl_invoice_details_id: newShipment.rdl_invoice_details_id,
+                                                shipment_details_id: newShipment.shipment_details_id,
+                                                invoice_quantity: newShipment.invoice_quantity,
+                                                action_type: actions.ADDED,
+                                                action_by: ctx.user.id,
+                                            },
+                                        });
+                                    })
+                                );
+
+                                tx.rdl_invoice_details_history.create({
+                                    data: {
+                                        rdl_invoice_details: newDetail.id,
+                                        rdl_invoice_id: newDetail.rdl_invoice_id,
+                                        factory_id: newDetail.factory_id,
+                                        factory_invoice_id: newDetail.factory_invoice_id,
+                                        action_type: actions.ADDED,
+                                        action_by: ctx.user.id,
+                                    },
+                                });
+                            }
+                            else {
+                                // Existing detail - update it
+                                await Promise.all(
+                                    detail.shipments.map(async (shipment) => {
+                                        if (!shipment.db_id) {
+                                            // New shipment - create it
+                                            const newShipment = await tx.rdl_invoice_shipment_details.create({
+                                                data: {
+                                                    rdl_invoice_details_id: detail.db_id,
+                                                    shipment_details_id: shipment.shipment_details_id,
+                                                    invoice_quantity: shipment.invoice_quantity,
+                                                },
+                                            });
+                                            tx.rdl_invoice_shipment_details_history.create({
+                                                data: {
+                                                    rdl_invoice_details_id: newShipment.rdl_invoice_details_id,
+                                                    shipment_details_id: newShipment.shipment_details_id,
+                                                    invoice_quantity: newShipment.invoice_quantity,
+                                                    action_type: actions.ADDED,
+                                                    action_by: ctx.user.id,
+                                                },
+                                            });
+                                        }
+                                        else {
+                                            // Existing shipment - update it
+                                            await tx.rdl_invoice_shipment_details.update({
+                                                where: { id: shipment.db_id },
+                                                data: {
+                                                    invoice_quantity: shipment.invoice_quantity,
+                                                },
+                                            });
+                                            tx.rdl_invoice_shipment_details_history.create({
+                                                data: {
+                                                    rdl_invoice_details_id: detail.db_id,
+                                                    shipment_details_id: shipment.shipment_details_id,
+                                                    invoice_quantity: shipment.invoice_quantity,
+                                                    action_type: actions.UPDATE,
+                                                    action_by: ctx.user.id,
+                                                },
+                                            });
+                                        }
+                                    })
+                                )
+                            }
+                        })
+                    );
+                });
             }
             catch (error) {
                 handlePrismaError(error);

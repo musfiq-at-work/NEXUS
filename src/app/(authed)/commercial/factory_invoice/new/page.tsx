@@ -64,10 +64,6 @@ const NewFactoryInvoicePage = () => {
         }
     });
 
-    useEffect(() => {
-        console.log("Factory Invoice Form Errors:", validationError);
-    }, [validationError]);
-
     return (
         <Wrapper heading='Add Factory Invoice' >
             <Form 

@@ -41,6 +41,13 @@ export const formFields = () => {
             optional: true,
         },
         {
+            name: 'previous_quantity',
+            label: 'Previous Quantity',
+            placeholder: 'Enter previous quantity',
+            disabled: true,
+            optional: true,
+        },
+        {
             name: 'invoice_quantity',
             label: 'Invoice Quantity',
             placeholder: 'Enter invoice quantity',

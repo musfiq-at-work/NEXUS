@@ -23,6 +23,13 @@ export const useFormFields = ({lcList, isEdit, buyer_id}: PropsType): Field<keyo
 
     return [
         {
+            name: "invoice_no",
+            label: "Invoice No (Auto)",
+            type: "text",
+            disabled: true,
+            optional: true
+        },
+        {
             name: 'buyer_id',
             label: 'Buyer',
             type: "select",
@@ -46,13 +53,6 @@ export const useFormFields = ({lcList, isEdit, buyer_id}: PropsType): Field<keyo
             options: lcList.map((lc) => ({ label: lc.sc_lc_no, value: lc.id })),
             disabled: isEdit,
             optional: isEdit
-        },
-        {
-            name: "invoice_no",
-            label: "Invoice No (Auto)",
-            type: "text",
-            disabled: true,
-            optional: true
         },
         {
             name: "invoice_date",
@@ -83,22 +83,6 @@ export const useFormFields = ({lcList, isEdit, buyer_id}: PropsType): Field<keyo
             optional: true,
         },
         {
-            name: "freight_terms",
-            label: "Freight Term (Auto)",
-            placeholder: "Auto filled based on Factory Invoice",
-            type: "text",
-            disabled: true,
-            optional: true,
-        },
-        {
-            name: "port_of_loading",
-            label: "Port of Loading (Auto)",
-            placeholder: "Auto filled based on Factory Invoice",
-            type: "text",
-            disabled: true,
-            optional: true,
-        },
-        {
             name: "invoice_quantity",
             label: "Shipment Quantity (Auto)",
             placeholder: "Auto calculated total quantity for the invoice",
@@ -123,30 +107,6 @@ export const useFormFields = ({lcList, isEdit, buyer_id}: PropsType): Field<keyo
             name: "total_value",
             label: "Total Value (Auto)",
             placeholder: "Auto calculated total value after discount",
-            optional: true,
-            disabled: true,
-        },
-        {
-            name: 'consignee_ids',
-            label: 'Consignees (Auto)',
-            type: 'multiselect',
-            options: consignees ? consignees.map(consignee => ({
-                label: consignee.consignee_name,
-                value: consignee.id
-            })) : [],
-            placeholder: "Auto filled based on Factory Invoice",
-            optional: true,
-            disabled: true,
-        },
-        {
-            name: 'notifyParties',
-            label: 'Notify Parties (Auto)',
-            type: 'multiselect',
-            options: consignees ? consignees.map(consignee => ({
-                label: consignee.consignee_name,
-                value: consignee.id
-            })) : [],
-            placeholder: "Auto filled based on Factory Invoice",
             optional: true,
             disabled: true,
         },

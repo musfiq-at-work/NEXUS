@@ -26,23 +26,20 @@ export const useRDLInvoiceForm = (initialData?: GetRdlInvoiceByIdTypes) => {
                 : initialData.lc_master?.id?.toString() ?? '',
             invoice_no: initialData.invoice_no ?? '',
             invoice_date: initialData.invoice_date ? formatDateForInput(new Date(initialData.invoice_date)) : '',
-            remarks: initialData.remark ?? '',
+            remarks: initialData.remarks ?? '',
+            invoice_type: initialData.invoice_type ?? false,
             pi_no: initialData.pi_no ?? '',
             container_no: initialData.container_no ?? '',
             discount: initialData.discount ?? undefined,
-            notifyParties: initialData.notify_parties
-                ?.map((notifyParty) => notifyParty.notify_party_id ?? undefined) ?? [],
-            consignee_ids: initialData.consignees
-                ?.map((consignee) => consignee.consignee_id ?? undefined) ?? [],
-            freight_terms: initialData.freightTerms ?? undefined,
-            port_of_loading: initialData.port_of_loading ?? undefined,
             details: initialData.rdl_invoice_details?.map((detail: RDLInvoiceDetails) => ({
                 db_id: detail.id,
-                factory_id: detail.factory_id ?? undefined,
-                FactoryInvoiceDetails: detail.rdl_invoice_shipment_details?.map((shipment: RDLInvoiceShipments) => ({
+                factory_id: detail.factory_id?.toString() ?? undefined,
+                factory_invoice_id: detail?.factory_invoice?.id ?? undefined,
+                factory_invoice_no: detail?.factory_invoice?.invoice_no ?? undefined,
+                details: detail.rdl_invoice_shipment_details?.map((shipment: RDLInvoiceShipments) => ({
                     db_id: shipment.id,
-                    shipment_details_id: shipment.shipment_details_id,
-                    invoice_quantity: shipment.invoice_quantity,
+                    shipment_details_id: shipment.shipment_details_id ?? undefined,
+                    invoice_quantity: shipment.invoice_quantity ?? undefined,
                 })) ?? [],
             })) ?? [],
         } : undefined;
@@ -56,12 +53,11 @@ export const useRDLInvoiceForm = (initialData?: GetRdlInvoiceByIdTypes) => {
             term_id: undefined,
             lc_sc_id: undefined,
             invoice_no: undefined,
+            invoice_type: false,
             pi_no: undefined,
             invoice_date: formatDateForInput(new Date()),
             remarks: "",
             discount: undefined,
-            freight_terms: undefined,
-            port_of_loading: undefined,
             details: [],
         },
     });
@@ -89,6 +85,8 @@ export const useRDLInvoiceForm = (initialData?: GetRdlInvoiceByIdTypes) => {
 
     const term_id = useWatch({ control, name: 'term_id' });
     const buyer_id = useWatch({ control, name: 'buyer_id' });
+    const details = useWatch({ control, name: "details" });
+    const discount = useWatch({ control, name: "discount" });
 
     const lcList = api.rdlInvoice.getScLcForRDLInvoice.useQuery(
        (!!term_id && !!buyer_id && !isEdit) ? {
@@ -111,16 +109,6 @@ export const useRDLInvoiceForm = (initialData?: GetRdlInvoiceByIdTypes) => {
     
     const formFields = useFormFields({lcList: lcScList, isEdit, buyer_id});
 
-    const details = useWatch({
-        control,
-        name: "details",
-    });
-
-    const discount = useWatch({
-        control,
-        name: "discount",
-    });
-
     const { invoiceQuantity, invoiceValue } = useMemo(() => {
         return (details ?? []).reduce(
             (acc, factory) => {
@@ -131,10 +119,7 @@ export const useRDLInvoiceForm = (initialData?: GetRdlInvoiceByIdTypes) => {
 
                 return acc;
             },
-            {
-                invoiceQuantity: 0,
-                invoiceValue: 0,
-            }
+            { invoiceQuantity: 0, invoiceValue: 0 }
         );
     }, [details]);
 
@@ -144,26 +129,10 @@ export const useRDLInvoiceForm = (initialData?: GetRdlInvoiceByIdTypes) => {
     );
 
     useEffect(() => {
-        methods.setValue(
-            "invoice_quantity",
-            invoiceQuantity ? invoiceQuantity.toString() : "0"
-        );
-
-        methods.setValue(
-            "invoice_value",
-            invoiceValue ? invoiceValue.toFixed(2) : "0.00"
-        );
-
-        methods.setValue(
-            "total_value",
-            totalValue.toFixed(2)
-        );
-    }, [
-        invoiceQuantity,
-        invoiceValue,
-        totalValue,
-        methods,
-    ]);
+        methods.setValue("invoice_quantity", invoiceQuantity ? invoiceQuantity.toString() : "0");
+        methods.setValue("invoice_value", invoiceValue ? invoiceValue.toFixed(2) : "0.00");
+        methods.setValue("total_value", totalValue.toFixed(2));
+    }, [ invoiceQuantity, invoiceValue, totalValue, methods ]);
 
     return { methods, handleSubmit, formFields, validationError, trigger, watch, control };
 }

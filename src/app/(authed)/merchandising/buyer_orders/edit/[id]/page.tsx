@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Form, Info, Wrapper, MessageBox } from "~/components";
+import { Button, Form, Wrapper, MessageBox } from "~/components";
 import React, { useCallback, useState } from "react";
 import { useBuyerOrderForm } from "../../config/useBuyerOrderForm";
 import { api } from "~/trpc/react";

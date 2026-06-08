@@ -668,12 +668,6 @@ export const tnaPlanRouter = createTRPCRouter({
                 });
             }
 
-            console.log("Input for getEventsForTnaUpdate:", input);
-
-            // const actionsIdClause = input.actionIds && input.actionIds.length > 0
-            //     ? Prisma.sql`AND TA.ID IN (${input.actionIds.join(",")})`
-            //     : Prisma.sql``;
-
             try {
                 const events = await ctx.db.$queryRaw<EventsType[]>`
                     SELECT 
