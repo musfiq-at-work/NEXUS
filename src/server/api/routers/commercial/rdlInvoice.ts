@@ -37,6 +37,19 @@ interface FactoryInvoiceForRDLInvoice {
     factory_value: bigint; 
 };
 
+interface FactoryInvoicePDFTableItem {
+    brand: string,
+    buyer_po: string,
+    style: string,
+    delivery_quantity: number,
+    unit_price: string,
+    total_price: string,
+    grand_total: number,
+    symbol: string;
+    total_quantity: number;
+}
+
+
 export const rdlInvoiceRouter = createTRPCRouter({
     getRdlInvoice: protectedProcedure
         .input(z.object({
@@ -998,4 +1011,349 @@ export const rdlInvoiceRouter = createTRPCRouter({
                 handlePrismaError(error);
             }
         }),
+
+    getAuthorizations: protectedProcedure
+        .input(z.object({
+            id: z.string(),
+        }))
+        .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.RDL_INVOICE]?.can_view;
+
+            if(!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view RDL invoices." 
+                });
+            }
+
+            try {
+                const authorizationState = await ctx.db.rdl_invoice.findUnique({
+                    where: { id: input.id },
+                    select: {
+                        is_authorized: true,
+                    }
+                });
+
+                const authorizationPermission = await ctx.db.$queryRaw<{department_id: number, level_id: number}[]>`
+                    SELECT 
+                        department_id, level_id 
+                    FROM AUTHORIZATIONS 
+                    WHERE module_id = ${m.RDL_INVOICE}
+                        AND level_id = ${ctx.user.level_id}
+                        AND department_id = ${ctx.user.department_id}
+                    LIMIT 1;
+                `;
+
+                return {authorization: authorizationState, permission: authorizationPermission[0]};
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    approveRDLInvoice: protectedProcedure
+        .input(z.object({
+            id: z.string(),
+            approval_status: z.boolean(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const can_approve = ctx.permissions[m.COMMISSION_DISTRIBUTION]?.can_update;
+
+            if(!can_approve) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to approve RDL invoices." 
+                });
+            }
+
+            try {
+                const userLevel = ctx.user.level_id;
+                const userDepartment = ctx.user.department_id;
+                const isAdmin = userLevel === ADMIN_LEVEL_ID && userDepartment === ADMIN_DEPARTMENT_ID;
+
+                const can_approve = await ctx.db.$queryRaw<{ can_approve: boolean }[]>`
+                    SELECT 
+                        1 as can_approve
+                    FROM AUTHORIZATIONS
+                    WHERE module_id = ${m.RDL_INVOICE}
+                        AND level_id = ${userLevel}
+                        AND department_id = ${userDepartment}
+                    LIMIT 1;
+                `;
+
+                if (can_approve.length === 0 && !isAdmin) {
+                    throw new TRPCError({
+                        code: "FORBIDDEN",
+                        message: "You do not have permission to Authorize this RDL Invoice.",
+                    });
+                }
+
+                const updatedInvoice = await ctx.db.rdl_invoice.update({
+                    where: { id: input.id },
+                    data: {
+                        is_authorized: input.approval_status,
+                    }
+                });
+
+                await ctx.db.rdl_invoice_history.create({
+                    data: {
+                        rdl_invoice_id: updatedInvoice.id,
+                        is_authorized: updatedInvoice.is_authorized,
+                        action_type: actions.UPDATE,
+                        action_by: ctx.user.id,
+                    }
+                });
+
+                return updatedInvoice;
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+
+    getPDFData: protectedProcedure
+        .input(z.object({
+            id: z.string(),
+        }))
+        .query(async ({ ctx, input }) => {
+            try {
+                const can_view = ctx.permissions[m.FACTORY_INVOICE]?.can_view;
+                if (!can_view) {
+                    throw new TRPCError({ 
+                        code: 'FORBIDDEN', 
+                        message: "You don't have permission to view factory invoice details." 
+                    });
+                }
+
+                const data = await ctx.db.rdl_invoice.findUnique({
+                    where: { id: input.id },
+                    select: {
+                        invoice_no: true,
+                        invoice_date: true,
+                        discount: true,
+                        pi_no: true,
+                        container_no: true,
+                        terms: {
+                            select: { name: true },
+                        },
+                        buyers: {
+                            select: {
+                                buyer_name: true,
+                                address: true,
+                            }
+                        },
+                        rdl_invoice_details: {
+                            select: {
+                                factory_invoice: {
+                                    select: {
+                                        shipment_mode: true,
+                                        factory_invoice_details: {
+                                            select: {
+                                                exfactory_shipments: {
+                                                    select: {
+                                                        shipment_details: {
+                                                            select: {
+                                                                shipment_mode: true,
+                                                                destinations: {
+                                                                    select: {
+                                                                        name: true,
+                                                                    }
+                                                                },
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        freight_term: {
+                                            select: {
+                                                name: true,
+                                            }
+                                        },
+                                        destinations: {
+                                            select: {
+                                                name: true,
+                                            }
+                                        },
+                                    }
+                                }
+                            }
+                        },
+                        sales_contracts: {
+                            select: {
+                                sales_contract_no: true,
+                                sales_contract_date: true,
+                                destinations: {
+                                    select: {
+                                        name: true,
+                                    }
+                                },
+                                companies: {
+                                    select: {
+                                        name: true,
+                                        street: true,
+                                        city: true,
+                                        zip_code: true,
+                                        company_banks: {
+                                            select: {
+                                                account_name: true,
+                                                account_no: true,
+                                                swift: true,
+                                                address: true,
+                                                banks: {
+                                                    select: {
+                                                        name: true,
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        lc_master: {
+                            select: {
+                                lc_no: true,
+                                lc_open_date: true,
+                                lc_orders: {
+                                    select: {
+                                        buyer_orders: {
+                                            select: {
+                                                sales_contract_details: {
+                                                    select: {
+                                                        sales_contracts: {
+                                                            select: {
+                                                                destinations: {
+                                                                    select: {
+                                                                        name: true,
+                                                                    }
+                                                                },
+                                                                companies: {
+                                                                    select: {
+                                                                        name: true,
+                                                                        street: true,
+                                                                        city: true,
+                                                                        zip_code: true,
+                                                                        company_banks: {
+                                                                            select: {
+                                                                                account_name: true,
+                                                                                account_no: true,
+                                                                                swift: true,
+                                                                                address: true,
+                                                                                banks: {
+                                                                                    select: {
+                                                                                        name: true,
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                    }
+                });
+
+                const factoryInvoiceHeader = data ? {
+                    company_name: data.sales_contracts?.companies?.name 
+                        ?? data.lc_master?.lc_orders?.[0]?.buyer_orders?.sales_contract_details?.[0]?.sales_contracts?.companies?.name 
+                        ?? null,
+                    company_street: data.sales_contracts?.companies?.street 
+                        ?? data.lc_master?.lc_orders?.[0]?.buyer_orders?.sales_contract_details?.[0]?.sales_contracts?.companies?.street 
+                        ?? null,
+                    company_city: data.sales_contracts?.companies?.city 
+                        ?? data.lc_master?.lc_orders?.[0]?.buyer_orders?.sales_contract_details?.[0]?.sales_contracts?.companies?.city 
+                        ?? null,
+                    company_zip_code: data.sales_contracts?.companies?.zip_code 
+                        ?? data.lc_master?.lc_orders?.[0]?.buyer_orders?.sales_contract_details?.[0]?.sales_contracts?.companies?.zip_code 
+                        ?? null,
+                    company_bank_account_name: data.sales_contracts?.companies?.company_banks?.[0]?.account_name 
+                        ?? data.lc_master?.lc_orders?.[0]?.buyer_orders?.sales_contract_details?.[0]?.sales_contracts?.companies?.company_banks?.[0]?.account_name 
+                        ?? null,
+                    company_bank_account_no: data.sales_contracts?.companies?.company_banks?.[0]?.account_no
+                        ?? data.lc_master?.lc_orders?.[0]?.buyer_orders?.sales_contract_details?.[0]?.sales_contracts?.companies?.company_banks?.[0]?.account_no
+                        ?? null,
+                    company_bank_swift: data.sales_contracts?.companies?.company_banks?.[0]?.swift
+                        ?? data.lc_master?.lc_orders?.[0]?.buyer_orders?.sales_contract_details?.[0]?.sales_contracts?.companies?.company_banks?.[0]?.swift
+                        ?? null,
+                    company_bank_address: data.sales_contracts?.companies?.company_banks?.[0]?.address
+                        ?? data.lc_master?.lc_orders?.[0]?.buyer_orders?.sales_contract_details?.[0]?.sales_contracts?.companies?.company_banks?.[0]?.address
+                        ?? null,
+                    company_bank_name: data.sales_contracts?.companies?.company_banks?.[0]?.banks?.name
+                        ?? data.lc_master?.lc_orders?.[0]?.buyer_orders?.sales_contract_details?.[0]?.sales_contracts?.companies?.company_banks?.[0]?.banks?.name
+                        ?? null,
+                    buyer_address: data.buyers?.address ?? null,
+                    buyer_name: data.buyers?.buyer_name ?? null,
+                    invoice_no: data.invoice_no,
+                    invoice_date: data.invoice_date,
+                    term_name: data.terms?.name ?? null,
+                    sales_contract_no: data.sales_contracts?.sales_contract_no ?? null,
+                    sales_contract_date: data.sales_contracts?.sales_contract_date ?? null,
+                    lc_no: data.lc_master?.lc_no ?? null,
+                    lc_open_date: data.lc_master?.lc_open_date ?? null,
+                    discount: data.discount,
+                    shipment_mode: data.rdl_invoice_details?.[0]?.factory_invoice?.factory_invoice_details?.[0]?.exfactory_shipments?.shipment_details?.shipment_mode 
+                        ?? data.rdl_invoice_details?.[0]?.factory_invoice?.shipment_mode,
+                    freight_term_name: data.rdl_invoice_details?.[0]?.factory_invoice?.freight_term?.name ?? null,
+                    port_of_loading: data.rdl_invoice_details?.[0]?.factory_invoice?.destinations?.name 
+                        ?? data.sales_contracts?.destinations?.name
+                        ??  data.lc_master?.lc_orders?.[0]?.buyer_orders?.sales_contract_details?.[0]?.sales_contracts?.destinations?.name,
+                    pi_no: data.pi_no,
+                    container_no: data.container_no,
+                } : null;
+
+                const table = await ctx.db.$queryRaw<FactoryInvoicePDFTableItem[]>`
+                    SELECT DISTINCT
+                        BB.brand,
+                        SD.buyer_po,
+                        OS.style,
+                        ES.delivery_quantity,
+                        sum(RISD.invoice_quantity) OVER () AS total_quantity,
+                        SD.fob_rate AS UNIT_PRICE,
+                        RISD.invoice_quantity * SD.fob_rate AS total_price,
+                        SUM( RISD.invoice_quantity * SD.fob_rate) OVER () AS grand_total,
+                        C.symbol
+                    FROM rdl_invoice AS RI
+                        INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
+                        INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
+                        INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
+                        INNER JOIN factory_invoice_details AS FID ON FID.factory_invoice_id = FI.id
+                        INNER JOIN exfactory_shipments AS ES ON ES.id = FID.exfactory_shipment_id
+                        INNER JOIN shipment_details AS SD ON SD.id = ES.shipment_details_id
+                        INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = SD.id
+                        INNER JOIN order_styles AS OS ON OS.id = SD.order_style_id
+                        INNER JOIN buyer_orders AS BO ON BO.ID = OS.order_id
+                        INNER JOIN buyer_brands AS BB ON BB.id = BO.brand_id
+                        INNER JOIN factory_orders AS FO ON FO.ID = FSD.factory_order_id
+                        INNER JOIN currencies AS C ON C.id = FO.currency_id
+                    WHERE RI.ID = ${input.id};
+                `;
+
+                const tableWithFormattedValues = table.map(item => ({
+                    ...item,
+                    total_quantity: quantityFormatter(Number(item.total_quantity)),
+                    unit_price: currencyFormatter(Number(item.unit_price), item.symbol),
+                    total_price: currencyFormatter(Number(item.total_price), item.symbol),
+                    grand_total: currencyFormatter(Number(item.grand_total), item.symbol),
+                }));
+
+                const discountedValue = table.length > 0 ? Number(table[0]?.grand_total) - (data?.discount ?? 0) : 0;
+                const discountedValueStr = currencyFormatter(discountedValue, table[0]?.symbol ?? '$');
+
+                return {header: factoryInvoiceHeader, table: tableWithFormattedValues, discountedValue: discountedValueStr };
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
 });

@@ -2453,6 +2453,7 @@ model rdl_invoice_history {
   container_no      String?   @db.VarChar(100)
   discount          Float?    @default(0)
   remarks           String?
+  is_authorized     Boolean?
   users             users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 

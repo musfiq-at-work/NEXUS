@@ -142,7 +142,7 @@ export const styles = StyleSheet.create({
         fontFamily: "Amasis",
         textAlign: "center",
         marginBottom: 10,
-        maxWidth: "50%",
+        maxWidth: "55%",
     },
     doubleColumn: {
         display: "flex", 

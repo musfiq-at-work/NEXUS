@@ -1,16 +1,17 @@
 'use client';
 
 import { Button, Form, Wrapper, MessageBox } from "~/components";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useRDLInvoiceForm } from "../../config/useRDLInvoiceForm";
 import { api } from "~/trpc/react";
 import { toast } from 'sonner';
 import { parseTRPCError } from "~/utils/parseTRPCError";
 import { useNavigationStore, usePermissionStore } from "~/store";
-import { useModulePath } from "~/hooks";
+import { useDecodedUser, useModulePath } from "~/hooks";
 import FactoryInvoiceDetails from "../../components/factoryInvoiceComponents/FactoryInvoiceDetails";
 import { printingWhiteIcon } from "~/assets";
 import { safeNumber } from "~/utils/numbers";
+import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 
 type EditRDLInvoicePageProp = {
     params: Promise<{ id: string }>
@@ -28,6 +29,11 @@ const EditRDLInvoicePage = ({ params }: EditRDLInvoicePageProp) => {
     const { methods, handleSubmit, formFields, validationError, control } = useRDLInvoiceForm(
         rdlInvoiceData ?? undefined
     );
+
+    const { data: authorizations, isLoading: isAuthorizationLoading } = api.rdlInvoice.getAuthorizations.useQuery({ id });
+    const isAuthorized = authorizations?.authorization?.is_authorized ?? false;
+
+    const { user } = useDecodedUser();
 
     // TRPC utils
     const utils = api.useUtils();
@@ -83,6 +89,52 @@ const EditRDLInvoicePage = ({ params }: EditRDLInvoicePageProp) => {
             setIsLoadingSubmit(false);
         }
     }), [updateRDLInvoice]);
+
+    const [canAuthorize, setCanAuthorize] = useState<boolean>(false);
+
+    const setAuthorization = api.rdlInvoice.approveRDLInvoice.useMutation({
+        onSuccess: async () => {
+            setError(null);
+            toast.success("Authorization status updated successfully!");
+            await Promise.all([
+                utils.rdlInvoice.getAuthorizations.invalidate({ id }),
+                utils.rdlInvoice.getRdlInvoice.invalidate(),
+                utils.rdlInvoice.searchRdlInvoices.invalidate()
+            ]);
+        },
+    });
+
+    const onSetAuthorization = async (status: boolean) => {
+        try {
+            await setAuthorization.mutateAsync({
+                id: id,
+                approval_status: status,
+            });
+        }
+        catch (error) {
+            const message = parseTRPCError(error);
+            toast.error(`Error updating authorization status: ${message}`);
+            setError(message);
+        }
+    };
+
+    useEffect(() => {
+        setCanAuthorize(
+            !(
+                isAuthorizationLoading 
+                || (
+                    !(
+                        user?.department_id === authorizations?.permission?.department_id 
+                        && user?.level_id === authorizations?.permission?.level_id
+                    ) && 
+                    !(
+                        Number(user?.department_id) === ADMIN_DEPARTMENT_ID
+                        && Number(user?.level_id) === ADMIN_LEVEL_ID
+                    )
+                )
+            )
+        );
+     }, [isAuthorizationLoading, authorizations, user]);
     
  
     return (
@@ -108,13 +160,13 @@ const EditRDLInvoicePage = ({ params }: EditRDLInvoicePageProp) => {
                 validationError={validationError ?? {}}
                 error={error}
                 control={control}
-                disabled={!can_update}
+                disabled={!can_update || isAuthorized}
             />
 
             <FactoryInvoiceDetails 
                 methods={methods}
                 validationError={validationError ?? {}}
-                disabled={isLoading}
+                disabled={isLoading || isAuthorized}
             />
 
             {/* Shipment Portal anchor */}
@@ -125,8 +177,40 @@ const EditRDLInvoicePage = ({ params }: EditRDLInvoicePageProp) => {
                     onClick={() => onSubmitAll()}
                     label={"Update RDL Invoice"} 
                     className="text-lg tracking-wide mt-6 max-w-80 m-8"
-                    disabled={isLoading || isLoadingSubmit}
+                    disabled={isLoading || isLoadingSubmit || isAuthorized}
                 />
+            </div>
+
+            <MessageBox 
+                message="This RDL Invoice has been approved and cannot be updated or deleted" 
+                active={isAuthorized} 
+                type="secondary" 
+            />
+
+            <div className='flex flex-row justify-start gap-8 ml-8 mb-8'>
+                {isAuthorized ? (
+                    <div className="flex flex-row justify-start">
+                        <Button 
+                            type="button"
+                            variant="delete"
+                            onClick={() => onSetAuthorization(false)}
+                            label="Unauthorize RDL Invoice"
+                            className="text-lg tracking-wide mt-6 max-w-80"
+                            disabled={!canAuthorize}
+                        />
+                    </div>
+                ) : (
+                    <div className="flex flex-row justify-start">
+                        <Button 
+                            type="button"
+                            variant="secondary"
+                            onClick={() => onSetAuthorization(true)}
+                            label="Authorize RDL Invoice"
+                            className="text-lg tracking-wide mt-6 max-w-80"
+                            disabled={!canAuthorize}
+                        />
+                    </div>
+                )}
             </div>
         </Wrapper>
     )
