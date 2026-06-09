@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import React from 'react';
 import { Controller, type Control, type FieldValues, type Path } from 'react-hook-form';
+import clsx from 'clsx';
 
 type TableHeader<T> = {
     key: keyof T;
@@ -59,12 +60,26 @@ const GenericTableRow = <T extends FieldValues>(props: TableRowProps<T>) => {
                                         control={control}
                                         render={({ field }) => (
                                             <CheckBox
-                                            value={field.value}
-                                            onChange={field.onChange}
+                                                value={field.value}
+                                                onChange={field.onChange}
                                             />
                                         )}
                                     />
                                 )
+
+                            // case 'button':
+                            //     return (
+                            //         <button type="button" 
+                            //             className={clsx("px-4 py-2 text-white rounded-full focus:outline-none focus:ring-2 focus:ring-primary-focus focus:ring-offset-2",
+                            //                 !handleAction ? "opacity-50 cursor-not-allowed bg-gray-accent" : "hover:cursor-pointer bg-secondary hover:bg-primary-dark"
+                            //             )}
+                            //             // disabled={isDisabled}
+                            //             onClick={() => handleAction ? handleAction(colIndex) : null}
+                            //             // disabled={disabled}
+                            //         >
+                            //             {col.label}
+                            //         </button>
+                            //     )
                             
                             case 'action':
                                 return (allowEdit || allowDelete || view || allowPrint) ? (
