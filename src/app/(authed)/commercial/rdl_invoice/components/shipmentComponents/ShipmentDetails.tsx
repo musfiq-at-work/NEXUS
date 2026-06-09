@@ -44,21 +44,32 @@ const ShipmentDetails = (props: props) => {
     useEffect(() => {
         if (!shipmentDetails.data) return;
 
+        const existingShipments = methods.getValues(`details.${invoiceIndex}.details`) ?? [];
+
         replaceShipments(
-            shipmentDetails.data.map((shipmentDetail) => ({
-                db_id: undefined,
-                order_no: shipmentDetail.order_no ?? undefined,
-                style: shipmentDetail.styles ?? undefined,
-                po: shipmentDetail.po ?? undefined,
-                order_quantity: shipmentDetail.order_quantity ?? 0,
-                shipment_details_id: shipmentDetail.shipment_details_id,
-                destination_port: shipmentDetail.destination ?? undefined,
-                previous_quantity: shipmentDetail.previous_quantity ?? 0,
-                invoice_fob: shipmentDetail.fob_rate?.toFixed(2) ?? undefined,
-                invoice_value: undefined,
-            }))
+            shipmentDetails.data.map((shipmentDetail) => {
+                const existing = existingShipments.find(
+                    (x) => x.shipment_details_id === shipmentDetail.shipment_details_id
+                );
+
+                return {
+                    db_id: existing?.db_id,
+                    order_no: shipmentDetail.order_no ?? undefined,
+                    style: shipmentDetail.styles ?? undefined,
+                    po: shipmentDetail.po ?? undefined,
+                    order_quantity: shipmentDetail.order_quantity ?? 0,
+                    shipment_details_id: shipmentDetail.shipment_details_id,
+                    destination_port: shipmentDetail.destination ?? undefined,
+                    previous_quantity: shipmentDetail.previous_quantity ?? 0,
+
+                    // preserve existing values loaded from initialData
+                    invoice_quantity: existing?.invoice_quantity,
+                    invoice_value: existing?.invoice_value,
+                    invoice_fob: shipmentDetail.fob_rate?.toFixed(2) ?? undefined,
+                };
+            })
         );
-    }, [shipmentDetails.data, replaceShipments]);
+    }, [shipmentDetails.data, replaceShipments, methods, invoiceIndex]);
 
     const ShipmentHeading = () => (
         <div className="flex flex-row items-center gap-4">

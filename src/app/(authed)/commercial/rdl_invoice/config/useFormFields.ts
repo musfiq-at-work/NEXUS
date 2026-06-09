@@ -13,21 +13,19 @@ interface LCListItem {
 interface PropsType {
     lcList: LCListItem[];
     isEdit: boolean;
-    buyer_id: number;
 }
 
-export const useFormFields = ({lcList, isEdit, buyer_id}: PropsType): Field<keyof RDLInvoiceFormValues>[] => {
+export const useFormFields = ({lcList, isEdit}: PropsType): Field<keyof RDLInvoiceFormValues>[] => {
     const terms = api.terms.getAllTerms.useQuery().data ?? [];
     const buyers = api.buyers.getAllBuyersByTeam.useQuery().data ?? [];
-    const { data: consignees } = api.buyers.getBuyerConsignees.useQuery(!!buyer_id ? buyer_id : skipToken);
 
     return [
         {
             name: "invoice_no",
-            label: "Invoice No (Auto)",
+            label: "Invoice No",
             type: "text",
-            disabled: true,
-            optional: true
+            disabled: isEdit,
+            optional: isEdit,
         },
         {
             name: 'buyer_id',
@@ -79,6 +77,12 @@ export const useFormFields = ({lcList, isEdit, buyer_id}: PropsType): Field<keyo
         {
             name: "container_no",
             label: "Container No",
+            type: "text",
+            optional: true,
+        },
+        {
+            name: "contact_no",
+            label: "Contact No",
             type: "text",
             optional: true,
         },

@@ -37,6 +37,7 @@ const NewRDLInvoicePage = () => {
                 buyer_id: safeNumber(rdlInvoiceData.buyer_id),
                 term_id: safeNumber(rdlInvoiceData.term_id),
                 lc_sc_id: rdlInvoiceData.lc_sc_id,
+                invoice_no: rdlInvoiceData.invoice_no,
                 invoice_date: new Date(rdlInvoiceData.invoice_date ?? new Date()),
                 invoice_type: rdlInvoiceData.invoice_type,
                 pi_no: rdlInvoiceData.pi_no,

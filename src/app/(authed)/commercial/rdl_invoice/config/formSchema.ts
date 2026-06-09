@@ -54,11 +54,12 @@ export const RDLInvoiceSchema = z.object({
     buyer_id: z.number().min(1, "Buyer is required"),
     term_id: z.number().min(1, "Term is required"),
     lc_sc_id: z.string().min(1, "LC/SC is required"),
-    invoice_no: z.string().optional(),
+    invoice_no: z.string().min(1, "Invoice No is required"),
     invoice_date: z.string().min(1, "Invoice Date is required"),
     invoice_type: z.boolean(),
     pi_no: z.string().optional(),
     container_no: z.string().optional(),
+    contact_no: z.string().optional(),
     remarks: z.string().optional(),
     discount: z.preprocess(
         (val) => {

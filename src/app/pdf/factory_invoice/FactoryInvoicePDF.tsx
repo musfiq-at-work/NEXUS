@@ -200,7 +200,7 @@ const FactoryInvoicePDF = ({ data }: { data: GetPDFDataOutput }) => {
 						{data.header?.notify_parties && data.header?.notify_parties.length > 0 &&
 							<View>
 								<Text style={{...styles.textBold, marginTop: 5}}>NOTIFY PARTIES:</Text>
-								{data.header?.notify_parties?.map((consignee, index) => (
+								{data.header?.notify_parties?.map((notifyParty, index) => (
 									<View key={index} style={{marginTop: 5, display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 10}}>
 										<Text style={{
 											fontFamily: 'Amasis',
@@ -213,8 +213,8 @@ const FactoryInvoicePDF = ({ data }: { data: GetPDFDataOutput }) => {
 										}}>
 											{`${index + 1}${index === 0 ? 'st' : index === 1 ? 'nd' : index === 2 ? 'rd' : 'th'}`} Notify Party Name:
 										</Text>
-										<Text style={styles.textAmasis}>{consignee.buyer_consignee?.consignee_name}</Text>
-										<Text style={styles.textAmasis}>{consignee.buyer_consignee?.address}</Text>
+										<Text style={styles.textAmasis}>{notifyParty.buyer_consignee?.consignee_name}</Text>
+										<Text style={styles.textAmasis}>{notifyParty.buyer_consignee?.address}</Text>
 									</View>
 								))}
 							</View>

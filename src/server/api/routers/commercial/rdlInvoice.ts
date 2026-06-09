@@ -49,6 +49,14 @@ interface FactoryInvoicePDFTableItem {
     total_quantity: number;
 }
 
+interface BankDetailsOfBeneficiary {
+    name: string;
+    account_name: string;
+    account_no: string;
+    branch_name: string;
+    address: string;
+    swift: string;
+}
 
 export const rdlInvoiceRouter = createTRPCRouter({
     getRdlInvoice: protectedProcedure
@@ -75,7 +83,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             RI.INVOICE_NO,
                             RI.INVOICE_DATE,
                             COALESCE(RI.IS_AUTHORIZED, FALSE) AS IS_AUTHORIZED,
-                            SUM(SD.FOB_RATE * RISD.INVOICE_QUANTITY) AS VALUE,
+                            SUM(SD.FOB_RATE * RISD.INVOICE_QUANTITY) - RI.DISCOUNT AS VALUE,
                             C.SYMBOL,
                             RI.ADDED_AT
                         FROM rdl_invoice AS RI
@@ -152,7 +160,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             RI.INVOICE_NO,
                             RI.INVOICE_DATE,
                             COALESCE(RI.IS_AUTHORIZED, FALSE) AS IS_AUTHORIZED,
-                            SUM(SD.FOB_RATE * RISD.INVOICE_QUANTITY) AS VALUE,
+                            SUM(SD.FOB_RATE * RISD.INVOICE_QUANTITY) - RI.DISCOUNT AS VALUE,
                             C.SYMBOL,
                             RI.ADDED_AT
                         FROM rdl_invoice AS RI
@@ -193,7 +201,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                     )
                     SELECT *,
                         COUNT(*) OVER() AS TOTAL_COUNT
-                    FROM FACTORY_INVOICES
+                    FROM RDL_INVOICES
                     ORDER BY ADDED_AT DESC
                     LIMIT ${input.limit}
                     OFFSET ${input.offset};
@@ -288,6 +296,8 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             pi_no: deleted.pi_no,
                             action_type: actions.DELETE,
                             action_by: ctx.user.id,
+                            contact_no: deleted.contact_no,
+                            container_no: deleted.container_no,
                         },
                     });
                 })
@@ -335,6 +345,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         invoice_type: true,
                         pi_no: true,
                         container_no: true,
+                        contact_no: true,
                         is_authorized: true,
                         discount: true,
                         remarks: true,
@@ -456,6 +467,8 @@ export const rdlInvoiceRouter = createTRPCRouter({
             pi_no: z.string().optional(),
             remarks: z.string().optional(),
             container_no: z.string().optional(),
+            invoice_no: z.string(),
+            contact_no: z.string().optional(),
             discount: z.number().optional(),
             details: z.array(z.object({
                 factory_id: z.number(),
@@ -498,26 +511,26 @@ export const rdlInvoiceRouter = createTRPCRouter({
 
                 const currentYear = new Date().getFullYear();
 
-                const meta = await ctx.db.rdl_invoice_metadata.upsert({
-                    where: { 
-                        buyer_id_year: {
-                            buyer_id: input.buyer_id,
-                            year: currentYear,
-                        },
-                    },
-                    update: {
-                        last_ref: {
-                            increment: 1,
-                        },
-                    },
-                    create: {
-                        buyer_id: input.buyer_id,
-                        year: currentYear,
-                        last_ref: 1,
-                    },
-                });
+                // const meta = await ctx.db.rdl_invoice_metadata.upsert({
+                //     where: { 
+                //         buyer_id_year: {
+                //             buyer_id: input.buyer_id,
+                //             year: currentYear,
+                //         },
+                //     },
+                //     update: {
+                //         last_ref: {
+                //             increment: 1,
+                //         },
+                //     },
+                //     create: {
+                //         buyer_id: input.buyer_id,
+                //         year: currentYear,
+                //         last_ref: 1,
+                //     },
+                // });
 
-                const invoiceRef = `RDL/${buyerPrefix?.prefix || 'BUYER'}/${currentYear}/${String(meta.last_ref).padStart(4, '0')}`;
+                // const invoiceRef = `RDL/${buyerPrefix?.prefix || 'BUYER'}/${currentYear}/${String(meta.last_ref).padStart(4, '0')}`;
 
                 return await ctx.db.$transaction(async (tx) => {
                     const rdlInvoice = await tx.rdl_invoice.create({
@@ -526,11 +539,12 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             term_id: input.term_id,
                             lc_id: isTT ? null : input.lc_sc_id,
                             sales_contract_id: isTT ? input.lc_sc_id : null,
-                            invoice_no: invoiceRef,
+                            invoice_no: input.invoice_no,
                             invoice_date: input.invoice_date,
                             invoice_type: input.invoice_type,
                             pi_no: input.pi_no,
                             container_no: input.container_no,
+                            contact_no: input.contact_no,
                             discount: input.discount,
                             remarks: input.remarks,
                         },
@@ -548,6 +562,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             invoice_type: rdlInvoice.invoice_type,
                             pi_no: rdlInvoice.pi_no,
                             container_no: rdlInvoice.container_no,
+                            contact_no: rdlInvoice.contact_no,
                             discount: rdlInvoice.discount,
                             remarks: rdlInvoice.remarks,
                             action_type: actions.ADDED,
@@ -694,11 +709,11 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             INNER JOIN factory_shipment_details FSD ON FSD.shipment_detail_id = ES.shipment_details_id
                         GROUP BY ES.id, FSD.ID, FSD.TRANSFER_RATE, FSD.FACTORY_RATE
                     )
-                    SELECT
+                    SELECT DISTINCT
                         FI.ID,
                         FI.INVOICE_NO,
-                        I.TOTAL_QUANTITY,
-                        I.FACTORY_VALUE
+                        SUM(I.TOTAL_QUANTITY) AS TOTAL_QUANTITY,
+                        SUM(I.FACTORY_VALUE) AS FACTORY_VALUE
                     FROM FACTORY_INVOICE FI
                         INNER JOIN factory_invoice_details FID ON FID.factory_invoice_id = FI.ID
                         INNER JOIN INVOICE I ON I.EFSD_ID = FID.exfactory_shipment_id
@@ -708,7 +723,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         FI.factory_id = ${input.factory_id}
                         AND ${whereClause}
                         ${invoiceFilter}
-                    GROUP BY FI.ID, FI.INVOICE_NO, I.TOTAL_QUANTITY, I.FACTORY_VALUE, PI.FACTORY_INVOICE_ID, PI.PREVIOUS_QUANTITY
+                    GROUP BY FI.ID, FI.INVOICE_NO, PI.FACTORY_INVOICE_ID, PI.PREVIOUS_QUANTITY
                 `;
 
                 const factoryInvoice = factoryInvoiceList.map(invoice => ({
@@ -822,7 +837,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         D.NAME AS DESTINATION,
                         SUM(ES.delivery_quantity) AS ORDER_QUANTITY,
                         PI.PREVIOUS_QUANTITY,
-                        SD.FOB_RATE / BO.CURRENCY_RATE AS FOB_RATE
+                        SD.FOB_RATE AS FOB_RATE
                     FROM factory_invoice AS FI
                         INNER JOIN factory_invoice_details AS FID ON FID.factory_invoice_id = FI.id
                         INNER JOIN exfactory_shipments AS ES ON ES.id = FID.exfactory_shipment_id
@@ -861,6 +876,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
             pi_no: z.string().optional(),
             remarks: z.string().optional(),
             container_no: z.string().optional(),
+            contact_no: z.string().optional(),
             discount: z.number().optional(),
             details: z.array(z.object({
                 db_id: z.string().optional(),
@@ -892,6 +908,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             pi_no: input.pi_no,
                             remarks: input.remarks,
                             container_no: input.container_no,
+                            contact_no: input.contact_no,
                             discount: input.discount,
                         }
                     });
@@ -908,6 +925,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             invoice_type: updated.invoice_type,
                             pi_no: updated.pi_no,
                             container_no: updated.container_no,
+                            contact_no: updated.contact_no,
                             discount: updated.discount,
                             remarks: updated.remarks,
                             action_type: actions.UPDATE,
@@ -1134,6 +1152,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         discount: true,
                         pi_no: true,
                         container_no: true,
+                        contact_no: true,
                         terms: {
                             select: { name: true },
                         },
@@ -1176,6 +1195,28 @@ export const rdlInvoiceRouter = createTRPCRouter({
                                                 name: true,
                                             }
                                         },
+                                        factory_invoice_consignee: {
+                                            select: {
+                                                buyer_consignee: {
+                                                    select: {
+                                                        id: true,
+                                                        consignee_name: true,
+                                                        address: true,
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        factory_invoice_notify_party: {
+                                            select: {
+                                                buyer_consignee: {
+                                                    select: {
+                                                        id: true,
+                                                        consignee_name: true,
+                                                        address: true,
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -1195,19 +1236,6 @@ export const rdlInvoiceRouter = createTRPCRouter({
                                         street: true,
                                         city: true,
                                         zip_code: true,
-                                        company_banks: {
-                                            select: {
-                                                account_name: true,
-                                                account_no: true,
-                                                swift: true,
-                                                address: true,
-                                                banks: {
-                                                    select: {
-                                                        name: true,
-                                                    }
-                                                }
-                                            }
-                                        }
                                     }
                                 }
                             }
@@ -1235,19 +1263,6 @@ export const rdlInvoiceRouter = createTRPCRouter({
                                                                         street: true,
                                                                         city: true,
                                                                         zip_code: true,
-                                                                        company_banks: {
-                                                                            select: {
-                                                                                account_name: true,
-                                                                                account_no: true,
-                                                                                swift: true,
-                                                                                address: true,
-                                                                                banks: {
-                                                                                    select: {
-                                                                                        name: true,
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        }
                                                                     }
                                                                 }
                                                             }
@@ -1263,6 +1278,24 @@ export const rdlInvoiceRouter = createTRPCRouter({
                     }
                 });
 
+                const consignees = Array.from(
+                    new Map(
+                        data?.rdl_invoice_details?.[0]?.factory_invoice?.factory_invoice_consignee.map(x => [
+                            x.buyer_consignee?.id,
+                            x.buyer_consignee,
+                        ])
+                    ).values()
+                );
+
+                const notifyParties = Array.from(
+                    new Map(
+                        data?.rdl_invoice_details?.[0]?.factory_invoice?.factory_invoice_notify_party.map(x => [
+                            x.buyer_consignee?.id,
+                            x.buyer_consignee,
+                        ])
+                    ).values()
+                );
+
                 const factoryInvoiceHeader = data ? {
                     company_name: data.sales_contracts?.companies?.name 
                         ?? data.lc_master?.lc_orders?.[0]?.buyer_orders?.sales_contract_details?.[0]?.sales_contracts?.companies?.name 
@@ -1275,21 +1308,6 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         ?? null,
                     company_zip_code: data.sales_contracts?.companies?.zip_code 
                         ?? data.lc_master?.lc_orders?.[0]?.buyer_orders?.sales_contract_details?.[0]?.sales_contracts?.companies?.zip_code 
-                        ?? null,
-                    company_bank_account_name: data.sales_contracts?.companies?.company_banks?.[0]?.account_name 
-                        ?? data.lc_master?.lc_orders?.[0]?.buyer_orders?.sales_contract_details?.[0]?.sales_contracts?.companies?.company_banks?.[0]?.account_name 
-                        ?? null,
-                    company_bank_account_no: data.sales_contracts?.companies?.company_banks?.[0]?.account_no
-                        ?? data.lc_master?.lc_orders?.[0]?.buyer_orders?.sales_contract_details?.[0]?.sales_contracts?.companies?.company_banks?.[0]?.account_no
-                        ?? null,
-                    company_bank_swift: data.sales_contracts?.companies?.company_banks?.[0]?.swift
-                        ?? data.lc_master?.lc_orders?.[0]?.buyer_orders?.sales_contract_details?.[0]?.sales_contracts?.companies?.company_banks?.[0]?.swift
-                        ?? null,
-                    company_bank_address: data.sales_contracts?.companies?.company_banks?.[0]?.address
-                        ?? data.lc_master?.lc_orders?.[0]?.buyer_orders?.sales_contract_details?.[0]?.sales_contracts?.companies?.company_banks?.[0]?.address
-                        ?? null,
-                    company_bank_name: data.sales_contracts?.companies?.company_banks?.[0]?.banks?.name
-                        ?? data.lc_master?.lc_orders?.[0]?.buyer_orders?.sales_contract_details?.[0]?.sales_contracts?.companies?.company_banks?.[0]?.banks?.name
                         ?? null,
                     buyer_address: data.buyers?.address ?? null,
                     buyer_name: data.buyers?.buyer_name ?? null,
@@ -1309,6 +1327,10 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         ??  data.lc_master?.lc_orders?.[0]?.buyer_orders?.sales_contract_details?.[0]?.sales_contracts?.destinations?.name,
                     pi_no: data.pi_no,
                     container_no: data.container_no,
+                    contact_no: data.contact_no,
+                    consignees: consignees,
+                    notify_parties: notifyParties,
+                    final_destination: data.rdl_invoice_details?.[0]?.factory_invoice?.factory_invoice_details?.[0]?.exfactory_shipments?.shipment_details?.destinations?.name ?? null,
                 } : null;
 
                 const table = await ctx.db.$queryRaw<FactoryInvoicePDFTableItem[]>`
@@ -1325,10 +1347,8 @@ export const rdlInvoiceRouter = createTRPCRouter({
                     FROM rdl_invoice AS RI
                         INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
                         INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
-                        INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
-                        INNER JOIN factory_invoice_details AS FID ON FID.factory_invoice_id = FI.id
-                        INNER JOIN exfactory_shipments AS ES ON ES.id = FID.exfactory_shipment_id
-                        INNER JOIN shipment_details AS SD ON SD.id = ES.shipment_details_id
+                        INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
+                        INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = SD.id
                         INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = SD.id
                         INNER JOIN order_styles AS OS ON OS.id = SD.order_style_id
                         INNER JOIN buyer_orders AS BO ON BO.ID = OS.order_id
@@ -1336,6 +1356,28 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         INNER JOIN factory_orders AS FO ON FO.ID = FSD.factory_order_id
                         INNER JOIN currencies AS C ON C.id = FO.currency_id
                     WHERE RI.ID = ${input.id};
+                `;
+
+                const beneficiaryBankDetails = await ctx.db.$queryRaw<BankDetailsOfBeneficiary[]>`
+                    SELECT
+                        B.NAME,
+                        CB.account_name,
+                        CB.account_no,
+                        CB.branch_name,
+                        CB.address,
+	                    CB.swift
+                    FROM rdl_invoice AS RI
+                        INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
+                        INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
+                        INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
+                        INNER JOIN order_styles AS OS ON OS.id = SD.order_style_id
+                        INNER JOIN buyer_orders AS BO ON BO.id = OS.order_id
+                        INNER JOIN sales_contract_details AS SCD ON SCD.order_id = BO.id
+                        INNER JOIN sales_contracts AS SC ON SC.id = SCD.sales_contract_id
+                        INNER JOIN company_banks AS CB ON CB.id = SC.rdl_bank_id
+                        INNER JOIN banks AS B ON B.id = CB.bank_id
+                    WHERE RI.ID = '3388fa67-6967-441b-a6aa-ab5dc0185ab3'
+                    GROUP BY RI.ID, B.ID, CB.ID;
                 `;
 
                 const tableWithFormattedValues = table.map(item => ({
@@ -1349,7 +1391,12 @@ export const rdlInvoiceRouter = createTRPCRouter({
                 const discountedValue = table.length > 0 ? Number(table[0]?.grand_total) - (data?.discount ?? 0) : 0;
                 const discountedValueStr = currencyFormatter(discountedValue, table[0]?.symbol ?? '$');
 
-                return {header: factoryInvoiceHeader, table: tableWithFormattedValues, discountedValue: discountedValueStr };
+                return {
+                    header: factoryInvoiceHeader,
+                    beneficiaryBankDetails: beneficiaryBankDetails[0] ?? null, 
+                    table: tableWithFormattedValues, 
+                    discountedValue: discountedValueStr 
+                };
             }
             catch (error) {
                 handlePrismaError(error);

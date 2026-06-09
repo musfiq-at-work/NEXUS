@@ -30,6 +30,7 @@ export const useRDLInvoiceForm = (initialData?: GetRdlInvoiceByIdTypes) => {
             invoice_type: initialData.invoice_type ?? false,
             pi_no: initialData.pi_no ?? '',
             container_no: initialData.container_no ?? '',
+            contact_no: initialData.contact_no ?? '',
             discount: initialData.discount ?? undefined,
             details: initialData.rdl_invoice_details?.map((detail: RDLInvoiceDetails) => ({
                 db_id: detail.id,
@@ -58,6 +59,7 @@ export const useRDLInvoiceForm = (initialData?: GetRdlInvoiceByIdTypes) => {
             invoice_date: formatDateForInput(new Date()),
             remarks: "",
             discount: undefined,
+            contact_no: undefined,
             details: [],
         },
     });
@@ -107,7 +109,7 @@ export const useRDLInvoiceForm = (initialData?: GetRdlInvoiceByIdTypes) => {
         lcScList = lcList;
     }
     
-    const formFields = useFormFields({lcList: lcScList, isEdit, buyer_id});
+    const formFields = useFormFields({lcList: lcScList, isEdit});
 
     const { invoiceQuantity, invoiceValue } = useMemo(() => {
         return (details ?? []).reduce(
@@ -127,6 +129,15 @@ export const useRDLInvoiceForm = (initialData?: GetRdlInvoiceByIdTypes) => {
         () => invoiceValue - safeNumber(discount),
         [invoiceValue, discount]
     );
+
+    useEffect(() => {
+        if (invoiceNoValue && invoiceNoValue !== invoiceNoValue.toUpperCase()) {
+            setValue("invoice_no", invoiceNoValue.toUpperCase(), {
+                shouldValidate: true,
+                shouldDirty: true,
+            });
+        }
+    }, [invoiceNoValue, setValue]);
 
     useEffect(() => {
         methods.setValue("invoice_quantity", invoiceQuantity ? invoiceQuantity.toString() : "0");

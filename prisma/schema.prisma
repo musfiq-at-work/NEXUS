@@ -2386,7 +2386,7 @@ model rdl_invoice {
   id                    String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   buyer_id              Int
   term_id               Int?
-  invoice_no            String                @db.VarChar(50)
+  invoice_no            String                @unique(map: "unique_rdl_invoice_no") @db.VarChar(50)
   invoice_date          DateTime              @db.Date
   sales_contract_id     String?               @db.Uuid
   lc_id                 String?               @db.Uuid
@@ -2401,6 +2401,7 @@ model rdl_invoice {
   container_no          String?               @db.VarChar(100)
   discount              Float?                @default(0)
   remarks               String?
+  contact_no            String?               @db.VarChar(100)
   buyers                buyers                @relation(fields: [buyer_id], references: [id], onUpdate: NoAction)
   lc_master             lc_master?            @relation(fields: [lc_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   sales_contracts       sales_contracts?      @relation(fields: [sales_contract_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
@@ -2454,6 +2455,7 @@ model rdl_invoice_history {
   discount          Float?    @default(0)
   remarks           String?
   is_authorized     Boolean?
+  contact_no        String?   @db.VarChar(100)
   users             users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 

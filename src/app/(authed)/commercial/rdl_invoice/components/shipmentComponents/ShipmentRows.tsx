@@ -46,32 +46,15 @@ const ShipmentRows = (props: Props) => {
         );
     }, [invoiceQuantity, invoice_fob, methods, invoiceIndex, index]);
 
-    // useEffect(() => {
-    //     if(invoiceQuantity === undefined){
-    //         methods.setValue(`details.${invoiceIndex}.details.${index}.invoice_quantity`, 
-    //         safeNumber(orderQuantity) - safeNumber(previousQuantity));
-    //     }
-    // }, [invoiceQuantity, methods, invoiceIndex, index]);
-
     useEffect(() => {
-        const path =
-            `details.${invoiceIndex}.details.${index}.invoice_quantity`;
+        const path = `details.${invoiceIndex}.details.${index}.invoice_quantity` as const;
 
-        const currentValue = methods.getValues( `details.${invoiceIndex}.details.${index}.invoice_quantity`);
+        const currentValue = methods.getValues(path);
 
-        if (currentValue === undefined || currentValue === null) {
-            methods.setValue(
-                 `details.${invoiceIndex}.details.${index}.invoice_quantity`,
-                safeNumber(orderQuantity) - safeNumber(previousQuantity)
-            );
+        if (currentValue === undefined || currentValue === null || Number.isNaN(Number(currentValue))) {
+            methods.setValue(path, safeNumber(orderQuantity) - safeNumber(previousQuantity));
         }
-    }, [
-        orderQuantity,
-        previousQuantity,
-        methods,
-        invoiceIndex,
-        index,
-    ]);
+    }, [orderQuantity, previousQuantity, methods, invoiceIndex, index]);
 
     return (
         <GenericFormTableRow

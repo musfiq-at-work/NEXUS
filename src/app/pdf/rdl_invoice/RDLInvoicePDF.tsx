@@ -86,30 +86,30 @@ const RDLInvoicePDF = ({ data }: { data: GetPDFDataOutput }) => {
 								<Text style={{...styles.BorderTableText, ...styles.textAmasis}}>CONTACT NO:</Text>
 							</View>
 							<View style={{...styles.text, display: 'flex', flexDirection: 'column', flex: 1}}>
-								<Text style={{...styles.BorderTableText, ...styles.textAmasis}}>{data.header?.pi_no ?? ''}</Text>
-								<Text style={{...styles.BorderTableText, ...styles.textAmasis}}>{data.header?.container_no ?? ''}</Text>
-								<Text style={{...styles.BorderTableText, ...styles.textAmasis}}>{data.header?.container_no ?? ''}</Text>
+								<Text style={{...styles.BorderTableText, ...styles.textAmasis}}>{data.header?.pi_no || ' '}</Text>
+								<Text style={{...styles.BorderTableText, ...styles.textAmasis}}>{data.header?.container_no || ' '}</Text>
+								<Text style={{...styles.BorderTableText, ...styles.textAmasis}}>{data.header?.contact_no || ' '}</Text>
 							</View>
 						</View>
-
+				
 						<View style={{...styles.flex_c_5, gap: 3}}>
 							<Text style={styles.textBold}>{`Beneficiary Bank Details:`}</Text>
 							<Text style={{...styles.textAmasis, lineHeight: 1.2}}>
-								{data.header?.company_bank_name}
+								{data.beneficiaryBankDetails?.name ?? ''}
 							</Text>
 							<Text style={{...styles.textAmasis, lineHeight: 1.2}}>
-								{data.header?.company_bank_address}
+								{data.beneficiaryBankDetails?.address ?? ''}
 							</Text>
 							<View style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
-								<View style={{...styles.text, display: 'flex', flexDirection: 'column', flex: 1}}>
+								<View style={{...styles.text, display: 'flex', flexDirection: 'column', flex: 2}}>
 									<Text style={{...styles.textAmasis, marginBottom: 3}}>ACCOUNT NAME:</Text>
 									<Text style={{...styles.textAmasis, marginBottom: 3}}>SWIFT:</Text>
 									<Text style={{...styles.textAmasis, marginBottom: 3}}>ACCOUNT NO:</Text>
 								</View>
-								<View style={{...styles.text, display: 'flex', flexDirection: 'column', flex: 1}}>
-									<Text style={{...styles.textAmasis, marginBottom: 3}}>{data.header?.company_bank_account_name ?? ''}</Text>
-									<Text style={{...styles.textAmasis, marginBottom: 3}}>{data.header?.company_bank_swift?.trim() ?? ''}</Text>
-									<Text style={{...styles.textAmasis, marginBottom: 3}}>{data.header?.company_bank_account_no ?? ''}</Text>
+								<View style={{...styles.text, display: 'flex', flexDirection: 'column', flex: 3}}>
+									<Text style={{...styles.textAmasis, marginBottom: 3}}>{data.beneficiaryBankDetails?.account_name ?? ''}</Text>
+									<Text style={{...styles.textAmasis, marginBottom: 3}}>{data.beneficiaryBankDetails?.swift?.trim() ?? ''}</Text>
+									<Text style={{...styles.textAmasis, marginBottom: 3}}>{data.beneficiaryBankDetails?.account_no ?? ''}</Text>
 								</View>
 							</View>
 						</View>
@@ -169,7 +169,7 @@ const RDLInvoicePDF = ({ data }: { data: GetPDFDataOutput }) => {
 							</View>
 						</View>
 
-						{/* <View style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between', ...styles.BorderTable}}>
+						<View style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between', ...styles.BorderTable}}>
 							<View style={{...styles.text, display: 'flex', flexDirection: 'column', flex: 1}}>
 								<Text style={{...styles.BorderTableText, ...styles.textAmasis}}>FINAL DESTINATION:</Text>
 								<Text style={{...styles.BorderTableText, ...styles.textAmasis}}>PORT OF DESTINATION:</Text>
@@ -178,13 +178,13 @@ const RDLInvoicePDF = ({ data }: { data: GetPDFDataOutput }) => {
 								<Text style={{...styles.BorderTableText, ...styles.textAmasis}}>{data.header?.final_destination}</Text>
 								<Text style={{...styles.BorderTableText, ...styles.textAmasis}}>{data.header?.final_destination}</Text>
 							</View>
-						</View> */}
+						</View>
 					</View>
 				</View>
 
 				<View style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between', gap: 10}}>
 					{/* Left Column */}
-					{/* <View style={{flex: 1, gap: 6}}>
+					<View style={{flex: 1, gap: 6}}>
 						{data.header?.consignees && data.header?.consignees.length > 0 &&
 							<View>
 								<Text style={{...styles.textBold, marginTop: 5}}>CONSIGNEE:</Text>
@@ -201,20 +201,20 @@ const RDLInvoicePDF = ({ data }: { data: GetPDFDataOutput }) => {
 										}}>
 											{`${index + 1}${index === 0 ? 'st' : index === 1 ? 'nd' : index === 2 ? 'rd' : 'th'}`} Consignee Name:
 										</Text>
-										<Text style={styles.textAmasis}>{consignee.buyer_consignee?.consignee_name}</Text>
-										<Text style={styles.textAmasis}>{consignee.buyer_consignee?.address}</Text>
+										<Text style={styles.textAmasis}>{consignee?.consignee_name}</Text>
+										<Text style={styles.textAmasis}>{consignee?.address}</Text>
 									</View>
 								))}
 							</View>
 						}
-					</View> */}
+					</View>
 
 					{/* Right Column */}
-					{/* <View style={{flex: 1, gap: 6}}>
+					<View style={{flex: 1, gap: 6}}>
 						{data.header?.notify_parties && data.header?.notify_parties.length > 0 &&
 							<View>
 								<Text style={{...styles.textBold, marginTop: 5}}>NOTIFY PARTIES:</Text>
-								{data.header?.notify_parties?.map((consignee, index) => (
+								{data.header?.notify_parties?.map((notify_party, index) => (
 									<View key={index} style={{marginTop: 5, display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 10}}>
 										<Text style={{
 											fontFamily: 'Amasis',
@@ -227,13 +227,13 @@ const RDLInvoicePDF = ({ data }: { data: GetPDFDataOutput }) => {
 										}}>
 											{`${index + 1}${index === 0 ? 'st' : index === 1 ? 'nd' : index === 2 ? 'rd' : 'th'}`} Notify Party Name:
 										</Text>
-										<Text style={styles.textAmasis}>{consignee.buyer_consignee?.consignee_name}</Text>
-										<Text style={styles.textAmasis}>{consignee.buyer_consignee?.address}</Text>
+										<Text style={styles.textAmasis}>{notify_party?.consignee_name}</Text>
+										<Text style={styles.textAmasis}>{notify_party?.address}</Text>
 									</View>
 								))}
 							</View>
 						}
-					</View> */}
+					</View>
 				</View>
 
 				<Table columns={tableColumns} data={data.table}/>
