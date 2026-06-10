@@ -59,6 +59,7 @@ const SalesContracts = () => {
     const editURL = '/merchandising/sales_contract/sales_contracts/edit/';
 
     const printURL = `/pdf/sales_contract/`;
+    const printURL2 = `/pdf/sales_contract_commission/`;
 
     const deleteMutation = api.salesContracts.deleteSalesContract.useMutation({
         onSuccess: async () => {
@@ -140,6 +141,8 @@ const SalesContracts = () => {
                         allowEdit={can_update}
                         allowPrint={true}
                         printURL={printURL}
+                        allowPrint2={true}
+                        printURL2={printURL2}
                         view={!can_update}
                     />
                 </div>

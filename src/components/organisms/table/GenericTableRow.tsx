@@ -23,14 +23,16 @@ type TableRowProps<T extends FieldValues> = {
     allowDelete?: boolean;
     allowEdit?: boolean;
     allowPrint?: boolean;
+    allowPrint2?: boolean;
     printURL?: string;
+    printURL2?: string;
     view?: boolean;
     control?: Control<T>;
 };
 
 // TableRow component to render a row of data based on provided columns and types
 const GenericTableRow = <T extends FieldValues>(props: TableRowProps<T>) => {
-    const { rowData, columns, editURL, deleteFunction, allowDelete, allowEdit, allowPrint, printURL, view = false, control } = props;
+    const { rowData, columns, editURL, deleteFunction, allowDelete, allowEdit, allowPrint, allowPrint2, printURL, printURL2, view = false, control } = props;
     return (
         <TableRow>
             {columns.map((col, colIndex) => (
@@ -67,23 +69,9 @@ const GenericTableRow = <T extends FieldValues>(props: TableRowProps<T>) => {
                                     />
                                 )
 
-                            // case 'button':
-                            //     return (
-                            //         <button type="button" 
-                            //             className={clsx("px-4 py-2 text-white rounded-full focus:outline-none focus:ring-2 focus:ring-primary-focus focus:ring-offset-2",
-                            //                 !handleAction ? "opacity-50 cursor-not-allowed bg-gray-accent" : "hover:cursor-pointer bg-secondary hover:bg-primary-dark"
-                            //             )}
-                            //             // disabled={isDisabled}
-                            //             onClick={() => handleAction ? handleAction(colIndex) : null}
-                            //             // disabled={disabled}
-                            //         >
-                            //             {col.label}
-                            //         </button>
-                            //     )
-                            
                             case 'action':
-                                return (allowEdit || allowDelete || view || allowPrint) ? (
-                                    <div className="flex flex-row justify-between items-center h-full text-[0.9rem] border-gray/20 w-fit max-w-20 p-2">
+                                return (allowEdit || allowDelete || view || allowPrint || allowPrint2) ? (
+                                    <div className="flex flex-row justify-between items-center h-full text-[0.9rem] border-gray/20 w-fit max-w-25 p-2">
                                         {(!!allowEdit || view) && (
                                             <Link scroll={false} href={`${editURL}/${String(rowData.id)}`}
                                                 className="ml-2 w-4 h-full hover:cursor-pointer" 
@@ -98,6 +86,15 @@ const GenericTableRow = <T extends FieldValues>(props: TableRowProps<T>) => {
                                                 rel="noopener noreferrer"
                                             >
                                                 <Image width={20} height={20} src={printingIcon.src} alt="Print" />
+                                            </Link>
+                                        )}
+                                        {allowPrint2 && (
+                                            <Link scroll={false} href={`${printURL2}/${String(rowData.id)}`}
+                                                className="ml-2 w-4 h-full hover:cursor-pointer" 
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                <Image width={20} height={20} src={viewIcon.src} alt="Print 2" />
                                             </Link>
                                         )}
                                         {allowDelete && (

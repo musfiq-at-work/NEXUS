@@ -17,12 +17,14 @@ type TableProps<T extends Record<string, unknown>> = {
     allowEdit?: boolean;
     allowPrint?: boolean;
     printURL?: string;
+    allowPrint2?: boolean;
+    printURL2?: string;
     view?: boolean;
 };
 
 // Table component to render data in tabular format with pagination
 const Table = <T extends Record<string, unknown>>( props: TableProps<T>) => {
-    const { data, columns, isLoading, nextPage, prevPage, page, limit, total, editURL, deleteFunction, allowDelete, allowPrint, printURL, allowEdit, view } = props;
+    const { data, columns, isLoading, nextPage, prevPage, page, limit, total, editURL, deleteFunction, allowDelete, allowPrint, printURL, allowPrint2, printURL2, allowEdit, view } = props;
 
     if (isLoading) return <Loader />;
 
@@ -52,6 +54,8 @@ const Table = <T extends Record<string, unknown>>( props: TableProps<T>) => {
                             allowDelete={allowDelete}
                             allowPrint={allowPrint}
                             printURL={printURL}
+                            allowPrint2={allowPrint2}
+                            printURL2={printURL2}
                             allowEdit={allowEdit}
                         />
                     ))}
