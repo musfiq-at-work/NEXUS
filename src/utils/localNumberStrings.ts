@@ -3,7 +3,7 @@ export const currencyFormatter = (value: number, currencySymbol: string) => {
 }
 
 export const quantityFormatter = (value: number) => {
-    return (value ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return (value ?? 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 
 const ones = [
