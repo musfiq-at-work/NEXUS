@@ -1659,7 +1659,8 @@ export const salesContractsRouter = createTRPCRouter({
                     }
                 });
 
-                let data = null;
+                let nonAmendData = null;
+                let amendData = null;
 
                 if(!hasAmendment) {
                     const orderDataObj = await ctx.db.sales_contracts.findUnique({
@@ -1724,168 +1725,101 @@ export const salesContractsRouter = createTRPCRouter({
                     });
 
                         
-                    const currencySymbol = orderDataObj?.sales_contract_details?.[0]?.buyer_orders?.order_styles?.[0]?.shipment_details?.[0]?.factory_shipment_details?.[0]?.factory_orders?.currencies?.symbol ?? '$';
+                    const currencySymbol =
+                        orderDataObj?.sales_contract_details?.[0]?.buyer_orders?.order_styles?.[0]?.shipment_details?.[0]?.factory_shipment_details?.[0]?.factory_orders?.currencies?.symbol ??
+                        '$';
 
-                    data = orderDataObj?.sales_contract_details.map(detail => ({
-                        ref_no: detail.buyer_orders?.ref_no,
-                        shipment_details: detail.buyer_orders?.order_styles.flatMap(os =>
-                            os.shipment_details.map(sd => ({
-                                style: os.style,
-                                buyer_po: sd.buyer_po,
-                                quantity: quantityFormatter(
-                                    sd.shipment_item_details.reduce((sum, item) => sum + item.quantity, 0)
-                                ),
-                                fob_rate: currencyFormatter(sd.fob_rate ?? 0, currencySymbol),
-                                rdl_value: currencyFormatter(
-                                    sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0),
-                                    currencySymbol
-                                ),
-                                factory_rate: currencyFormatter(sd.factory_shipment_details?.[0]?.factory_rate ?? 0, currencySymbol),
-                                factory_value: currencyFormatter(
-                                    sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.factory_shipment_details?.[0]?.factory_rate ?? 0),
-                                    currencySymbol
-                                ),
-                                commissionPercentage: `${((sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0) -
-                                    sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.factory_shipment_details?.[0]?.factory_rate ?? 0)) /
-                                    (sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0)) * 100).toFixed(2) }%`,
-                                commissionValue: currencyFormatter(
-                                    (sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0) -
-                                    sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.factory_shipment_details?.[0]?.factory_rate ?? 0)),
-                                    currencySymbol
-                                ),
-                                dhakaCommission: currencyFormatter(
-                                    sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0) 
-                                    * (sd.commission_distributions_details?.dhaka_commission_percentage ?? 0) / 100,
-                                    currencySymbol
-                                ),
-                                othersCommission: currencyFormatter(
-                                    sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0) 
-                                    * (sd.commission_distributions_details?.others_commission_percentage ?? 0) / 100,
-                                    currencySymbol
-                                ),
-                                overseasCommission: currencyFormatter(
-                                    sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0) 
-                                    * (sd.commission_distributions_details?.overseas_commission_percentage ?? 0) / 100,
-                                    currencySymbol
-                                ),  
-                            }))
-                        ),
-                        results: {
-                            totalQuantity: quantityFormatter(
-                                detail.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0),
-                                    0),
-                                0)                            ),
-                            totalRdlValue: currencyFormatter(
-                                detail.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0), 
-                                    0),
-                                0),
-                                currencySymbol
-                            ),
-                            totalFactoryValue: currencyFormatter(
-                                detail.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.factory_shipment_details?.[0]?.factory_rate ?? 0), 
-                                    0),
-                                0),
-                                currencySymbol
-                             ),
-                            commissionPercentage: `${(() => {
-                                const numerator = detail.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + (sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0) -
-                                        sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.factory_shipment_details?.[0]?.factory_rate ?? 0)),
-                                    0),
-                                0) ?? 0;
-                                const denominator = detail.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0),
-                                    0),
-                                0) ?? 0;
-                                return denominator ? ((numerator / denominator) * 100).toFixed(2) : '0.00';
-                            })()}%`,
-                            totalCommissionValue: currencyFormatter(
-                                detail.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + (sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0) -
-                                        sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.factory_shipment_details?.[0]?.factory_rate ?? 0)), 
-                                    0),
-                                0),
-                                currencySymbol
-                             ),
-                            totalDhakaCommission: currencyFormatter(
-                                detail.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + (sd.shipment_item_details.reduce((sumItem, item) => sumItem + (item.quantity ?? 0), 0) * (sd.fob_rate ?? 0)
-                                        * (sd.commission_distributions_details?.dhaka_commission_percentage ?? 0) / 100),
-                                    0),
-                                0),
-                                currencySymbol
-                            ),
-                            totalDhakaCommissionPercentage: `${(() => {
-                                const numerator = detail.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + (sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0)                                        * (sd.commission_distributions_details?.dhaka_commission_percentage ?? 0) / 100),
-                                    0),
-                                0) ?? 0;
-                                const denominator = detail.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + (sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0)),
-                                    0),
-                                0) ?? 0;
-                                return denominator ? ((numerator / denominator) * 100).toFixed(2) : '0.00';
-                            })()}%`,
-                            totalOverseasCommission: currencyFormatter(
-                                detail.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + (sd.shipment_item_details.reduce((sumItem, item) => sumItem + (item.quantity ?? 0), 0) * (sd.fob_rate ?? 0)
-                                        * (sd.commission_distributions_details?.overseas_commission_percentage ?? 0) / 100),
-                                    0),
-                                0),
-                                currencySymbol
-                            ),
-                            totalOverseasCommissionPercentage: `${(() => {  
-                                const numerator = detail.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + (sd.shipment_item_details.reduce((sumItem, item) => sumItem + (item.quantity ?? 0), 0) * (sd.fob_rate ?? 0)
-                                        * (sd.commission_distributions_details?.overseas_commission_percentage ?? 0) / 100),
-                                    0),
-                                0) ?? 0;
-                                const denominator = detail.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + (sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0)),
-                                    0),
-                                0) ?? 0;
-                                return denominator ? ((numerator / denominator) * 100).toFixed(2) : '0.00';
-                            })()}%`,
-                            totalOthersCommission: currencyFormatter(
-                                detail.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + (sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0)
-                                        * (sd.commission_distributions_details?.others_commission_percentage ?? 0) / 100),
-                                    0),
-                                0),
-                                currencySymbol
-                            ),
-                            totalOthersCommissionPercentage: `${(() => {
-                                const numerator = detail.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + (sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0)    
-                                        * (sd.commission_distributions_details?.others_commission_percentage ?? 0) / 100),
-                                    0),
-                                0) ?? 0;
-                                const denominator = detail.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + (sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0)),
-                                    0),
-                                0) ?? 0;
-                                return denominator ? ((numerator / denominator) * 100).toFixed(2) : '0.00';
-                            })()}%`,
+                    nonAmendData = orderDataObj?.sales_contract_details?.map(detail => {
+                        const shipmentRows = detail.buyer_orders?.order_styles?.flatMap(os =>
+                            os.shipment_details?.map(sd => {
+                                const totalQty = sd.shipment_item_details?.reduce(
+                                    (sum, item) => sum + (item.quantity ?? 0), 0
+                                ) ?? 0;
+
+                                const fobRate = sd.fob_rate ?? 0;
+                                const factoryRate = sd.factory_shipment_details?.[0]?.factory_rate ?? 0;
+
+                                const rdlVal = totalQty * fobRate;
+                                const factoryVal = totalQty * factoryRate;
+                                const commVal = rdlVal - factoryVal;
+
+                                const dhakaComm = (rdlVal * (sd.commission_distributions_details?.dhaka_commission_percentage ?? 0)) / 100;
+
+                                const overseasComm =(rdlVal * (sd.commission_distributions_details?.overseas_commission_percentage ?? 0)) /100;
+
+                                const othersComm =(rdlVal * (sd.commission_distributions_details?.others_commission_percentage ?? 0)) /100;
+                                        
+                                return {
+                                    row: {
+                                        style: os.style,
+                                        buyer_po: sd.buyer_po,
+                                        quantity: quantityFormatter(totalQty),
+                                        fob_rate: currencyFormatter(fobRate, currencySymbol),
+                                        rdl_value: currencyFormatter(rdlVal, currencySymbol),
+                                        factory_rate: currencyFormatter(factoryRate, currencySymbol),
+                                        factory_value: currencyFormatter(factoryVal, currencySymbol),
+                                        commissionPercentage: `${rdlVal ? ((commVal / rdlVal) * 100).toFixed(2) : '0.00'}%`,
+                                        commissionValue: currencyFormatter(commVal, currencySymbol),
+                                        dhakaCommission: currencyFormatter(dhakaComm, currencySymbol),
+                                        overseasCommission: currencyFormatter(overseasComm, currencySymbol),
+                                        othersCommission: currencyFormatter(othersComm, currencySymbol),
+                                    },
+
+                                    raw: {
+                                        totalQty,
+                                        rdlVal,
+                                        factoryVal,
+                                        commVal,
+                                        dhakaComm,
+                                        overseasComm,
+                                        othersComm,
+                                    },
+                                };
+                            }) || []
+                        ) || [];
+
+                    const totals = shipmentRows.reduce(
+                        (acc, item) => {
+                            acc.qty += item.raw.totalQty;
+                            acc.rdl += item.raw.rdlVal;
+                            acc.factory += item.raw.factoryVal;
+                            acc.comm += item.raw.commVal;
+                            acc.dhaka += item.raw.dhakaComm;
+                            acc.overseas += item.raw.overseasComm;
+                            acc.others += item.raw.othersComm;
+                            return acc;
+                        },
+                        {
+                            qty: 0,
+                            rdl: 0,
+                            factory: 0,
+                            comm: 0,
+                            dhaka: 0,
+                            overseas: 0,
+                            others: 0,
                         }
-                    }));
+                    );
+
+                    return {
+                        ref_no: detail.buyer_orders?.ref_no,
+
+                        shipment_details: shipmentRows.map(item => item.row),
+
+                        results: {
+                            totalQuantity: quantityFormatter(totals.qty),
+                                totalRdlValue: currencyFormatter(totals.rdl,currencySymbol),
+                                totalFactoryValue: currencyFormatter(totals.factory,currencySymbol),
+                                commissionPercentage: `${totals.rdl? ((totals.comm / totals.rdl) * 100).toFixed(2) : '0.00'}%`,
+                                totalCommissionValue: currencyFormatter(totals.comm,currencySymbol),
+                                totalDhakaCommission: currencyFormatter(totals.dhaka,currencySymbol),
+                                totalDhakaCommissionPercentage: `${totals.rdl? ((totals.dhaka / totals.rdl) * 100).toFixed(2) : '0.00'}%`,
+                                totalOverseasCommission: currencyFormatter(totals.overseas,currencySymbol),
+                                totalOverseasCommissionPercentage: `${totals.rdl? ((totals.overseas / totals.rdl) * 100).toFixed(2) : '0.00'}%`,
+                                totalOthersCommission: currencyFormatter(totals.others,currencySymbol),
+                                totalOthersCommissionPercentage: `${totals.rdl? ((totals.others / totals.rdl) * 100).toFixed(2) : '0.00'}%`,
+                            },
+                        };
+                    }) || [];
                 }
                 else {
                     const orderDataObj = await ctx.db.sales_contract_amendment.findMany({
@@ -1953,178 +1887,97 @@ export const salesContractsRouter = createTRPCRouter({
 
                     const currencySymbol = orderDataObj?.[0]?.sales_contract_amendment_details?.[0]?.buyer_orders?.order_styles?.[0]?.shipment_details?.[0]?.factory_shipment_details?.[0]?.factory_orders?.currencies?.symbol ?? '$';
 
-                    data = orderDataObj.map(amendment => ({
-                        amendment_no: amendment.amendment_no,
-                        amendment_date: amendment.amendment_date,
-                        ref_no: amendment.sales_contract_amendment_details?.[0]?.buyer_orders?.ref_no,
-                        shipment_details: amendment.sales_contract_amendment_details.map(
-                            detail => detail.buyer_orders?.order_styles.flatMap(os =>
-                                os.shipment_details.map(sd => ({
-                                style: os.style,
-                                buyer_po: sd.buyer_po,
-                                quantity: quantityFormatter(
-                                    sd.shipment_item_details.reduce((sum, item) => sum + item.quantity, 0)
-                                ),
-                                fob_rate: currencyFormatter(sd.fob_rate ?? 0, currencySymbol),
-                                rdl_value: currencyFormatter(
-                                    sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0),
-                                    currencySymbol
-                                ),
-                                factory_rate: currencyFormatter(sd.factory_shipment_details?.[0]?.factory_rate ?? 0, currencySymbol),
-                                factory_value: currencyFormatter(
-                                    sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.factory_shipment_details?.[0]?.factory_rate ?? 0),
-                                    currencySymbol
-                                ),
-                                commissionPercentage: `${((sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0) -
-                                    sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.factory_shipment_details?.[0]?.factory_rate ?? 0)) /
-                                    (sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0)) * 100).toFixed(2) }%`,
-                                commissionValue: currencyFormatter(
-                                    (sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0) -
-                                    sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.factory_shipment_details?.[0]?.factory_rate ?? 0)),
-                                    currencySymbol
-                                ),
-                                dhakaCommission: currencyFormatter(
-                                    sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0)
-                                    * (sd.commission_distributions_details?.dhaka_commission_percentage ?? 0) / 100,
-                                    currencySymbol
-                                ),
-                                othersCommission: currencyFormatter(
-                                    sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0)
-                                    * (sd.commission_distributions_details?.others_commission_percentage ?? 0) / 100,
-                                    currencySymbol
-                                ),
-                                overseasCommission: currencyFormatter(
-                                    sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0)
-                                    * (sd.commission_distributions_details?.overseas_commission_percentage ?? 0) / 100,
-                                    currencySymbol
-                                ),  
-                            }))
-                        )),
-                        results: {
-                            totalQuantity: quantityFormatter(
-                                (amendment.sales_contract_amendment_details?.[0]?.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0),
-                                    0),
-                                0) ?? 0)                            
-                            ),
-                            totalRdlValue: currencyFormatter(
-                                amendment.sales_contract_amendment_details?.[0]?.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0),
-                                    0),
-                                0) ?? 0,
-                                currencySymbol
-                            ),
-                            totalFactoryValue: currencyFormatter(
-                                amendment.sales_contract_amendment_details?.[0]?.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.factory_shipment_details?.[0]?.factory_rate ?? 0),
-                                    0),
-                                0) ?? 0,
-                                currencySymbol
-                             ),
-                            commissionPercentage: `${(() => {
-                                const numerator = amendment.sales_contract_amendment_details?.[0]?.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + (sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0) -
-                                        sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.factory_shipment_details?.[0]?.factory_rate ?? 0)),
-                                    0),
-                                0) ?? 0;
-                                const denominator = amendment.sales_contract_amendment_details?.[0]?.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + sd.shipment_item_details.reduce((sumItem, item) => sumItem + item
-                                            .quantity, 0) * (sd.fob_rate ?? 0),
-                                    0),
-                                0) ?? 0;
-                                return denominator ? ((numerator / denominator) * 100).toFixed(2) : '0.00';
-                            })()}%`,
-                            totalCommissionValue: currencyFormatter(
-                                amendment.sales_contract_amendment_details?.[0]?.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + (sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0) -
-                                        sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.factory_shipment_details?.[0]?.factory_rate ?? 0)), 
-                                    0),
-                                0) ?? 0,
-                                currencySymbol
-                             ),
-                            totalDhakaCommission: currencyFormatter(
-                                amendment.sales_contract_amendment_details?.[0]?.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + (sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0)                                        * (sd.commission_distributions_details?.dhaka_commission_percentage ?? 0) / 100),
-                                    0),
-                                0) ?? 0,
-                                currencySymbol
-                            ),
-                            totalDhakaCommissionPercentage: `${(() => {
-                                const numerator = amendment.sales_contract_amendment_details?.[0]?.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + (sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0)                                        * (sd.commission_distributions_details?.dhaka_commission_percentage ?? 0) / 100),
-                                    0),
-                                0) ?? 0;
-                                const denominator = amendment.sales_contract_amendment_details?.[0]?.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + (sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0)),
-                                    0),
-                                0) ?? 0;
-                                return denominator ? ((numerator / denominator) * 100).toFixed(2) : '0.00';
-                            })()}%`,
-                            totalOverseasCommission: currencyFormatter(
-                                amendment.sales_contract_amendment_details?.[0]?.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + (sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0)
-                                        * (sd.commission_distributions_details?.overseas_commission_percentage ?? 0) / 100),
-                                    0),
-                                0) ?? 0,
-                                currencySymbol
-                            ),
-                            totalOverseasCommissionPercentage: `${(() => {  
-                                const numerator = amendment.sales_contract_amendment_details?.[0]?.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + (sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0) * (sd.fob_rate ?? 0)
-                                        * (sd.commission_distributions_details?.overseas_commission_percentage ?? 0) / 100),
-                                    0),
-                                0) ?? 0;
-                                const denominator = amendment.sales_contract_amendment_details?.[0]?.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + (sd.shipment_item_details.reduce((sumItem, item) => sumItem + (item.quantity ?? 0),
-                                            0) * (sd.fob_rate ?? 0)),
-                                    0),
-                                0) ?? 0;
-                                return denominator ? ((numerator / denominator) * 100).toFixed(2) : '0.00';
+                    amendData = orderDataObj.map(amendment => {
+                        const shipmentRows = amendment.sales_contract_amendment_details.flatMap(detail =>
+                            detail.buyer_orders?.order_styles.flatMap(os =>
+                                os.shipment_details.map(sd => {
+                                    const totalQty = sd.shipment_item_details.reduce(
+                                        (sum, item) => sum + (item.quantity ?? 0), 0
+                                    );
+
+                                    const fobRate = sd.fob_rate ?? 0;
+                                    const factoryRate = sd.factory_shipment_details?.[0]?.factory_rate ?? 0;
+
+                                    const rdlVal = totalQty * fobRate;
+                                    const factoryVal = totalQty * factoryRate;
+                                    const commVal = rdlVal - factoryVal;
+
+                                    const dhakaComm = rdlVal * (sd.commission_distributions_details?.dhaka_commission_percentage ?? 0) / 100;
+
+                                    const overseasComm = rdlVal * (sd.commission_distributions_details?.overseas_commission_percentage ?? 0) / 100;
+
+                                    const othersComm = rdlVal * (sd.commission_distributions_details?.others_commission_percentage ?? 0) / 100;
+
+                                    return {
+                                        row: {
+                                            style: os.style,
+                                            buyer_po: sd.buyer_po,
+                                            quantity: quantityFormatter(totalQty),
+                                            fob_rate: currencyFormatter(fobRate, currencySymbol),
+                                            rdl_value: currencyFormatter(rdlVal, currencySymbol),
+                                            factory_rate: currencyFormatter(factoryRate, currencySymbol),
+                                            factory_value: currencyFormatter(factoryVal, currencySymbol),
+                                            commissionPercentage: `${rdlVal ? ((commVal / rdlVal) * 100).toFixed(2) : "0.00"}%`,
+                                            commissionValue: currencyFormatter(commVal, currencySymbol),
+                                            dhakaCommission: currencyFormatter(dhakaComm, currencySymbol),
+                                            overseasCommission: currencyFormatter(overseasComm, currencySymbol),
+                                            othersCommission: currencyFormatter(othersComm, currencySymbol),
+                                        },
+
+                                        raw: { totalQty, rdlVal, factoryVal, commVal, dhakaComm, overseasComm, othersComm },
+                                    };
+                                })
+                            ) || []
+                        );
+
+                        const totals = shipmentRows.reduce(
+                            (acc, item) => {
+                                acc.qty += item.raw.totalQty;
+                                acc.rdl += item.raw.rdlVal;
+                                acc.factory += item.raw.factoryVal;
+                                acc.comm += item.raw.commVal;
+                                acc.dhaka += item.raw.dhakaComm;
+                                acc.overseas += item.raw.overseasComm;
+                                acc.others += item.raw.othersComm;
+
+                                return acc;
+                            },
+                            {
+                                qty: 0,
+                                rdl: 0,
+                                factory: 0,
+                                comm: 0,
+                                dhaka: 0,
+                                overseas: 0,
+                                others: 0,
                             }
-                            )()}%`,
-                            totalOthersCommission: currencyFormatter(
-                                amendment.sales_contract_amendment_details?.[0]?.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + (sd.shipment_item_details.reduce((sumItem, item) => sumItem + (item.quantity ?? 0), 0) * (sd.fob_rate ?? 0)
-                                        * (sd.commission_distributions_details?.others_commission_percentage ?? 0) / 100),
-                                    0),
-                                0) ?? 0,
-                                currencySymbol
-                            ),
-                            totalOthersCommissionPercentage: `${(() => {
-                                const numerator = amendment.sales_contract_amendment_details?.[0]?.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + (sd.shipment_item_details.reduce((sumItem, item) => sumItem + (item.quantity ?? 0), 0) * (sd.fob_rate ?? 0)
-                                        * (sd.commission_distributions_details?.others_commission_percentage ?? 0) / 100),
-                                    0),
-                                0) ?? 0;
-                                const denominator = amendment.sales_contract_amendment_details?.[0]?.buyer_orders?.order_styles.reduce((sumOs, os) =>
-                                    sumOs + os.shipment_details.reduce((sumSd, sd) =>
-                                        sumSd + (sd.shipment_item_details.reduce((sumItem, item) => sumItem + (item.quantity ?? 0),
-                                            0) * (
-                                                sd.fob_rate ?? 0)),
-                                    0),
-                                0) ?? 0;
-                                return denominator ? ((numerator / denominator) * 100).toFixed(2) : '0.00';
-                            }
-                            )()}%`,
-                        },
-                    }));
+                        );
+
+                        return {
+                            amendment_no: amendment.amendment_no,
+                            amendment_date: amendment.amendment_date,
+                            ref_no: amendment.sales_contract_amendment_details?.[0]?.buyer_orders?.ref_no,
+
+                            shipment_details: shipmentRows.map(item => item.row),
+
+                            results: {
+                                totalQuantity: quantityFormatter(totals.qty),
+                                totalRdlValue: currencyFormatter( totals.rdl, currencySymbol),
+                                totalFactoryValue: currencyFormatter( totals.factory, currencySymbol),
+                                commissionPercentage: `${totals.rdl    ? ((totals.comm / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
+                                totalCommissionValue: currencyFormatter(totals.comm,currencySymbol),
+                                totalDhakaCommission: currencyFormatter(totals.dhaka,currencySymbol),
+                                totalDhakaCommissionPercentage: `${totals.rdl ? ((totals.dhaka / totals.rdl) * 100).toFixed(2) : "0.00" }%`,
+                                totalOverseasCommission: currencyFormatter(totals.overseas,currencySymbol),
+                                totalOverseasCommissionPercentage: `${ totals.rdl ? ((totals.overseas / totals.rdl) * 100).toFixed(2) : "0.00" }%`,
+                                totalOthersCommission: currencyFormatter(totals.others,currencySymbol),
+                                totalOthersCommissionPercentage: `${ totals.rdl ? ((totals.others / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
+                            },
+                        };
+                    });
                 }
 
-                return { pdfHeader, hasAmendment, data};
+                return { pdfHeader, hasAmendment: !!hasAmendment, amendData, nonAmendData };
             }
             catch (error) {
                 handlePrismaError(error);
