@@ -28,6 +28,7 @@ export { default as printingWhiteIcon } from './icons/printing_white.png';
 export { default as userIcon } from './icons/user.png';
 export { default as maximizeIcon } from './icons/maximize.png';
 export { default as tagIcon } from './icons/tag.png';
+export { default as commissionIcon } from './icons/commission.png';
 
 // images
 export { default as unauthorizedImage } from "./img/denied.jpg";

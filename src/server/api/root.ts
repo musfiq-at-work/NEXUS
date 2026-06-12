@@ -8,7 +8,7 @@ import {
 	seasonsRouter, teamsRouter, handoverDatesRouter, buyerOrdersRouter, factoryOrderRouter, tnaBaseActionRouter,
 	tnaTemplatesRouter, tnaPlanRouter, commissionDistributionRouter, scContactPersonRouter, salesContractsRouter,
 	salesContractAmendmentRouter, lcMasterRouter, lcAmendmentRouter, toleranceLevelRouter, exFactoryRouter,
-	lcTransferRouter, factoryInvoiceRouter, evPermissionRouter, rdlInvoiceRouter,
+	lcTransferRouter, factoryInvoiceRouter, evPermissionRouter, rdlInvoiceRouter, documentSubmissionRouter,
 } from '.' 
 
 // All routers added in /api/routers should be manually added here.
@@ -66,6 +66,7 @@ export const appRouter = createTRPCRouter({
 	lcTransfer: lcTransferRouter,
 	factoryInvoice: factoryInvoiceRouter,
 	rdlInvoice: rdlInvoiceRouter,
+	documentSubmission: documentSubmissionRouter,
 });
 
 // export type definition of API

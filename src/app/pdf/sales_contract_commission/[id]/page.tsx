@@ -13,7 +13,9 @@ type EditSalesContractPdfProp = {
 const PDF = ({ params }: EditSalesContractPdfProp) => {
     const { id } = React.use(params);
 
-    const { data, isLoading } = api.salesContracts.getSalesContractCommissionPDFData.useQuery(!!id ? { id: id } : skipToken);
+    const { data, isLoading } = api.salesContracts.getSalesContractCommissionPDFData.useQuery(
+        !!id ? { id: id } : skipToken
+    );
 
     if (isLoading || !data) {
         return <div className="text-center p-16">Loading...</div>;

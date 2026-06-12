@@ -1957,14 +1957,12 @@ export const salesContractsRouter = createTRPCRouter({
                             amendment_no: amendment.amendment_no,
                             amendment_date: amendment.amendment_date,
                             ref_no: amendment.sales_contract_amendment_details?.[0]?.buyer_orders?.ref_no,
-
                             shipment_details: shipmentRows.map(item => item.row),
-
                             results: {
                                 totalQuantity: quantityFormatter(totals.qty),
                                 totalRdlValue: currencyFormatter( totals.rdl, currencySymbol),
                                 totalFactoryValue: currencyFormatter( totals.factory, currencySymbol),
-                                commissionPercentage: `${totals.rdl    ? ((totals.comm / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
+                                commissionPercentage: `${totals.rdl ? ((totals.comm / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
                                 totalCommissionValue: currencyFormatter(totals.comm,currencySymbol),
                                 totalDhakaCommission: currencyFormatter(totals.dhaka,currencySymbol),
                                 totalDhakaCommissionPercentage: `${totals.rdl ? ((totals.dhaka / totals.rdl) * 100).toFixed(2) : "0.00" }%`,

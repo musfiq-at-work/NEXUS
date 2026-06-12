@@ -1,6 +1,6 @@
 import { ShowPassword, Chip, TableRow, TableCell, CheckBox } from '~/components';
 import { formatDate, formatDateTime } from "~/utils/localDateString";
-import { deleteIcon, editIcon, printingIcon, viewIcon } from '~/assets';
+import { commissionIcon, deleteIcon, editIcon, printingIcon, viewIcon } from '~/assets';
 import Link from 'next/link';
 import Image from 'next/image';
 import React from 'react';
@@ -94,7 +94,7 @@ const GenericTableRow = <T extends FieldValues>(props: TableRowProps<T>) => {
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                             >
-                                                <Image width={20} height={20} src={viewIcon.src} alt="Print 2" />
+                                                <Image width={20} height={20} src={commissionIcon.src} alt="Print 2" />
                                             </Link>
                                         )}
                                         {allowDelete && (

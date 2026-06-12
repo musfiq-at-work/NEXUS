@@ -141,21 +141,21 @@ model permissions_history {
 }
 
 model users {
-  id                                                                 String                                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  first_name                                                         String                                     @db.VarChar(25)
-  last_name                                                          String?                                    @db.VarChar(25)
-  phone_no                                                           String                                     @db.VarChar(18)
+  id                                                                 String                                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  first_name                                                         String                                         @db.VarChar(25)
+  last_name                                                          String?                                        @db.VarChar(25)
+  phone_no                                                           String                                         @db.VarChar(18)
   password                                                           String
-  email                                                              String                                     @db.VarChar(50)
+  email                                                              String                                         @db.VarChar(50)
   department_id                                                      Int
-  is_active                                                          Boolean                                    @default(true)
-  user_id                                                            String                                     @unique(map: "unique_user_id") @db.VarChar(20)
+  is_active                                                          Boolean                                        @default(true)
+  user_id                                                            String                                         @unique(map: "unique_user_id") @db.VarChar(20)
   hashed_password                                                    String
   level_id                                                           Int
   old_pk                                                             Int?
-  created_at                                                         DateTime?                                  @default(now()) @db.Timestamp(6)
+  created_at                                                         DateTime?                                      @default(now()) @db.Timestamp(6)
   authorizations                                                     authorizations[]
-  banks_history_banks_history_action_byTousers                       banks_history[]                            @relation("banks_history_action_byTousers")
+  banks_history_banks_history_action_byTousers                       banks_history[]                                @relation("banks_history_action_byTousers")
   buyer_additional_clause_history                                    buyer_additional_clause_history[]
   buyer_banks_history                                                buyer_banks_history[]
   buyer_brands_history                                               buyer_brands_history[]
@@ -167,24 +167,27 @@ model users {
   buyer_orders_history                                               buyer_orders_history[]
   buyer_payment_term_history                                         buyer_payment_term_history[]
   buyers_history                                                     buyers_history[]
-  color_history_color_history_action_byTousers                       color_history[]                            @relation("color_history_action_byTousers")
+  color_history_color_history_action_byTousers                       color_history[]                                @relation("color_history_action_byTousers")
   commission_distribution_details_history                            commission_distribution_details_history[]
   commission_distribution_history                                    commission_distribution_history[]
-  companies_history_companies_history_action_byTousers               companies_history[]                        @relation("companies_history_action_byTousers")
+  companies_history_companies_history_action_byTousers               companies_history[]                            @relation("companies_history_action_byTousers")
   company_banks_history                                              company_banks_history[]
-  countries_history_countries_history_action_byTousers               countries_history[]                        @relation("countries_history_action_byTousers")
-  courier_history_courier_history_action_byTousers                   courier_history[]                          @relation("courier_history_action_byTousers")
-  currencies_history_currencies_history_action_byTousers             currencies_history[]                       @relation("currencies_history_action_byTousers")
-  destinations_history_destinations_history_action_byTousers         destinations_history[]                     @relation("destinations_history_action_byTousers")
+  countries_history_countries_history_action_byTousers               countries_history[]                            @relation("countries_history_action_byTousers")
+  courier_history_courier_history_action_byTousers                   courier_history[]                              @relation("courier_history_action_byTousers")
+  currencies_history_currencies_history_action_byTousers             currencies_history[]                           @relation("currencies_history_action_byTousers")
+  destinations_history_destinations_history_action_byTousers         destinations_history[]                         @relation("destinations_history_action_byTousers")
+  document_submission_factory_invoices_history                       document_submission_factory_invoices_history[]
+  document_submissions_details_history                               document_submissions_details_history[]
+  document_submissions_history                                       document_submissions_history[]
   ev_permission_history                                              ev_permission_history[]
   ev_permissions                                                     ev_permissions[]
   exfactory_history                                                  exfactory_history[]
   exfactory_orders_history                                           exfactory_orders_history[]
   exfactory_shipments_history                                        exfactory_shipments_history[]
-  fabric_suppliers_history_fabric_suppliers_history_action_byTousers fabric_suppliers_history[]                 @relation("fabric_suppliers_history_action_byTousers")
-  fabrics_history_fabrics_history_action_byTousers                   fabrics_history[]                          @relation("fabrics_history_action_byTousers")
-  factory_bank_history_factory_bank_history_action_byTousers         factory_bank_history[]                     @relation("factory_bank_history_action_byTousers")
-  factory_history_factory_history_action_byTousers                   factory_history[]                          @relation("factory_history_action_byTousers")
+  fabric_suppliers_history_fabric_suppliers_history_action_byTousers fabric_suppliers_history[]                     @relation("fabric_suppliers_history_action_byTousers")
+  fabrics_history_fabrics_history_action_byTousers                   fabrics_history[]                              @relation("fabrics_history_action_byTousers")
+  factory_bank_history_factory_bank_history_action_byTousers         factory_bank_history[]                         @relation("factory_bank_history_action_byTousers")
+  factory_history_factory_history_action_byTousers                   factory_history[]                              @relation("factory_history_action_byTousers")
   factory_invoice_consignee_history                                  factory_invoice_consignee_history[]
   factory_invoice_details_history                                    factory_invoice_details_history[]
   factory_invoice_history                                            factory_invoice_history[]
@@ -205,20 +208,20 @@ model users {
   lc_transfer_details_history                                        lc_transfer_details_history[]
   lc_transfer_history                                                lc_transfer_history[]
   level_permission                                                   level_permission[]
-  level_permission_history_level_permission_history_action_byTousers level_permission_history[]                 @relation("level_permission_history_action_byTousers")
-  level_permission_history_level_permission_history_added_byTousers  level_permission_history[]                 @relation("level_permission_history_added_byTousers")
+  level_permission_history_level_permission_history_action_byTousers level_permission_history[]                     @relation("level_permission_history_action_byTousers")
+  level_permission_history_level_permission_history_added_byTousers  level_permission_history[]                     @relation("level_permission_history_added_byTousers")
   levels_history                                                     levels_history[]
   login_history                                                      login_history[]
   order_styles_history                                               order_styles_history[]
-  overseas_office_history_overseas_office_history_action_byTousers   overseas_office_history[]                  @relation("overseas_office_history_action_byTousers")
-  payment_terms_history_payment_terms_history_action_byTousers       payment_terms_history[]                    @relation("payment_terms_history_action_byTousers")
-  permissions_permissions_added_byTousers                            permissions[]                              @relation("permissions_added_byTousers")
-  permissions_permissions_user_idTousers                             permissions[]                              @relation("permissions_user_idTousers")
-  permissions_history_permissions_history_action_byTousers           permissions_history[]                      @relation("permissions_history_action_byTousers")
-  permissions_history_permissions_history_added_byTousers            permissions_history[]                      @relation("permissions_history_added_byTousers")
-  permissions_history_permissions_history_user_idTousers             permissions_history[]                      @relation("permissions_history_user_idTousers")
-  product_types_history_product_types_history_action_byTousers       product_types_history[]                    @relation("product_types_history_action_byTousers")
-  products_history_products_history_action_byTousers                 products_history[]                         @relation("products_history_action_byTousers")
+  overseas_office_history_overseas_office_history_action_byTousers   overseas_office_history[]                      @relation("overseas_office_history_action_byTousers")
+  payment_terms_history_payment_terms_history_action_byTousers       payment_terms_history[]                        @relation("payment_terms_history_action_byTousers")
+  permissions_permissions_added_byTousers                            permissions[]                                  @relation("permissions_added_byTousers")
+  permissions_permissions_user_idTousers                             permissions[]                                  @relation("permissions_user_idTousers")
+  permissions_history_permissions_history_action_byTousers           permissions_history[]                          @relation("permissions_history_action_byTousers")
+  permissions_history_permissions_history_added_byTousers            permissions_history[]                          @relation("permissions_history_added_byTousers")
+  permissions_history_permissions_history_user_idTousers             permissions_history[]                          @relation("permissions_history_user_idTousers")
+  product_types_history_product_types_history_action_byTousers       product_types_history[]                        @relation("product_types_history_action_byTousers")
+  products_history_products_history_action_byTousers                 products_history[]                             @relation("products_history_action_byTousers")
   rdl_invoice_details_history                                        rdl_invoice_details_history[]
   rdl_invoice_history                                                rdl_invoice_history[]
   rdl_invoice_shipment_details_history                               rdl_invoice_shipment_details_history[]
@@ -235,16 +238,16 @@ model users {
   team_members                                                       team_members[]
   team_members_history                                               team_members_history[]
   teams_history                                                      teams_history[]
-  tna_actions_history_tna_actions_history_action_byTousers           tna_actions_history[]                      @relation("tna_actions_history_action_byTousers")
+  tna_actions_history_tna_actions_history_action_byTousers           tna_actions_history[]                          @relation("tna_actions_history_action_byTousers")
   tna_base_actions_history                                           tna_base_actions_history[]
   tna_plan_details_history                                           tna_plan_details_history[]
   tna_plan_history                                                   tna_plan_history[]
   tna_template_actions_history                                       tna_template_actions_history[]
   tna_templates_history                                              tna_templates_history[]
   user_sessions                                                      user_sessions[]
-  departments                                                        departments                                @relation(fields: [department_id], references: [id], onUpdate: NoAction)
-  levels                                                             levels                                     @relation(fields: [level_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  users_history_users_history_action_byTousers                       users_history[]                            @relation("users_history_action_byTousers")
+  departments                                                        departments                                    @relation(fields: [department_id], references: [id], onUpdate: NoAction)
+  levels                                                             levels                                         @relation(fields: [level_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users_history_users_history_action_byTousers                       users_history[]                                @relation("users_history_action_byTousers")
 }
 
 model users_history {
@@ -384,12 +387,13 @@ model payment_terms {
 }
 
 model terms {
-  id              Int               @id @default(autoincrement())
-  name            String            @db.VarChar(5)
-  exfactory       exfactory[]
-  factory_invoice factory_invoice[]
-  payment_terms   payment_terms[]
-  rdl_invoice     rdl_invoice[]
+  id                   Int                    @id @default(autoincrement())
+  name                 String                 @db.VarChar(5)
+  document_submissions document_submissions[]
+  exfactory            exfactory[]
+  factory_invoice      factory_invoice[]
+  payment_terms        payment_terms[]
+  rdl_invoice          rdl_invoice[]
 }
 
 model banks {
@@ -609,15 +613,16 @@ model courier_history {
 }
 
 model couriers {
-  id             Int       @id @default(autoincrement())
-  name           String    @unique(map: "unique_couriers") @db.VarChar(50)
-  address        String?
-  email          String?   @db.VarChar(50)
-  contact_person String?   @db.VarChar(30)
-  phone_no       String?   @db.VarChar(18)
-  website        String?   @db.VarChar(25)
-  old_pk         Int?
-  added_at       DateTime? @default(now()) @db.Timestamp(6)
+  id                   Int                    @id @default(autoincrement())
+  name                 String                 @unique(map: "unique_couriers") @db.VarChar(50)
+  address              String?
+  email                String?                @db.VarChar(50)
+  contact_person       String?                @db.VarChar(30)
+  phone_no             String?                @db.VarChar(18)
+  website              String?                @db.VarChar(25)
+  old_pk               Int?
+  added_at             DateTime?              @default(now()) @db.Timestamp(6)
+  document_submissions document_submissions[]
 }
 
 model fabric_suppliers {
@@ -955,6 +960,7 @@ model buyers {
   buyer_payment_term       buyer_payment_term[]
   countries                countries?                @relation(fields: [country_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   overseas_offices         overseas_offices?         @relation(fields: [overseas_office_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  document_submissions     document_submissions[]
   ev_permissions           ev_permissions[]
   exfactory                exfactory[]
   factory_invoice          factory_invoice[]
@@ -1772,6 +1778,7 @@ model sales_contracts {
   old_pk                                                           Int?
   added_at                                                         DateTime?                             @default(now()) @db.Timestamp(6)
   company_id                                                       Int?
+  document_submissions                                             document_submissions[]
   factory_invoice                                                  factory_invoice[]
   lc_transfer_details                                              lc_transfer_details[]
   rdl_invoice                                                      rdl_invoice[]
@@ -1902,6 +1909,7 @@ model lc_master {
   company_id            Int?
   is_authorized         Boolean?               @default(false)
   approved_once         Boolean?               @default(false)
+  document_submissions  document_submissions[]
   factory_invoice       factory_invoice[]
   lc_amendment          lc_amendment[]
   lc_amendment_metadata lc_amendment_metadata?
@@ -2267,36 +2275,37 @@ model lc_transfer_history {
 }
 
 model factory_invoice {
-  id                           String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  factory_id                   Int
-  old_factory_id               Int?
-  invoice_no                   String                         @db.VarChar(50)
-  invoice_date                 DateTime?                      @default(dbgenerated("CURRENT_DATE")) @db.Date
-  term_id                      Int
-  sales_contract_id            String?                        @db.Uuid
-  old_sales_contract_id        Int?
-  lc_id                        String?                        @db.Uuid
-  old_lc_id                    Int?
-  remarks                      String?
-  old_pk                       Int?
-  added_at                     DateTime?                      @default(now()) @db.Timestamp(6)
-  discount                     Float?
-  buyer_id                     Int?
-  old_buyer_id                 Int?
-  shipment_mode                shipment_modes?
-  port_of_loading              Int?
-  freight_term_id              Int?
-  buyers                       buyers?                        @relation(fields: [buyer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  factories                    factories                      @relation(fields: [factory_id], references: [id], onUpdate: NoAction)
-  freight_term                 freight_term?                  @relation(fields: [freight_term_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  lc_master                    lc_master?                     @relation(fields: [lc_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  destinations                 destinations?                  @relation(fields: [port_of_loading], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  sales_contracts              sales_contracts?               @relation(fields: [sales_contract_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  terms                        terms                          @relation(fields: [term_id], references: [id], onUpdate: NoAction)
-  factory_invoice_consignee    factory_invoice_consignee[]
-  factory_invoice_details      factory_invoice_details[]
-  factory_invoice_notify_party factory_invoice_notify_party[]
-  rdl_invoice_details          rdl_invoice_details[]
+  id                                   String                                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  factory_id                           Int
+  old_factory_id                       Int?
+  invoice_no                           String                                 @db.VarChar(50)
+  invoice_date                         DateTime?                              @default(dbgenerated("CURRENT_DATE")) @db.Date
+  term_id                              Int
+  sales_contract_id                    String?                                @db.Uuid
+  old_sales_contract_id                Int?
+  lc_id                                String?                                @db.Uuid
+  old_lc_id                            Int?
+  remarks                              String?
+  old_pk                               Int?
+  added_at                             DateTime?                              @default(now()) @db.Timestamp(6)
+  discount                             Float?
+  buyer_id                             Int?
+  old_buyer_id                         Int?
+  shipment_mode                        shipment_modes?
+  port_of_loading                      Int?
+  freight_term_id                      Int?
+  document_submission_factory_invoices document_submission_factory_invoices[]
+  buyers                               buyers?                                @relation(fields: [buyer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  factories                            factories                              @relation(fields: [factory_id], references: [id], onUpdate: NoAction)
+  freight_term                         freight_term?                          @relation(fields: [freight_term_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  lc_master                            lc_master?                             @relation(fields: [lc_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  destinations                         destinations?                          @relation(fields: [port_of_loading], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sales_contracts                      sales_contracts?                       @relation(fields: [sales_contract_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  terms                                terms                                  @relation(fields: [term_id], references: [id], onUpdate: NoAction)
+  factory_invoice_consignee            factory_invoice_consignee[]
+  factory_invoice_details              factory_invoice_details[]
+  factory_invoice_notify_party         factory_invoice_notify_party[]
+  rdl_invoice_details                  rdl_invoice_details[]
 }
 
 model factory_invoice_details {
@@ -2383,30 +2392,31 @@ model factory_invoice_notify_party_history {
 }
 
 model rdl_invoice {
-  id                    String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  buyer_id              Int
-  term_id               Int?
-  invoice_no            String                @unique(map: "unique_rdl_invoice_no") @db.VarChar(50)
-  invoice_date          DateTime              @db.Date
-  sales_contract_id     String?               @db.Uuid
-  lc_id                 String?               @db.Uuid
-  invoice_type          Boolean?              @default(false)
-  pi_no                 String?               @db.VarChar(50)
-  old_buyer_id          Int?
-  old_sales_contract_id Int?
-  old_lc_id             Int?
-  added_at              DateTime?             @default(now()) @db.Timestamp(6)
-  old_pk                Int?
-  is_authorized         Boolean?              @default(false)
-  container_no          String?               @db.VarChar(100)
-  discount              Float?                @default(0)
-  remarks               String?
-  contact_no            String?               @db.VarChar(100)
-  buyers                buyers                @relation(fields: [buyer_id], references: [id], onUpdate: NoAction)
-  lc_master             lc_master?            @relation(fields: [lc_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  sales_contracts       sales_contracts?      @relation(fields: [sales_contract_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  terms                 terms?                @relation(fields: [term_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  rdl_invoice_details   rdl_invoice_details[]
+  id                           String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  buyer_id                     Int
+  term_id                      Int?
+  invoice_no                   String                         @unique(map: "unique_rdl_invoice_no") @db.VarChar(50)
+  invoice_date                 DateTime                       @db.Date
+  sales_contract_id            String?                        @db.Uuid
+  lc_id                        String?                        @db.Uuid
+  invoice_type                 Boolean?                       @default(false)
+  pi_no                        String?                        @db.VarChar(50)
+  old_buyer_id                 Int?
+  old_sales_contract_id        Int?
+  old_lc_id                    Int?
+  added_at                     DateTime?                      @default(now()) @db.Timestamp(6)
+  old_pk                       Int?
+  is_authorized                Boolean?                       @default(false)
+  container_no                 String?                        @db.VarChar(100)
+  discount                     Float?                         @default(0)
+  remarks                      String?
+  contact_no                   String?                        @db.VarChar(100)
+  document_submissions_details document_submissions_details[]
+  buyers                       buyers                         @relation(fields: [buyer_id], references: [id], onUpdate: NoAction)
+  lc_master                    lc_master?                     @relation(fields: [lc_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  sales_contracts              sales_contracts?               @relation(fields: [sales_contract_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  terms                        terms?                         @relation(fields: [term_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  rdl_invoice_details          rdl_invoice_details[]
 }
 
 model rdl_invoice_details {
@@ -2512,6 +2522,106 @@ model rdl_invoice_metadata {
   year     Int
 
   @@unique([buyer_id, year], map: "unique_rdl_invoice_buyer_ref_year")
+}
+
+model document_submission_factory_invoices {
+  id                                 String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  document_submissions_details_id    String                       @db.Uuid
+  factory_invoice_id                 String                       @db.Uuid
+  old_pk                             Int?
+  old_document_submission_details_id Int?
+  old_factory_invoice_id             Int?
+  added_at                           DateTime?                    @default(now()) @db.Timestamp(6)
+  factory_fdbc_no                    String?                      @db.VarChar(100)
+  document_submissions_details       document_submissions_details @relation(fields: [document_submissions_details_id], references: [id], onUpdate: NoAction, map: "document_submission_factory_i_document_submissions_details_fkey")
+  factory_invoice                    factory_invoice              @relation(fields: [factory_invoice_id], references: [id], onUpdate: NoAction)
+}
+
+model document_submission_factory_invoices_history {
+  id                                      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  document_submission_factory_invoices_id String?   @db.Uuid
+  document_submissions_details_id         String?   @db.Uuid
+  factory_invoice_id                      String?   @db.Uuid
+  action_type                             actions?
+  action_by                               String?   @db.Uuid
+  action_at                               DateTime? @default(now()) @db.Timestamp(6)
+  factory_fdbc_no                         String?   @db.VarChar(50)
+  users                                   users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model document_submissions {
+  id                           String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  term_id                      Int
+  buyer_id                     Int
+  submission_date              DateTime?                      @default(dbgenerated("CURRENT_DATE")) @db.Date
+  fdbc_no                      String?                        @db.VarChar(100)
+  fdbc_value                   Float?
+  fdbc_date                    DateTime?                      @db.Date
+  lc_id                        String?                        @db.Uuid
+  sales_contract_id            String?                        @db.Uuid
+  awb_no                       String?                        @db.VarChar(100)
+  courier_id                   Int?
+  added_at                     DateTime?                      @default(now()) @db.Timestamp(6)
+  old_pk                       Int?
+  old_buyer_id                 Int?
+  old_lc_id                    Int?
+  old_sales_contract_id        Int?
+  old_courier_id               Int?
+  awb_date                     DateTime?                      @db.Date
+  remarks                      String?
+  buyers                       buyers                         @relation(fields: [buyer_id], references: [id], onUpdate: NoAction)
+  couriers                     couriers?                      @relation(fields: [courier_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  lc_master                    lc_master?                     @relation(fields: [lc_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "document_submissions_lc_ic_fkey")
+  sales_contracts              sales_contracts?               @relation(fields: [sales_contract_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  terms                        terms                          @relation(fields: [term_id], references: [id], onUpdate: NoAction)
+  document_submissions_details document_submissions_details[]
+}
+
+model document_submissions_details {
+  id                                   String                                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  document_submissions_id              String                                 @db.Uuid
+  rdl_invoice_id                       String                                 @db.Uuid
+  old_pk                               Int?
+  old_document_submission_id           Int?
+  old_rdl_invoice_id                   Int?
+  added_at                             DateTime?                              @default(now()) @db.Timestamp(6)
+  quantity                             Int?
+  document_submission_factory_invoices document_submission_factory_invoices[]
+  document_submissions                 document_submissions                   @relation(fields: [document_submissions_id], references: [id], onUpdate: NoAction)
+  rdl_invoice                          rdl_invoice                            @relation(fields: [rdl_invoice_id], references: [id], onUpdate: NoAction)
+}
+
+model document_submissions_details_history {
+  id                              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  document_submissions_details_id String?   @db.Uuid
+  document_submissions_id         String?   @db.Uuid
+  rdl_invoice_id                  String?   @db.Uuid
+  action_type                     actions?
+  action_by                       String?   @db.Uuid
+  action_at                       DateTime? @default(now()) @db.Timestamp(6)
+  quantity                        Int?
+  users                           users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model document_submissions_history {
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  document_submission_id String?   @db.Uuid
+  lterm_id               Int?
+  buyer_id               Int?
+  submission_date        DateTime? @db.Date
+  fdbc_no                String?   @db.VarChar(100)
+  fdbc_value             Float?
+  fdbc_date              DateTime? @db.Date
+  lc_id                  String?   @db.Uuid
+  sales_contract_id      String?   @db.Uuid
+  awb_no                 String?   @db.VarChar(100)
+  courier_id             Int?
+  action_type            actions?
+  action_by              String?   @db.Uuid
+  action_at              DateTime? @default(now()) @db.Timestamp(6)
+  awb_date               DateTime? @db.Date
+  remarks                String?
+  users                  users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 enum actions {

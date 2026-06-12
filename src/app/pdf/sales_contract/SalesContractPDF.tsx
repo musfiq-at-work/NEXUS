@@ -126,6 +126,7 @@ const SalesContractPDF = ({ data }: { data: GetPDFDataOutput }) => {
                         style={styles.pageBackground}
                     />
                 )}
+
                 {/* Sales Contract ref and date */}
                 <View style={{marginTop: 15}}>
                     <View style={styles.doubleColumnContainer}>
@@ -250,6 +251,7 @@ const SalesContractPDF = ({ data }: { data: GetPDFDataOutput }) => {
                     }}>
                         THIS PURCHASE CONTRACT HAS BEEN MADE WITH BUYER AND SUPPLIER AS PER BELOW TERMS AND CONDITIONS:
                     </Text>
+                    
                     <View style={styles.doubleColumnContainer}>
                         <View style={{flex: 3, display: 'flex', flexDirection: 'column', gap: 2}}>
                             <Text style={styles.textBold}>NEGOTIATION:</Text>

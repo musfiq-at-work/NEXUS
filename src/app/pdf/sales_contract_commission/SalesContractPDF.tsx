@@ -4,7 +4,7 @@ import { PrintByAndDate, RenaissanceLogo, ReportTitle } from "../components";
 import { formatDate } from "~/utils/localDateString";
 import type { inferRouterOutputs } from '@trpc/server';
 import type { salesContractsRouter } from "~/server/api";
-import Table from "./components/Table";
+import SalesContractCommissionTable from "./components/Table";
 
 type RouterOutput = inferRouterOutputs<typeof salesContractsRouter>;
 
@@ -30,7 +30,7 @@ const SalesContractPDF = ({ data }: { data: GetPDFDataOutput }) => {
 				<ReportTitle title="SALES CONTRACT COMMISSION" />
 
                 {/* Sales Contract ref and date */}
-                <View style={{marginTop: 15}}>
+                <View style={{marginTop: 15, marginBottom: 10}}>
                     <View style={styles.doubleColumnContainer}>
                         <Text style={{...styles.textBold, flex: 3}}>
                             SALES CONTRACT NO: {data.pdfHeader?.sales_contract_no}
@@ -51,7 +51,7 @@ const SalesContractPDF = ({ data }: { data: GetPDFDataOutput }) => {
                 </View>
 
                 {!data.hasAmendment && (
-                    <Table data={data.nonAmendData ?? []} />
+                    <SalesContractCommissionTable data={data.nonAmendData ?? []} />
                 )}
 
                 {data.hasAmendment && (
@@ -62,7 +62,13 @@ const SalesContractPDF = ({ data }: { data: GetPDFDataOutput }) => {
 
                         const row = { ...amendment, ref_no: amendment.ref_no ?? "", shipment_details };
 
-                        return <Table key={index} data={[row]} amendment_no={amendment.amendment_no ?? undefined} amendment_date={amendment.amendment_date} />;
+                        return (
+                            <SalesContractCommissionTable key={index} 
+                                data={[row]} 
+                                amendment_no={amendment.amendment_no ?? undefined} 
+                                amendment_date={amendment.amendment_date} 
+                            />
+                        );
                     })
                 )}
 

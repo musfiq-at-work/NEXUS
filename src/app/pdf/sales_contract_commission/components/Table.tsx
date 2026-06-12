@@ -1,6 +1,6 @@
 import { Text, View } from "@react-pdf/renderer";
 import { useMemo } from "react";
-import { registerPdfFonts, styles, tableBorderColor } from "../../components/pdfConfig";
+import { styles, tableBorderColor } from "../../components/pdfConfig";
 import type { inferRouterOutputs } from '@trpc/server';
 import type { salesContractsRouter } from "~/server/api";
 import { formatDate } from "~/utils/localDateString";
@@ -50,7 +50,13 @@ const TableHeaders = ({ tableColumns }: { tableColumns: TableColumns }) => {
     )
 }
 
-const Table = ({data, amendment_no, amendment_date}: { data: GetPDFDataOutput,  amendment_no?: number, amendment_date?: Date }) => {
+interface SalesContractCommissionTableProps {
+    data: GetPDFDataOutput;
+    amendment_no?: number;
+    amendment_date?: Date;
+}
+
+const SalesContractCommissionTable = ({data, amendment_no, amendment_date}: SalesContractCommissionTableProps) => {
     const tableColumns = useMemo(() => [
         { key: 'style', label: 'Style', width: 123.3 },
         { key: 'buyer_po', label: 'PO', width: 123.3 },
@@ -77,51 +83,51 @@ const Table = ({data, amendment_no, amendment_date}: { data: GetPDFDataOutput,  
     };
 
     const useFlattenedRows = (orderData: GetPDFDataOutput) => {
-            return useMemo(() => {
-                const rows: FlatRow[] = [];
-    
-                for (const order of orderData ?? []) {
-                // Reference row
+        return useMemo(() => {
+            const rows: FlatRow[] = [];
+
+            for (const order of orderData ?? []) {
+            // Reference row
+                rows.push({
+                    type: "ref",
+                    ref_no: order.ref_no ?? '',
+                });
+
+                // Shipment rows
+                for (const shipment of order.shipment_details ?? []) {
                     rows.push({
-                        type: "ref",
-                        ref_no: order.ref_no ?? '',
-                    });
-    
-                    // Shipment rows
-                    for (const shipment of order.shipment_details ?? []) {
-                        rows.push({
-                            type: "shipment",
-                            data: {
-                                ...shipment,
-                                style: String(shipment.style ?? ""),
-                                buyer_po: String(shipment.buyer_po ?? ""),
-                                quantity: String(shipment.quantity ?? ""),
-                                fob_rate: String(shipment.fob_rate ?? ""),
-                                rdl_value: String(shipment.rdl_value ?? ""),
-                                factory_rate: String(shipment.factory_rate ?? ""),
-                                factory_value: String(shipment.factory_value ?? ""),
-                                commissionValue: String(shipment.commissionValue ?? ""),
-                                commissionPercentage: String(shipment.commissionPercentage ?? ""),
-                                overseasCommission: String(shipment.overseasCommission ?? ""),
-                                othersCommission: String(shipment.othersCommission ?? ""),
-                                dhakaCommission: String(shipment.dhakaCommission ?? ""),
-                            },
-                        });
-                    }
-    
-                    // Subtotal row
-                    rows.push({
-                        type: "subtotal",
-                        results: order.results,
+                        type: "shipment",
+                        data: {
+                            ...shipment,
+                            style: String(shipment.style ?? ""),
+                            buyer_po: String(shipment.buyer_po ?? ""),
+                            quantity: String(shipment.quantity ?? ""),
+                            fob_rate: String(shipment.fob_rate ?? ""),
+                            rdl_value: String(shipment.rdl_value ?? ""),
+                            factory_rate: String(shipment.factory_rate ?? ""),
+                            factory_value: String(shipment.factory_value ?? ""),
+                            commissionValue: String(shipment.commissionValue ?? ""),
+                            commissionPercentage: String(shipment.commissionPercentage ?? ""),
+                            overseasCommission: String(shipment.overseasCommission ?? ""),
+                            othersCommission: String(shipment.othersCommission ?? ""),
+                            dhakaCommission: String(shipment.dhakaCommission ?? ""),
+                        },
                     });
                 }
+
+                // Subtotal row
+                rows.push({
+                    type: "subtotal",
+                    results: order.results,
+                });
+            }
+
+            return rows;
+        }, [orderData]);
+    };
     
-                return rows;
-            }, [orderData]);
-        };
-    
-        const columnStyles = useColumnStyles(tableColumns);
-        const flattenedRows = useFlattenedRows(data);
+    const columnStyles = useColumnStyles(tableColumns);
+    const flattenedRows = useFlattenedRows(data);
 
     return (
         <View style={{...styles.tableContainer, marginTop: 10}}>
@@ -152,7 +158,8 @@ const Table = ({data, amendment_no, amendment_date}: { data: GetPDFDataOutput,  
                     return (
                         <View key={`ref-${index}`} style={rowStyle} wrap={false}>
                             <Text style={styles.salesContractOrderRefs}
-                                {...({ bookmark: row.ref_no } as any)} // Types are outdates in @react-pdf/renderer, so we have to cast it as any
+                                // Types are outdates in @react-pdf/renderer, so we have to cast it as any
+                                {...({ bookmark: row.ref_no } as any)} 
                             >
                                 {row.ref_no}
                             </Text>
@@ -161,12 +168,11 @@ const Table = ({data, amendment_no, amendment_date}: { data: GetPDFDataOutput,  
                 }
 
                 // SHIPMENT ROW
-                if (row.type === "shipment") {
+                else if (row.type === "shipment") {
                     return (
                         <View key={`ship-${index}`} style={styles.row} wrap={false}>
                         {tableColumns.map((column, i) => (
                             <View key={column.key} style={{...columnStyles[i], flexWrap: "wrap"}}>
-                                {/* <Text>{row.data[column.key]}</Text> */}
                                 {row.data[column.key]?.split("").map((s: string, idx: number) => {
                                     return <Text key={idx}>{s}</Text>
                                 })}
@@ -177,7 +183,7 @@ const Table = ({data, amendment_no, amendment_date}: { data: GetPDFDataOutput,  
                 }
 
                 // SUBTOTAL ROW
-                if (row.type === "subtotal") {
+                else if (row.type === "subtotal") {
                     return (
                         <View
                             key={`sub-${index}`}
@@ -237,4 +243,4 @@ const Table = ({data, amendment_no, amendment_date}: { data: GetPDFDataOutput,  
     )
 }
 
-export default Table;
+export default SalesContractCommissionTable;
