@@ -401,7 +401,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                 if (!can_view) {
                     throw new TRPCError({ 
                         code: 'FORBIDDEN', 
-                        message: "You don't have permission to view LC and Sales Contract details." 
+                        message: "You don't have permission to view RDL Invoices." 
                     });
                 }
 
@@ -421,32 +421,62 @@ export const rdlInvoiceRouter = createTRPCRouter({
 
                 if (terms.name.toLowerCase() === 'tt') {
                     scLcList = await ctx.db.$queryRaw<{ id: string, sc_lc_no: string }[]>`
+                        WITH SC_EXFACTORY AS (
+                            SELECT 
+                                FID.factory_invoice_id AS FID,
+                                SUM(ES.DELIVERY_QUANTITY) AS EF_QUANTITY
+                            FROM factory_invoice_details AS FID
+                            INNER JOIN exfactory_shipments AS ES ON ES.id = FID.exfactory_shipment_id
+                            GROUP BY FID.factory_invoice_id
+                        ),
+                        IN_RDL_INVOICE AS (
+                            SELECT 
+                                RID.factory_invoice_id AS FID,
+                                SUM(RISD.INVOICE_QUANTITY) AS RDL_QUANTITY
+                            FROM rdl_invoice_details AS RID
+                            INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
+                            GROUP BY RID.factory_invoice_id
+                        )
                         SELECT DISTINCT
                             SC.ID,
                             SC.SALES_CONTRACT_NO AS SC_LC_NO
                         FROM sales_contracts AS SC
                             INNER JOIN factory_invoice AS FI ON FI.sales_contract_id = SC.id
-                        WHERE NOT EXISTS (
-                            SELECT 1
-                            FROM rdl_invoice_details AS RID
-                            WHERE RID.FACTORY_INVOICE_ID = FI.ID
-                        )
-                        AND SC.buyer_id = ${input.buyer_id}
+                            INNER JOIN SC_EXFACTORY AS E ON E.FID = FI.id
+                            LEFT JOIN IN_RDL_INVOICE AS R ON R.FID = FI.id
+                        WHERE SC.buyer_id = ${input.buyer_id}
+                        GROUP BY SC.ID
+                        HAVING SUM(E.EF_QUANTITY) < SUM(R.RDL_QUANTITY);
                     `;
                 }
                 else {
                     scLcList = await ctx.db.$queryRaw<{ id: string, sc_lc_no: string }[]>`
+                        WITH LC_EXFACTORY AS (
+                            SELECT 
+                                FID.factory_invoice_id AS FID,
+                                SUM(ES.DELIVERY_QUANTITY) AS EF_QUANTITY
+                            FROM factory_invoice_details AS FID
+                            INNER JOIN exfactory_shipments AS ES ON ES.id = FID.exfactory_shipment_id
+                            GROUP BY FID.factory_invoice_id
+                        ),
+                        IN_RDL_INVOICE AS (
+                            SELECT 
+                                RID.factory_invoice_id AS FID,
+                                SUM(RISD.INVOICE_QUANTITY) AS RDL_QUANTITY
+                            FROM rdl_invoice_details AS RID
+                            INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
+                            GROUP BY RID.factory_invoice_id
+                        )
                         SELECT DISTINCT
                             LC.id,
                             LC.lc_no AS SC_LC_NO
                         FROM lc_master AS LC
                             INNER JOIN factory_invoice AS FI ON FI.lc_id = LC.id
-                        WHERE NOT EXISTS (
-                            SELECT 1
-                            FROM rdl_invoice_details AS RID
-                            WHERE RID.FACTORY_INVOICE_ID = FI.ID
-                        )
-                        AND LC.buyer_id = ${input.buyer_id}
+                            INNER JOIN LC_EXFACTORY AS E ON E.FID = FI.id
+                            LEFT JOIN IN_RDL_INVOICE AS R ON R.FID = FI.id
+                        WHERE LC.buyer_id = ${input.buyer_id}
+                        GROUP BY LC.ID
+                        HAVING SUM(E.EF_QUANTITY) < SUM(R.RDL_QUANTITY);
                     `;
                 }
 
@@ -671,13 +701,13 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         AND (
                             CRID.ID IS NOT NULL
                             OR PI.FACTORY_INVOICE_ID IS NULL
-                            OR PI.PREVIOUS_QUANTITY < I.TOTAL_QUANTITY
+                            OR COALESCE(PI.PREVIOUS_QUANTITY, 0) < I.TOTAL_QUANTITY
                         )
                     `
                     : Prisma.sql`
                         AND (
                             PI.FACTORY_INVOICE_ID IS NULL
-                            OR PI.PREVIOUS_QUANTITY < I.TOTAL_QUANTITY
+                            OR COALESCE(PI.PREVIOUS_QUANTITY, 0) < I.TOTAL_QUANTITY
                         )
                     `;
 

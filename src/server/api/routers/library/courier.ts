@@ -280,4 +280,14 @@ export const courierRouter = createTRPCRouter({
 
         return { couriers, total };
     }),
+
+    getAllCouriers: protectedProcedure.query(async ({ ctx }) => {
+        return await ctx.db.couriers.findMany({
+            orderBy: { added_at: 'desc' },
+            select: {
+                id: true,
+                name: true
+            },
+        });
+    }),
 });

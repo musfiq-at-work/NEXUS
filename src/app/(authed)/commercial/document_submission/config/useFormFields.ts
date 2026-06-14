@@ -1,9 +1,8 @@
 import { api } from "~/trpc/react";
-import type { RDLInvoiceFormValues } from "./formSchema";
+import type { DocumentSubmissionFormValues } from "./formSchema";
 import type { BaseField } from "~/types/form";
-import { skipToken } from "@tanstack/react-query";
 
-export type Field<T extends keyof RDLInvoiceFormValues> = BaseField<T>;
+export type Field<T extends keyof DocumentSubmissionFormValues> = BaseField<T>;
 
 interface LCListItem {
     id: string;
@@ -15,15 +14,18 @@ interface PropsType {
     isEdit: boolean;
 }
 
-export const useFormFields = ({lcList, isEdit}: PropsType): Field<keyof RDLInvoiceFormValues>[] => {
+export const useFormFields = ({lcList, isEdit}: PropsType): Field<keyof DocumentSubmissionFormValues>[] => {
     const terms = api.terms.getAllTerms.useQuery().data ?? [];
     const buyers = api.buyers.getAllBuyersByTeam.useQuery().data ?? [];
+    const couriers = api.courier.getAllCouriers.useQuery().data ?? [];
 
     return [
         {
-            name: "invoice_no",
-            label: "Invoice No",
-            type: "text",
+            name: "term_id",
+            label: "Select Payment Term",
+            placeholder: "Select payment term",
+            type: "select",
+            options: terms.map((term) => ({ label: term.name, value: term.id })),
             disabled: isEdit,
             optional: isEdit,
         },
@@ -36,13 +38,30 @@ export const useFormFields = ({lcList, isEdit}: PropsType): Field<keyof RDLInvoi
             optional: isEdit,
         },
         {
-            name: "term_id",
-            label: "Select Payment Term",
-            placeholder: "Select payment term",
-            type: "select",
-            options: terms.map((term) => ({ label: term.name, value: term.id })),
+            name: "submission_date",
+            label: "Submission Date",
+            type: "date",
             disabled: isEdit,
+            optional: isEdit
+        },
+        {
+            name: "fdbc_no",
+            label: "FDBC/TT No",
+            type: "text",
             optional: isEdit,
+            disabled: isEdit
+        },
+        {
+            name: "fdbc_value",
+            label: "FDBC/TT Value",
+            type: "number",
+            optional: true,
+        },
+        {
+            name: "fdbc_date",
+            label: "FDBC/TT Date",
+            type: "date",
+            optional: true,
         },
         {
             name: "lc_sc_id",
@@ -53,71 +72,22 @@ export const useFormFields = ({lcList, isEdit}: PropsType): Field<keyof RDLInvoi
             optional: isEdit
         },
         {
-            name: "invoice_date",
-            label: "Invoice Date",
+            name: "awb_no",
+            label: "AWB No",
+            type: "text",
+            optional: true,
+        },
+        {
+            name: "awb_date",
+            label: "AWB Date",
             type: "date",
-            disabled: isEdit,
-            optional: isEdit
+            optional: true,
         },
         {
-            name: "invoice_type",
-            label: "Invoice Type",
+            name: 'courier_id',
+            label: 'Courier',
             type: "select",
-            options: [
-                { label: "Single", value: false },
-                { label: "Club", value: true }
-            ],
-        },
-        {
-            name: "pi_no",
-            label: "PI No",
-            type: "text",
-            optional: true,
-        },
-        {
-            name: "container_no",
-            label: "Container No",
-            type: "text",
-            optional: true,
-        },
-        {
-            name: "contact_no",
-            label: "Contact No",
-            type: "text",
-            optional: true,
-        },
-        {
-            name: "invoice_quantity",
-            label: "Shipment Quantity (Auto)",
-            placeholder: "Auto calculated total quantity for the invoice",
-            optional: true,
-            disabled: true,
-        },
-        {
-            name: "invoice_value",
-            label: "Shipment Value (Auto)",
-            placeholder: "Auto calculated total value for the invoice",
-            optional: true,
-            disabled: true,
-        },
-        {
-            name: "discount",
-            label: "Discount",
-            type: "number",
-            placeholder: "Enter discount amount",
-            optional: true,
-        },
-        {
-            name: "total_value",
-            label: "Total Value (Auto)",
-            placeholder: "Auto calculated total value after discount",
-            optional: true,
-            disabled: true,
-        },
-        {
-            name: "remarks",
-            label: "Remarks",
-            placeholder: "Enter remarks",
+            options: couriers.map((courier) => ({ label: courier.name, value: courier.id })),
             optional: true,
         },
     ]

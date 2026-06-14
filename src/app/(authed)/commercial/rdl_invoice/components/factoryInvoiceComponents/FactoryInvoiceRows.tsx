@@ -59,8 +59,6 @@ const FactoryInvoiceRow = (props: Props) => {
 
     const selectedFactoryInvoiceNo = factoryInvoices?.find(invoice => invoice.id === selectedFactoryInvoice)?.invoice_no;
 
-    // const isEdit = useWatch({ control: methods.control, name: `details.${index}.db_id` }) !== undefined;
-
     useEffect(() => {
         if (!selectedFactoryInvoice || !factoryInvoices) return;
 

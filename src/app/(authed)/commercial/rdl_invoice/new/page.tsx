@@ -25,7 +25,10 @@ const NewRDLInvoicePage = () => {
         onSuccess: async () => {
             setError(null);
             toast.success("RDL Invoice added successfully!");
-            await utils.rdlInvoice.getRdlInvoice.invalidate();
+            await Promise.all([
+                utils.rdlInvoice.getRdlInvoice.invalidate(),
+                utils.rdlInvoice.searchRdlInvoices.invalidate()
+            ]);
         }
     });
 

@@ -131,15 +131,6 @@ export const useRDLInvoiceForm = (initialData?: GetRdlInvoiceByIdTypes) => {
     );
 
     useEffect(() => {
-        if (invoiceNoValue && invoiceNoValue !== invoiceNoValue.toUpperCase()) {
-            setValue("invoice_no", invoiceNoValue.toUpperCase(), {
-                shouldValidate: true,
-                shouldDirty: true,
-            });
-        }
-    }, [invoiceNoValue, setValue]);
-
-    useEffect(() => {
         methods.setValue("invoice_quantity", invoiceQuantity ? invoiceQuantity.toString() : "0");
         methods.setValue("invoice_value", invoiceValue ? invoiceValue.toFixed(2) : "0.00");
         methods.setValue("total_value", totalValue.toFixed(2));
