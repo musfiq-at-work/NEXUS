@@ -595,12 +595,12 @@ export const factoryInvoiceRouter = createTRPCRouter({
                             SUM(SID.QUANTITY) AS ORDER_QUANTITY,
                             EFSD.DELIVERY_QUANTITY,
                             CASE
-                                WHEN FSD.TRANSFER_RATE <> 0	
+                                WHEN COALESCE(FSD.TRANSFER_RATE, 0) <> 0	
                                     THEN FSD.TRANSFER_RATE
                                 ELSE FSD.FACTORY_RATE
                             END AS FACTORY_FOB,
                             CASE
-                                WHEN FSD.TRANSFER_RATE <> 0	
+                                WHEN COALESCE(FSD.TRANSFER_RATE, 0) <> 0	
                                     THEN FSD.TRANSFER_RATE * SUM(SID.QUANTITY)
                                 ELSE FSD.FACTORY_RATE * SUM(SID.QUANTITY)
                             END AS FACTORY_VALUE
@@ -672,12 +672,12 @@ export const factoryInvoiceRouter = createTRPCRouter({
                         SUM(SID.QUANTITY) AS ORDER_QUANTITY,
                         EFSD.DELIVERY_QUANTITY AS DELIVERY_QUANTITY,
                         CASE
-                            WHEN FSD.TRANSFER_RATE <> 0
+                            WHEN COALESCE(FSD.TRANSFER_RATE, 0) <> 0
                                 THEN FSD.TRANSFER_RATE
                             ELSE FSD.FACTORY_RATE
                         END AS FACTORY_FOB,
                         CASE
-                            WHEN FSD.TRANSFER_RATE <> 0
+                            WHEN COALESCE(FSD.TRANSFER_RATE, 0) <> 0
                                 THEN FSD.TRANSFER_RATE * SUM(SID.QUANTITY)
                             ELSE FSD.FACTORY_RATE * SUM(SID.QUANTITY)
                         END AS FACTORY_VALUE

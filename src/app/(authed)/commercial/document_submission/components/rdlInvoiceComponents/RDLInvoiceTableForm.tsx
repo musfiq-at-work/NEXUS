@@ -10,10 +10,13 @@ import Image from "next/image";
 import type { DocumentSubmissionFormValues } from "../../config/formSchema";
 import FactoryInvoiceRows from "./RDLInvoiceRows";
 
+type RdlInvoiceArrayPath = "rdlInvoices";
+type RdlInvoiceRowValues = FieldArrayWithId<DocumentSubmissionFormValues, RdlInvoiceArrayPath>;
+
 type Props = {
     isLoading?: boolean;
-    columns: TableHeaderType<FieldArrayWithId<DocumentSubmissionFormValues>>[];
-    rows: FieldArrayWithId<DocumentSubmissionFormValues>[];
+    columns: TableHeaderType<RdlInvoiceRowValues>[];
+    rows: RdlInvoiceRowValues[];
     disabled?: boolean;
     addRow: () => void;
     removeRow: (index: number) => void;

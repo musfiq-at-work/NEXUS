@@ -24,7 +24,17 @@ interface RDLInvoice {
     invoice_no: string,
     total_quantity: bigint,
     total_value: bigint,
+    invoice_date: Date,
     previous_quantity: bigint,
+}
+
+interface FactoryInvoiceDetails {
+    factory_name: string,
+    factory_invoice_id: string,
+    factory_invoice_no: string,
+    invoice_date: Date,
+    factory_invoice_value: bigint,
+    quantity: bigint,
 }
 
 export const documentSubmissionRouter = createTRPCRouter({
@@ -544,6 +554,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                     SELECT
                         RI.ID,
                         RI.INVOICE_NO,
+                        RI.INVOICE_DATE,
                         SUM(RISD.INVOICE_QUANTITY) AS TOTAL_QUANTITY,
 	                    SUM(RISD.INVOICE_QUANTITY * SD.fob_rate) AS TOTAL_VALUE,
                         IDS.PREVIOUS_QUANTITY AS PREVIOUS_QUANTITY
@@ -560,6 +571,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                 const rdlInvoice = rdlInvoicesList.map((invoice) => ({
                     id: invoice.id,
                     invoice_no: invoice.invoice_no,
+                    invoice_date: invoice.invoice_date,
                     total_quantity: Number(invoice.total_quantity),
                     total_value: Number(invoice.total_value),
                     previous_quantity: Number(invoice.previous_quantity || 0),
@@ -571,4 +583,157 @@ export const documentSubmissionRouter = createTRPCRouter({
                 handlePrismaError(error);
             }
         }),
+
+    deleteRdlInvoice: protectedProcedure
+        .input(z.object({
+            db_id: z.string(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            try {
+                const can_delete = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_delete;
+
+                if (!can_delete) {
+                    throw new TRPCError({ 
+                        code: 'FORBIDDEN', 
+                        message: "You do not have permission to delete RDL Invoices from document submissions." 
+                    });
+                }
+
+                return await ctx.db.$transaction(async (tx) => {
+                    const deletedRdlInvoice = await tx.document_submissions_details.delete({
+                        where: {
+                            id: input.db_id
+                        }
+                    });
+
+                    await tx.document_submissions_details_history.create({
+                        data: {
+                            document_submissions_details_id: deletedRdlInvoice.id,
+                            document_submissions_id: deletedRdlInvoice.document_submissions_id,
+                            rdl_invoice_id: deletedRdlInvoice.rdl_invoice_id,
+                            quantity: deletedRdlInvoice.quantity,
+                            action_type: actions.DELETE,
+                            action_by: ctx.user.id,
+                        }
+                    });
+
+                    const relatedFactoryInvoices = await tx.document_submission_factory_invoices.findMany({
+                        where: {
+                            document_submissions_details_id: input.db_id
+                        }
+                    });
+
+                    await tx.document_submission_factory_invoices.deleteMany({
+                        where: {
+                            document_submissions_details_id: input.db_id
+                        }
+                    });
+
+                    await tx.document_submission_factory_invoices_history.createMany({
+                        data: relatedFactoryInvoices.map(invoice => ({
+                            document_submission_factory_invoices_id: invoice.id,
+                            document_submission_details_id: invoice.document_submissions_details_id,
+                            factory_invoice_id: invoice.factory_invoice_id,
+                            action_type: actions.DELETE,
+                            action_by: ctx.user.id,
+                        }))
+                    });
+
+                    return deletedRdlInvoice;
+                });
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    getRdlInvoiceDetails: protectedProcedure
+        .input(z.object({
+            rdl_invoice_id: z.string(),
+        }))
+        .query(async ({ ctx, input }) => {
+            try {
+                const can_view = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_view;
+
+                if (!can_view) {
+                    throw new TRPCError({ 
+                        code: 'FORBIDDEN', 
+                        message: "You don't have permission to view Document Submissions." 
+                    });
+                }
+
+                const result = await ctx.db.$queryRaw<FactoryInvoiceDetails[]>`
+                    SELECT 
+                        F.NAME AS FACTORY_NAME,
+                        FI.ID AS FACTORY_INVOICE_ID,
+                        FI.INVOICE_NO AS FACTORY_INVOICE_NO,
+                        FI.INVOICE_DATE AS INVOICE_DATE,
+                        CASE
+                            WHEN COALESCE(FSD.TRANSFER_RATE, 0) <> 0	
+                                THEN FSD.TRANSFER_RATE * RISD.INVOICE_QUANTITY
+                            ELSE FSD.FACTORY_RATE * RISD.INVOICE_QUANTITY
+                        END AS FACTORY_INVOICE_VALUE,
+                        RISD.INVOICE_QUANTITY AS QUANTITY
+                    FROM rdl_invoice AS RI
+                        INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
+                        INNER JOIN FACTORY_INVOICE AS FI ON FI.id = RID.factory_invoice_id
+                        INNER JOIN factories AS F ON F.id = FI.factory_id
+                        INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
+                        INNER JOIN SHIPMENT_DETAILS AS SD ON SD.id = RISD.shipment_details_id
+                        INNER JOIN FACTORY_SHIPMENT_DETAILS AS FSD ON FSD.shipment_detail_id = SD.id
+                    WHERE RI.ID = ${input.rdl_invoice_id};
+                `;
+
+                const factoryInvoices = result.map(item => ({
+                    factory_name: item.factory_name,
+                    factory_invoice_id: item.factory_invoice_id,
+                    factory_invoice_no: item.factory_invoice_no,
+                    invoice_date: item.invoice_date,
+                    factory_invoice_value: Number(item.factory_invoice_value),
+                    quantity: Number(item.quantity),
+                }));
+
+                return factoryInvoices;
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
 })
+
+
+/**
+    WITH EXFACTORY_INFO AS (
+        SELECT
+            ES.ID AS EID,
+            CASE
+                WHEN COALESCE(FSD.TRANSFER_RATE, 0) <> 0	
+                    THEN FSD.TRANSFER_RATE * ES.DELIVERY_QUANTITY
+                ELSE FSD.FACTORY_RATE * ES.DELIVERY_QUANTITY
+            END AS FACTORY_VALUE,
+            ES.DELIVERY_QUANTITY
+        FROM EXFACTORY_SHIPMENTS AS ES
+            INNER JOIN SHIPMENT_DETAILS AS SD ON SD.id = ES.shipment_details_id
+            INNER JOIN FACTORY_SHIPMENT_DETAILS AS FSD ON FSD.shipment_detail_id = SD.id
+    ),
+    FACTORY_INVOICES AS (
+        SELECT
+            FI.ID AS FACTORY_INVOICE_ID,
+            F.NAME AS FACTORY_NAME,
+            FI.INVOICE_NO AS FACTORY_INVOICE_NO,
+            FI.INVOICE_DATE AS INVOICE_DATE,
+            SUM(E.DELIVERY_QUANTITY) AS QUANTITY,
+            SUM(E.FACTORY_VALUE) AS FACTORY_INVOICE_VALUE
+        FROM factory_invoice AS FI
+            INNER JOIN factory_invoice_details AS FID ON FID.factory_invoice_id = FI.id
+            INNER JOIN factories AS F ON F.id = FI.factory_id
+            INNER JOIN EXFACTORY_INFO AS E ON E.EID = FID.exfactory_shipment_id
+        GROUP BY FI.ID, F.ID
+    )
+    SELECT 
+        FI.*
+    FROM rdl_invoice AS RI
+        INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
+        INNER JOIN FACTORY_INVOICES AS FI ON FI.FACTORY_INVOICE_ID = RID.factory_invoice_id
+    WHERE RI.ID = ${input.rdl_invoice_id};
+ */

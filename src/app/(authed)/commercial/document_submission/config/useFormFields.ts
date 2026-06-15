@@ -61,7 +61,6 @@ export const useFormFields = ({lcList, isEdit}: PropsType): Field<keyof Document
             name: "fdbc_date",
             label: "FDBC/TT Date",
             type: "date",
-            optional: true,
         },
         {
             name: "lc_sc_id",

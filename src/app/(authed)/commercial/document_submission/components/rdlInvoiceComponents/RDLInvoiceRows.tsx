@@ -6,7 +6,8 @@ import React, { useEffect } from "react";
 import { api } from "~/trpc/react";
 import { skipToken } from "@tanstack/react-query";
 import { safeNumber } from "~/utils/numbers";
-// import ShipmentDetails from "../shipmentComponents/ShipmentDetails";
+import FactoryInvoiceDetails from "../factoryInvoiceComponents/FactoryInvoiceDetails";
+import { formatDate } from "~/utils/localDateString";
 
 type Props = {
     register: ReturnType<typeof useDocumentSubmissionForm>['methods']['register'];
@@ -57,6 +58,8 @@ const RdlInvoiceRow = (props: Props) => {
         name: `rdlInvoices.${index}.rdl_invoice_id`,
     });
 
+    const selectedRdlInvoiceNo = rdlInvoices?.find(invoice => invoice.id === selectedRDLInvoice)?.invoice_no;
+
     useEffect(() => {
         if (!selectedRDLInvoice || !rdlInvoices) return;
 
@@ -83,6 +86,12 @@ const RdlInvoiceRow = (props: Props) => {
             invoice.previous_quantity.toFixed(2),
             { shouldDirty: true }
         );
+
+        methods.setValue(
+            `rdlInvoices.${index}.invoice_date`,
+            invoice.invoice_date ? formatDate(invoice.invoice_date): undefined,
+            { shouldDirty: true }
+        );
     }, [selectedRDLInvoice, rdlInvoices, index, methods]);
 
     return (
@@ -98,16 +107,16 @@ const RdlInvoiceRow = (props: Props) => {
                 index={index}
             />
 
-            {/* {!!selectedFactoryInvoiceNo && 
-                <Portal containerId="rdl_invoice_shipment_details_portal">
-                    <ShipmentDetails invoiceIndex={index} 
+            {!!selectedRdlInvoiceNo && (
+                <Portal containerId="document_submissions_rdl_invoice_portal">
+                    <FactoryInvoiceDetails invoiceIndex={index} 
                         methods={methods} 
                         validationError={validationError}
                         disabled={disabled}
-                        selectedFactoryInvoiceNo={selectedFactoryInvoiceNo}
+                        selectedRdlInvoiceNo={selectedRdlInvoiceNo}
                     />
                 </Portal>
-            } */}
+            )}
         </>
     );
 }

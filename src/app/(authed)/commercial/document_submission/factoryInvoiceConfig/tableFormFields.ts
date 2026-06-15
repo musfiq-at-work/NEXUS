@@ -3,20 +3,8 @@ import type { FactoryInvoiceDetailsFormValues } from "../config/formSchema";
 
 export type Field<T extends keyof FactoryInvoiceDetailsFormValues> = BaseField<T>;
 
-interface RDLInvoiceProp {
-    id: string, 
-    invoice_no: string
-};
-
-export const formFields = ({rdlInvoice}: {rdlInvoice: RDLInvoiceProp[] | undefined}): Field<keyof FactoryInvoiceDetailsFormValues>[] => {
+export const formFields = (): Field<keyof FactoryInvoiceDetailsFormValues>[] => {
     return [
-        {
-            name: "factory_invoice_id",
-            label: "Factory Invoice",
-            placeholder: "Select Factory invoice",
-            type: "select",
-            options: rdlInvoice?.map((f) => ({ label: f.invoice_no, value: f.id.toString() })) ?? [],
-        },
         {
             name: 'factory_name',
             label: 'Factory Name',
@@ -35,8 +23,6 @@ export const formFields = ({rdlInvoice}: {rdlInvoice: RDLInvoiceProp[] | undefin
             name: "factory_fdbc_no",
             label: "Factory FDBC No",
             placeholder: "Enter factory FDBC number",
-            disabled: true,
-            optional: true,
         },
         {
             name: "factory_invoice_date",
@@ -49,7 +35,13 @@ export const formFields = ({rdlInvoice}: {rdlInvoice: RDLInvoiceProp[] | undefin
             name: "quantity",
             label: "Quantity",
             placeholder: "Enter quantity",
-            type: "number",
+            disabled: true,
+            optional: true,
+        },
+        {
+            name: "factory_invoice_value",
+            label: "Factory Invoice Value",
+            placeholder: "Enter factory invoice value",
             disabled: true,
             optional: true,
         },

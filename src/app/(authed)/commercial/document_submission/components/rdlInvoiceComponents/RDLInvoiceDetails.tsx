@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { parseTRPCError } from "~/utils/parseTRPCError";
 import React, { useCallback } from "react";
 
+type RdlInvoiceRowValues = NonNullable<DocumentSubmissionFormValues["rdlInvoices"]>[number];
+
 type Props = {
     methods: ReturnType<typeof useDocumentSubmissionForm>['methods'];
     validationError: FieldErrors<DocumentSubmissionFormValues>;
@@ -17,7 +19,7 @@ type Props = {
 const RdlInvoiceDetails = ({ methods, validationError, disabled = false }: Props) => {
     const { 
         fields: rdlInvoiceFields, append: addRdlInvoice, remove: removeRdlInvoice,
-    } = useFieldArray<DocumentSubmissionFormValues>({
+    } = useFieldArray<DocumentSubmissionFormValues, "rdlInvoices">({
         control: methods.control,
         name: "rdlInvoices",
     });
@@ -25,35 +27,37 @@ const RdlInvoiceDetails = ({ methods, validationError, disabled = false }: Props
     const utils = api.useUtils();
 
     const AddRdlInvoiceRow = useCallback(() => {
-        addRdlInvoice({
+        const newRow: RdlInvoiceRowValues = {
             db_id: undefined,
-            rdl_invoice_id: undefined,
+            rdl_invoice_id: "",
             rdl_invoice_no: undefined,
             quantity: undefined,
             rdl_value: undefined,
             received_rdl_value: undefined,
             previously_received_rdl_value: undefined,
             factoryInvoices: [],
-        });
+        };
+
+        addRdlInvoice(newRow);
     }, [addRdlInvoice]);
 
-    // const deleteRdlInvoiceMutation = api.rdlInvoice.deleteRdlInvoice.useMutation({
-    //     onSuccess: async () => {
-    //         toast.success("RDL Invoice deleted successfully!");
-    //         await Promise.all([
-    //             utils.rdlInvoice.getRdlInvoice.invalidate(),
-    //             utils.rdlInvoice.getRdlInvoiceById.invalidate()
-    //         ])
-    //     },
-    // });
+    const deleteRdlInvoiceMutation = api.documentSubmission.deleteRdlInvoice.useMutation({
+        onSuccess: async () => {
+            toast.success("RDL Invoice deleted successfully!");
+            await Promise.all([
+                utils.documentSubmission.getDocumentSubmission.invalidate(),
+                utils.documentSubmission.getRdlInvoiceForDocumentSubmission.invalidate()
+            ])
+        },
+    });
 
     const RemoveRdlInvoiceRow = useCallback(async (index: number) => {
         try {
-            // if(!!rdlInvoiceFields[index]?.db_id) {
-            //     await deleteRdlInvoiceMutation.mutateAsync({ 
-            //         db_id: rdlInvoiceFields[index].db_id 
-            //     });
-            // }
+            if(!!rdlInvoiceFields[index]?.db_id) {
+                await deleteRdlInvoiceMutation.mutateAsync({ 
+                    db_id: rdlInvoiceFields[index].db_id 
+                });
+            }
 
             removeRdlInvoice(index);
         }
@@ -61,8 +65,7 @@ const RdlInvoiceDetails = ({ methods, validationError, disabled = false }: Props
             const message = parseTRPCError(error);
             toast.error(`Error deleting RDL Invoice: ${message}`);
         }
-    // }, [deleteRdlInvoiceMutation, removeRdlInvoice, rdlInvoiceFields]);
-    }, [removeRdlInvoice, rdlInvoiceFields]);
+    }, [deleteRdlInvoiceMutation, removeRdlInvoice, rdlInvoiceFields]);
 
     return (
         <TableForm 
