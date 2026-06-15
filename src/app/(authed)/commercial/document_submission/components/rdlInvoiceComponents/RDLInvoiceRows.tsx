@@ -1,6 +1,6 @@
 import { GenericFormTableRow, Portal } from "~/components";
 import type { useDocumentSubmissionForm } from "../../config/useDocumentSubmissionForm";
-import { formFields as factoryInvoiceTableFormFields } from "../../rdlInvoiceConfig/tableFormFields";
+import { formFields as rdlInvoiceTableFormFields } from "../../rdlInvoiceConfig/tableFormFields";
 import { useWatch } from "react-hook-form";
 import React, { useEffect } from "react";
 import { api } from "~/trpc/react";
@@ -83,7 +83,7 @@ const RdlInvoiceRow = (props: Props) => {
 
         methods.setValue(
             `rdlInvoices.${index}.previously_received_rdl_value`,
-            invoice.previous_quantity.toFixed(2),
+            invoice.previous_value.toFixed(2),
             { shouldDirty: true }
         );
 
@@ -94,10 +94,12 @@ const RdlInvoiceRow = (props: Props) => {
         );
     }, [selectedRDLInvoice, rdlInvoices, index, methods]);
 
+    const isEdit = !!documentSubmissionDBid;
+
     return (
         <>
             <GenericFormTableRow
-                fields={factoryInvoiceTableFormFields({ rdlInvoice: filteredRDLInvoices })}
+                fields={rdlInvoiceTableFormFields({ rdlInvoice: filteredRDLInvoices, isEdit })}
                 register={methods.register}
                 removeRow={removeRow}
                 disabled={disabled}

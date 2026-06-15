@@ -71,6 +71,20 @@ export const useFormFields = ({lcList, isEdit}: PropsType): Field<keyof Document
             optional: isEdit
         },
         {
+            name: "lc_sc_date",
+            label: "LC/SC Date",
+            type: "date",
+            disabled: true,
+            optional: true,
+        },
+        {
+            name: "bank_name",
+            label: "Bank Name",
+            type: "text",
+            disabled: true,
+            optional: true,
+        },
+        {
             name: "awb_no",
             label: "AWB No",
             type: "text",

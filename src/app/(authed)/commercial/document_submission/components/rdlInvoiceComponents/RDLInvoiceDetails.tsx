@@ -33,7 +33,7 @@ const RdlInvoiceDetails = ({ methods, validationError, disabled = false }: Props
             rdl_invoice_no: undefined,
             quantity: undefined,
             rdl_value: undefined,
-            received_rdl_value: undefined,
+            received_rdl_value: "",
             previously_received_rdl_value: undefined,
             factoryInvoices: [],
         };

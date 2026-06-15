@@ -1,4 +1,5 @@
 import z from 'zod';
+import { safeNumber } from '~/utils/numbers';
 
 export const FactoryInvoiceDetails = z.object({
     db_id: z.string().optional(),
@@ -20,9 +21,22 @@ export const RDLInvoiceDetails = z.object({
     invoice_date: z.string().optional(),
     quantity: z.string().optional(),
     rdl_value: z.string().optional(),
-    received_rdl_value: z.string().optional(),
+    received_rdl_value: z.string(),
     previously_received_rdl_value: z.string().optional(),
     factoryInvoices: z.array(FactoryInvoiceDetails).optional(),
+})
+.superRefine((data, ctx) => {
+    if (data.rdl_value !== undefined && data.previously_received_rdl_value !== undefined) {
+        const remainingValue = safeNumber(data.rdl_value) - safeNumber(data.previously_received_rdl_value);
+
+        if (safeNumber(data.received_rdl_value) > remainingValue) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["received_rdl_value"],
+                message: `Received value cannot exceed remaining value (${remainingValue}).`,
+            });
+        }
+    }
 });
 
 export type DocumentSubmissionDetailsFormValues = z.infer<typeof RDLInvoiceDetails>;
@@ -38,6 +52,8 @@ export const DocumentSubmissionSchema = z.object({
     fdbc_date: z.string().min(1, "FDBC/TT Date is required"),
     lc_sc_id: z.string().min(1, "LC/SC is required"),
     awb_no: z.string().min(1, "AWB No is required"),
+    lc_sc_date: z.string().optional(),
+    bank_name: z.string().optional(),
     awb_date: z.string().min(1, "AWB Date is required"),
     courier_id: z.number().optional(),
     rdlInvoices: z.array(RDLInvoiceDetails).optional(),

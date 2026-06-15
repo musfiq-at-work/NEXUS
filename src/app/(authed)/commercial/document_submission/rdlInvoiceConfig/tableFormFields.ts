@@ -8,7 +8,7 @@ interface RDLInvoiceProp {
     invoice_no: string
 };
 
-export const formFields = ({rdlInvoice}: {rdlInvoice: RDLInvoiceProp[] | undefined}): Field<keyof DocumentSubmissionDetailsFormValues>[] => {
+export const formFields = ({rdlInvoice, isEdit}: {rdlInvoice: RDLInvoiceProp[] | undefined, isEdit: boolean}): Field<keyof DocumentSubmissionDetailsFormValues>[] => {
     return [
         {
             name: "rdl_invoice_id",
@@ -16,6 +16,8 @@ export const formFields = ({rdlInvoice}: {rdlInvoice: RDLInvoiceProp[] | undefin
             placeholder: "Select RDL invoice",
             type: "select",
             options: rdlInvoice?.map((f) => ({ label: f.invoice_no, value: f.id.toString() })) ?? [],
+            disabled: isEdit,
+            optional: isEdit,
         },
         {
             name: 'invoice_date',
@@ -49,7 +51,6 @@ export const formFields = ({rdlInvoice}: {rdlInvoice: RDLInvoiceProp[] | undefin
             name: "received_rdl_value",
             label: "Received RDL Value",
             placeholder: "Enter RDL value",
-            optional: true,
         },
     ]
 }

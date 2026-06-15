@@ -50,9 +50,12 @@ const NewDocumentSubmissionPage = () => {
                 fdbc_value: safeNumber(documentSubmissionData.fdbc_value),
                 awb_no: documentSubmissionData.awb_no,
                 awb_date: new Date(documentSubmissionData.awb_date ?? new Date()),
-                courier_id: documentSubmissionData.courier_id ? safeNumber(documentSubmissionData.courier_id) : undefined,
+                courier_id: documentSubmissionData.courier_id 
+                    ? safeNumber(documentSubmissionData.courier_id) 
+                    : undefined,
                 rdlInvoices: (documentSubmissionData.rdlInvoices ?? []).map((rdlInvoice) => ({
                     rdl_invoice_id: rdlInvoice.rdl_invoice_id ?? "",
+                    received_rdl_value: safeNumber(rdlInvoice.received_rdl_value),
                     factoryInvoices: rdlInvoice.factoryInvoices?.map((factoryInvoice) => ({
                         factory_invoice_id: factoryInvoice.factory_invoice_id ?? "",
                         factory_fdbc_no: factoryInvoice.factory_fdbc_no ?? "",
@@ -60,8 +63,8 @@ const NewDocumentSubmissionPage = () => {
                 })),
             };
 
-            const res = await addDocumentSubmission.mutateAsync(payload);
-            router.push('/commercial/document_submission');
+            const id = await addDocumentSubmission.mutateAsync(payload);
+            router.push(`/commercial/document_submission/edit/${id}`);
         }
         catch (error) {
             const message = parseTRPCError(error);

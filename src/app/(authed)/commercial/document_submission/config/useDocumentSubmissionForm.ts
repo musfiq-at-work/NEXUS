@@ -8,42 +8,42 @@ import { formatDateForInput } from "~/utils/localDateString";
 import { api } from "~/trpc/react";
 import { skipToken } from "@tanstack/react-query";
 import { safeNumber } from "~/utils/numbers";
-import type { GetRdlInvoiceByIdTypes } from "~/types/commercialAPITypes";
+import type { GetDocumentSubmissionByIdTypes } from "~/types/commercialAPITypes";
 
-// type RDLInvoiceDetails = NonNullable<GetRdlInvoiceByIdTypes>['rdl_invoice_details'][number];
+type RDLInvoiceDetails = NonNullable<GetDocumentSubmissionByIdTypes>['rdlInvoices'][number];
 
-// type RDLInvoiceShipments = NonNullable<RDLInvoiceDetails>['rdl_invoice_shipment_details'][number];
+type FactoryInvoiceShipments = NonNullable<RDLInvoiceDetails>['factoryInvoices'][number];
 
-export const useDocumentSubmissionForm = (initialData?: any) => {
+export const useDocumentSubmissionForm = (initialData?: GetDocumentSubmissionByIdTypes) => {
     const transformedInitialData = useMemo(() => {
         return initialData ? {
             db_id: initialData.id,
             buyer_id: initialData.buyer_id ?? undefined,
             term_id: initialData.term_id ?? undefined,
-            lc_sc_id: initialData.sales_contracts?.id?.toString() 
-                ? initialData.sales_contracts?.id?.toString() 
-                : initialData.lc_master?.id?.toString() ?? '',
+            lc_sc_id: initialData.lc_sc_id?.toString() ?? '',
+            sc_lc_no: initialData.sc_lc_no ?? '',
             fdbc_no: initialData.fdbc_no ?? '',
-            fdbc_date: initialData.fdbc_date ? formatDateForInput(new Date(initialData.fdbc_date)) : '',
+            fdbc_date: initialData.fdbc_date 
+                ? formatDateForInput(new Date(initialData.fdbc_date)) : '',
             fdbc_value: initialData.fdbc_value ?? undefined,
-            submission_date: initialData.submission_date ? formatDateForInput(new Date(initialData.submission_date)) : '',
+            submission_date: initialData.submission_date 
+                ? formatDateForInput(new Date(initialData.submission_date)) : '',
             awb_no: initialData.awb_no ?? '',
-            awb_date: initialData.awb_date ? formatDateForInput(new Date(initialData.awb_date)) : '',
+            awb_date: initialData.awb_date 
+                ? formatDateForInput(new Date(initialData.awb_date)) : '',
             courier_id: initialData.courier_id ?? undefined,
-            rdlInvoices: initialData.rdl_invoice_details?.map((detail: any) => ({
-                db_id: detail.id,
+            lc_sc_date: initialData.lc_sc_date
+                ? formatDateForInput(new Date(initialData.lc_sc_date)) : '',
+            bank_name: initialData.bank_name ?? '',
+            rdlInvoices: initialData.rdlInvoices?.map((detail: RDLInvoiceDetails) => ({
+                db_id: detail.db_id,
                 rdl_invoice_id: detail.rdl_invoice_id?.toString() ?? undefined,
-                rdl_invoice_no: detail?.rdl_invoice_no?.invoice_no ?? undefined,
-                quantity: detail.quantity ? detail.quantity.toString() : undefined,
-                rdl_value: detail.rdl_value ? detail.rdl_value.toString() : undefined,
-                factoryInvoices: detail.rdl_invoice_shipment_details?.map((shipment: any) => ({
-                    db_id: shipment.id,
-                    factory_name: shipment.factory_name ?? undefined,
+                rdl_invoice_no: detail?.rdl_invoice_no ?? undefined,
+                received_rdl_value: detail.received_value ? detail.received_value.toString() : undefined,
+                factoryInvoices: detail.factoryInvoices?.map((shipment: FactoryInvoiceShipments) => ({
+                    db_id: shipment.db_id,
                     factory_invoice_no: shipment.factory_invoice_no ?? undefined,
                     factory_fdbc_no: shipment.factory_fdbc_no ?? undefined,
-                    factory_invoice_date: shipment.factory_invoice_date ? formatDateForInput(new Date(shipment.factory_invoice_date)) : undefined,
-                    quantity: shipment.quantity ? shipment.quantity.toString() : undefined,
-                    factory_invoice_value: shipment.factory_invoice_value ? shipment.factory_invoice_value.toString() : undefined,
                 })) ?? [],
             })) ?? [],
         } : undefined;
@@ -57,7 +57,7 @@ export const useDocumentSubmissionForm = (initialData?: any) => {
             term_id: undefined,
             lc_sc_id: undefined,
             fdbc_no: undefined,
-            fdbc_date: undefined,
+            fdbc_date: formatDateForInput(new Date()),
             fdbc_value: undefined,
             submission_date: formatDateForInput(new Date()),
             awb_no: undefined,
@@ -101,10 +101,9 @@ export const useDocumentSubmissionForm = (initialData?: any) => {
     let lcScList: { id: string; sc_lc_no: string }[];
 
     if(isEdit) {
-        const id = initialData.sales_contracts?.id ?? initialData.lc_master?.id;
-        const sc_lc_no = initialData.sales_contracts?.sales_contract_no ?? initialData.lc_master?.lc_no;
+        const id = initialData.lc_sc_id;
 
-        lcScList = id && sc_lc_no ? [{ id: String(id), sc_lc_no: String(sc_lc_no) }] : [];
+        lcScList = id ? [{ id: String(id), sc_lc_no: String(initialData.sc_lc_no) }] : [];
     }
     else {
         lcScList = lcList;

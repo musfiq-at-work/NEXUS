@@ -5,5 +5,4 @@ export const tableFormColumns = [
     { key: 'factory_invoice_date', label: 'Factory Invoice Date' },
     { key: 'quantity', label: 'Quantity(pcs)' },
     { key: 'factory_invoice_value', label: 'Factory invoice Value' },
-    { key: 'actions', label: '', type: 'action' }
 ]

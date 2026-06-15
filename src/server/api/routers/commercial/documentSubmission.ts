@@ -25,7 +25,7 @@ interface RDLInvoice {
     total_quantity: bigint,
     total_value: bigint,
     invoice_date: Date,
-    previous_quantity: bigint,
+    previous_value: bigint,
 }
 
 interface FactoryInvoiceDetails {
@@ -249,7 +249,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                     await tx.document_submission_factory_invoices_history.createMany({
                         data: documentSubmissionFactoryInvoices.map(invoice => ({
                             document_submission_factory_invoices_id: invoice.id,
-                            document_submission_details_id: invoice.document_submissions_details_id,
+                            document_submissions_details_id: invoice.document_submissions_details_id,
                             factory_invoice_id: invoice.factory_invoice_id,
                             action_type: actions.DELETE,
                             action_by: ctx.user.id,
@@ -261,7 +261,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                             document_submissions_details_id: detail.id,
                             document_submissions_id: detail.document_submissions_id,
                             rdl_invoice_id: detail.rdl_invoice_id,
-                            quantity: detail.quantity,
+                            received_value: detail.received_value,
                             action_type: actions.DELETE,
                             action_by: ctx.user.id,
                         }))
@@ -289,6 +289,7 @@ export const documentSubmissionRouter = createTRPCRouter({
             courier_id: z.number().optional(),
             rdlInvoices: z.array(z.object({
                 rdl_invoice_id: z.string(),
+                received_rdl_value: z.number(),
                 factoryInvoices: z.array(z.object({
                     factory_invoice_id: z.string(),
                     factory_fdbc_no: z.string().optional(),
@@ -357,47 +358,55 @@ export const documentSubmissionRouter = createTRPCRouter({
                     });
 
                     if (input.rdlInvoices && input.rdlInvoices.length > 0) {
-                        await Promise.all(input.rdlInvoices.map(async (rdlInvoice) => {
-                            const newDocumentSubmissionDetail = await tx.document_submissions_details.create({
-                                data: {
-                                    document_submissions_id: newDocumentSubmission.id,
-                                    rdl_invoice_id: rdlInvoice.rdl_invoice_id,
-                                }
-                            });
+                        await Promise.all(
+                            input.rdlInvoices.map(async (rdlInvoice) => {
+                                const newDocumentSubmissionDetail = await tx.document_submissions_details.create({
+                                    data: {
+                                        document_submissions_id: newDocumentSubmission.id,
+                                        rdl_invoice_id: rdlInvoice.rdl_invoice_id,
+                                        received_value: rdlInvoice.received_rdl_value,
+                                    }
+                                });
 
-                            await tx.document_submissions_details_history.create({
-                                data: {
-                                    document_submissions_details_id: newDocumentSubmissionDetail.id,
-                                    document_submissions_id: newDocumentSubmission.id,
-                                    rdl_invoice_id: newDocumentSubmissionDetail.rdl_invoice_id,
-                                    action_type: actions.ADDED,
-                                    action_by: ctx.user.id,
-                                }
-                            });
+                                await tx.document_submissions_details_history.create({
+                                    data: {
+                                        document_submissions_details_id: newDocumentSubmissionDetail.id,
+                                        document_submissions_id: newDocumentSubmission.id,
+                                        rdl_invoice_id: newDocumentSubmissionDetail.rdl_invoice_id,
+                                        received_value: rdlInvoice.received_rdl_value,
+                                        action_type: actions.ADDED,
+                                        action_by: ctx.user.id,
+                                    }
+                                });
 
-                            if(rdlInvoice.factoryInvoices && rdlInvoice.factoryInvoices.length > 0) {
-                                await Promise.all(rdlInvoice.factoryInvoices.map(async (factoryInvoice) => {
-                                    const newFactoryInvoice = await tx.document_submission_factory_invoices.create({
-                                        data: {
-                                            document_submissions_details_id: newDocumentSubmissionDetail.id,
-                                            factory_invoice_id: factoryInvoice.factory_invoice_id,
-                                            factory_fdbc_no: factoryInvoice.factory_fdbc_no,
+                                if(rdlInvoice.factoryInvoices && rdlInvoice.factoryInvoices.length > 0) {
+                                    await Promise.all(
+                                        rdlInvoice.factoryInvoices.map(async (factoryInvoice) => {
+                                            const newFactoryInvoice = await tx.document_submission_factory_invoices.create({
+                                                data: {
+                                                    document_submissions_details_id: newDocumentSubmissionDetail.id,
+                                                    factory_invoice_id: factoryInvoice.factory_invoice_id,
+                                                    factory_fdbc_no: factoryInvoice.factory_fdbc_no,
+                                                }
+                                            });
+
+                                            await tx.document_submission_factory_invoices_history.create({
+                                                data: {
+                                                    document_submission_factory_invoices_id: newFactoryInvoice.id,
+                                                    document_submissions_details_id: newDocumentSubmissionDetail.id,
+                                                    factory_invoice_id: newFactoryInvoice.factory_invoice_id,
+                                                    action_type: actions.ADDED,
+                                                    action_by: ctx.user.id,
+                                                }
+                                            });
                                         }
-                                    });
-
-                                    await tx.document_submission_factory_invoices_history.create({
-                                        data: {
-                                            document_submission_factory_invoices_id: newFactoryInvoice.id,
-                                            document_submission_details_id: newDocumentSubmissionDetail.id,
-                                            factory_invoice_id: newFactoryInvoice.factory_invoice_id,
-                                            action_type: actions.ADDED,
-                                            action_by: ctx.user.id,
-                                        }
-                                    });
-                                }));
+                                    ));
+                                }
                             }
-                        }));
+                        ));
                     }
+
+                    return newDocumentSubmission.id;
                 })
             }
             catch (error) {
@@ -448,7 +457,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                         IN_DOCUMENT_SUBMISSION AS (
                             SELECT
                                 DSD.rdl_invoice_id AS RID,
-                                SUM(DSD.QUANTITY) AS DOCUMENT_QUANTITY
+                                SUM(DSD.received_value) AS DOCUMENT_VALUE
                             FROM document_submissions_details AS DSD
                             GROUP BY DSD.rdl_invoice_id
                         )
@@ -461,7 +470,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                             LEFT JOIN IN_DOCUMENT_SUBMISSION AS IDS ON IDS.RID = RI.ID
                         WHERE SC.buyer_id = ${input.buyer_id}
                         GROUP BY SC.ID
-                        HAVING SUM(IRI.RDL_QUANTITY) > SUM(IDS.DOCUMENT_QUANTITY);
+                        HAVING SUM(IRI.RDL_QUANTITY) > SUM(IDS.DOCUMENT_VALUE);
                     `;
                 }
                 else {
@@ -477,7 +486,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                         IN_DOCUMENT_SUBMISSION AS (
                             SELECT
                                 DSD.rdl_invoice_id AS RID,
-                                SUM(DSD.QUANTITY) AS DOCUMENT_QUANTITY
+                                SUM(DSD.received_value) AS DOCUMENT_VALUE
                             FROM document_submissions_details AS DSD
                             GROUP BY DSD.rdl_invoice_id
                         )
@@ -490,7 +499,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                             LEFT JOIN IN_DOCUMENT_SUBMISSION AS IDS ON IDS.RID = RI.ID
                         WHERE LC.buyer_id = ${input.buyer_id}
                         GROUP BY LC.ID
-                        HAVING SUM(IRI.RDL_QUANTITY) > SUM(IDS.DOCUMENT_QUANTITY);
+                        HAVING SUM(IRI.RDL_QUANTITY) > SUM(IDS.DOCUMENT_VALUE);
                     `;
                 }
 
@@ -545,7 +554,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                     WITH IN_DOCUMENT_SUBMISSION AS (
                         SELECT
                             DSD.rdl_invoice_id AS RSD_RID,
-                            SUM(DSD.QUANTITY) AS PREVIOUS_QUANTITY
+                            SUM(DSD.received_value) AS PREVIOUS_VALUE
                         FROM document_submissions AS DS 
                         INNER JOIN DOCUMENT_SUBMISSIONS_DETAILS AS DSD ON DSD.document_submissions_id = DS.id
                         ${excludeCurrentInvoiceClause}
@@ -557,15 +566,15 @@ export const documentSubmissionRouter = createTRPCRouter({
                         RI.INVOICE_DATE,
                         SUM(RISD.INVOICE_QUANTITY) AS TOTAL_QUANTITY,
 	                    SUM(RISD.INVOICE_QUANTITY * SD.fob_rate) AS TOTAL_VALUE,
-                        IDS.PREVIOUS_QUANTITY AS PREVIOUS_QUANTITY
+                        IDS.PREVIOUS_VALUE AS PREVIOUS_VALUE
                     FROM rdl_invoice AS RI
                         INNER JOIN RDL_INVOICE_DETAILS AS RID ON RID.rdl_invoice_id = RI.id
                         INNER JOIN RDL_INVOICE_SHIPMENT_DETAILS AS RISD ON RISD.rdl_invoice_details_id = RID.id
                         INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
                         LEFT JOIN IN_DOCUMENT_SUBMISSION AS IDS ON IDS.RSD_RID = RI.id
                     WHERE ${whereClause} AND RI.buyer_id = ${input.buyer_id}
-                    GROUP BY RI.ID, IDS.PREVIOUS_QUANTITY
-                    HAVING SUM(RISD.INVOICE_QUANTITY) > COALESCE(IDS.PREVIOUS_QUANTITY, 0);
+                    GROUP BY RI.ID, IDS.PREVIOUS_VALUE
+                    HAVING SUM(RISD.INVOICE_QUANTITY) > COALESCE(IDS.PREVIOUS_VALUE, 0);
                 `;
 
                 const rdlInvoice = rdlInvoicesList.map((invoice) => ({
@@ -574,7 +583,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                     invoice_date: invoice.invoice_date,
                     total_quantity: Number(invoice.total_quantity),
                     total_value: Number(invoice.total_value),
-                    previous_quantity: Number(invoice.previous_quantity || 0),
+                    previous_value: Number(invoice.previous_value || 0),
                 }));
 
                 return rdlInvoice;
@@ -611,7 +620,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                             document_submissions_details_id: deletedRdlInvoice.id,
                             document_submissions_id: deletedRdlInvoice.document_submissions_id,
                             rdl_invoice_id: deletedRdlInvoice.rdl_invoice_id,
-                            quantity: deletedRdlInvoice.quantity,
+                            received_value: deletedRdlInvoice.received_value,
                             action_type: actions.DELETE,
                             action_by: ctx.user.id,
                         }
@@ -699,41 +708,127 @@ export const documentSubmissionRouter = createTRPCRouter({
                 handlePrismaError(error);
             }
         }),
+
+    getDocumentSubmissionById: protectedProcedure
+        .input(z.object({
+            id: z.string(),
+        }))
+        .query(async ({ ctx, input }) => {
+            try {
+                const can_view = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_view;
+
+                if (!can_view) {
+                    throw new TRPCError({ 
+                        code: 'FORBIDDEN', 
+                        message: "You don't have permission to view Document Submissions." 
+                    });
+                }
+
+                const result = await ctx.db.document_submissions.findUnique({
+                    where: { id: input.id },
+                    select: {
+                        id: true,
+                        term_id: true,
+                        buyer_id: true,
+                        submission_date: true,
+                        fdbc_no: true,
+                        fdbc_value: true,
+                        fdbc_date: true,
+                        lc_id: true,
+                        sales_contract_id: true,
+                        lc_master: {
+                            select: {
+                                lc_no: true,
+                                lc_open_date: true,
+                                buyer_banks: {
+                                    select: {
+                                        banks: {
+                                            select: {
+                                                name: true,
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        sales_contracts: {
+                            select: {
+                                sales_contract_no: true,
+                                sales_contract_date: true,
+                                buyer_banks: {
+                                    select: {
+                                        banks: {
+                                            select: {
+                                                name: true,
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        awb_no: true,
+                        awb_date: true,
+                        courier_id: true,
+                        document_submissions_details: {
+                            select: {
+                                id: true,
+                                rdl_invoice_id: true,
+                                received_value: true,
+                                document_submission_factory_invoices: {
+                                    select: {
+                                        id: true,
+                                        factory_invoice_id: true,
+                                        factory_fdbc_no: true,
+                                        factory_invoice: {
+                                            select: {
+                                                invoice_no: true,
+                                            }
+                                        }
+                                    }
+                                },
+                                rdl_invoice: {
+                                    select: {
+                                        invoice_no: true,
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                const documentSubmission = result ? {
+                    id: result.id,
+                    term_id: result.term_id,
+                    buyer_id: result.buyer_id,
+                    submission_date: result.submission_date,
+                    fdbc_no: result.fdbc_no,
+                    fdbc_value: Number(result.fdbc_value),
+                    fdbc_date: result.fdbc_date,
+                    lc_sc_id: result.lc_id ?? result.sales_contract_id,
+                    sc_lc_no: result.lc_master?.lc_no ?? result.sales_contracts?.sales_contract_no ?? '',
+                    lc_sc_date: result.lc_master?.lc_open_date ?? result.sales_contracts?.sales_contract_date,
+                    bank_name: result.lc_master?.buyer_banks?.banks?.name ?? result.sales_contracts?.buyer_banks?.banks?.name ?? '',
+                    awb_no: result.awb_no,
+                    awb_date: result.awb_date,
+                    courier_id: result.courier_id,
+                    rdlInvoices: result.document_submissions_details.map(detail => ({
+                        db_id: detail.id,
+                        rdl_invoice_id: detail.rdl_invoice_id,
+                        received_value: Number(detail.received_value),
+                        rdl_invoice_no: detail.rdl_invoice?.invoice_no,
+                        factoryInvoices: detail.document_submission_factory_invoices.map(factoryInvoice => ({
+                            db_id: factoryInvoice.id,
+                            factory_invoice_id: factoryInvoice.factory_invoice_id,
+                            factory_fdbc_no: factoryInvoice.factory_fdbc_no,
+                            factory_invoice_no: factoryInvoice.factory_invoice?.invoice_no,
+                        }))
+                    })),
+                } : null;
+
+                return documentSubmission;
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
 })
-
-
-/**
-    WITH EXFACTORY_INFO AS (
-        SELECT
-            ES.ID AS EID,
-            CASE
-                WHEN COALESCE(FSD.TRANSFER_RATE, 0) <> 0	
-                    THEN FSD.TRANSFER_RATE * ES.DELIVERY_QUANTITY
-                ELSE FSD.FACTORY_RATE * ES.DELIVERY_QUANTITY
-            END AS FACTORY_VALUE,
-            ES.DELIVERY_QUANTITY
-        FROM EXFACTORY_SHIPMENTS AS ES
-            INNER JOIN SHIPMENT_DETAILS AS SD ON SD.id = ES.shipment_details_id
-            INNER JOIN FACTORY_SHIPMENT_DETAILS AS FSD ON FSD.shipment_detail_id = SD.id
-    ),
-    FACTORY_INVOICES AS (
-        SELECT
-            FI.ID AS FACTORY_INVOICE_ID,
-            F.NAME AS FACTORY_NAME,
-            FI.INVOICE_NO AS FACTORY_INVOICE_NO,
-            FI.INVOICE_DATE AS INVOICE_DATE,
-            SUM(E.DELIVERY_QUANTITY) AS QUANTITY,
-            SUM(E.FACTORY_VALUE) AS FACTORY_INVOICE_VALUE
-        FROM factory_invoice AS FI
-            INNER JOIN factory_invoice_details AS FID ON FID.factory_invoice_id = FI.id
-            INNER JOIN factories AS F ON F.id = FI.factory_id
-            INNER JOIN EXFACTORY_INFO AS E ON E.EID = FID.exfactory_shipment_id
-        GROUP BY FI.ID, F.ID
-    )
-    SELECT 
-        FI.*
-    FROM rdl_invoice AS RI
-        INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
-        INNER JOIN FACTORY_INVOICES AS FI ON FI.FACTORY_INVOICE_ID = RID.factory_invoice_id
-    WHERE RI.ID = ${input.rdl_invoice_id};
- */

@@ -1,5 +1,5 @@
 import type { inferRouterOutputs } from '@trpc/server';
-import type { lcTransferRouter, factoryInvoiceRouter, rdlInvoiceRouter } from "~/server/api";
+import type { lcTransferRouter, factoryInvoiceRouter, rdlInvoiceRouter, documentSubmissionRouter } from "~/server/api";
 
 // LC Transfer types
 type LcTransferRouterOutput = inferRouterOutputs<typeof lcTransferRouter>;
@@ -17,3 +17,8 @@ export type GetFactoryInvoiceByIdTypes = FactoryInvoiceRouterOutput['getFactoryI
 type RdlInvoiceRouterOutput = inferRouterOutputs<typeof rdlInvoiceRouter>;
 
 export type GetRdlInvoiceByIdTypes = RdlInvoiceRouterOutput['getRdlInvoiceById'];
+
+// Document Submission types
+type DocumentSubmissionRouterOutput = inferRouterOutputs<typeof documentSubmissionRouter>;
+
+export type GetDocumentSubmissionByIdTypes = DocumentSubmissionRouterOutput['getDocumentSubmissionById'];
