@@ -30,6 +30,7 @@ interface RDLInvoice {
 
 interface FactoryInvoiceDetails {
     factory_name: string,
+    risdid: string,
     factory_invoice_id: string,
     factory_invoice_no: string,
     invoice_date: Date,
@@ -674,6 +675,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                 const result = await ctx.db.$queryRaw<FactoryInvoiceDetails[]>`
                     SELECT 
                         F.NAME AS FACTORY_NAME,
+                        RISD.ID AS RISDID,
                         FI.ID AS FACTORY_INVOICE_ID,
                         FI.INVOICE_NO AS FACTORY_INVOICE_NO,
                         FI.INVOICE_DATE AS INVOICE_DATE,
@@ -696,6 +698,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                 const factoryInvoices = result.map(item => ({
                     factory_name: item.factory_name,
                     factory_invoice_id: item.factory_invoice_id,
+                    risdid: item.risdid,
                     factory_invoice_no: item.factory_invoice_no,
                     invoice_date: item.invoice_date,
                     factory_invoice_value: Number(item.factory_invoice_value),
@@ -831,4 +834,145 @@ export const documentSubmissionRouter = createTRPCRouter({
                 handlePrismaError(error);
             }
         }),
-})
+
+    updateDocumentSubmission : protectedProcedure
+        .input(z.object({
+            id: z.string(),
+            submission_date: z.date().optional(),
+            fdbc_value: z.number().optional(),
+            awb_no: z.string().optional(),
+            awb_date: z.date().optional(),
+            courier_id: z.number().optional(),
+            rdlInvoices: z.array(z.object({
+                db_id: z.string().optional(),
+                rdl_invoice_id: z.string(),
+                received_rdl_value: z.number(),
+                factoryInvoices: z.array(z.object({
+                    db_id: z.string().optional(),
+                    factory_invoice_id: z.string(),
+                    factory_fdbc_no: z.string().optional(),                    
+                })).optional(),
+            })).optional(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            try {
+                const can_edit = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_update;
+
+                if (!can_edit) {
+                    throw new TRPCError({ 
+                        code: 'FORBIDDEN', 
+                        message: "You do not have permission to edit document submissions." 
+                    });
+                }
+
+                console.log("Updating document submission with data:", input);
+
+                return await ctx.db.$transaction(async (tx) => {
+                    const updatedDocumentSubmission = await tx.document_submissions.update({
+                        where: { id: input.id },
+                        data: {
+                            submission_date: input.submission_date,
+                            fdbc_value: input.fdbc_value,
+                            awb_no: input.awb_no,
+                            awb_date: input.awb_date,
+                            courier_id: input.courier_id,
+                        }
+                    });
+
+                    await tx.document_submissions_history.create({
+                        data: {
+                            document_submission_id: updatedDocumentSubmission.id,
+                            term_id: updatedDocumentSubmission.term_id,
+                            buyer_id: updatedDocumentSubmission.buyer_id,
+                            submission_date: input.submission_date,
+                            fdbc_no: updatedDocumentSubmission.fdbc_no,
+                            fdbc_value: input.fdbc_value,
+                            fdbc_date: updatedDocumentSubmission.fdbc_date,
+                            lc_id: updatedDocumentSubmission.lc_id,
+                            sales_contract_id: updatedDocumentSubmission.sales_contract_id,
+                            awb_no: input.awb_no,
+                            awb_date: input.awb_date,
+                            courier_id: input.courier_id,
+                            action_type: actions.UPDATE,
+                            action_by: ctx.user.id,
+                        }
+                    });
+
+                    // update existing rdl invoices 
+                    await Promise.all(
+                        (input.rdlInvoices ?? []).map(async (rdlInvoice) => {
+                            if (rdlInvoice.db_id) { // existing invoice, perform update
+                                await tx.document_submissions_details.update({
+                                    where: { id: rdlInvoice.db_id },
+                                    data: {
+                                        rdl_invoice_id: rdlInvoice.rdl_invoice_id,
+                                        received_value: rdlInvoice.received_rdl_value,
+                                    }
+                                });
+
+                                await tx.document_submissions_details_history.create({
+                                    data: {
+                                        document_submissions_details_id: rdlInvoice.db_id,
+                                        document_submissions_id: input.id,
+                                        rdl_invoice_id: rdlInvoice.rdl_invoice_id,
+                                        received_value: rdlInvoice.received_rdl_value,
+                                        action_type: actions.UPDATE,
+                                        action_by: ctx.user.id,
+                                    }
+                                });
+
+                                // handle factory invoices for existing rdl invoice
+                                await Promise.all(
+                                    (rdlInvoice.factoryInvoices ?? []).map(async (factoryInvoice) => {
+                                        await tx.document_submission_factory_invoices.update({
+                                            where: { id: factoryInvoice.db_id },
+                                            data: {
+                                                factory_fdbc_no: factoryInvoice.factory_fdbc_no,
+                                            }
+                                        });
+                                    })
+                                );
+                            }
+                            else { // new invoice, perform create
+                                const newDocumentSubmissionDetail = await tx.document_submissions_details.create({
+                                    data: {
+                                        document_submissions_id: input.id,
+                                        rdl_invoice_id: rdlInvoice.rdl_invoice_id,
+                                        received_value: rdlInvoice.received_rdl_value,
+                                    }
+                                });
+
+                                await tx.document_submissions_details_history.create({
+                                    data: {
+                                        document_submissions_details_id: newDocumentSubmissionDetail.id,
+                                        document_submissions_id: input.id,
+                                        rdl_invoice_id: rdlInvoice.rdl_invoice_id,
+                                        received_value: rdlInvoice.received_rdl_value,
+                                        action_type: actions.ADDED,
+                                        action_by: ctx.user.id,
+                                    }
+                                });
+
+                                await Promise.all(
+                                    (rdlInvoice.factoryInvoices ?? []).map(async (factoryInvoice) => {
+                                        await tx.document_submission_factory_invoices.create({
+                                            data: {
+                                                document_submissions_details_id: newDocumentSubmissionDetail.id,
+                                                factory_invoice_id: factoryInvoice.factory_invoice_id,
+                                                factory_fdbc_no: factoryInvoice.factory_fdbc_no,
+                                            }
+                                        });
+                                    })
+                                );
+                            }
+                        })
+                    );
+
+                    return updatedDocumentSubmission;
+                });
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+});

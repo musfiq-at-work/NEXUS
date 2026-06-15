@@ -39,8 +39,15 @@ const FactoryInvoiceDetails = (props: props) => {
 
     useEffect(() => {
         if (!rdlInvoiceDetails) return;
-
         const existingFactoryInvoice = methods.getValues(`rdlInvoices.${invoiceIndex}.factoryInvoices`) ?? [];
+
+                console.log(
+            "existingFactoryInvoice",
+            existingFactoryInvoice.map(x => ({
+                db_id: x.db_id,
+                factory_invoice_id: x.factory_invoice_id,
+            }))
+        );
 
         replaceShipments(
             rdlInvoiceDetails.map((factoryInvoice) => {
@@ -48,8 +55,9 @@ const FactoryInvoiceDetails = (props: props) => {
                     (x) => x.factory_invoice_id === factoryInvoice.factory_invoice_id
                 );
 
+                console.log( "existing", factoryInvoice.factory_invoice_id,  existing)
+
                 return {
-                    db_id: existing?.db_id,
                     factory_invoice_id: factoryInvoice.factory_invoice_id ?? undefined,
                     factory_name: factoryInvoice.factory_name ?? undefined,
                     factory_invoice_no: factoryInvoice.factory_invoice_no ?? undefined,
@@ -58,13 +66,18 @@ const FactoryInvoiceDetails = (props: props) => {
                         : undefined,
                     quantity: factoryInvoice.quantity.toString() ?? undefined,
                     factory_invoice_value: factoryInvoice.factory_invoice_value.toFixed(2) ?? undefined,
-
+                    
                     // preserve existing values loaded from initialData
+                    db_id: existing?.db_id,
                     factory_fdbc_no: existing?.factory_fdbc_no,
                 };
             })
         );
-    }, [rdlInvoiceDetails, replaceShipments, methods, invoiceIndex]);
+
+        console.log('Yo',
+            methods.getValues(`rdlInvoices.${invoiceIndex}.factoryInvoices`)
+        );
+    }, [rdlInvoiceDetails, invoiceIndex]);
 
     const ShipmentHeading = () => (
         <div className="flex flex-row items-center gap-4">

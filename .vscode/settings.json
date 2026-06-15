@@ -9,6 +9,7 @@
         "INCOTERMS",
         "LCTD",
         "RISD",
+        "risdid",
         "upserted"
     ]
 }

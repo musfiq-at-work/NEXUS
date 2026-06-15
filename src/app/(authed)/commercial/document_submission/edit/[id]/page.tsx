@@ -36,41 +36,44 @@ const EditDocumentSubmissionPage = ({ params }: EditDocumentSubmissionPageProp) 
     // Get current module permissions
     const pathId = useNavigationStore((s) => s.getByHref(modulePath));
     const permissions = usePermissionStore(s => (pathId ? s.permission[pathId] : undefined));
-    const { can_update, can_view } = permissions ?? {};
+    const { can_update } = permissions ?? {};
 
-    // const updateDocumentSubmission = api.documentSubmission.updateDocumentSubmission.useMutation({
-    //     onSuccess: async () => {
-    //         setError(null);
-    //         toast.success("Document Submission updated successfully!");
-    //         await Promise.all([
-    //             utils.documentSubmission.getDocumentSubmissionById.invalidate({ id }),
-    //             utils.documentSubmission.getDocumentSubmission.invalidate(),
-    //             utils.documentSubmission.searchDocumentSubmissions.invalidate()
-    //         ]);
-    //     }
-    // });
+    const updateDocumentSubmission = api.documentSubmission.updateDocumentSubmission.useMutation({
+        onSuccess: async () => {
+            setError(null);
+            toast.success("Document Submission updated successfully!");
+            await Promise.all([
+                utils.documentSubmission.getDocumentSubmissionById.invalidate({ id }),
+                utils.documentSubmission.getDocumentSubmission.invalidate(),
+                utils.documentSubmission.searchDocumentSubmissions.invalidate()
+            ]);
+        }
+    });
+
+    useEffect(() => {
+        console.log("Validation Errors:", documentSubmissionData);
+    }, [documentSubmissionData]);
 
     // Handle form submission for all fields
     const onSubmitAll = useCallback(handleSubmit(async (documentSubmissionData) => {
+        console.log("Submitting update with data:", documentSubmissionData);
         try {
             setIsLoadingSubmit(true);
             const payload = {
                 id,
-                buyer_id: safeNumber(documentSubmissionData.buyer_id),
-                term_id: safeNumber(documentSubmissionData.term_id),
-                lc_sc_id: documentSubmissionData.lc_sc_id,
                 submission_date: new Date(documentSubmissionData.submission_date ?? new Date()),
-                fdbc_no: documentSubmissionData.fdbc_no,
-                fdbc_date: new Date(documentSubmissionData.fdbc_date ?? new Date()),
                 fdbc_value: safeNumber(documentSubmissionData.fdbc_value),
                 awb_no: documentSubmissionData.awb_no,
-                awb_date: new Date(documentSubmissionData.awb_date ?? new Date()),
+                awb_date: documentSubmissionData.awb_date 
+                    ? new Date(documentSubmissionData.awb_date) 
+                    : undefined,
                 courier_id: documentSubmissionData.courier_id 
                     ? safeNumber(documentSubmissionData.courier_id) 
                     : undefined,
                 rdlInvoices: (documentSubmissionData.rdlInvoices ?? []).map((rdlInvoice) => ({
                     db_id: rdlInvoice.db_id,
                     rdl_invoice_id: rdlInvoice.rdl_invoice_id ?? "",
+                    received_rdl_value: safeNumber(rdlInvoice.received_rdl_value),
                     factoryInvoices: rdlInvoice.factoryInvoices?.map((factoryInvoice) => ({
                         db_id: factoryInvoice.db_id,
                         factory_invoice_id: factoryInvoice.factory_invoice_id ?? "",
@@ -79,8 +82,8 @@ const EditDocumentSubmissionPage = ({ params }: EditDocumentSubmissionPageProp) 
                 })),
             };
 
-            // const res = await updateDocumentSubmission.mutateAsync(payload);
-            console.log("Payload for submission:", payload);
+            console.log("Submitting update with payload:", payload);
+            const res = await updateDocumentSubmission.mutateAsync(payload);
         }
         catch (error) {
             const message = parseTRPCError(error);
@@ -89,7 +92,7 @@ const EditDocumentSubmissionPage = ({ params }: EditDocumentSubmissionPageProp) 
         finally {
             setIsLoadingSubmit(false);
         }
-    }), []);
+    }), [updateDocumentSubmission]);
 
     
     return (
@@ -102,12 +105,13 @@ const EditDocumentSubmissionPage = ({ params }: EditDocumentSubmissionPageProp) 
                 validationError={validationError ?? {}}
                 error={error}
                 control={control}
+                    
             />
 
             <RDLInvoiceDetails 
                 methods={methods}
                 validationError={validationError ?? {}}
-                disabled={isLoading}
+                disabled={isLoading || !can_update}
             />
 
             {/* Shipment Portal anchor */}
@@ -118,7 +122,7 @@ const EditDocumentSubmissionPage = ({ params }: EditDocumentSubmissionPageProp) 
                     onClick={() => onSubmitAll()}
                     label={"Add Document Submission"} 
                     className="text-lg tracking-wide mt-6 max-w-80 m-8"
-                    disabled={isLoading}
+                    disabled={isLoading || !can_update}
                 />
             </div>
         </Wrapper>

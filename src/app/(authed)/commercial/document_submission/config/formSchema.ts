@@ -51,10 +51,10 @@ export const DocumentSubmissionSchema = z.object({
     fdbc_value: z.number().min(1, "FDBC/TT Value is required"),
     fdbc_date: z.string().min(1, "FDBC/TT Date is required"),
     lc_sc_id: z.string().min(1, "LC/SC is required"),
-    awb_no: z.string().min(1, "AWB No is required"),
+    awb_no: z.string().optional(),
     lc_sc_date: z.string().optional(),
     bank_name: z.string().optional(),
-    awb_date: z.string().min(1, "AWB Date is required"),
+    awb_date: z.string().optional(),
     courier_id: z.number().optional(),
     rdlInvoices: z.array(RDLInvoiceDetails).optional(),
 });
