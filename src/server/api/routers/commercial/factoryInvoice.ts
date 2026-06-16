@@ -1110,4 +1110,20 @@ export const factoryInvoiceRouter = createTRPCRouter({
             }
         }),
 
+    checkIfRdlInvoiceExists: protectedProcedure
+        .input(z.object({
+            factory_invoice_id: z.string(),
+        }))
+        .query(async ({ ctx, input }) => {
+            try {
+                const count = await ctx.db.rdl_invoice_details.count({
+                    where: { factory_invoice_id: input.factory_invoice_id },
+                });
+
+                return { exists: count > 0 };
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
 })

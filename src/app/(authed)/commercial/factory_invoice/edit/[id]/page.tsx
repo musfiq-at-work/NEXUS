@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Form, Wrapper } from "~/components";
+import { Button, Form, MessageBox, Wrapper } from "~/components";
 import React, { useCallback, useState } from "react";
 import { api } from "~/trpc/react";
 import { toast } from 'sonner';
@@ -12,6 +12,8 @@ import ShipmentDetails from "../../components/shipmentComponents/ShipmentDetails
 import Tags from "../../components/tagItems/Tags";
 import { safeNumber } from "~/utils/numbers";
 import { printingWhiteIcon } from "~/assets";
+import { useWatch } from "react-hook-form";
+import { skipToken } from "@tanstack/react-query";
 
 
 type EditFactoryInvoicePageProp = {
@@ -49,6 +51,7 @@ const EditFactoryInvoicePage = ({ params }: EditFactoryInvoicePageProp) => {
                 utils.factoryInvoice.getFactoryInvoiceById.invalidate({ id }),
                 utils.factoryInvoice.getFactoryInvoiceList.invalidate(),
                 utils.factoryInvoice.getShipmentDetailsForTagShipments.invalidate(),
+                utils.exFactory.checkCommercialProcedure.invalidate()
             ]);
         }
     });
@@ -84,6 +87,13 @@ const EditFactoryInvoicePage = ({ params }: EditFactoryInvoicePageProp) => {
 
     }), [id, updateFactoryInvoice, handleSubmit]);
 
+    const db_id = useWatch({ control, name: "db_id" });
+
+    const { data: rdlInvoiceExistsData } = api.factoryInvoice.checkIfRdlInvoiceExists.useQuery(
+        !!db_id ? { factory_invoice_id: db_id ?? "" } : skipToken,
+    );
+
+    const exists = !!rdlInvoiceExistsData?.exists;
 
     return (
         <Wrapper heading='Update Factory Invoice'
@@ -108,17 +118,24 @@ const EditFactoryInvoicePage = ({ params }: EditFactoryInvoicePageProp) => {
                 validationError={validationError ?? {}}
                 error={error}
                 control={control}
-                disabled={!can_update}
+                disabled={!can_update || exists}
             />
 
             <ShipmentDetails 
                 methods={methods}
-                disabled={isLoading}
+                disabled={isLoading || exists}
             />
             
             <Tags 
                 methods={methods}
                 isLoading={isLoading}
+                disabled={isLoading || exists}
+            />
+
+            <MessageBox 
+                message="This Factory Invoice has associated RDL Invoice and cannot be updated or deleted." 
+                active={exists} 
+                type="primary" 
             />
 
             <div className="w-full flex flex-row justify-end">
@@ -126,7 +143,7 @@ const EditFactoryInvoicePage = ({ params }: EditFactoryInvoicePageProp) => {
                     onClick={() => onSubmitAll()}
                     label={"Update Factory Invoice"} 
                     className="text-lg tracking-wide mt-6 max-w-80 m-8"
-                    disabled={isLoading || isLoadingSubmit}
+                    disabled={isLoading || isLoadingSubmit|| exists}
                 />
             </div>
         </Wrapper>

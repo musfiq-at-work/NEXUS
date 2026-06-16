@@ -14,9 +14,10 @@ import { safeNumber } from "~/utils/numbers";
 interface Props {
     methods: ReturnType<typeof useFactoryInvoiceForm>['methods'];
     isLoading?: boolean;
+    disabled?: boolean;
 }
 
-const Tags = ({ methods, isLoading }: Props) => {
+const Tags = ({ methods, isLoading, disabled }: Props) => {
     const [showShipments, setShowShipments] = useState(false);
     
     // Fetch shipments for tagging based on selected LC/SC and Term
@@ -121,7 +122,8 @@ const Tags = ({ methods, isLoading }: Props) => {
             <Button
                 variant="secondary"
                 label="Tag Shipments"
-                className="max-w-80 mx-8"
+                className="max-w-80 mx-8 mb-3"
+                disabled={isLoading || disabled}
                 leftIcon={tagIcon}
                 onClick={() => setShowShipments(true)}
             />
@@ -135,7 +137,7 @@ const Tags = ({ methods, isLoading }: Props) => {
                             onClick={(e) => e.stopPropagation()}
                         >
                             <TagShipmentDetails 
-                                disabled={isLoading}
+                                disabled={isLoading || disabled}
                                 onCloseShipmentDetails={() => setShowShipments(false)}
                                 addShipmentToTag={addShipmentToTag}
                                 shipmentFields={shipmentFields}

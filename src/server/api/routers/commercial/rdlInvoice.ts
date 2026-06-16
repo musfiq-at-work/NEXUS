@@ -1433,4 +1433,20 @@ export const rdlInvoiceRouter = createTRPCRouter({
             }
         }),
 
+    checkIfDocumentSubmissionExists: protectedProcedure
+        .input(z.object({
+            rdl_invoice_id: z.string(),
+        }))
+        .query(async ({ ctx, input }) => {
+            try {
+                const count = await ctx.db.document_submissions_details.count({
+                    where: { rdl_invoice_id: input.rdl_invoice_id },
+                });
+
+                return { exists: count > 0 };
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
 });

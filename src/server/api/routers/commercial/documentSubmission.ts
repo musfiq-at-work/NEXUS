@@ -577,7 +577,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                         INNER JOIN RDL_INVOICE_SHIPMENT_DETAILS AS RISD ON RISD.rdl_invoice_details_id = RID.id
                         INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
                         LEFT JOIN IN_DOCUMENT_SUBMISSION AS IDS ON IDS.RSD_RID = RI.id
-                    WHERE ${whereClause} AND RI.buyer_id = ${input.buyer_id}
+                    WHERE ${whereClause} AND RI.buyer_id = ${input.buyer_id} AND RI.is_authorized = true
                     GROUP BY RI.ID, IDS.PREVIOUS_VALUE
                     HAVING SUM(RISD.INVOICE_QUANTITY) > COALESCE(IDS.PREVIOUS_VALUE, 0);
                 `;

@@ -17,13 +17,14 @@ type Props<T extends FieldValues> = {
     register: UseFormRegister<any>;
     control?: Control<any>;
     handleAction?: (index: number) => void;
+    className?: string;
 }
 
 const GenericFormTableRow = <T extends FieldValues, >(props: Props<T>) => {
-    const {fields, register, removeRow, disabled = false, validationError, name, control, index, handleAction} =  props;
+    const {fields, register, removeRow, disabled = false, validationError, name, control, index, handleAction, className} =  props;
 
     return (
-        <TableRow key={index}>
+        <TableRow key={index} className={className}>
             {fields.map((col, colIndex) => (
                 <TableCell key={colIndex} fixedLength={col.type !== 'checkbox'}>
                     {(() => {

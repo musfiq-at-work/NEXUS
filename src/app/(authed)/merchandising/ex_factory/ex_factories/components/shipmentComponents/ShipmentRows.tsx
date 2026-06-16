@@ -5,6 +5,8 @@ import { useWatch, type FieldErrors } from "react-hook-form";
 import React from "react";
 import type { ExFactoryFormValues } from "../../config/formSchema";
 import { useAdminStore } from "~/store";
+import { skipToken } from "@tanstack/react-query";
+import { api } from "~/trpc/react";
 
 type Props = {
     register: ReturnType<typeof useExfactoryForm>['methods']['register'];
@@ -24,17 +26,26 @@ const ShipmentRows = (props: Props) => {
 
     const isAdmin = useAdminStore((state) => state.isAdmin);
 
+    const db_id = useWatch({ control: methods.control, name: `exfactory.orders.${orderIndex}.shipments.${index}.db_id` });
+
+    const checkCommercialProcedureQuery = api.exFactory.checkCommercialProcedure.useQuery(
+        !!db_id ? { exfactory_shipment_id: db_id } : skipToken
+    );
+
+    const exists = checkCommercialProcedureQuery.data?.exists ?? false;
+
     return (
         <>
             <GenericFormTableRow
                 fields={shipmentTableFormFields({ isEdit: Boolean(exfactory_id), isAdmin: isAdmin })}
                 register={methods.register}
-                disabled={disabled}
+                disabled={disabled || exists}
                 removeRow={removeRow}
                 validationError={validationError?.orders?.[orderIndex]?.shipments ?? {}}
                 name={name}
                 control={methods.control}
                 index={index}
+                className={exists ? 'bg-yellow-100' : ''} // Highlight row if commercial procedure exists
             />
         </>
     );

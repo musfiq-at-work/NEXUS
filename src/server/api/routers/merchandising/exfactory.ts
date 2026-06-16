@@ -1398,5 +1398,35 @@ export const exFactoryRouter = createTRPCRouter({
                 handlePrismaError(error);
             }
         }),
+
+    checkCommercialProcedure: protectedProcedure
+        .input(z.object({
+            exfactory_shipment_id: z.string().min(1),
+        }))
+        .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.EX_FACTORIES]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view ex-factory records." 
+                });
+            }
+
+            try {
+                const exists = await ctx.db.factory_invoice_details.findFirst({
+                    where: {
+                        exfactory_shipment_id: input.exfactory_shipment_id,
+                    },
+                });
+
+                return { exists: !!exists?.id };
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+
 });
 

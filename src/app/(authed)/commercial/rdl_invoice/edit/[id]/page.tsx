@@ -12,6 +12,8 @@ import FactoryInvoiceDetails from "../../components/factoryInvoiceComponents/Fac
 import { printingWhiteIcon } from "~/assets";
 import { safeNumber } from "~/utils/numbers";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
+import { useWatch } from "react-hook-form";
+import { skipToken } from "@tanstack/react-query";
 
 type EditRDLInvoicePageProp = {
     params: Promise<{ id: string }>
@@ -135,6 +137,15 @@ const EditRDLInvoicePage = ({ params }: EditRDLInvoicePageProp) => {
             )
         );
      }, [isAuthorizationLoading, authorizations, user]);
+
+    
+    const db_id = useWatch({ control, name: "db_id" });
+    
+    const { data: documentSubmissionExistsData } = api.rdlInvoice.checkIfDocumentSubmissionExists.useQuery(
+        !!db_id ? { rdl_invoice_id: db_id ?? "" } : skipToken,
+    );
+
+    const exists = !!documentSubmissionExistsData?.exists;
     
  
     return (
@@ -160,13 +171,13 @@ const EditRDLInvoicePage = ({ params }: EditRDLInvoicePageProp) => {
                 validationError={validationError ?? {}}
                 error={error}
                 control={control}
-                disabled={!can_update || isAuthorized}
+                disabled={!can_update || isAuthorized || exists}
             />
 
             <FactoryInvoiceDetails 
                 methods={methods}
                 validationError={validationError ?? {}}
-                disabled={isLoading || isAuthorized}
+                disabled={isLoading || isAuthorized || exists}
             />
 
             {/* Shipment Portal anchor */}
@@ -177,7 +188,7 @@ const EditRDLInvoicePage = ({ params }: EditRDLInvoicePageProp) => {
                     onClick={() => onSubmitAll()}
                     label={"Update RDL Invoice"} 
                     className="text-lg tracking-wide mt-6 max-w-80 m-8"
-                    disabled={isLoading || isLoadingSubmit || isAuthorized}
+                    disabled={isLoading || isLoadingSubmit || isAuthorized || exists}
                 />
             </div>
 
@@ -185,6 +196,12 @@ const EditRDLInvoicePage = ({ params }: EditRDLInvoicePageProp) => {
                 message="This RDL Invoice has been approved and cannot be updated or deleted" 
                 active={isAuthorized} 
                 type="secondary" 
+            />
+
+            <MessageBox 
+                message="This RDL Invoice has associated Document Submission and cannot be updated or deleted" 
+                active={exists} 
+                type="primary" 
             />
 
             <div className='flex flex-row justify-start gap-8 ml-8 mb-8'>
@@ -196,7 +213,7 @@ const EditRDLInvoicePage = ({ params }: EditRDLInvoicePageProp) => {
                             onClick={() => onSetAuthorization(false)}
                             label="Unauthorize RDL Invoice"
                             className="text-lg tracking-wide mt-6 max-w-80"
-                            disabled={!canAuthorize}
+                            disabled={!canAuthorize || exists}
                         />
                     </div>
                 ) : (
