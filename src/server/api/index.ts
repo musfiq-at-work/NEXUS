@@ -52,3 +52,6 @@ export { lcTransferRouter } from "./routers/commercial/lcTransfer";
 export { factoryInvoiceRouter } from "./routers/commercial/factoryInvoice";
 export { rdlInvoiceRouter } from "./routers/commercial/rdlInvoice";
 export { documentSubmissionRouter } from "./routers/commercial/documentSubmission";
+
+// Accounting routers
+export { commissionInvoiceRouter } from "./routers/accounting/commissionInvoice";

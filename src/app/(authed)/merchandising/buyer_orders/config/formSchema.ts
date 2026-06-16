@@ -38,6 +38,6 @@ export const orderFormSchema = z.object({
       }
     });
   });
-});;
+});
 
 export type OrderFormValues = z.infer<typeof orderFormSchema>;

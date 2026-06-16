@@ -170,6 +170,7 @@ model users {
   color_history_color_history_action_byTousers                       color_history[]                                @relation("color_history_action_byTousers")
   commission_distribution_details_history                            commission_distribution_details_history[]
   commission_distribution_history                                    commission_distribution_history[]
+  commission_invoice_history                                         commission_invoice_history[]
   companies_history_companies_history_action_byTousers               companies_history[]                            @relation("companies_history_action_byTousers")
   company_banks_history                                              company_banks_history[]
   countries_history_countries_history_action_byTousers               countries_history[]                            @relation("countries_history_action_byTousers")
@@ -389,6 +390,7 @@ model payment_terms {
 model terms {
   id                   Int                    @id @default(autoincrement())
   name                 String                 @db.VarChar(5)
+  commission_invoice   commission_invoice[]
   document_submissions document_submissions[]
   exfactory            exfactory[]
   factory_invoice      factory_invoice[]
@@ -960,6 +962,7 @@ model buyers {
   buyer_payment_term       buyer_payment_term[]
   countries                countries?                @relation(fields: [country_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   overseas_offices         overseas_offices?         @relation(fields: [overseas_office_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  commission_invoice       commission_invoice[]
   document_submissions     document_submissions[]
   ev_permissions           ev_permissions[]
   exfactory                exfactory[]
@@ -1147,23 +1150,24 @@ model teams_history {
 }
 
 model company_banks {
-  id                                                                 Int               @id @default(autoincrement())
+  id                                                                 Int                  @id @default(autoincrement())
   company_id                                                         Int?
   bank_id                                                            Int?
   old_company_id                                                     Int?
   old_bank_id                                                        Int?
-  branch_name                                                        String?           @db.VarChar(255)
-  account_no                                                         String?           @db.VarChar(30)
-  account_name                                                       String?           @db.VarChar(255)
-  swift                                                              String?           @db.VarChar(20)
-  added_at                                                           DateTime?         @default(now()) @db.Timestamp(6)
+  branch_name                                                        String?              @db.VarChar(255)
+  account_no                                                         String?              @db.VarChar(30)
+  account_name                                                       String?              @db.VarChar(255)
+  swift                                                              String?              @db.VarChar(20)
+  added_at                                                           DateTime?            @default(now()) @db.Timestamp(6)
   address                                                            String?
   old_pk                                                             Int?
-  banks                                                              banks?            @relation(fields: [bank_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  companies                                                          companies?        @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  commission_invoice                                                 commission_invoice[]
+  banks                                                              banks?               @relation(fields: [bank_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  companies                                                          companies?           @relation(fields: [company_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   lc_master                                                          lc_master[]
-  sales_contracts_sales_contracts_negotiation_bank_idTocompany_banks sales_contracts[] @relation("sales_contracts_negotiation_bank_idTocompany_banks")
-  sales_contracts_sales_contracts_rdl_bank_idTocompany_banks         sales_contracts[] @relation("sales_contracts_rdl_bank_idTocompany_banks")
+  sales_contracts_sales_contracts_negotiation_bank_idTocompany_banks sales_contracts[]    @relation("sales_contracts_negotiation_bank_idTocompany_banks")
+  sales_contracts_sales_contracts_rdl_bank_idTocompany_banks         sales_contracts[]    @relation("sales_contracts_rdl_bank_idTocompany_banks")
 }
 
 model company_banks_history {
@@ -1778,6 +1782,7 @@ model sales_contracts {
   old_pk                                                           Int?
   added_at                                                         DateTime?                             @default(now()) @db.Timestamp(6)
   company_id                                                       Int?
+  commission_invoice                                               commission_invoice[]
   document_submissions                                             document_submissions[]
   factory_invoice                                                  factory_invoice[]
   lc_transfer_details                                              lc_transfer_details[]
@@ -1909,6 +1914,7 @@ model lc_master {
   company_id            Int?
   is_authorized         Boolean?               @default(false)
   approved_once         Boolean?               @default(false)
+  commission_invoice    commission_invoice[]
   document_submissions  document_submissions[]
   factory_invoice       factory_invoice[]
   lc_amendment          lc_amendment[]
@@ -2411,6 +2417,7 @@ model rdl_invoice {
   discount                     Float?                         @default(0)
   remarks                      String?
   contact_no                   String?                        @db.VarChar(100)
+  commission_invoice           commission_invoice[]
   document_submissions_details document_submissions_details[]
   buyers                       buyers                         @relation(fields: [buyer_id], references: [id], onUpdate: NoAction)
   lc_master                    lc_master?                     @relation(fields: [lc_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
@@ -2571,6 +2578,7 @@ model document_submissions {
   old_courier_id               Int?
   awb_date                     DateTime?                      @db.Date
   remarks                      String?
+  commission_invoice           commission_invoice[]
   buyers                       buyers                         @relation(fields: [buyer_id], references: [id], onUpdate: NoAction)
   couriers                     couriers?                      @relation(fields: [courier_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   lc_master                    lc_master?                     @relation(fields: [lc_id], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "document_submissions_lc_ic_fkey")
@@ -2623,6 +2631,51 @@ model document_submissions_history {
   action_at              DateTime? @default(now()) @db.Timestamp(6)
   awb_date               DateTime? @db.Date
   remarks                String?
+  users                  users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model commission_invoice {
+  id                         String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  term_id                    Int
+  buyer_id                   Int?
+  lc_id                      String?               @db.Uuid
+  sales_contract_id          String?               @db.Uuid
+  document_submission_id     String?               @db.Uuid
+  rdl_invoice_id             String?               @db.Uuid
+  company_bank_id            Int?
+  ref_no                     String                @db.VarChar(50)
+  old_buyer_id               Int?
+  old_lc_id                  Int?
+  old_sales_contract_id      Int?
+  old_document_submission_id Int?
+  old_rdl_invoice_id         Int?
+  old_bank_id                Int?
+  old_pk                     Int?
+  invoice_date               DateTime?             @db.Date
+  added_at                   DateTime?             @default(now()) @db.Timestamp(6)
+  buyers                     buyers?               @relation(fields: [buyer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  company_banks              company_banks?        @relation(fields: [company_bank_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  document_submissions       document_submissions? @relation(fields: [document_submission_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  lc_master                  lc_master?            @relation(fields: [lc_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  rdl_invoice                rdl_invoice?          @relation(fields: [rdl_invoice_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  sales_contracts            sales_contracts?      @relation(fields: [sales_contract_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  terms                      terms                 @relation(fields: [term_id], references: [id], onUpdate: NoAction)
+}
+
+model commission_invoice_history {
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  commission_invoice_id  String?   @db.Uuid
+  term_id                Int?
+  buyer_id               Int?
+  lc_id                  String?   @db.Uuid
+  sales_contract_id      String?   @db.Uuid
+  document_submission_id String?   @db.Uuid
+  rdl_invoice_id         String?   @db.Uuid
+  company_bank_id        Int?
+  ref_no                 String?   @db.VarChar(30)
+  action_type            actions?
+  action_by              String?   @db.Uuid
+  action_at              DateTime? @default(now()) @db.Timestamp(6)
   users                  users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
