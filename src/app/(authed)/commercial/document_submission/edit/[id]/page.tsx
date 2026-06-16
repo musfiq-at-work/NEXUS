@@ -50,10 +50,6 @@ const EditDocumentSubmissionPage = ({ params }: EditDocumentSubmissionPageProp) 
         }
     });
 
-    useEffect(() => {
-        console.log("Validation Errors:", documentSubmissionData);
-    }, [documentSubmissionData]);
-
     // Handle form submission for all fields
     const onSubmitAll = useCallback(handleSubmit(async (documentSubmissionData) => {
         try {
@@ -81,7 +77,6 @@ const EditDocumentSubmissionPage = ({ params }: EditDocumentSubmissionPageProp) 
                 })),
             };
 
-            console.log("Submitting update with payload:", payload);
             const res = await updateDocumentSubmission.mutateAsync(payload);
         }
         catch (error) {

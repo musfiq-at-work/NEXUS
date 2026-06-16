@@ -41,8 +41,6 @@ const FactoryInvoiceDetails = (props: props) => {
         if (!rdlInvoiceDetails) return;
         
         const existingFactoryInvoice = methods.getValues(`rdlInvoices.${invoiceIndex}.factoryInvoices`) ?? [];
-        console.log("rdlInvoiceDetails", rdlInvoiceDetails);
-        console.log("existingFactoryInvoice", existingFactoryInvoice);
 
         replaceShipments(
             rdlInvoiceDetails.map((factoryInvoice) => {
@@ -50,10 +48,8 @@ const FactoryInvoiceDetails = (props: props) => {
                     (x) => x.rdl_invoice_details_id === factoryInvoice.risdid
                 );
 
-                console.log( "existing", factoryInvoice.risdid, existingFactoryInvoice, existing)
-
                 return {
-                    rdl_invoice_details_id: factoryInvoice.risdid,
+                    rdl_invoice_details_id: factoryInvoice.risdid ?? existing?.db_id ?? undefined,
                     factory_invoice_id: factoryInvoice.factory_invoice_id ?? undefined,
                     factory_name: factoryInvoice.factory_name ?? undefined,
                     factory_invoice_no: factoryInvoice.factory_invoice_no ?? undefined,

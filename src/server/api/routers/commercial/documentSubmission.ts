@@ -871,8 +871,6 @@ export const documentSubmissionRouter = createTRPCRouter({
                     });
                 }
 
-                console.log("Updating document submission with data:", input);
-
                 return await ctx.db.$transaction(async (tx) => {
                     const updatedDocumentSubmission = await tx.document_submissions.update({
                         where: { id: input.id },

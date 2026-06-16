@@ -22,6 +22,22 @@ export const orderFormSchema = z.object({
         status: z.nativeEnum(order_status).optional(),
         styles: z.array(styleSchema).optional(),
     }),
-});
+}).superRefine((data, ctx) => {
+  const orderDate = new Date(data.order.order_date);
+
+  data.order.styles?.forEach((style, styleIndex) => {
+    style.shipments?.forEach((shipment, shipmentIndex) => {
+      const etdDate = new Date(shipment.etd_date);
+
+      if (etdDate <= orderDate) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["order", "styles", styleIndex, "shipments", shipmentIndex, "etd_date"],
+          message: "ETD date must be later than Order Date",
+        });
+      }
+    });
+  });
+});;
 
 export type OrderFormValues = z.infer<typeof orderFormSchema>;

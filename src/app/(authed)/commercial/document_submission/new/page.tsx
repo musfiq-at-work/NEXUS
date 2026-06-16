@@ -32,10 +32,6 @@ const NewDocumentSubmissionPage = () => {
         }
     });
 
-    useEffect(() => {
-        console.log("Validation Errors:", validationError);
-    }, [validationError]);
-
     // Handle form submission for all fields
     const onSubmitAll =  handleSubmit(async (documentSubmissionData) => {
         try {

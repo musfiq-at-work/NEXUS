@@ -15,7 +15,6 @@ type RDLInvoiceDetails = NonNullable<GetDocumentSubmissionByIdTypes>['rdlInvoice
 type FactoryInvoiceShipments = NonNullable<RDLInvoiceDetails>['factoryInvoices'][number];
 
 export const useDocumentSubmissionForm = (initialData?: GetDocumentSubmissionByIdTypes) => {
-    console.log("Initial Data for Document Submission Form:", initialData);
     const transformedInitialData = useMemo(() => {
         return initialData ? {
             db_id: initialData.id,
