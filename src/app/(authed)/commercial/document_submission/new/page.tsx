@@ -49,7 +49,9 @@ const NewDocumentSubmissionPage = () => {
                 fdbc_date: new Date(documentSubmissionData.fdbc_date ?? new Date()),
                 fdbc_value: safeNumber(documentSubmissionData.fdbc_value),
                 awb_no: documentSubmissionData.awb_no,
-                awb_date: new Date(documentSubmissionData.awb_date ?? new Date()),
+                awb_date: documentSubmissionData.awb_date 
+                    ? new Date(documentSubmissionData.awb_date) 
+                    : undefined,
                 courier_id: documentSubmissionData.courier_id 
                     ? safeNumber(documentSubmissionData.courier_id) 
                     : undefined,
@@ -58,6 +60,7 @@ const NewDocumentSubmissionPage = () => {
                     received_rdl_value: safeNumber(rdlInvoice.received_rdl_value),
                     factoryInvoices: rdlInvoice.factoryInvoices?.map((factoryInvoice) => ({
                         factory_invoice_id: factoryInvoice.factory_invoice_id ?? "",
+                        rdl_invoice_details_id: factoryInvoice.rdl_invoice_details_id,
                         factory_fdbc_no: factoryInvoice.factory_fdbc_no ?? "",
                     })) ?? [],
                 })),

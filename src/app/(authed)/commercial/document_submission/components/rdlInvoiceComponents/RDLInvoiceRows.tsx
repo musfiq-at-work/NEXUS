@@ -96,6 +96,21 @@ const RdlInvoiceRow = (props: Props) => {
 
     const isEdit = !!documentSubmissionDBid;
 
+    const rdlValue = methods.watch(`rdlInvoices.${index}.rdl_value`);
+
+    const previouslyReceivedRdlValue = methods.watch(`rdlInvoices.${index}.previously_received_rdl_value`);
+
+    useEffect(() => {
+        const path = `rdlInvoices.${index}.received_rdl_value` as const;
+
+        const currentValue = methods.getValues(path);
+
+        if (!currentValue || currentValue === undefined || currentValue === null || Number.isNaN(Number(currentValue))) {
+            methods.setValue(path, (safeNumber(rdlValue) - safeNumber(previouslyReceivedRdlValue)));
+        }
+    }, [rdlValue, previouslyReceivedRdlValue, methods, index]);
+    
+
     return (
         <>
             <GenericFormTableRow

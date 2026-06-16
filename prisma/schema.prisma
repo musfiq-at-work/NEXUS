@@ -2533,6 +2533,7 @@ model document_submission_factory_invoices {
   old_factory_invoice_id             Int?
   added_at                           DateTime?                    @default(now()) @db.Timestamp(6)
   factory_fdbc_no                    String?                      @db.VarChar(100)
+  rdl_invoice_details_id             String?                      @db.Uuid
   document_submissions_details       document_submissions_details @relation(fields: [document_submissions_details_id], references: [id], onUpdate: NoAction, map: "document_submission_factory_i_document_submissions_details_fkey")
   factory_invoice                    factory_invoice              @relation(fields: [factory_invoice_id], references: [id], onUpdate: NoAction)
 }
@@ -2546,6 +2547,7 @@ model document_submission_factory_invoices_history {
   action_by                               String?   @db.Uuid
   action_at                               DateTime? @default(now()) @db.Timestamp(6)
   factory_fdbc_no                         String?   @db.VarChar(50)
+  rdl_invoice_details_id                  String?   @db.Uuid
   users                                   users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 

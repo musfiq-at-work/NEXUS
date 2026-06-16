@@ -15,6 +15,7 @@ type RDLInvoiceDetails = NonNullable<GetDocumentSubmissionByIdTypes>['rdlInvoice
 type FactoryInvoiceShipments = NonNullable<RDLInvoiceDetails>['factoryInvoices'][number];
 
 export const useDocumentSubmissionForm = (initialData?: GetDocumentSubmissionByIdTypes) => {
+    console.log("Initial Data for Document Submission Form:", initialData);
     const transformedInitialData = useMemo(() => {
         return initialData ? {
             db_id: initialData.id,
@@ -39,11 +40,12 @@ export const useDocumentSubmissionForm = (initialData?: GetDocumentSubmissionByI
                 db_id: detail.db_id,
                 rdl_invoice_id: detail.rdl_invoice_id?.toString() ?? undefined,
                 rdl_invoice_no: detail?.rdl_invoice_no ?? undefined,
-                received_rdl_value: detail.received_value ? detail.received_value.toString() : undefined,
+                received_rdl_value: detail.received_value ? detail.received_value : undefined,
                 factoryInvoices: detail.factoryInvoices?.map((factoryInvoice: FactoryInvoiceShipments) => ({
                     db_id: factoryInvoice.db_id,
                     factory_invoice_no: factoryInvoice.factory_invoice_no ?? undefined,
                     factory_fdbc_no: factoryInvoice.factory_fdbc_no ?? undefined,
+                    rdl_invoice_details_id: factoryInvoice.rdl_invoice_details_id ?? undefined,
                 })) ?? [],
             })) ?? [],
         } : undefined;

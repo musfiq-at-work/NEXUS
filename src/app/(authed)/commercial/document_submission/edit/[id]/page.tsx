@@ -56,7 +56,6 @@ const EditDocumentSubmissionPage = ({ params }: EditDocumentSubmissionPageProp) 
 
     // Handle form submission for all fields
     const onSubmitAll = useCallback(handleSubmit(async (documentSubmissionData) => {
-        console.log("Submitting update with data:", documentSubmissionData);
         try {
             setIsLoadingSubmit(true);
             const payload = {
@@ -120,7 +119,7 @@ const EditDocumentSubmissionPage = ({ params }: EditDocumentSubmissionPageProp) 
             <div className="w-full flex flex-row justify-end">
                 <Button type="button" 
                     onClick={() => onSubmitAll()}
-                    label={"Add Document Submission"} 
+                    label={"Update Document Submission"} 
                     className="text-lg tracking-wide mt-6 max-w-80 m-8"
                     disabled={isLoading || !can_update}
                 />

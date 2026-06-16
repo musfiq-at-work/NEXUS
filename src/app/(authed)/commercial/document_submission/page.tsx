@@ -86,6 +86,8 @@ const DocumentSubmissionPage = () => {
         }
         finally {
             setIsLoadingDelete(false);
+            setDeleteClicked(false);
+            setDeleteID('');
         }
     }, [deleteID, deleteMutation]);
 

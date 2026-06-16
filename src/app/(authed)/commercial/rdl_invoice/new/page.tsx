@@ -69,10 +69,6 @@ const NewRDLInvoicePage = () => {
         }
     });
 
-    useEffect(() => {
-        console.log("RDL Invoice Form Errors:", validationError);
-    }, [validationError]);
-
     return (
         <Wrapper heading='Add RDL Invoice' >
             <Form 

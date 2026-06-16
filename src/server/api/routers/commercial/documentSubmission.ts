@@ -29,8 +29,8 @@ interface RDLInvoice {
 }
 
 interface FactoryInvoiceDetails {
-    factory_name: string,
     risdid: string,
+    factory_name: string,
     factory_invoice_id: string,
     factory_invoice_no: string,
     invoice_date: Date,
@@ -293,6 +293,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                 received_rdl_value: z.number(),
                 factoryInvoices: z.array(z.object({
                     factory_invoice_id: z.string(),
+                    rdl_invoice_details_id: z.string(),
                     factory_fdbc_no: z.string().optional(),
                 })).optional(),
             })).optional(),
@@ -388,6 +389,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                                                     document_submissions_details_id: newDocumentSubmissionDetail.id,
                                                     factory_invoice_id: factoryInvoice.factory_invoice_id,
                                                     factory_fdbc_no: factoryInvoice.factory_fdbc_no,
+                                                    rdl_invoice_details_id: factoryInvoice.rdl_invoice_details_id,
                                                 }
                                             });
 
@@ -396,6 +398,8 @@ export const documentSubmissionRouter = createTRPCRouter({
                                                     document_submission_factory_invoices_id: newFactoryInvoice.id,
                                                     document_submissions_details_id: newDocumentSubmissionDetail.id,
                                                     factory_invoice_id: newFactoryInvoice.factory_invoice_id,
+                                                    factory_fdbc_no: newFactoryInvoice.factory_fdbc_no,
+                                                    rdl_invoice_details_id: newFactoryInvoice.rdl_invoice_details_id,
                                                     action_type: actions.ADDED,
                                                     action_by: ctx.user.id,
                                                 }
@@ -674,8 +678,8 @@ export const documentSubmissionRouter = createTRPCRouter({
 
                 const result = await ctx.db.$queryRaw<FactoryInvoiceDetails[]>`
                     SELECT 
+                        RISD.id AS risdid,
                         F.NAME AS FACTORY_NAME,
-                        RISD.ID AS RISDID,
                         FI.ID AS FACTORY_INVOICE_ID,
                         FI.INVOICE_NO AS FACTORY_INVOICE_NO,
                         FI.INVOICE_DATE AS INVOICE_DATE,
@@ -696,9 +700,9 @@ export const documentSubmissionRouter = createTRPCRouter({
                 `;
 
                 const factoryInvoices = result.map(item => ({
+                    risdid: item.risdid,
                     factory_name: item.factory_name,
                     factory_invoice_id: item.factory_invoice_id,
-                    risdid: item.risdid,
                     factory_invoice_no: item.factory_invoice_no,
                     invoice_date: item.invoice_date,
                     factory_invoice_value: Number(item.factory_invoice_value),
@@ -780,10 +784,11 @@ export const documentSubmissionRouter = createTRPCRouter({
                                 document_submission_factory_invoices: {
                                     select: {
                                         id: true,
-                                        factory_invoice_id: true,
                                         factory_fdbc_no: true,
+                                        rdl_invoice_details_id: true,
                                         factory_invoice: {
                                             select: {
+                                                id: true,
                                                 invoice_no: true,
                                             }
                                         }
@@ -821,8 +826,9 @@ export const documentSubmissionRouter = createTRPCRouter({
                         rdl_invoice_no: detail.rdl_invoice?.invoice_no,
                         factoryInvoices: detail.document_submission_factory_invoices.map(factoryInvoice => ({
                             db_id: factoryInvoice.id,
-                            factory_invoice_id: factoryInvoice.factory_invoice_id,
+                            factory_invoice_id: factoryInvoice.factory_invoice.id,
                             factory_fdbc_no: factoryInvoice.factory_fdbc_no,
+                            rdl_invoice_details_id: factoryInvoice.rdl_invoice_details_id,
                             factory_invoice_no: factoryInvoice.factory_invoice?.invoice_no,
                         }))
                     })),

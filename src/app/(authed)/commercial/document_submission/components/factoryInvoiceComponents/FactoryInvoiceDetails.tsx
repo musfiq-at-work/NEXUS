@@ -39,25 +39,21 @@ const FactoryInvoiceDetails = (props: props) => {
 
     useEffect(() => {
         if (!rdlInvoiceDetails) return;
+        
         const existingFactoryInvoice = methods.getValues(`rdlInvoices.${invoiceIndex}.factoryInvoices`) ?? [];
-
-                console.log(
-            "existingFactoryInvoice",
-            existingFactoryInvoice.map(x => ({
-                db_id: x.db_id,
-                factory_invoice_id: x.factory_invoice_id,
-            }))
-        );
+        console.log("rdlInvoiceDetails", rdlInvoiceDetails);
+        console.log("existingFactoryInvoice", existingFactoryInvoice);
 
         replaceShipments(
             rdlInvoiceDetails.map((factoryInvoice) => {
                 const existing = existingFactoryInvoice.find(
-                    (x) => x.factory_invoice_id === factoryInvoice.factory_invoice_id
+                    (x) => x.rdl_invoice_details_id === factoryInvoice.risdid
                 );
 
-                console.log( "existing", factoryInvoice.factory_invoice_id,  existing)
+                console.log( "existing", factoryInvoice.risdid, existingFactoryInvoice, existing)
 
                 return {
+                    rdl_invoice_details_id: factoryInvoice.risdid,
                     factory_invoice_id: factoryInvoice.factory_invoice_id ?? undefined,
                     factory_name: factoryInvoice.factory_name ?? undefined,
                     factory_invoice_no: factoryInvoice.factory_invoice_no ?? undefined,
@@ -70,14 +66,13 @@ const FactoryInvoiceDetails = (props: props) => {
                     // preserve existing values loaded from initialData
                     db_id: existing?.db_id,
                     factory_fdbc_no: existing?.factory_fdbc_no,
+                    
                 };
             })
         );
-
-        console.log('Yo',
-            methods.getValues(`rdlInvoices.${invoiceIndex}.factoryInvoices`)
-        );
     }, [rdlInvoiceDetails, invoiceIndex]);
+
+    
 
     const ShipmentHeading = () => (
         <div className="flex flex-row items-center gap-4">
