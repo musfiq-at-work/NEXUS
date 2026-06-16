@@ -930,12 +930,15 @@ export const documentSubmissionRouter = createTRPCRouter({
                                 // handle factory invoices for existing rdl invoice
                                 await Promise.all(
                                     (rdlInvoice.factoryInvoices ?? []).map(async (factoryInvoice) => {
-                                        await tx.document_submission_factory_invoices.update({
-                                            where: { id: factoryInvoice.db_id },
-                                            data: {
-                                                factory_fdbc_no: factoryInvoice.factory_fdbc_no,
-                                            }
-                                        });
+                                        if(!!factoryInvoice.db_id) {
+                                            await tx.document_submission_factory_invoices.update({
+                                                where: { id: factoryInvoice.db_id },
+                                                data: {
+                                                    factory_fdbc_no: factoryInvoice.factory_fdbc_no,
+                                                }
+                                            });
+                                        }
+                                        
                                     })
                                 );
                             }
