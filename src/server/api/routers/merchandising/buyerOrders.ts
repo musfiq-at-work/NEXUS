@@ -502,7 +502,7 @@ export const buyerOrdersRouter = createTRPCRouter({
                     });
 
                     return deletedBuyerOrder;
-                });
+                }, {timeout: 30000});
             } catch (error) {
                 handlePrismaError(error);
             }
@@ -827,7 +827,7 @@ export const buyerOrdersRouter = createTRPCRouter({
                             styles,
                         },
                     };
-                });
+                }, {timeout: 30000});
             } 
             catch (error) {
                 handlePrismaError(error);
@@ -1274,7 +1274,7 @@ export const buyerOrdersRouter = createTRPCRouter({
                             styles,
                         },
                     };
-                });
+                }, {timeout: 30000});
             } catch (error) {
                 handlePrismaError(error);
             }
@@ -1293,9 +1293,7 @@ export const buyerOrdersRouter = createTRPCRouter({
                 });
             }
 
-            return ctx.db.$transaction(tx =>
-                deleteStyle(tx, input.style_id, ctx.user.id)
-            );
+            return ctx.db.$transaction(tx => deleteStyle(tx, input.style_id, ctx.user.id), {timeout: 30000});
         }),
 
 
@@ -1311,9 +1309,7 @@ export const buyerOrdersRouter = createTRPCRouter({
                 });
             }
 
-            return ctx.db.$transaction(tx =>
-                deleteShipment(tx, input.shipment_id, ctx.user.id)
-            );
+            return ctx.db.$transaction(tx => deleteShipment(tx, input.shipment_id, ctx.user.id), {timeout: 30000});
         }),
 
 
@@ -1363,7 +1359,7 @@ export const buyerOrdersRouter = createTRPCRouter({
                         where: { id: input.color_id },
                     });
                     return existingColor;
-                });
+                }, {timeout: 30000});
             } catch (error) {
                 handlePrismaError(error);
             }

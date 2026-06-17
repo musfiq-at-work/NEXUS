@@ -568,7 +568,7 @@ export const factoryOrderRouter = createTRPCRouter({
                         ...factoryOrder,
                         shipments,
                     };
-                });
+                }, {timeout: 30000});
             } catch (error) {
                 handlePrismaError(error);
             }
@@ -851,7 +851,7 @@ export const factoryOrderRouter = createTRPCRouter({
                     }
 
                     return factoryOrder;
-                });
+                }, {timeout: 30000});
 
                 return updatedFactoryOrder;
             }
@@ -1007,7 +1007,7 @@ export const factoryOrderRouter = createTRPCRouter({
                     });
 
                     return factoryOrder;
-                });
+                }, {timeout: 30000});
 
                 return approvedFactoryOrder;
             }
@@ -1097,7 +1097,7 @@ export const factoryOrderRouter = createTRPCRouter({
                         },
                     });
                     return deletedFactoryOrder;
-                });
+                }, {timeout: 30000});
 
                 return deletedFactoryOrder;
             }

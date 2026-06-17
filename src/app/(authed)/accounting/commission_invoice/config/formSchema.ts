@@ -8,7 +8,9 @@ export const CommissionInvoiceSchema = z.object({
     invoice_date: z.string().min(1, "Submission Date is required"),
     ref_no: z.string().optional(),
     lc_sc_id: z.string().min(1, "FDBC/TT Value is required"),
-    fdbc_rdl_invoice_no: z.string().min(1, "FDBC/TT Date is required"),
+    sc_lc_no: z.string().optional(),
+    fdbc_rdl_invoice_id: z.string().min(1, "FDBC/TT Date is required"),
+    fdbc_rdl_invoice_no: z.string().optional(),
     company_bank_id: z.string().min(1, "LC/SC is required"),
 });
 

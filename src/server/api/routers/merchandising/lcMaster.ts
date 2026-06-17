@@ -335,8 +335,7 @@ export const lcMasterRouter = createTRPCRouter({
                             action_by: ctx.user.id,
                         }
                     })
-
-                });
+                }, {timeout: 30000});
 
             }
             catch (error) {
@@ -454,7 +453,7 @@ export const lcMasterRouter = createTRPCRouter({
                         ...newLC,
                         orders,
                     };
-                });
+                }, {timeout: 30000});
             } catch (error) {
                 handlePrismaError(error);
             }
@@ -701,7 +700,7 @@ export const lcMasterRouter = createTRPCRouter({
                         created_orders: createdOrders,
                         deleted_orders: deletedOrders,
                     };
-                });
+                }, {timeout: 30000});
             } catch (error) {
                 handlePrismaError(error);
             }
@@ -1062,7 +1061,7 @@ export const lcMasterRouter = createTRPCRouter({
                             }
                         });
                     }
-                });
+                }, {timeout: 30000});
             }
             catch (error) {
                 handlePrismaError(error);
@@ -1127,7 +1126,7 @@ export const lcMasterRouter = createTRPCRouter({
                             action_by: ctx.user.id,
                         }
                     });
-                });
+                }, {timeout: 30000});
             }
             catch (error) {
                 handlePrismaError(error);
@@ -1242,7 +1241,7 @@ export const lcMasterRouter = createTRPCRouter({
                     });
 
                     return updatedLC;
-                })
+                }, {timeout: 30000})
             }
             catch (error) {
                 handlePrismaError(error);

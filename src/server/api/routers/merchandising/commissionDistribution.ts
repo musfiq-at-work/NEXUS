@@ -270,7 +270,7 @@ export const commissionDistributionRouter = createTRPCRouter({
                             action_by: ctx.user.id,
                         }
                     });
-                })
+                }, {timeout: 30000})
             }
             catch (error) {
                 handlePrismaError(error);
@@ -400,7 +400,7 @@ export const commissionDistributionRouter = createTRPCRouter({
                     `;
 
                     return newDistribution;
-                });
+                }, {timeout: 30000});
             }
             catch (error) {
                 handlePrismaError(error);
@@ -618,7 +618,7 @@ export const commissionDistributionRouter = createTRPCRouter({
                         ...updatedDistribution,
                         details: details.filter(Boolean),
                     };
-                });
+                }, {timeout: 30000});
             } catch (error) {
                 handlePrismaError(error);
             }

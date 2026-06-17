@@ -10,11 +10,7 @@ import { skipToken } from "@tanstack/react-query";
 import { safeNumber } from "~/utils/numbers";
 import type { GetCommissionInvoiceByIdTypes } from "~/types/accountingAPITypes";
 
-// type RDLInvoiceDetails = NonNullable<GetDocumentSubmissionByIdTypes>['rdlInvoices'][number];
-
-// type FactoryInvoiceShipments = NonNullable<RDLInvoiceDetails>['factoryInvoices'][number];
-
-export const useDocumentSubmissionForm = (initialData?: GetCommissionInvoiceByIdTypes) => {
+export const useCommissionInvoiceForm = (initialData?: GetCommissionInvoiceByIdTypes) => {
     const transformedInitialData = useMemo(() => {
         return initialData ? {
             db_id: initialData.id,
@@ -24,8 +20,11 @@ export const useDocumentSubmissionForm = (initialData?: GetCommissionInvoiceById
                 ? formatDateForInput(new Date(initialData.invoice_date)) : '',
             ref_no: initialData.ref_no ?? '',
             lc_sc_id: initialData.lc_sc_id?.toString() ?? undefined,
+            sc_lc_no: initialData.sc_lc_no ?? undefined,
             fdbc_rdl_invoice_no: initialData.fdbc_rdl_invoice_no ?? '',
-            company_bank_id: initialData.company_bank_id != null ? String(initialData.company_bank_id) : undefined,
+            fdbc_rdl_invoice_id: initialData.fdbc_rdl_invoice_id ?? '',
+            company_bank_id: initialData.company_bank_id != null 
+                ? String(initialData.company_bank_id) : undefined,
         } : undefined;
     }, [initialData]);
 
@@ -37,8 +36,10 @@ export const useDocumentSubmissionForm = (initialData?: GetCommissionInvoiceById
             buyer_id: undefined,
             invoice_date: formatDateForInput(new Date()),
             lc_sc_id: undefined,
+            sc_lc_no: undefined,
             ref_no: undefined,
             fdbc_rdl_invoice_no: undefined,
+            fdbc_rdl_invoice_id: undefined,
             company_bank_id: undefined,
         },
     });
@@ -53,29 +54,57 @@ export const useDocumentSubmissionForm = (initialData?: GetCommissionInvoiceById
 
     const isEdit = !!initialData;
 
-    // const term_id = useWatch({ control, name: 'term_id' });
-    // const buyer_id = useWatch({ control, name: 'buyer_id' });
+    const term_id = useWatch({ control, name: 'term_id' });
+    const buyer_id = useWatch({ control, name: 'buyer_id' });
+    const lc_sc_id = useWatch({ control, name: 'lc_sc_id' });
 
-    // const lcList = api.documentSubmission.getScLcForDocumentSubmission.useQuery(
-    //    (!!term_id && !!buyer_id && !isEdit) ? {
-    //         term_id: safeNumber(term_id),
-    //         buyer_id: safeNumber(buyer_id),
-    //     } : skipToken
-    // ).data || [];
+    const lcList = api.commissionInvoice.getScLcForCommissionInvoice.useQuery(
+       (!!term_id && !!buyer_id && !isEdit) ? {
+            term_id: safeNumber(term_id),
+            buyer_id: safeNumber(buyer_id),
+        } : skipToken
+    ).data || [];
 
     let lcScList: { id: string; sc_lc_no: string }[];
 
-    // if(isEdit) {
-    //     const id = initialData.lc_sc_id;
+    if(isEdit) {
+        const id = initialData.lc_sc_id;
 
-    //     lcScList = id ? [{ id: String(id), sc_lc_no: String(initialData.sc_lc_no) }] : [];
-    // }
-    // else {
-    //     lcScList = lcList;
-    // }
+        lcScList = id ? [{ id: String(id), sc_lc_no: String(initialData.sc_lc_no) }] : [];
+    }
+    else {
+        lcScList = lcList;
+    }
+
+    const fdbcRdlInvoice = api.commissionInvoice.selectFDBCorRDLForCommissionInvoice.useQuery(
+       (!!term_id && !!lc_sc_id && !isEdit) ? {
+            term_id: safeNumber(term_id),
+            lc_sc_id: lc_sc_id,
+        } : skipToken
+    ).data || [];
+
+    let fdbcRdlInvoiceList: { id: string; fdbc_rdl_invoice_no: string }[];
+
+    if(isEdit) {
+        const id = initialData.lc_sc_id;
+
+        fdbcRdlInvoiceList = id ? [{ 
+            id: String(id), 
+            fdbc_rdl_invoice_no: String(initialData.fdbc_rdl_invoice_no) 
+        }] : [];
+    }
+    else {
+        fdbcRdlInvoiceList = fdbcRdlInvoice;
+    }
     
-    const formFields = useFormFields({lcScList, isEdit});
-    // const formFields = useFormFields({lcList: lcScList, isEdit});
+    const companyBankList = api.commissionInvoice.getCompanyBankForCommissionInvoice.useQuery(
+        (!!term_id && !!lc_sc_id && !isEdit) ? {
+            term_id: safeNumber(term_id),
+            lc_sc_id: lc_sc_id,
+        } : skipToken
+    ).data || [];
+
+    const formFields = useFormFields({lcScList, isEdit, fdbcRdlInvoiceList, companyBankList});
 
     return { methods, handleSubmit, formFields, validationError, trigger, watch, control };
 }

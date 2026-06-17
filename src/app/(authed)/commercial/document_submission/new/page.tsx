@@ -1,7 +1,7 @@
 'use client';
 
 import { Button, Form, Wrapper } from "~/components";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { api } from "~/trpc/react";
 import { toast } from "sonner";
 import { parseTRPCError } from "~/utils/parseTRPCError";

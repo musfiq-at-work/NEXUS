@@ -2522,15 +2522,6 @@ model rdl_invoice_shipment_details_history {
   users                  users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "rdl_invoice_shiment_details_histroy_action_by_fkey")
 }
 
-model rdl_invoice_metadata {
-  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  buyer_id Int
-  last_ref Int    @default(0)
-  year     Int
-
-  @@unique([buyer_id, year], map: "unique_rdl_invoice_buyer_ref_year")
-}
-
 model document_submission_factory_invoices {
   id                                 String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   document_submissions_details_id    String                       @db.Uuid
@@ -2643,7 +2634,7 @@ model commission_invoice {
   document_submission_id     String?               @db.Uuid
   rdl_invoice_id             String?               @db.Uuid
   company_bank_id            Int?
-  ref_no                     String                @db.VarChar(50)
+  ref_no                     String                @unique(map: "unique_ref_no") @db.VarChar(50)
   old_buyer_id               Int?
   old_lc_id                  Int?
   old_sales_contract_id      Int?
@@ -2677,6 +2668,15 @@ model commission_invoice_history {
   action_by              String?   @db.Uuid
   action_at              DateTime? @default(now()) @db.Timestamp(6)
   users                  users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model commission_invoice_metadata {
+  id       String @id(map: "rdl_invoice_metadata_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  buyer_id Int
+  last_ref Int    @default(0)
+  year     Int
+
+  @@unique([buyer_id, year], map: "unique_rdl_invoice_buyer_ref_year")
 }
 
 enum actions {

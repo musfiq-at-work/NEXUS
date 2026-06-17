@@ -71,8 +71,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
                             )
                         )
                     )
-                    SELECT 
-                        *,
+                    SELECT *,
                         COUNT(*) OVER() AS TOTAL_COUNT
                     FROM COMMISSION_INVOICE_LIST
                     ORDER BY ADDED_AT DESC, INVOICE_DATE DESC
@@ -109,7 +108,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
 
                 const result = await ctx.db.$queryRaw<CommissionInvoiceListItem[]>`
                     WITH COMMISSION_INVOICE_LIST AS (
-                        SELECT
+                        SELECT DISTINCT
                             T.NAME AS TERM,
                             CI.ID,
                             B.BUYER_NAME,
@@ -160,8 +159,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
                             OR DSDFI.INVOICE_NO ILIKE '%' || ${input.query} || '%'
                         )
                     )
-                    SELECT 
-                        *,
+                    SELECT *,
                         COUNT(*) OVER() AS TOTAL_COUNT
                     FROM COMMISSION_INVOICE_LIST
                     ORDER BY ADDED_AT DESC, INVOICE_DATE DESC
@@ -245,10 +243,30 @@ export const commissionInvoiceRouter = createTRPCRouter({
                         id: true,
                         buyer_id: true,
                         company_bank_id: true,
-                        document_submission_id: true,
-                        rdl_invoice_id: true,
-                        lc_id: true,
-                        sales_contract_id: true,
+                        lc_master: {
+                            select: {
+                                id: true,
+                                lc_no: true,
+                            }
+                        },
+                        sales_contracts: {
+                            select: {
+                                id: true,
+                                sales_contract_no: true,
+                            }
+                        },
+                        document_submissions: {
+                            select: {
+                                id: true,
+                                fdbc_no: true,
+                            }
+                        },
+                        rdl_invoice: {
+                            select: {
+                                id: true,
+                                invoice_no: true,
+                            }
+                        },
                         ref_no: true,
                         term_id: true,
                         invoice_date: true,
@@ -259,14 +277,320 @@ export const commissionInvoiceRouter = createTRPCRouter({
                     id: invoiceObj.id,
                     buyer_id: invoiceObj.buyer_id,
                     company_bank_id: invoiceObj.company_bank_id,
-                    fdbc_rdl_invoice_no: invoiceObj.document_submission_id ?? invoiceObj.rdl_invoice_id,
-                    lc_sc_id: invoiceObj.lc_id ?? invoiceObj.sales_contract_id,
+                    fdbc_rdl_invoice_no: invoiceObj.document_submissions?.fdbc_no ?? invoiceObj.rdl_invoice?.invoice_no,
+                    fdbc_rdl_invoice_id: invoiceObj.document_submissions?.id ?? invoiceObj.rdl_invoice?.id,
+                    lc_sc_id: invoiceObj.lc_master?.id ?? invoiceObj.sales_contracts?.id,
+                    sc_lc_no: invoiceObj.lc_master?.lc_no ?? invoiceObj.sales_contracts?.sales_contract_no,
                     ref_no: invoiceObj.ref_no,
                     term_id: invoiceObj.term_id,
                     invoice_date: invoiceObj.invoice_date,
                 } : null;
 
                 return invoice;
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    getScLcForCommissionInvoice: protectedProcedure
+        .input(z.object({
+            term_id: z.number(),
+            buyer_id: z.number(),
+        }))
+        .query(async ({ ctx, input }) => {
+            try {
+                const can_view = ctx.permissions[m.COMMISSION_INVOICE]?.can_add;
+
+                if (!can_view) {
+                    throw new TRPCError({ 
+                        code: "FORBIDDEN", 
+                        message: "You do not have permission to view commission invoices." 
+                    });
+                }
+
+                const terms = await ctx.db.terms.findUnique({
+                    where: { id: input.term_id },
+                    select: { name: true },
+                });
+
+                if (!terms) {
+                    throw new TRPCError({ 
+                        code: 'NOT_FOUND', 
+                        message: "Terms not found." 
+                    });
+                }
+
+                let scLcList: { id: string, sc_lc_no: string}[] = [];
+
+                if (terms.name.toLowerCase() === 'tt') {
+                    scLcList = await ctx.db.$queryRaw<{ id: string, sc_lc_no: string }[]>`
+                        SELECT DISTINCT
+                            SC.ID AS id,
+                            SC.sales_contract_no AS sc_lc_no
+                        FROM rdl_invoice AS RI 
+                            INNER JOIN sales_contracts AS SC ON RI.sales_contract_id = SC.id
+                        WHERE NOT EXISTS (
+                            SELECT 1
+                            FROM commission_invoice AS CI
+                            WHERE CI.RDL_INVOICE_ID = RI.ID
+                        )
+                        AND RI.term_id = ${input.term_id}
+                        AND SC.buyer_id = ${input.buyer_id};
+                    `;
+                }
+                else {
+                    scLcList = await ctx.db.$queryRaw<{ id: string, sc_lc_no: string }[]>`
+                        SELECT DISTINCT
+                            LC.ID AS id,
+                            LC.lc_no AS sc_lc_no
+                        FROM document_submissions AS DS 
+                            INNER JOIN lc_master AS LC ON DS.lc_id = LC.id
+                        WHERE NOT EXISTS (
+                            SELECT 1
+                            FROM commission_invoice AS CI
+                            WHERE CI.document_submission_id = DS.ID
+                        )
+                        AND DS.term_id = ${input.term_id}
+                        AND LC.buyer_id = ${input.buyer_id};
+                    `;
+                }
+
+                return scLcList;
+
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    selectFDBCorRDLForCommissionInvoice: protectedProcedure
+        .input(z.object({
+            term_id: z.number(),
+            lc_sc_id: z.string(),
+        }))
+        .query(async ({ ctx, input }) => {
+            try {
+                const can_view = ctx.permissions[m.COMMISSION_INVOICE]?.can_add;
+
+                if (!can_view) {
+                    throw new TRPCError({ 
+                        code: "FORBIDDEN", 
+                        message: "You do not have permission to view commission invoices." 
+                    });
+                }
+
+                const terms = await ctx.db.terms.findUnique({
+                    where: { id: input.term_id },
+                    select: { name: true },
+                });
+
+                if (!terms) {
+                    throw new TRPCError({ 
+                        code: 'NOT_FOUND', 
+                        message: "Terms not found." 
+                    });
+                }
+
+                let fdbcRdlInvoiceList: { id: string, fdbc_rdl_invoice_no: string}[] = [];
+
+                if (terms.name.toLowerCase() === 'tt') {
+                    fdbcRdlInvoiceList = await ctx.db.$queryRaw<{ id: string, fdbc_rdl_invoice_no: string }[]>`
+                        SELECT DISTINCT
+                            RI.ID,
+                            RI.INVOICE_NO AS fdbc_rdl_invoice_no
+                        FROM rdl_invoice AS RI 
+                            INNER JOIN sales_contracts AS SC ON RI.sales_contract_id = SC.id
+                        WHERE NOT EXISTS (
+                            SELECT 1
+                            FROM commission_invoice AS CI
+                            WHERE CI.RDL_INVOICE_ID = RI.ID
+                        )
+                        AND RI.term_id = ${input.term_id}
+                        AND SC.ID = ${input.lc_sc_id};
+                    `;
+                }
+                else {
+                    fdbcRdlInvoiceList = await ctx.db.$queryRaw<{ id: string, fdbc_rdl_invoice_no: string }[]>`
+                        SELECT DISTINCT
+                            DS.ID,
+                            DS.fdbc_no AS fdbc_rdl_invoice_no
+                        FROM document_submissions AS DS 
+                            INNER JOIN lc_master AS LC ON DS.lc_id = LC.id
+                        WHERE NOT EXISTS (
+                            SELECT 1
+                            FROM commission_invoice AS CI
+                            WHERE CI.document_submission_id = DS.ID
+                        )
+                        AND DS.term_id = ${input.term_id}
+                        AND LC.ID = ${input.lc_sc_id};
+                    `;
+                }
+
+                return fdbcRdlInvoiceList;
+
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    getCompanyBankForCommissionInvoice: protectedProcedure
+        .input(z.object({
+            term_id: z.number(),
+            lc_sc_id: z.string(),
+        }))
+        .query(async ({ ctx, input }) => {
+            try {
+                const can_view = ctx.permissions[m.COMMISSION_INVOICE]?.can_add;
+
+                if (!can_view) {
+                    throw new TRPCError({ 
+                        code: "FORBIDDEN", 
+                        message: "You do not have permission to view commission invoices." 
+                    });
+                }
+
+                const terms = await ctx.db.terms.findUnique({
+                    where: { id: input.term_id },
+                    select: { name: true },
+                });
+
+                if (!terms) {
+                    throw new TRPCError({ 
+                        code: 'NOT_FOUND', 
+                        message: "Terms not found." 
+                    });
+                }
+
+                let companyBankList: { id: string, bank_name: string}[] = [];
+
+                if (terms.name.toLowerCase() === 'tt') {
+                    companyBankList = await ctx.db.$queryRaw<{ id: string, bank_name: string }[]>`
+                        SELECT
+                            CB.ID,
+                            CONCAT(B.NAME, ' (', CB.account_no, ')') AS bank_name 
+                        FROM company_banks AS CB
+                            INNER JOIN BANKS AS B ON B.ID = CB.bank_id
+                            INNER JOIN sales_contracts AS SC ON SC.company_id = CB.company_id
+                        WHERE SC.ID = ${input.lc_sc_id};
+                    `;
+                }
+                else {
+                    companyBankList = await ctx.db.$queryRaw<{ id: string, bank_name: string }[]>`
+                        SELECT
+                            CB.ID,
+                            CONCAT(B.NAME, ' (', CB.account_no, ')') AS bank_name
+                        FROM company_banks AS CB
+                            INNER JOIN BANKS AS B ON B.ID = CB.bank_id
+                            INNER JOIN LC_MASTER AS LC ON LC.company_id = CB.company_id
+                        WHERE LC.ID = ${input.lc_sc_id};
+                    `;
+                }
+
+                return companyBankList;
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    addCommissionInvoice: protectedProcedure
+        .input(z.object({
+            term_id: z.number(),
+            buyer_id: z.number(),
+            lc_sc_id: z.string(),
+            fdbc_rdl_invoice_id: z.string(),
+            company_bank_id: z.number(),
+            invoice_date: z.date(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            try {
+                const can_add = ctx.permissions[m.COMMISSION_INVOICE]?.can_add;
+
+                if (!can_add) {
+                    throw new TRPCError({ 
+                        code: "FORBIDDEN", 
+                        message: "You do not have permission to add commission invoices." 
+                    });
+                }
+
+                const currentYear = new Date().getFullYear();
+
+                const meta = await ctx.db.commission_invoice_metadata.upsert({
+                    where: {
+                        buyer_id_year: {
+                        buyer_id: input.buyer_id,
+                        year: currentYear
+                    }
+                    },
+                    update: {
+                        last_ref: {
+                            increment: 1,
+                        },
+                    },
+                    create: {
+                        year: currentYear,
+                        buyer_id: input.buyer_id,
+                        last_ref: 0,
+                    },
+                });
+
+                const buyerName = await ctx.db.buyers.findUnique({
+                    where: { id: input.buyer_id },
+                    select: { short_name: true },
+                });
+
+                const ref_no = `CI/${buyerName?.short_name ?? 'UNKNOWN'}/${currentYear}/${String(meta.last_ref).padStart(4, '0')}`;
+
+                const terms = await ctx.db.terms.findUnique({
+                    where: { id: input.term_id },
+                    select: { name: true },
+                });
+
+                if (!terms) {
+                    throw new TRPCError({ 
+                        code: 'NOT_FOUND', 
+                        message: "Terms not found." 
+                    });
+                }
+
+                const isTT = terms.name.toLowerCase() === 'tt'
+
+                return await ctx.db.$transaction(async (tx) => {
+                    const newInvoice = await tx.commission_invoice.create({
+                        data: {
+                            term_id: input.term_id,
+                            buyer_id: input.buyer_id,
+                            lc_id: isTT ? null : input.lc_sc_id,
+                            sales_contract_id: isTT ? input.lc_sc_id : null,
+                            rdl_invoice_id: isTT ? input.fdbc_rdl_invoice_id : null,
+                            document_submission_id: isTT ? null : input.fdbc_rdl_invoice_id,
+                            company_bank_id: input.company_bank_id,
+                            invoice_date: input.invoice_date,
+                            ref_no,
+                        },
+                    });
+
+                    await tx.commission_invoice_history.create({
+                        data: {
+                            commission_invoice_id: newInvoice.id,
+                            buyer_id: newInvoice.buyer_id,
+                            company_bank_id: newInvoice.company_bank_id,
+                            document_submission_id: newInvoice.document_submission_id,
+                            rdl_invoice_id: newInvoice.rdl_invoice_id,
+                            lc_id: newInvoice.lc_id,
+                            sales_contract_id: newInvoice.sales_contract_id,
+                            ref_no: newInvoice.ref_no,
+                            term_id: newInvoice.term_id,
+                            action_type: actions.ADDED,
+                            action_by: ctx.user.id,
+                            action_at: new Date(),
+                        },
+                    });
+
+                    return newInvoice.id;
+                });
             }
             catch (error) {
                 handlePrismaError(error);

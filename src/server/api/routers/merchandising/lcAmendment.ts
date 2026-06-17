@@ -359,7 +359,7 @@ export const lcAmendmentRouter = createTRPCRouter({
 							action_by: ctx.user.id,
 						}
 					 })
-				});
+				}, {timeout: 30000});
 			} catch (error) {
 				handlePrismaError(error);
 			}
@@ -666,7 +666,7 @@ export const lcAmendmentRouter = createTRPCRouter({
 						amendment_id: newLcAmendment.id,
 						orders,
 					};
-				});
+				}, {timeout: 30000});
 			} catch (error) {
 				handlePrismaError(error);
 			}
@@ -1301,7 +1301,7 @@ export const lcAmendmentRouter = createTRPCRouter({
 					);
 
 					return updatedLcAmendment;
-				});
+				}, {timeout: 30000});
 			}
 			catch (error) {
 				handlePrismaError(error);

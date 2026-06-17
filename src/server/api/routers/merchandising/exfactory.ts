@@ -315,7 +315,7 @@ export const exFactoryRouter = createTRPCRouter({
                             action_by: ctx.user.id,
                         },
                     });
-                });
+                }, {timeout: 30000});
             }
             catch (error) {
                 handlePrismaError(error);
@@ -470,7 +470,7 @@ export const exFactoryRouter = createTRPCRouter({
                         ...addedExfactory,
                         orders,
                     };
-                });
+                }, {timeout: 30000});
             } catch (error) {
                 handlePrismaError(error);
             }
@@ -656,7 +656,7 @@ export const exFactoryRouter = createTRPCRouter({
                         },
                     });
 
-                });
+                }, {timeout: 30000});
             }
             catch (error) {
                 handlePrismaError(error);
@@ -1012,7 +1012,7 @@ export const exFactoryRouter = createTRPCRouter({
                         ...updatedExfactory,
                         orders: orders.filter(Boolean),
                     };
-                });
+                }, {timeout: 30000});
             } catch (error) {
                 handlePrismaError(error);
             }
@@ -1173,12 +1173,11 @@ export const exFactoryRouter = createTRPCRouter({
                             id: input.exfactory_shipment_id,
                         },
                     });
-                })
+                }, {timeout: 30000})
             }
             catch (error) {
                 handlePrismaError(error);
             }
-
         }),
 
     pendingExfactoryList: protectedProcedure
