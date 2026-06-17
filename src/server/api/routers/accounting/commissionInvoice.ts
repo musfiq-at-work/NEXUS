@@ -260,7 +260,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
                     buyer_id: invoiceObj.buyer_id,
                     company_bank_id: invoiceObj.company_bank_id,
                     fdbc_rdl_invoice_no: invoiceObj.document_submission_id ?? invoiceObj.rdl_invoice_id,
-                    lc_sc_no: invoiceObj.lc_id ?? invoiceObj.sales_contract_id,
+                    lc_sc_id: invoiceObj.lc_id ?? invoiceObj.sales_contract_id,
                     ref_no: invoiceObj.ref_no,
                     term_id: invoiceObj.term_id,
                     invoice_date: invoiceObj.invoice_date,

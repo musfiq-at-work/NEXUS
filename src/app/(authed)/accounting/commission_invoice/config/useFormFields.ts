@@ -1,8 +1,8 @@
 import { api } from "~/trpc/react";
-import type { DocumentSubmissionFormValues } from "./formSchema";
+import type { CommissionInvoiceFormValues } from "./formSchema";
 import type { BaseField } from "~/types/form";
 
-export type Field<T extends keyof DocumentSubmissionFormValues> = BaseField<T>;
+export type Field<T extends keyof CommissionInvoiceFormValues> = BaseField<T>;
 
 interface LCListItem {
     id: string;
@@ -10,11 +10,11 @@ interface LCListItem {
 }
 
 interface PropsType {
-    lcList: LCListItem[];
+    lcScList: LCListItem[];
     isEdit: boolean;
 }
 
-export const useFormFields = ({lcList, isEdit}: PropsType): Field<keyof DocumentSubmissionFormValues>[] => {
+export const useFormFields = ({lcScList, isEdit}: PropsType): Field<keyof CommissionInvoiceFormValues>[] => {
     const terms = api.terms.getAllTerms.useQuery().data ?? [];
     const buyers = api.buyers.getAllBuyersByTeam.useQuery().data ?? [];
     const couriers = api.courier.getAllCouriers.useQuery().data ?? [];
@@ -38,67 +38,41 @@ export const useFormFields = ({lcList, isEdit}: PropsType): Field<keyof Document
             optional: isEdit,
         },
         {
-            name: "submission_date",
-            label: "Submission Date",
+            name: "invoice_date",
+            label: "Invoice Date",
             type: "date",
             disabled: isEdit,
             optional: isEdit
         },
         {
-            name: "fdbc_no",
-            label: "FDBC/TT No",
+            name: "ref_no",
+            label: "Reference No",
             type: "text",
             optional: isEdit,
             disabled: isEdit
         },
         {
-            name: "fdbc_value",
-            label: "FDBC/TT Value",
+            name: "lc_sc_id",
+            label: "LC/Sales Contract No",
             type: "number",
             optional: true,
         },
         {
-            name: "fdbc_date",
-            label: "FDBC/TT Date",
+            name: "fdbc_rdl_invoice_no",
+            label: "FDBC/Sales Contract No",
             type: "date",
         },
         {
             name: "lc_sc_id",
             label: "Select LC/SC",
             type: "select",
-            options: lcList.map((lc) => ({ label: lc.sc_lc_no, value: lc.id })),
+            options: lcScList.map((lc) => ({ label: lc.sc_lc_no, value: lc.id })),
             disabled: isEdit,
             optional: isEdit
         },
         {
-            name: "lc_sc_date",
-            label: "LC/SC Date",
-            type: "date",
-            disabled: true,
-            optional: true,
-        },
-        {
-            name: "bank_name",
-            label: "Bank Name",
-            type: "text",
-            disabled: true,
-            optional: true,
-        },
-        {
-            name: "awb_no",
-            label: "AWB No",
-            type: "text",
-            optional: true,
-        },
-        {
-            name: "awb_date",
-            label: "AWB Date",
-            type: "date",
-            optional: true,
-        },
-        {
-            name: 'courier_id',
-            label: 'Courier',
+            name: 'company_bank_id',
+            label: 'Company Bank',
             type: "select",
             options: couriers.map((courier) => ({ label: courier.name, value: courier.id })),
             optional: true,

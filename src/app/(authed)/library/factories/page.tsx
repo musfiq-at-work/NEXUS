@@ -1,40 +1,20 @@
 'use client';
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
 import { plusIcon } from "~/assets";
 import { Button, SearchField, Table, Wrapper, Popup } from "~/components";
-import { useDebouncedValue, useModulePath, useTablePagination } from "~/hooks";
-import { useNavigationStore, usePermissionStore } from "~/store";
 import { api } from "~/trpc/react";
 import { toast } from "sonner";
 import { tableHeaders } from "./config/columns";
-import { parseTRPCError } from "~/utils/parseTRPCError";
+import { useSearchablePagination, useModulePermissions, useDeleteConfirmation } from "~/hooks";
+import { safeNumber } from "~/utils/numbers";
 
 const FactoriesPage = () => {
     const router = useRouter();
-    const [searchTerm, setSearchTerm] = useState('');
-    
-    // Delete Flow States
-    const [isLoadingDelete, setIsLoadingDelete] = useState(false);
-    const [deleteClicked, setDeleteClicked] = useState(false);
-    const [deleteID, setDeleteID] = useState<number>(0);
-
     const utils = api.useUtils();
-
-    // Debounced search term
-    const debouncedSearch = useDebouncedValue(searchTerm);
-
-    // Get current module path
-    const modulePath = useModulePath().path;
-        
-    // Get current module permissions
-    const pathId = useNavigationStore((s) => s.getByHref(modulePath));
-    const permissions = usePermissionStore(s => (pathId ? s.permission[pathId] : undefined));
-    const { can_add, can_update, can_delete } = permissions ?? {};
-
-
-    // Frontend pagination state and handlers
-    const { page, limit, nextPage, prevPage, setPage } = useTablePagination();
+    
+    const { page, limit, debouncedSearch, handleSearchChange, nextPage, prevPage } = useSearchablePagination();
+    
+    const { can_add, can_update, can_delete } = useModulePermissions();
 
     // Fetch paginated data
     const {data: factories, isLoading} = api.factory.getFactories.useQuery({
@@ -51,18 +31,11 @@ const FactoriesPage = () => {
         { enabled: debouncedSearch.length > 0 }
     );
 
-    const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-        setPage(0); 
-        setSearchTerm(event.target.value.trim());
-    }, [setPage]);
-
     const editURL = '/library/factories/edit/';
 
     const deleteMutation = api.factory.deleteFactory.useMutation({
         onSuccess: async () => {
             toast.success("Factory deleted successfully!");
-            setDeleteClicked(false);
-            setDeleteID(0);
             await Promise.all([
                 utils.factory.getFactories.invalidate(),
                 utils.factory.searchFactories.invalidate()
@@ -70,29 +43,13 @@ const FactoriesPage = () => {
         },
     });
 
-    // Handlers
-    const handleDeleteClicked = useCallback((id: string) => {
-        setDeleteClicked(true);
-        setDeleteID(parseInt(id));
-    }, []);
-
-    
-    const handleDeleteConfirmed = useCallback(async () => {
-        setIsLoadingDelete(true);
-
-        if(!deleteID) return;
-
-        try {
-            await deleteMutation.mutateAsync({ id: deleteID });
-        }
-        catch (error) {
-            const parsedError = parseTRPCError(error);
-            toast.error(parsedError);
-        }
-        finally {
-            setIsLoadingDelete(false);
-        }
-    }, [deleteID, deleteMutation]);
+    const { 
+        deleteID, isLoadingDelete, deleteClicked, setDeleteClicked, handleDeleteClicked, handleDeleteConfirmed 
+    } = useDeleteConfirmation({
+        mutation: deleteMutation,
+        successMessage: 'Factory deleted successfully',
+        payloadBuilder: id => ({ id: safeNumber(id) }),
+    });
 
     return (
         <>
@@ -147,7 +104,7 @@ const FactoriesPage = () => {
                 description={`Are you sure you want to delete "${(
                     searchQuery.data?.factories && !!debouncedSearch 
                         ? searchQuery.data.factories : factoriesList
-                ).find(factory => factory.id === deleteID)?.name}"?`}
+                ).find(factory => factory.id === safeNumber(deleteID))?.name}"?`}
                 actionLabel="DELETE"
                 negativeAction={true}
                 loading={isLoadingDelete}

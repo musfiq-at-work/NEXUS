@@ -1,39 +1,20 @@
 'use client';
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
 import { plusIcon } from "~/assets";
 import { Button, SearchField, Table, Wrapper, Popup } from "~/components";
-import { useDebouncedValue, useModulePath, useTablePagination } from "~/hooks";
-import { useNavigationStore, usePermissionStore } from "~/store";
 import { api } from "~/trpc/react";
 import { toast } from "sonner";
 import { tableHeaders } from "./config/columns";
-import { parseTRPCError } from "~/utils/parseTRPCError";
+import { useSearchablePagination, useModulePermissions, useDeleteConfirmation } from "~/hooks";
+
 
 const SalesContracts = () => {
     const router = useRouter();
-    const [searchTerm, setSearchTerm] = useState('');
-    
-    // Delete Flow States
-    const [isLoadingDelete, setIsLoadingDelete] = useState(false);
-    const [deleteClicked, setDeleteClicked] = useState(false);
-    const [deleteID, setDeleteID] = useState<string>('');
-        
     const utils = api.useUtils();
-        
-    // Debounced search term
-    const debouncedSearch = useDebouncedValue(searchTerm);
-        
-    // Get current module path
-    const modulePath = useModulePath().path;
-        
-    // Get current module permissions
-    const pathId = useNavigationStore((s) => s.getByHref(modulePath));
-    const permissions = usePermissionStore(s => (pathId ? s.permission[pathId] : undefined));
-    const { can_add, can_update, can_delete } = permissions ?? {};
-    
-    // Frontend pagination state and handlers
-    const { page, limit, nextPage, prevPage, setPage } = useTablePagination();
+
+    const { page, limit, debouncedSearch, handleSearchChange, nextPage, prevPage } = useSearchablePagination();
+
+    const { can_add, can_update, can_delete } = useModulePermissions();
 
     // Fetch paginated data
     const {data: salesContracts, isLoading} = api.salesContracts.getSalesContracts.useQuery({
@@ -50,22 +31,14 @@ const SalesContracts = () => {
         { enabled: debouncedSearch.length > 0 }
     );
 
-    const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-        setPage(0); 
-        setSearchTerm(event.target.value.trim());
-    }, [setPage]);
-
     // URLs for actions
     const editURL = '/merchandising/sales_contract/sales_contracts/edit/';
-
     const printURL = `/pdf/sales_contract/`;
     const printURL2 = `/pdf/sales_contract_commission/`;
 
     const deleteMutation = api.salesContracts.deleteSalesContract.useMutation({
         onSuccess: async () => {
             toast.success("Sales Contract deleted successfully!");
-            setDeleteClicked(false);
-            setDeleteID('');
             await Promise.all([
                 utils.salesContracts.getSalesContracts.invalidate(),
                 utils.salesContracts.searchSalesContracts.invalidate(),
@@ -73,29 +46,13 @@ const SalesContracts = () => {
         },
     });
     
-
-    // Handlers
-    const handleDeleteClicked = useCallback((id: string) => {
-        setDeleteClicked(true);
-        setDeleteID(id);
-    }, []);
-
-    const handleDeleteConfirmed = useCallback(async () => {
-        setIsLoadingDelete(true);
-
-        if(!deleteID) return;
-
-        try {
-            await deleteMutation.mutateAsync({ id: deleteID });
-        }
-        catch (error) {
-            const parsedError = parseTRPCError(error);
-            toast.error(`Error deleting Sales Contract: ${parsedError}`);
-        }
-        finally {
-            setIsLoadingDelete(false);
-        }
-    }, [deleteID, deleteMutation]);
+    const { 
+        deleteID, isLoadingDelete, deleteClicked, setDeleteClicked, handleDeleteClicked, handleDeleteConfirmed 
+    } = useDeleteConfirmation({
+        mutation: deleteMutation,
+        successMessage: 'Sales Contract deleted successfully',
+        payloadBuilder: id => ({ id }),
+    });
 
     return (
         <>

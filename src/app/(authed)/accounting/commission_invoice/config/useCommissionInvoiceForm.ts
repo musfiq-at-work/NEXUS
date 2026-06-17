@@ -23,9 +23,9 @@ export const useDocumentSubmissionForm = (initialData?: GetCommissionInvoiceById
             invoice_date: initialData.invoice_date 
                 ? formatDateForInput(new Date(initialData.invoice_date)) : '',
             ref_no: initialData.ref_no ?? '',
-            lc_sc_no: initialData.lc_sc_no?.toString() ?? '',
+            lc_sc_id: initialData.lc_sc_id?.toString() ?? undefined,
             fdbc_rdl_invoice_no: initialData.fdbc_rdl_invoice_no ?? '',
-            company_bank_id: initialData.company_bank_id ?? '',
+            company_bank_id: initialData.company_bank_id != null ? String(initialData.company_bank_id) : undefined,
         } : undefined;
     }, [initialData]);
 
@@ -63,7 +63,7 @@ export const useDocumentSubmissionForm = (initialData?: GetCommissionInvoiceById
     //     } : skipToken
     // ).data || [];
 
-    // let lcScList: { id: string; sc_lc_no: string }[];
+    let lcScList: { id: string; sc_lc_no: string }[];
 
     // if(isEdit) {
     //     const id = initialData.lc_sc_id;
@@ -74,7 +74,7 @@ export const useDocumentSubmissionForm = (initialData?: GetCommissionInvoiceById
     //     lcScList = lcList;
     // }
     
-    const formFields = useFormFields();
+    const formFields = useFormFields({lcScList, isEdit});
     // const formFields = useFormFields({lcList: lcScList, isEdit});
 
     return { methods, handleSubmit, formFields, validationError, trigger, watch, control };

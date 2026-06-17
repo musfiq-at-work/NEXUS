@@ -1,40 +1,20 @@
 'use client';
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
 import { plusIcon } from "~/assets";
 import { Button, SearchField, Table, Wrapper, Popup } from "~/components";
-import { useDebouncedValue, useModulePath, useTablePagination } from "~/hooks";
-import { useNavigationStore, usePermissionStore } from "~/store";
 import { api } from "~/trpc/react";
 import { toast } from "sonner";
 import { tableHeaders } from "./config/columns";
-import { parseTRPCError } from "~/utils/parseTRPCError";
+import { useSearchablePagination, useModulePermissions, useDeleteConfirmation } from "~/hooks";
+import { safeNumber } from "~/utils/numbers";
 
 const ColorsPage = () => {
     const router = useRouter();
-    const [searchTerm, setSearchTerm] = useState('');
-    
-    // Delete Flow States
-    const [isLoadingDelete, setIsLoadingDelete] = useState(false);
-    const [deleteClicked, setDeleteClicked] = useState(false);
-    const [deleteID, setDeleteID] = useState<number>(0);
-    
     const utils = api.useUtils();
 
-    // Debounced search term
-    const debouncedSearch = useDebouncedValue(searchTerm);
+    const { page, limit, debouncedSearch, handleSearchChange, nextPage, prevPage } = useSearchablePagination();
 
-    // Get current module path
-    const modulePath = useModulePath().path;
-        
-    // Get current module permissions
-    const pathId = useNavigationStore((s) => s.getByHref(modulePath));
-    const permissions = usePermissionStore(s => (pathId ? s.permission[pathId] : undefined));
-    const { can_add, can_update, can_delete } = permissions ?? {};
-
-
-    // Frontend pagination state and handlers
-    const { page, limit, nextPage, prevPage, setPage } = useTablePagination();
+    const { can_add, can_update, can_delete } = useModulePermissions();
 
     // Fetch paginated data
     const {data: colors, isLoading} = api.colors.getColors.useQuery({
@@ -51,11 +31,6 @@ const ColorsPage = () => {
         { enabled: debouncedSearch.length > 0 }
     );
 
-    const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-        setPage(0); 
-        setSearchTerm(event.target.value.trim());
-    }, [setPage]);
-
     const editURL = '/library/colors/edit/';
 
     const deleteMutation = api.colors.deleteColors.useMutation({
@@ -66,28 +41,13 @@ const ColorsPage = () => {
         },
     });
         
-    // Handlers
-    const handleDeleteClicked = useCallback((id: string) => {
-        setDeleteClicked(true);
-        setDeleteID(parseInt(id));
-    }, []);
-
-    const handleDeleteConfirmed = useCallback(async () => {
-        setIsLoadingDelete(true);
-
-        if(!deleteID) return;
-
-        try {
-            await deleteMutation.mutateAsync({ id: deleteID});
-        }
-        catch (error) {
-            const parsedError = parseTRPCError(error);
-            toast.error(`Error deleting color: ${parsedError}`);
-        }
-        finally {
-            setIsLoadingDelete(false);
-        }
-    }, [deleteID, deleteMutation]);
+    const { 
+        deleteID, isLoadingDelete, deleteClicked, setDeleteClicked, handleDeleteClicked, handleDeleteConfirmed 
+    } = useDeleteConfirmation({
+        mutation: deleteMutation,
+        successMessage: 'Color deleted successfully',
+        payloadBuilder: id => ({ id: safeNumber(id) }),
+    });
     
     return (
         <>
@@ -141,7 +101,7 @@ const ColorsPage = () => {
                 description={`Are you sure you want to delete "${(
                     searchQuery.data?.colors && !!debouncedSearch 
                         ? searchQuery.data.colors : colorsList
-                ).find(color => color.id === deleteID)?.name}"?`}
+                ).find(color => color.id === safeNumber(deleteID))?.name}"?`}
                 actionLabel="DELETE"
                 negativeAction={true}
                 loading={isLoadingDelete}

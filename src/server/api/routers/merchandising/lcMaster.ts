@@ -255,9 +255,9 @@ export const lcMasterRouter = createTRPCRouter({
 
             try {
                 await ctx.db.$transaction(async (tx) => {
-                    await tx.lc_amendment_metadata.delete({
+                    await tx.lc_amendment_metadata.deleteMany({
                         where: { lc_id: input.id }
-                    })
+                    });
 
                     const lcShipmentDetails = await tx.lc_shipments.findMany({
                         where: {

@@ -1,96 +1,50 @@
 'use client';
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
 import { plusIcon } from "~/assets";
 import { Button, SearchField, Table, Wrapper, Popup } from "~/components";
-import { useDebouncedValue, useModulePath, useTablePagination } from "~/hooks";
-import { useNavigationStore, usePermissionStore } from "~/store";
 import { api } from "~/trpc/react";
-import { toast } from "sonner";
 import { tableHeaders } from "./config/columns";
-import { parseTRPCError } from "~/utils/parseTRPCError";
+import { useSearchablePagination, useModulePermissions, useDeleteConfirmation } from "~/hooks";
 
 const DocumentSubmissionPage = () => {
     const router = useRouter();
-    const [searchTerm, setSearchTerm] = useState('');
-    
-    // Delete Flow States
-    const [isLoadingDelete, setIsLoadingDelete] = useState(false);
-    const [deleteClicked, setDeleteClicked] = useState(false);
-    const [deleteID, setDeleteID] = useState<string>('');
-    
     const utils = api.useUtils();
-    
-    // Debounced search term
-    const debouncedSearch = useDebouncedValue(searchTerm);
-    
-    // Get current module path
-    const modulePath = useModulePath().path;
-        
-    // Get current module permissions
-    const pathId = useNavigationStore((s) => s.getByHref(modulePath));
-    const permissions = usePermissionStore(s => (pathId ? s.permission[pathId] : undefined));
-    const { can_add, can_update, can_delete } = permissions ?? {};
 
-    // Frontend pagination state and handlers
-    const { page, limit, nextPage, prevPage, setPage } = useTablePagination();
-    
-    const { data: documentSubmissions, isLoading} = api.documentSubmission.getDocumentSubmission.useQuery({
+    const { page, limit, debouncedSearch, handleSearchChange, nextPage, prevPage } = useSearchablePagination();
+
+    const { can_add, can_update, can_delete } = useModulePermissions();
+
+    const { data: documentSubmissions, isLoading } = api.documentSubmission.getDocumentSubmission.useQuery({
         limit,
         offset: page * limit,
     });
 
-    const documentSubmissionList = documentSubmissions?.documentSubmissions ?? [];
+    const documentSubmissionList = documentSubmissions?.documentSubmissions ?? []; 
     const total = documentSubmissions?.total ?? 0;
-
-    // Search query (enabled only when there's a search term)
-    const searchQuery = api.documentSubmission.searchDocumentSubmissions.useQuery(
-        { query: debouncedSearch, limit, offset: page * limit },
-        { enabled: debouncedSearch.length > 0 }
-    );
-
-    const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-        setPage(0); 
-        setSearchTerm(event.target.value.trim());
-    }, [setPage]);
-
     const editURL = '/commercial/document_submission/edit/';
+
+    const searchQuery = api.documentSubmission.searchDocumentSubmissions.useQuery({
+        query: debouncedSearch,
+        limit,
+        offset: page * limit,
+    }, { enabled: debouncedSearch.length > 0 });
 
     const deleteMutation = api.documentSubmission.deleteDocumentSubmission.useMutation({
         onSuccess: async () => {
-            toast.success("Document Submission deleted successfully");
             await Promise.all([
                 utils.documentSubmission.getDocumentSubmission.invalidate(),
-                utils.documentSubmission.searchDocumentSubmissions.invalidate()
-            ])
+                utils.documentSubmission.searchDocumentSubmissions.invalidate(),
+            ]);
         },
     });
 
-    // Handlers
-    const handleDeleteClicked = useCallback((id: string) => {
-        setDeleteClicked(true);
-        setDeleteID(id);
-    }, []);
-
-    const handleDeleteConfirmed = useCallback(async () => {
-        setIsLoadingDelete(true);
-
-        if(!deleteID) return;
-
-        try {
-            await deleteMutation.mutateAsync({ id: deleteID });
-        }
-        catch (error) {
-            const parsedError = parseTRPCError(error);
-            toast.error(`Error deleting Document Submission: ${parsedError}`);
-        }
-        finally {
-            setIsLoadingDelete(false);
-            setDeleteClicked(false);
-            setDeleteID('');
-        }
-    }, [deleteID, deleteMutation]);
-
+    const { 
+        deleteID, isLoadingDelete, deleteClicked, setDeleteClicked, handleDeleteClicked, handleDeleteConfirmed 
+    } = useDeleteConfirmation({
+        mutation: deleteMutation,
+        successMessage: 'Document Submission deleted successfully',
+        payloadBuilder: id => ({ id }),
+    });
 
     return (
         <>
