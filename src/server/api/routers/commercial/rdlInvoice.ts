@@ -1139,10 +1139,36 @@ export const rdlInvoiceRouter = createTRPCRouter({
         .query(async ({ ctx, input }) => {
             try {
                 const can_view = ctx.permissions[m.FACTORY_INVOICE]?.can_view;
+
                 if (!can_view) {
                     throw new TRPCError({ 
                         code: 'FORBIDDEN', 
                         message: "You don't have permission to view factory invoice details." 
+                    });
+                }
+
+                const isATeamMember = await ctx.db.team_members.findFirst({
+                    where: {
+                        user_id: ctx.user.id,
+                        teams: {
+                            buyers: {
+                                rdl_invoice: {
+                                    some: {
+                                        id: input.id,
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    select: {
+                        id: true,
+                    }
+                });
+
+                if(!isATeamMember && (ctx.user.level_id !== 5 || ctx.user.department_id !== 5)) {
+                    throw new TRPCError({ 
+                        code: "FORBIDDEN", 
+                        message: "You do not have permission to view this RDL Invoice." 
                     });
                 }
 

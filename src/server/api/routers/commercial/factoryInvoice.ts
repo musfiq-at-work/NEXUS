@@ -923,6 +923,31 @@ export const factoryInvoiceRouter = createTRPCRouter({
                     });
                 }
 
+                const isATeamMember = await ctx.db.team_members.findFirst({
+                    where: {
+                        user_id: ctx.user.id,
+                        teams: {
+                            buyers: {
+                                factory_invoice: {
+                                    some: {
+                                        id: input.id,
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    select: {
+                        id: true,
+                    }
+                });
+
+                if(!isATeamMember && (ctx.user.level_id !== 5 || ctx.user.department_id !== 5)) {
+                    throw new TRPCError({ 
+                        code: "FORBIDDEN", 
+                        message: "You do not have permission to view this Factory Invoice." 
+                    });
+                }
+
                 const data = await ctx.db.factory_invoice.findUnique({
                     where: { id: input.id },
                     select: {

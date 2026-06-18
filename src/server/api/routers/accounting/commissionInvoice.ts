@@ -698,6 +698,31 @@ export const commissionInvoiceRouter = createTRPCRouter({
                     });
                 }
 
+                const isATeamMember = await ctx.db.team_members.findFirst({
+                    where: {
+                        user_id: ctx.user.id,
+                        teams: {
+                            buyers: {
+                                commission_invoice: {
+                                    some: {
+                                        id: input.id,
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    select: {
+                        id: true,
+                    }
+                });
+
+                if(!isATeamMember && (ctx.user.level_id !== 5 || ctx.user.department_id !== 5)) {
+                    throw new TRPCError({ 
+                        code: "FORBIDDEN", 
+                        message: "You do not have permission to view this Commission Invoice." 
+                    });
+                }
+
                 const headerData = await ctx.db.$queryRaw<PDFHeaderData[]>`
                     WITH LC AS (
                         SELECT 
