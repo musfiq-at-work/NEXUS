@@ -300,7 +300,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             container_no: deleted.container_no,
                         },
                     });
-                })
+                }, {timeout: 30000})
             }
             catch (error) {
                 handlePrismaError(error);
@@ -534,34 +534,6 @@ export const rdlInvoiceRouter = createTRPCRouter({
 
                 const isTT = terms.name.toLowerCase() === 'tt';
 
-                const buyerPrefix = await ctx.db.buyers.findUnique({
-                    where: { id: input.buyer_id },
-                    select: { prefix: true },
-                });
-
-                const currentYear = new Date().getFullYear();
-
-                // const meta = await ctx.db.rdl_invoice_metadata.upsert({
-                //     where: { 
-                //         buyer_id_year: {
-                //             buyer_id: input.buyer_id,
-                //             year: currentYear,
-                //         },
-                //     },
-                //     update: {
-                //         last_ref: {
-                //             increment: 1,
-                //         },
-                //     },
-                //     create: {
-                //         buyer_id: input.buyer_id,
-                //         year: currentYear,
-                //         last_ref: 1,
-                //     },
-                // });
-
-                // const invoiceRef = `RDL/${buyerPrefix?.prefix || 'BUYER'}/${currentYear}/${String(meta.last_ref).padStart(4, '0')}`;
-
                 return await ctx.db.$transaction(async (tx) => {
                     const rdlInvoice = await tx.rdl_invoice.create({
                         data: {
@@ -646,7 +618,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                     );
 
                     return rdlInvoice;
-                });
+                }, {timeout: 30000});
             }
             catch (error) {
                 handlePrismaError(error);
@@ -821,7 +793,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                     await tx.rdl_invoice_details.delete({
                         where: { id: input.db_id },
                     });
-                });
+                }, {timeout: 30000});
             }
             catch (error) {
                 handlePrismaError(error);
@@ -1053,7 +1025,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             }
                         })
                     );
-                });
+                }, {timeout: 30000});
             }
             catch (error) {
                 handlePrismaError(error);

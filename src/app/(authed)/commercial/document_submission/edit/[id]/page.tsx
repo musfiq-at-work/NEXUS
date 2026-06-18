@@ -1,16 +1,15 @@
 'use client';
 
-import { Button, Form, Wrapper, MessageBox } from "~/components";
-import React, { useCallback, useEffect, useState } from "react";
+import { Button, Form, Wrapper } from "~/components";
+import React, { useCallback, useState } from "react";
 import { useDocumentSubmissionForm } from "../../config/useDocumentSubmissionForm";
 import { api } from "~/trpc/react";
 import { toast } from 'sonner';
 import { parseTRPCError } from "~/utils/parseTRPCError";
 import { useNavigationStore, usePermissionStore } from "~/store";
-import { useDecodedUser, useModulePath } from "~/hooks";
+import { useModulePath } from "~/hooks";
 import RDLInvoiceDetails from "../../components/rdlInvoiceComponents/RDLInvoiceDetails";
 import { safeNumber } from "~/utils/numbers";
-import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 
 type EditDocumentSubmissionPageProp = {
     params: Promise<{ id: string }>
@@ -77,7 +76,7 @@ const EditDocumentSubmissionPage = ({ params }: EditDocumentSubmissionPageProp) 
                 })),
             };
 
-            const res = await updateDocumentSubmission.mutateAsync(payload);
+            await updateDocumentSubmission.mutateAsync(payload);
         }
         catch (error) {
             const message = parseTRPCError(error);
@@ -90,7 +89,7 @@ const EditDocumentSubmissionPage = ({ params }: EditDocumentSubmissionPageProp) 
 
     
     return (
-        <Wrapper heading='Add Document Submission' >
+        <Wrapper heading='Update Document Submission' >
             <Form 
                 fields={formFields} 
                 buttonLabel="Add New Document Submission" 
@@ -99,7 +98,6 @@ const EditDocumentSubmissionPage = ({ params }: EditDocumentSubmissionPageProp) 
                 validationError={validationError ?? {}}
                 error={error}
                 control={control}
-                    
             />
 
             <RDLInvoiceDetails 
@@ -116,7 +114,7 @@ const EditDocumentSubmissionPage = ({ params }: EditDocumentSubmissionPageProp) 
                     onClick={() => onSubmitAll()}
                     label={"Update Document Submission"} 
                     className="text-lg tracking-wide mt-6 max-w-80 m-8"
-                    disabled={isLoading || !can_update}
+                    disabled={isLoading || !can_update || isLoadingSubmit}
                 />
             </div>
         </Wrapper>

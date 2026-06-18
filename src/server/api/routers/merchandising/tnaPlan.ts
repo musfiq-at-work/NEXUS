@@ -387,7 +387,7 @@ export const tnaPlanRouter = createTRPCRouter({
                     `;
 
                     return newPlan;
-                })
+                }, {timeout: 30000})
             }
             catch (error) {
                 handlePrismaError(error);
@@ -555,7 +555,7 @@ export const tnaPlanRouter = createTRPCRouter({
                     });
 
                     return existingPlan;
-                });
+                }, {timeout: 30000});
             }
             catch (error) {
                 handlePrismaError(error);
@@ -645,7 +645,7 @@ export const tnaPlanRouter = createTRPCRouter({
                     }
 
                     return updatedActions;
-                });
+                }, {timeout: 30000});
             }
             catch (error) {
                 handlePrismaError(error);
@@ -780,7 +780,7 @@ export const tnaPlanRouter = createTRPCRouter({
                     );
 
                     return updatedEvents;
-                });
+                }, {timeout: 30000});
             }
             catch (error) {
                 handlePrismaError(error);

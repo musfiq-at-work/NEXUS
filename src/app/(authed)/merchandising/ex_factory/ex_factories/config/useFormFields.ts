@@ -2,7 +2,6 @@ import { api } from "~/trpc/react";
 import type { ExFactoryFormValues } from "./formSchema";
 import type { BaseField } from "~/types/form";
 import { useDecodedUser } from "~/hooks";
-import { useAdminStore } from "~/store";
 
 export type Field<T extends keyof ExFactoryFormValues['exfactory']> = BaseField<T>;
 
@@ -20,7 +19,7 @@ export const useFormFields = (Props: FormProps): Field<keyof ExFactoryFormValues
 
     const factories = api.factory.getAllFactories.useQuery().data ?? [];
 
-    const isAdmin = useAdminStore((state) => state.isAdmin);
+    const { isAdmin } = useDecodedUser();
 
     return [
         {

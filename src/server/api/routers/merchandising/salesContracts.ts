@@ -390,7 +390,7 @@ export const salesContractsRouter = createTRPCRouter({
                             action_by: ctx.user.id,
                         }
                     })
-                });
+                }, {timeout: 30000});
             }
             catch (error) {
                 handlePrismaError(error);
@@ -554,7 +554,7 @@ export const salesContractsRouter = createTRPCRouter({
                         sales_contract: newSalesContract,
                         details: createdDetails,
                     };
-                });
+                }, {timeout: 30000});
             } catch (error) {
                 handlePrismaError(error);
             }
@@ -997,7 +997,7 @@ export const salesContractsRouter = createTRPCRouter({
                         added_details: createdDetails,
                         deleted_details: detailsToDelete,
                     };
-                });
+                }, {timeout: 30000});
             }
             catch (error) {
                 handlePrismaError(error);
@@ -1073,7 +1073,7 @@ export const salesContractsRouter = createTRPCRouter({
                             action_by: ctx.user.id,
                         }
                     });
-                });
+                }, {timeout: 30000});
             }
             catch (error) {
                 handlePrismaError(error);
@@ -1122,6 +1122,8 @@ export const salesContractsRouter = createTRPCRouter({
                         AND department_id = ${ctx.user.department_id}
                     LIMIT 1;
                 `;
+
+                console.log('Authorization Permission:', authorizationPermission);
 
                 return {authorization: authorizationState, permission: authorizationPermission[0]};
             }
@@ -1213,7 +1215,7 @@ export const salesContractsRouter = createTRPCRouter({
                             }
                         });
                     }
-                })
+                }, {timeout: 30000})
             }
             catch (error) {
                 handlePrismaError(error);

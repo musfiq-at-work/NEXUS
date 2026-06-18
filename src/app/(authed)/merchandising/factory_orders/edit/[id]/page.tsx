@@ -6,7 +6,7 @@ import { useFactoryOrderForm } from "../../config/useFactoryOrderForm";
 import { api } from "~/trpc/react";
 import { toast } from 'sonner';
 import { parseTRPCError } from "~/utils/parseTRPCError";
-import { useAdminStore, useNavigationStore, usePermissionStore } from "~/store";
+import { useNavigationStore, usePermissionStore } from "~/store";
 import { useDecodedUser, useModulePath } from "~/hooks";
 import StylesDetails from "../../components/styleComponents/styles";
 import { printingWhiteIcon } from "~/assets";
@@ -91,7 +91,7 @@ const EditFactoryOrderPage = ({ params }: EditFactoryOrderPageProp) => {
 
     const [canAuthorize, setCanAuthorize] = useState(false);
 
-    const { user } = useDecodedUser();
+    const { user, isAdmin } = useDecodedUser();
     const { data: authorizations, isLoading: isAuthorizationLoading } = api.factoryOrder.getAuthorizations.useQuery(
         { factoryOrderId: id }
     );
@@ -99,7 +99,6 @@ const EditFactoryOrderPage = ({ params }: EditFactoryOrderPageProp) => {
     const isFirstLevelAuthorized = authorizations?.authorizations?.approval_status === 1;
     const isAuthorized = authorizations?.authorizations?.approval_status === 2;
     const approvalLevel = authorizations?.authorizationPermission?.approval_level ?? 0;
-    const isAdmin = useAdminStore((state) => state.isAdmin);
 
     useEffect(() => {
         setCanAuthorize(

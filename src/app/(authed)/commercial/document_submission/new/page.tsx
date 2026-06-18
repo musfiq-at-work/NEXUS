@@ -67,6 +67,7 @@ const NewDocumentSubmissionPage = () => {
         }
         catch (error) {
             const message = parseTRPCError(error);
+            setError(message);
             toast.error(`Failed to add Document Submission: ${message}`);
         }
         finally {

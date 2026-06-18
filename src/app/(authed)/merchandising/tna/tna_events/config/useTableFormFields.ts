@@ -1,11 +1,11 @@
 import type { ActionFormValues } from "./formSchema";
 import type { BaseField } from "~/types/form";
-import { useAdminStore } from "~/store/useAdminStore";
+import { useDecodedUser } from "~/hooks";
 
 export type Field<T extends keyof ActionFormValues> = BaseField<T>;
 
 export const useFormFields = (): Field<keyof ActionFormValues>[] => {
-    const isAdmin = useAdminStore((state) => state.isAdmin);
+    const { isAdmin } = useDecodedUser();
 
     return [
         {

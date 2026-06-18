@@ -11,7 +11,7 @@ export const CommissionInvoiceSchema = z.object({
     sc_lc_no: z.string().optional(),
     fdbc_rdl_invoice_id: z.string().min(1, "FDBC/TT Date is required"),
     fdbc_rdl_invoice_no: z.string().optional(),
-    company_bank_id: z.string().min(1, "LC/SC is required"),
+    company_bank_id: z.number().min(1, "LC/SC is required"),
 });
 
 export type CommissionInvoiceFormValues = z.infer<typeof CommissionInvoiceSchema>;

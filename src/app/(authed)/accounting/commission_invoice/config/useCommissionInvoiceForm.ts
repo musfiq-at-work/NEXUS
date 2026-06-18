@@ -24,7 +24,7 @@ export const useCommissionInvoiceForm = (initialData?: GetCommissionInvoiceByIdT
             fdbc_rdl_invoice_no: initialData.fdbc_rdl_invoice_no ?? '',
             fdbc_rdl_invoice_id: initialData.fdbc_rdl_invoice_id ?? '',
             company_bank_id: initialData.company_bank_id != null 
-                ? String(initialData.company_bank_id) : undefined,
+                ? initialData.company_bank_id : undefined,
         } : undefined;
     }, [initialData]);
 
@@ -86,7 +86,7 @@ export const useCommissionInvoiceForm = (initialData?: GetCommissionInvoiceByIdT
     let fdbcRdlInvoiceList: { id: string; fdbc_rdl_invoice_no: string }[];
 
     if(isEdit) {
-        const id = initialData.lc_sc_id;
+        const id = initialData.fdbc_rdl_invoice_id;
 
         fdbcRdlInvoiceList = id ? [{ 
             id: String(id), 
@@ -98,7 +98,7 @@ export const useCommissionInvoiceForm = (initialData?: GetCommissionInvoiceByIdT
     }
     
     const companyBankList = api.commissionInvoice.getCompanyBankForCommissionInvoice.useQuery(
-        (!!term_id && !!lc_sc_id && !isEdit) ? {
+        (!!term_id && !!lc_sc_id) ? {
             term_id: safeNumber(term_id),
             lc_sc_id: lc_sc_id,
         } : skipToken

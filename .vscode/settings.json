@@ -11,6 +11,7 @@
         "ILIKE",
         "INCOTERMS",
         "LCTD",
+        "RIID",
         "RISD",
         "risdid",
         "upserted"

@@ -250,7 +250,7 @@ export const lcTransferRouter = createTRPCRouter({
                             action_type: actions.DELETE,
                         },
                     });
-                });
+                }, {timeout: 30000});
             } catch (error) {
                 handlePrismaError(error);
             }
@@ -334,7 +334,7 @@ export const lcTransferRouter = createTRPCRouter({
                     }
 
                     return newLcTransfer;
-                })
+                }, {timeout: 30000})
 
             }
             catch (error) {
@@ -614,7 +614,7 @@ export const lcTransferRouter = createTRPCRouter({
                     });
 
                     return transferDetail;
-                });
+                }, {timeout: 30000});
 
             }
             catch (error) {
@@ -741,7 +741,7 @@ export const lcTransferRouter = createTRPCRouter({
                     }
 
                     return newLcTransfer;
-                })
+                }, {timeout: 30000})
             }
             catch (error) {
                 handlePrismaError(error);

@@ -304,7 +304,7 @@ export const salesContractAmendmentRouter = createTRPCRouter({
                             message: "Only the most recent amendment can be deleted. Please delete the more recent amendments first."
                         });
                     }
-                })
+                }, {timeout: 30000})
             } catch (error) {
                 handlePrismaError(error);
             }
@@ -556,7 +556,7 @@ export const salesContractAmendmentRouter = createTRPCRouter({
                         created_details: createdSalesContractDetails,
                         deleted_details: deletedDetails,
                     };
-                });
+                }, {timeout: 30000});
             } catch (error) {
                 handlePrismaError(error);
             }
@@ -702,7 +702,7 @@ export const salesContractAmendmentRouter = createTRPCRouter({
                             action_type: actions.DELETE,
                         }
                     });
-                });
+                }, {timeout: 30000});
             } catch (error) {
                 handlePrismaError(error);
             }
@@ -1067,7 +1067,7 @@ export const salesContractAmendmentRouter = createTRPCRouter({
                         created_order_ids: newOrderIds,
                         deleted_order_ids: deletedOrderIds,
                     };
-                });
+                }, {timeout: 30000});
             } catch (error) {
                 handlePrismaError(error);
             }

@@ -23,6 +23,7 @@ const CommissionInvoicePage = () => {
     const commissionInvoiceList = commissionInvoices?.commissionInvoices ?? [];
     const total = commissionInvoices?.total ?? 0;
     const editURL = '/accounting/commission_invoice/edit/';
+    const pdfURL = '/pdf/commission_invoice/';
 
     // Search query (enabled only when there's a search term)
     const searchQuery = api.commissionInvoice.searchCommissionInvoice.useQuery(
@@ -90,6 +91,8 @@ const CommissionInvoicePage = () => {
                         editURL={editURL}
                         allowDelete={can_delete}
                         allowEdit={can_update}
+                        allowPrint={true}
+                        printURL={pdfURL}
                         view={!can_update}
                     />
                 </div>

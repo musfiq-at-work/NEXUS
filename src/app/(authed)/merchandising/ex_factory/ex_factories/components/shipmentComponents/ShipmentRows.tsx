@@ -4,9 +4,9 @@ import { formFields as shipmentTableFormFields } from "../../shipmentConfig/tabl
 import { useWatch, type FieldErrors } from "react-hook-form";
 import React from "react";
 import type { ExFactoryFormValues } from "../../config/formSchema";
-import { useAdminStore } from "~/store";
 import { skipToken } from "@tanstack/react-query";
 import { api } from "~/trpc/react";
+import { useDecodedUser } from "~/hooks";
 
 type Props = {
     register: ReturnType<typeof useExfactoryForm>['methods']['register'];
@@ -24,7 +24,7 @@ const ShipmentRows = (props: Props) => {
 
     const exfactory_id = useWatch({ control: methods.control, name: `exfactory.db_id` });
 
-    const isAdmin = useAdminStore((state) => state.isAdmin);
+    const { isAdmin } = useDecodedUser();
 
     const db_id = useWatch({ control: methods.control, name: `exfactory.orders.${orderIndex}.shipments.${index}.db_id` });
 

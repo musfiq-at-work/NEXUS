@@ -80,7 +80,7 @@ export const tnaTemplatesRouter = createTRPCRouter({
                     }
 
                     return newTemplate;
-                })
+                }, {timeout: 30000})
             } catch (error) {
                 handlePrismaError(error);
             }
@@ -358,7 +358,7 @@ export const tnaTemplatesRouter = createTRPCRouter({
                     }
 
                     return updatedTemplate;
-                })
+                }, {timeout: 30000})
             }
             catch (error) {
                 handlePrismaError(error);
@@ -421,7 +421,7 @@ export const tnaTemplatesRouter = createTRPCRouter({
                     });
 
                     return deletedTemplate;
-                })
+                }, {timeout: 30000})
             }
             catch (error) {
                 handlePrismaError(error);
@@ -560,7 +560,7 @@ export const tnaTemplatesRouter = createTRPCRouter({
                     });
 
                     return deletedAction;
-                })
+                }, {timeout: 30000})
             } catch (error) {
                 handlePrismaError(error);
             }

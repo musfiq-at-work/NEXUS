@@ -269,7 +269,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                     });
 
                     return deletedDocumentSubmission;
-                });
+                }, {timeout: 30000});
             }
             catch (error) {
                 handlePrismaError(error);
@@ -412,7 +412,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                     }
 
                     return newDocumentSubmission.id;
-                })
+                }, {timeout: 30000})
             }
             catch (error) {
                 handlePrismaError(error);
@@ -654,7 +654,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                     });
 
                     return deletedRdlInvoice;
-                });
+                }, {timeout: 30000});
             }
             catch (error) {
                 handlePrismaError(error);
@@ -976,7 +976,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                     );
 
                     return updatedDocumentSubmission;
-                });
+                }, {timeout: 30000});
             }
             catch (error) {
                 handlePrismaError(error);

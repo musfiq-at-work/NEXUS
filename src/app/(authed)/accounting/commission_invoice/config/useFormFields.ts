@@ -70,8 +70,8 @@ export const useFormFields = ({lcScList, isEdit, fdbcRdlInvoiceList, companyBank
             optional: isEdit
         },
         {
-            name: "fdbc_rdl_invoice_no",
-            label: "FDBC/Sales Contract No",
+            name: "fdbc_rdl_invoice_id",
+            label: "FDBC/RDL Invoice No",
             type: "select",
             options: fdbcRdlInvoiceList.map((invoice) => ({ label: invoice.fdbc_rdl_invoice_no, value: invoice.id })),
             disabled: isEdit,

@@ -6,7 +6,7 @@ import type { FactoryOrderFormValues } from "../../config/formSchema";
 import React from "react";
 import { api } from "~/trpc/react";
 import { skipToken } from "@tanstack/react-query";
-import { useAdminStore } from "~/store";
+import { useDecodedUser } from "~/hooks";
 
 type Props = {
     register: ReturnType<typeof useFactoryOrderForm>['methods']['register'];
@@ -30,7 +30,7 @@ const ShipmentRows = (props: Props) => {
         factoryOrderId ? { factoryOrderID: factoryOrderId } : skipToken,
     );
 
-    const isAdmin = useAdminStore((state) => state.isAdmin);
+    const { isAdmin } = useDecodedUser();
 
     return (
         <GenericFormTableRow

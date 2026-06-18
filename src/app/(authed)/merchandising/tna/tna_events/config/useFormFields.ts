@@ -2,7 +2,6 @@ import { api } from "~/trpc/react";
 import type { FormValues } from "./formSchema";
 import type { BaseField } from "~/types/form";
 import { useDecodedUser } from "~/hooks";
-import { useAdminStore } from "~/store";
 
 export type Field<T extends keyof FormValues> = BaseField<T>;
 
@@ -26,7 +25,7 @@ export const useFormFields = (): Field<keyof FormValues>[] => {
 
     const departmentId = Number(user?.department_id);
 
-    const isAdmin = useAdminStore((state) => state.isAdmin);
+    const { isAdmin } = useDecodedUser();
 
     const allowedActions = (() => {
         if (isAdmin) return actions;

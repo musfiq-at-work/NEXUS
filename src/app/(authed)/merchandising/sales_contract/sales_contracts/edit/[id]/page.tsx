@@ -6,7 +6,7 @@ import { useSalesContractForm } from "../../config/useSalesContractForm";
 import { api } from "~/trpc/react";
 import { toast } from 'sonner';
 import { parseTRPCError } from "~/utils/parseTRPCError";
-import { useAdminStore, useNavigationStore, usePermissionStore } from "~/store";
+import { useNavigationStore, usePermissionStore } from "~/store";
 import { useDecodedUser, useModulePath } from "~/hooks";
 import ScDetails from "../../components/ScDetails";
 
@@ -95,10 +95,9 @@ const EditSalesContractPage = ({ params }: EditSalesContractPageProp) => {
     const isAuthorized = authorizations?.authorization?.approval_status === 2 ? true : false;
     const approvalLevel = authorizations?.permission?.approval_level ?? 0;
 
-    const { user } = useDecodedUser();
+    const { user, isAdmin } = useDecodedUser();
 
     const [canAuthorize, setCanAuthorize] = useState<boolean>(false);
-    const isAdmin = useAdminStore((state) => state.isAdmin);
 
     const approveSalesContract = api.salesContracts.approveSalesContract.useMutation({
         onSuccess: async () => {

@@ -292,7 +292,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
                             invoice_date: deleted.invoice_date,
                         }
                     })
-                })
+                }, {timeout: 30000})
             }
             catch (error) {
                 handlePrismaError(error);
@@ -440,7 +440,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
                         })
                     );
                     return createdInvoice;
-                });
+                }, {timeout: 30000});
             }
             catch (error) {
                 handlePrismaError(error);
@@ -641,7 +641,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
                     `;
 
                     return shipments;
-                })                
+                }, {timeout: 30000})                
             }
             catch (error) {
                 handlePrismaError(error);
@@ -678,8 +678,8 @@ export const factoryInvoiceRouter = createTRPCRouter({
                         END AS FACTORY_FOB,
                         CASE
                             WHEN COALESCE(FSD.TRANSFER_RATE, 0) <> 0
-                                THEN FSD.TRANSFER_RATE * SUM(SID.QUANTITY)
-                            ELSE FSD.FACTORY_RATE * SUM(SID.QUANTITY)
+                                THEN COALESCE(FSD.TRANSFER_RATE, 0) * EFSD.DELIVERY_QUANTITY
+                            ELSE COALESCE(FSD.FACTORY_RATE, 0) * EFSD.DELIVERY_QUANTITY
                         END AS FACTORY_VALUE
                     FROM exfactory_shipments AS EFSD
                         INNER JOIN shipment_details AS SD ON SD.ID = EFSD.shipment_details_id
@@ -865,7 +865,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
                     }
 
                     return updatedInvoice;
-                });
+                }, {timeout: 30000});
             }
             catch (error) {
                 handlePrismaError(error);
@@ -902,7 +902,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
                     });
 
                     return detail;
-                });
+                }, {timeout: 30000});
             }
             catch (error) {
                 handlePrismaError(error);
@@ -1067,14 +1067,14 @@ export const factoryInvoiceRouter = createTRPCRouter({
                             ELSE FSD.factory_rate
                         END AS UNIT_PRICE,
                         CASE
-                            WHEN FSD.transfer_rate <> 0
-                                THEN FSD.transfer_rate * ES.delivery_quantity
+                            WHEN COALESCE(FSD.transfer_rate, 0) <> 0
+                                THEN COALESCE(FSD.transfer_rate, 0) * ES.delivery_quantity
                             ELSE FSD.factory_rate * ES.delivery_quantity
                         END AS total_price,
                         SUM(
                             CASE
-                                WHEN FSD.transfer_rate <> 0
-                                    THEN FSD.transfer_rate * ES.delivery_quantity
+                                WHEN COALESCE(FSD.transfer_rate, 0) <> 0
+                                    THEN COALESCE(FSD.transfer_rate, 0) * ES.delivery_quantity
                                 ELSE FSD.factory_rate * ES.delivery_quantity
                             END
                         ) OVER () AS grand_total,

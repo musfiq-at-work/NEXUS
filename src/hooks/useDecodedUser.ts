@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
 import type { MyTokenPayload } from "~/types/token";
+import { safeNumber } from "~/utils/numbers";
 
 // Hook to decode JWT token stored in localStorage and return user info
 export function useDecodedUser() {
   const [user, setUser] = useState<MyTokenPayload | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -35,5 +37,10 @@ export function useDecodedUser() {
     void loadUser();
   }, []);
 
-  return { user, setUser};
+  useEffect(() => {
+    const isAdmin = safeNumber(user?.department_id) === 5 && safeNumber(user?.level_id) === 5; 
+    setIsAdmin(isAdmin);
+  }, [user]);
+
+  return { user, setUser, isAdmin};
 }
