@@ -50,13 +50,15 @@ const NewRDLInvoicePage = () => {
                 details: (rdlInvoiceData.details ?? []).map((detail) => ({
                     factory_id: safeNumber(detail.factory_id),
                     factory_invoice_id: detail.factory_invoice_id ?? "",
-                    shipments: detail.details?.map((shipment) => ({
+                    shipments: detail.factoryInvoiceDetails?.map((shipment) => ({
                         shipment_details_id: shipment.shipment_details_id ?? "",
                         invoice_quantity: safeNumber(shipment.invoice_quantity),
+                        factory_invoice_details_id: shipment.factory_invoice_details_id ?? "",
                     })) ?? [],
                 })),
             };
 
+            console.log("Payload for adding RDL Invoice:", payload); // Debugging line
             const res = await addRDLInvoice.mutateAsync(payload);
             router.push(`/commercial/rdl_invoice/edit/${res.id}`);
         }   

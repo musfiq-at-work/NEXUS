@@ -114,7 +114,7 @@ export const useRDLInvoiceForm = (initialData?: GetRdlInvoiceByIdTypes) => {
     const { invoiceQuantity, invoiceValue } = useMemo(() => {
         return (details ?? []).reduce(
             (acc, factory) => {
-                (factory.details ?? []).forEach((shipment) => {
+                (factory.factoryInvoiceDetails ?? []).forEach((shipment) => {
                     acc.invoiceQuantity += safeNumber(shipment.invoice_quantity);
                     acc.invoiceValue += safeNumber(shipment.invoice_value);
                 });

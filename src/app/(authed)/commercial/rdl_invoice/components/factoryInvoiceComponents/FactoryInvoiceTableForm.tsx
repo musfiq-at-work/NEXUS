@@ -2,24 +2,28 @@
 
 import React from "react";
 import { Heading, TableBody, TableWrapper } from "~/components";
-import { useWatch, type FieldArrayWithId, type FieldErrors } from "react-hook-form";
+import { useWatch, type FieldErrors } from "react-hook-form";
 import { plusIcon } from "~/assets";
 import type { useRDLInvoiceForm } from "../../config/useRDLInvoiceForm";
 import TableHeader, { type TableHeaderType} from "~/components/organisms/table/TableHeader";
 import Image from "next/image";
-import type { RDLInvoiceDetailsFormValues } from "../../config/formSchema";
+import type { RDLInvoiceFormValues } from "../../config/formSchema";
 import FactoryInvoiceRows from "./FactoryInvoiceRows";
+
+type FactoryInvoiceDetailRow = NonNullable<RDLInvoiceFormValues['details']>[number] & {
+    id: string;
+};
 
 type Props = {
     isLoading?: boolean;
-    columns: TableHeaderType<FieldArrayWithId<RDLInvoiceDetailsFormValues>>[];
-    rows: FieldArrayWithId<RDLInvoiceDetailsFormValues>[];
+    columns: TableHeaderType<FactoryInvoiceDetailRow>[];
+    rows: FactoryInvoiceDetailRow[];
     disabled?: boolean;
     addRow: () => void;
     removeRow: (index: number) => void;
     name: string;
     methods: ReturnType<typeof useRDLInvoiceForm>['methods'];
-    validationError: FieldErrors<RDLInvoiceDetailsFormValues>;
+    validationError: FieldErrors<RDLInvoiceFormValues>;
     handleAction?: (index: number) => void;
     register: ReturnType<typeof useRDLInvoiceForm>['methods']['register'];
 }

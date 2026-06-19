@@ -364,6 +364,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                                         id: true,
                                         shipment_details_id: true,
                                         invoice_quantity: true,
+                                        factory_invoice_details_id: true,
                                     }
                                 }
                             }
@@ -505,6 +506,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                 factory_invoice_id: z.string(),
                 shipments: z.array(z.object({
                     shipment_details_id: z.string(),
+                    factory_invoice_details_id: z.string(),
                     invoice_quantity: z.number(),
                 })),
             }))
@@ -588,6 +590,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                                         data: {
                                             rdl_invoice_details_id: rdlInvoiceDetail.id,
                                             shipment_details_id: shipment.shipment_details_id,
+                                            factory_invoice_details_id: shipment.factory_invoice_details_id,
                                             invoice_quantity: shipment.invoice_quantity,
                                         },
                                     });

@@ -74,7 +74,7 @@ const EditRDLInvoicePage = ({ params }: EditRDLInvoicePageProp) => {
                     db_id: detail.db_id,
                     factory_id: safeNumber(detail.factory_id),
                     factory_invoice_id: detail.factory_invoice_id ?? "",
-                    shipments: detail.details?.map((shipment) => ({
+                    shipments: detail.factoryInvoiceDetails?.map((shipment) => ({
                         db_id: shipment.db_id,
                         shipment_details_id: shipment.shipment_details_id ?? "",
                         invoice_quantity: safeNumber(shipment.invoice_quantity),

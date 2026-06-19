@@ -17,7 +17,7 @@ type Props = {
 const FactoryInvoiceDetails = ({ methods, validationError, disabled = false }: Props) => {
     const { 
         fields: factoryInvoiceFields, append: addFactoryInvoice, remove: removeFactoryInvoice,
-    } = useFieldArray<RDLInvoiceFormValues>({
+    } = useFieldArray<RDLInvoiceFormValues, 'details'>({
         control: methods.control,
         name: "details",
     });
@@ -27,11 +27,11 @@ const FactoryInvoiceDetails = ({ methods, validationError, disabled = false }: P
     const AddFactoryInvoiceRow = useCallback(() => {
         addFactoryInvoice({
             db_id: undefined,
-            factory_id: undefined,
-            factory_invoice_id: undefined,
+            factory_id: '',
+            factory_invoice_id: '',
             quantity: 0,
             factory_value: 0,
-            details: [],
+            factoryInvoiceDetails: [],
         });
     }, [addFactoryInvoice]);
 

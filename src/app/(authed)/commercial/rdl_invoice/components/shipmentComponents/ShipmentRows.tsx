@@ -21,33 +21,33 @@ const ShipmentRows = (props: Props) => {
 
     const invoiceQuantity = useWatch({
         control: methods.control,
-        name: `details.${invoiceIndex}.details.${index}.invoice_quantity`,
+        name: `details.${invoiceIndex}.factoryInvoiceDetails.${index}.invoice_quantity`,
     });
 
     const orderQuantity = useWatch({
         control: methods.control,
-        name: `details.${invoiceIndex}.details.${index}.order_quantity`,
+        name: `details.${invoiceIndex}.factoryInvoiceDetails.${index}.order_quantity`,
     });
 
     const previousQuantity = useWatch({
         control: methods.control,
-        name: `details.${invoiceIndex}.details.${index}.previous_quantity`,
+        name: `details.${invoiceIndex}.factoryInvoiceDetails.${index}.previous_quantity`,
     });
 
     const invoice_fob = useWatch({
         control: methods.control,
-        name: `details.${invoiceIndex}.details.${index}.invoice_fob`,
+        name: `details.${invoiceIndex}.factoryInvoiceDetails.${index}.invoice_fob`,
     });
 
     useEffect(() => {
         methods.setValue(
-            `details.${invoiceIndex}.details.${index}.invoice_value`, 
+            `details.${invoiceIndex}.factoryInvoiceDetails.${index}.invoice_value`, 
             (safeNumber(invoiceQuantity) * safeNumber(invoice_fob)).toFixed(2)
         );
     }, [invoiceQuantity, invoice_fob, methods, invoiceIndex, index]);
 
     useEffect(() => {
-        const path = `details.${invoiceIndex}.details.${index}.invoice_quantity` as const;
+        const path = `details.${invoiceIndex}.factoryInvoiceDetails.${index}.invoice_quantity` as const;
 
         const currentValue = methods.getValues(path);
 
@@ -61,7 +61,7 @@ const ShipmentRows = (props: Props) => {
             fields={shipmentTableFormFields()}
             register={methods.register}
             disabled={disabled}
-            validationError={validationError?.details?.[invoiceIndex]?.details ?? {}}
+            validationError={validationError?.details?.[invoiceIndex]?.factoryInvoiceDetails ?? {}}
             name={name}
             control={methods.control}
             index={index}

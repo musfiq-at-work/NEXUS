@@ -24,7 +24,7 @@ const ShipmentDetails = (props: props) => {
         fields: shipmentFields, replace: replaceShipments
     } = useFieldArray<RDLInvoiceFormValues>({
         control: methods.control,
-        name: `details.${invoiceIndex}.details`,
+        name: `details.${invoiceIndex}.factoryInvoiceDetails`,
     });
 
     const selectedFactoryInvoice = useWatch({
@@ -44,12 +44,12 @@ const ShipmentDetails = (props: props) => {
     useEffect(() => {
         if (!shipmentDetails.data) return;
 
-        const existingShipments = methods.getValues(`details.${invoiceIndex}.details`) ?? [];
+        const existingShipments = methods.getValues(`details.${invoiceIndex}.factoryInvoiceDetails`) ?? [];
 
         replaceShipments(
             shipmentDetails.data.map((shipmentDetail) => {
                 const existing = existingShipments.find(
-                    (x) => x.shipment_details_id === shipmentDetail.shipment_details_id
+                    (x) => x.factory_invoice_details_id === shipmentDetail.id
                 );
 
                 return {
@@ -61,6 +61,7 @@ const ShipmentDetails = (props: props) => {
                     shipment_details_id: shipmentDetail.shipment_details_id,
                     destination_port: shipmentDetail.destination ?? undefined,
                     previous_quantity: shipmentDetail.previous_quantity ?? 0,
+                    factory_invoice_details_id: shipmentDetail?.id,
 
                     // preserve existing values loaded from initialData
                     invoice_quantity: existing?.invoice_quantity,
@@ -85,7 +86,7 @@ const ShipmentDetails = (props: props) => {
     return (
         <TableForm 
             title={<ShipmentHeading />}
-            name={`details.${invoiceIndex}.details`}
+            name={`details.${invoiceIndex}.factoryInvoiceDetails`}
             rows={shipmentFields}
             columns={tableFormColumns}
             disabled={disabled}

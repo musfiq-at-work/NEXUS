@@ -5,6 +5,7 @@ export const FactoryInvoiceDetails = z.object({
     order_no: z.string().optional(),
     style: z.string().optional(),
     po: z.string().optional(),
+    factory_invoice_details_id: z.string(),
     shipment_details_id: z.string().optional(),
     order_quantity: z.number().optional(),
     destination_port: z.string().optional(),
@@ -43,7 +44,7 @@ export const RDLInvoiceDetails = z.object({
     factory_invoice_no: z.string().optional(),
     quantity: z.number().optional(),
     factory_value: z.number().optional(),
-    details: z.array(FactoryInvoiceDetails).optional(),
+    factoryInvoiceDetails: z.array(FactoryInvoiceDetails).optional(),
 });
 
 export type RDLInvoiceDetailsFormValues = z.infer<typeof RDLInvoiceDetails>;

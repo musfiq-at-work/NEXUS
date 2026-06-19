@@ -2315,15 +2315,16 @@ model factory_invoice {
 }
 
 model factory_invoice_details {
-  id                        String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  factory_invoice_id        String              @db.Uuid
-  old_factory_invoice_id    Int?
-  exfactory_shipment_id     String              @db.Uuid
-  old_exfactory_shipment_id Int?
-  old_pk                    Int?
-  added_at                  DateTime?           @default(now()) @db.Timestamp(6)
-  exfactory_shipments       exfactory_shipments @relation(fields: [exfactory_shipment_id], references: [id], onUpdate: NoAction)
-  factory_invoice           factory_invoice     @relation(fields: [factory_invoice_id], references: [id], onUpdate: NoAction)
+  id                           String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  factory_invoice_id           String                         @db.Uuid
+  old_factory_invoice_id       Int?
+  exfactory_shipment_id        String                         @db.Uuid
+  old_exfactory_shipment_id    Int?
+  old_pk                       Int?
+  added_at                     DateTime?                      @default(now()) @db.Timestamp(6)
+  exfactory_shipments          exfactory_shipments            @relation(fields: [exfactory_shipment_id], references: [id], onUpdate: NoAction)
+  factory_invoice              factory_invoice                @relation(fields: [factory_invoice_id], references: [id], onUpdate: NoAction)
+  rdl_invoice_shipment_details rdl_invoice_shipment_details[]
 }
 
 model factory_invoice_details_history {
@@ -2477,16 +2478,18 @@ model rdl_invoice_history {
 }
 
 model rdl_invoice_shipment_details {
-  id                         String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  rdl_invoice_details_id     String?              @db.Uuid
-  shipment_details_id        String?              @db.Uuid
+  id                         String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  rdl_invoice_details_id     String?                  @db.Uuid
+  shipment_details_id        String?                  @db.Uuid
   invoice_quantity           Int?
   old_pk                     Int?
   old_rdl_invoice_details_id Int?
   old_shipment_details_id    Int?
-  added_at                   DateTime?            @default(now()) @db.Timestamp(6)
-  rdl_invoice_details        rdl_invoice_details? @relation(fields: [rdl_invoice_details_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  shipment_details           shipment_details?    @relation(fields: [shipment_details_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  added_at                   DateTime?                @default(now()) @db.Timestamp(6)
+  factory_invoice_details_id String?                  @db.Uuid
+  factory_invoice_details    factory_invoice_details? @relation(fields: [factory_invoice_details_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "rdl_invoice_shipment_details_factory_invoice_details_fkey")
+  rdl_invoice_details        rdl_invoice_details?     @relation(fields: [rdl_invoice_details_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  shipment_details           shipment_details?        @relation(fields: [shipment_details_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
 }
 
 model ev_permission_history {
