@@ -15,6 +15,7 @@
         "RIID",
         "RISD",
         "risdid",
+        "SDID",
         "upserted"
     ]
 }

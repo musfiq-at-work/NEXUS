@@ -6,6 +6,7 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
+import { formatDate } from "~/utils/localDateString";
 
 interface CommissionInvoiceListItem {
     id: string,
@@ -30,6 +31,8 @@ interface PDFHeaderData {
     lc_exfactory_date: Date | null,
     sc_exfactory_date: Date | null,
     fdbc_no: string | null,
+    lc_symbol: string | null,
+    sc_symbol: string | null
 }
 
 interface RDLInvoiceData {
@@ -54,6 +57,33 @@ interface FactoryInvoiceData {
     rft_invoice_date: Date,
     rft_invoice_quantity: number,
     rft_invoice_value: number
+}
+
+interface CommissionDistributionData {
+    cfl_dhaka_value: number,
+    cfl_overseas_value: number,
+    cfl_other_value: number,
+    cfl_dhaka_percentage: number,
+    cfl_overseas_percentage: number,
+    cfl_other_percentage: number,
+    cft_dhaka_value: number,
+    cft_overseas_value: number,
+    cft_other_value: number,
+    cft_dhaka_percentage: number,
+    cft_overseas_percentage: number,
+    cft_other_percentage: number,
+    cfl_dn_dhaka_value: number,
+    cfl_dn_overseas_value: number,
+    cfl_dn_other_value: number,
+    cfl_dn_dhaka_percentage: number,
+    cfl_dn_overseas_percentage: number,
+    cfl_dn_other_percentage: number,
+    cft_dn_dhaka_value: number,
+    cft_dn_overseas_value: number,
+    cft_dn_other_value: number,
+    cft_dn_dhaka_percentage: number,
+    cft_dn_overseas_percentage: number,
+    cft_dn_other_percentage: number
 }
 
 export const commissionInvoiceRouter = createTRPCRouter({
@@ -728,21 +758,25 @@ export const commissionInvoiceRouter = createTRPCRouter({
                         SELECT 
                             LC.ID,
                             LC.LC_NO AS LC_NO,
-                            MAX(E.EXFACTORY_DATE) AS EXFACTORY_DATE
+                            MAX(E.EXFACTORY_DATE) AS EXFACTORY_DATE,
+                            C.SYMBOL
                         FROM LC_MASTER AS LC
                             INNER JOIN lc_orders AS LO ON LO.lc_master_id = LC.id
                             INNER JOIN lc_shipments AS LCS ON LCS.lc_order_id = LO.id
                             INNER JOIN shipment_details AS SD ON SD.id = LCS.shipment_details_id
                             INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = SD.id
                             INNER JOIN exfactory_orders AS EO ON EO.id = ES.exfactory_orders_id
+                            INNER JOIN buyer_orders AS BO ON BO.ID = EO.order_id
+                            INNER JOIN currencies AS C ON C.id = BO.secondary_currency_id
                             INNER JOIN exfactory AS E ON E.id = EO.exfactory_id
-                        GROUP BY LC.ID
+                        GROUP BY LC.ID, C.ID
                     ),
                     SC AS (
                         SELECT
                             SC.ID,
                             SC.SALES_CONTRACT_NO AS SALES_CONTRACT_NO,
-                            MAX(E.EXFACTORY_DATE) AS EXFACTORY_DATE
+                            MAX(E.EXFACTORY_DATE) AS EXFACTORY_DATE,
+                            C.SYMBOL
                         FROM SALES_CONTRACTS AS SC
                             INNER JOIN sales_contract_details AS SCD ON SCD.sales_contract_id = SC.id
                             INNER JOIN buyer_orders AS BO ON BO.id = SCD.order_id
@@ -751,7 +785,8 @@ export const commissionInvoiceRouter = createTRPCRouter({
                             INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = SD.id
                             INNER JOIN exfactory_orders AS EO ON EO.id = ES.exfactory_orders_id
                             INNER JOIN exfactory AS E ON E.id = EO.exfactory_id
-                        GROUP BY SC.ID
+                            INNER JOIN currencies AS C ON C.id = BO.secondary_currency_id
+                        GROUP BY SC.ID, C.ID
                     )
                     SELECT
                         T.name AS TERM_NAME,
@@ -763,7 +798,9 @@ export const commissionInvoiceRouter = createTRPCRouter({
                         SC.SALES_CONTRACT_NO,
                         LC.EXFACTORY_DATE AS lc_exfactory_date,
                         SC.EXFACTORY_DATE AS sc_exfactory_date,
-                        DS.FDBC_NO
+                        DS.FDBC_NO,
+                        LC.SYMBOL as lc_symbol,
+                        SC.SYMBOL as sc_symbol
                     FROM commission_invoice AS CI
                         INNER JOIN company_banks AS CB ON CB.id = CI.company_bank_id
                         INNER JOIN banks AS B ON B.id = CB.bank_id
@@ -776,6 +813,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
                 `;
 
                 const isTT = headerData[0]?.term_name.toLowerCase() === 'tt';
+                const symbol = isTT ? headerData[0]?.sc_symbol : headerData[0]?.lc_symbol;
 
                 const header = {
                     term_name: headerData[0]?.term_name ?? '',
@@ -855,6 +893,13 @@ export const commissionInvoiceRouter = createTRPCRouter({
                     invoice_value: isTT ? data.rft_invoice_value : data.rfl_invoice_value,
                 }));
 
+                const formattedRdlInvoices = rdl_invoices.map((ri) => ({
+                    invoice_no: ri.invoice_no,
+                    invoice_date: formatDate(ri.invoice_date),
+                    invoice_quantity: quantityFormatter(ri.invoice_quantity),
+                    invoice_value: currencyFormatter(ri.invoice_value, symbol ?? '$'),
+                }));
+
                 const factory_invoices_data = await ctx.db.$queryRaw<FactoryInvoiceData[]>`
                     WITH FI_FOR_LC AS (
                         SELECT 
@@ -930,9 +975,290 @@ export const commissionInvoiceRouter = createTRPCRouter({
                     invoice_date: isTT ? data.rft_invoice_date : data.rfl_invoice_date,
                     invoice_quantity: isTT ? data.rft_invoice_quantity : data.rfl_invoice_quantity,
                     invoice_value: isTT ? data.rft_invoice_value : data.rfl_invoice_value,
-                }))
+                }));
 
-                return {header, rdl_invoices, factoryInvoices};
+                const formattedFactoryInvoice = factoryInvoices.map((fi) => ({
+                    invoice_no: fi.invoice_no,
+                    invoice_date: formatDate(fi.invoice_date),
+                    invoice_quantity: quantityFormatter(fi.invoice_quantity),
+                    invoice_value: currencyFormatter(fi.invoice_value, symbol ?? '$'),
+                }));
+
+                const commission_distribution_data = await ctx.db.$queryRaw<CommissionDistributionData[]>`
+                    WITH INV AS (
+                        SELECT
+                            RISD.rdl_invoice_details_id AS RIDID,
+                            ES.shipment_details_id AS SDID,
+                            SUM(RISD.invoice_quantity) AS INVOICE_QUANTITY
+                        FROM rdl_invoice_shipment_details RISD
+                            INNER JOIN factory_invoice_details FID ON FID.id = RISD.factory_invoice_details_id
+                            INNER JOIN exfactory_shipments ES ON ES.id = FID.exfactory_shipment_id
+                        GROUP BY RISD.rdl_invoice_details_id, ES.shipment_details_id
+                    ),
+                    CI_FOR_LC AS (
+                        SELECT
+                            DS.id AS DS_ID,
+                            SUM(INV.INVOICE_QUANTITY * (SD.FOB_RATE / BO.CURRENCY_RATE)) AS TOTAL_RDL_VALUE,
+                            SUM(INV.INVOICE_QUANTITY * (SD.FOB_RATE / BO.CURRENCY_RATE)) - SUM(INV.INVOICE_QUANTITY * FSD.TRANSFER_RATE) AS TOTAL_CI,
+                            COALESCE(SUM(INV.INVOICE_QUANTITY * 
+                                (FSD.TRANSFER_RATE - FSD.FACTORY_RATE) / FO.CURRENCY_RATE), 0
+                            ) AS TOTAL_DN,
+                            COALESCE(SUM(INV.INVOICE_QUANTITY * 
+                                (SD.FOB_RATE / BO.CURRENCY_RATE) * CDD.DHAKA_COMMISSION_PERCENTAGE / 100), 0
+                            ) AS TOTAL_DHAKA_CI,
+                            COALESCE(SUM(INV.INVOICE_QUANTITY * 
+                                (SD.FOB_RATE / BO.CURRENCY_RATE) * CDD.OTHERS_COMMISSION_PERCENTAGE / 100), 0
+                            ) AS TOTAL_OTHER_CI,
+                            COALESCE(SUM(INV.INVOICE_QUANTITY * 
+                                (SD.FOB_RATE / BO.CURRENCY_RATE) * CDD.OVERSEAS_COMMISSION_PERCENTAGE / 100), 0
+                            ) AS TOTAL_OVERSEAS_CI
+                        FROM document_submissions DS
+                            INNER JOIN document_submissions_details DSD ON DSD.document_submissions_id = DS.id
+                            INNER JOIN rdl_invoice RI ON RI.id = DSD.rdl_invoice_id
+                            INNER JOIN rdl_invoice_details RID ON RID.rdl_invoice_id = RI.id
+                            INNER JOIN INV ON INV.RIDID = RID.id
+                            INNER JOIN shipment_details SD ON SD.id = INV.SDID
+                            INNER JOIN order_styles AS OS ON OS.id = SD.order_style_id
+                            INNER JOIN buyer_orders AS BO ON BO.id = OS.order_id
+                            INNER JOIN factory_orders AS FO ON FO.order_id = BO.id
+                            INNER JOIN factory_shipment_details FSD ON FSD.shipment_detail_id = SD.id
+                            INNER JOIN commission_distributions_details CDD ON CDD.shipment_details_id = SD.id
+                        GROUP BY DS.id
+                    ),
+                    CI_FOR_TT AS (
+                        SELECT
+                            RI.id AS RI_ID,
+                            SUM(INV.INVOICE_QUANTITY * (SD.FOB_RATE / BO.CURRENCY_RATE)) AS TOTAL_RDL_VALUE,
+                            SUM(INV.INVOICE_QUANTITY * (SD.FOB_RATE / BO.CURRENCY_RATE)) - SUM(INV.INVOICE_QUANTITY * FSD.TRANSFER_RATE) AS TOTAL_CI,
+                            COALESCE(SUM(INV.INVOICE_QUANTITY * (FSD.TRANSFER_RATE - FSD.FACTORY_RATE) / FO.CURRENCY_RATE), 0) AS TOTAL_DN,
+                            COALESCE(SUM(INV.INVOICE_QUANTITY * 
+                                (SD.FOB_RATE / BO.CURRENCY_RATE) * CDD.DHAKA_COMMISSION_PERCENTAGE / 100), 0
+                            ) AS TOTAL_DHAKA_CI,
+                            COALESCE(SUM(INV.INVOICE_QUANTITY * 
+                                (SD.FOB_RATE / BO.CURRENCY_RATE) * CDD.OTHERS_COMMISSION_PERCENTAGE / 100), 0
+                            ) AS TOTAL_OTHER_CI,
+                            COALESCE(SUM(INV.INVOICE_QUANTITY * 
+                                (SD.FOB_RATE / BO.CURRENCY_RATE) * CDD.OVERSEAS_COMMISSION_PERCENTAGE / 100), 0
+                            ) AS TOTAL_OVERSEAS_CI
+                        FROM rdl_invoice RI
+                            INNER JOIN rdl_invoice_details RID ON RID.rdl_invoice_id = RI.id
+                            INNER JOIN INV ON INV.RIDID = RID.id
+                            INNER JOIN shipment_details SD ON SD.id = INV.SDID
+                            INNER JOIN order_styles AS OS ON OS.id = SD.order_style_id
+                            INNER JOIN buyer_orders AS BO ON BO.id = OS.order_id
+                            INNER JOIN factory_orders AS FO ON FO.order_id = BO.id
+                            INNER JOIN factory_shipment_details FSD ON FSD.shipment_detail_id = SD.id
+                            INNER JOIN commission_distributions_details CDD ON CDD.shipment_details_id = SD.id
+                        GROUP BY RI.id
+                    )
+                    SELECT
+                        -- LC, CI Allocation: Dhaka Value
+                        SUM(CFL.TOTAL_CI * (CFL.TOTAL_DHAKA_CI /
+                            NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))
+                        ) AS CFL_DHAKA_VALUE,
+
+                        -- LC, CI Allocation: Overseas Value
+                        SUM(CFL.TOTAL_CI * (CFL.TOTAL_OVERSEAS_CI /
+                            NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))
+                        ) AS CFL_OVERSEAS_VALUE,
+                        
+                        -- LC, CI Allocation: Other Value
+                        SUM(CFL.TOTAL_CI * (CFL.TOTAL_OTHER_CI /
+                            NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))
+                        ) AS CFL_OTHER_VALUE,
+                        
+                        -- LC, CI Allocation: Dhaka Percentage
+                        SUM(CFL.TOTAL_CI * (CFL.TOTAL_DHAKA_CI /
+                            NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))
+                        ) / NULLIF(SUM(CFL.TOTAL_RDL_VALUE), 0) * 100 AS CFL_DHAKA_PERCENTAGE,
+                        
+                        -- LC, CI Allocation: Overseas Percentage
+                        SUM(CFL.TOTAL_CI * (CFL.TOTAL_OVERSEAS_CI /
+                            NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))
+                        ) / NULLIF(SUM(CFL.TOTAL_RDL_VALUE), 0) * 100 AS CFL_OVERSEAS_PERCENTAGE,
+                        
+                        -- LC, CI Allocation: Other Percentage
+                        SUM(CFL.TOTAL_CI * (CFL.TOTAL_OTHER_CI /
+                            NULLIF( CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))
+                        ) / NULLIF(SUM(CFL.TOTAL_RDL_VALUE), 0) * 100 AS CFL_OTHER_PERCENTAGE,
+                        
+                        -- TT, CI Allocation: Dhaka Value
+                        SUM(CFT.TOTAL_CI * (CFT.TOTAL_DHAKA_CI /
+                            NULLIF( CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))
+                        ) AS CFT_DHAKA_VALUE,
+                        
+                        -- TT, CI Allocation: Overseas Value
+                        SUM(CFT.TOTAL_CI * (CFT.TOTAL_OVERSEAS_CI /
+                            NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))
+                        ) AS CFT_OVERSEAS_VALUE,
+                        
+                        -- TT, CI Allocation: Other Value
+                        SUM(CFT.TOTAL_CI * (CFT.TOTAL_OTHER_CI /
+                            NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))
+                        ) AS CFT_OTHER_VALUE,
+                        
+                        -- TT, CI Allocation: Dhaka Percentage
+                        SUM(CFT.TOTAL_CI * (CFT.TOTAL_DHAKA_CI /
+                            NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))
+                        ) / NULLIF(SUM(CFT.TOTAL_RDL_VALUE), 0) * 100 AS CFT_DHAKA_PERCENTAGE,
+                        
+                        -- TT, CI Allocation: Overseas Percentage
+                        SUM(CFT.TOTAL_CI * (CFT.TOTAL_OVERSEAS_CI /
+                            NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))
+                        ) / NULLIF(SUM(CFT.TOTAL_RDL_VALUE), 0) * 100 AS CFT_OVERSEAS_PERCENTAGE,
+                        
+                        -- TT, CI Allocation: Other Percentage
+                        SUM(CFT.TOTAL_CI * (CFT.TOTAL_OTHER_CI /
+                            NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))
+                        ) / NULLIF(SUM(CFT.TOTAL_RDL_VALUE), 0) * 100 AS CFT_OTHER_PERCENTAGE,
+
+                        -- LC, DN Allocation: Dhaka Value
+                        SUM(CFL.TOTAL_DN * (CFL.TOTAL_DHAKA_CI /
+                            NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))
+                        ) AS CFL_DN_DHAKA_VALUE,
+                        
+                        -- LC, DN Allocation: Overseas Value
+                        SUM(CFL.TOTAL_DN * (CFL.TOTAL_OVERSEAS_CI /
+                            NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))
+                        ) AS CFL_DN_OVERSEAS_VALUE,
+                        
+                        -- LC, DN Allocation: Other Value
+                        SUM(CFL.TOTAL_DN * (CFL.TOTAL_OTHER_CI /
+                            NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))
+                        ) AS CFL_DN_OTHER_VALUE,
+
+                        -- LC, DN Allocation: Dhaka Percentage
+                        SUM(CFL.TOTAL_DN * (CFL.TOTAL_DHAKA_CI /
+                            NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))
+                        ) / NULLIF(SUM(CFL.TOTAL_RDL_VALUE), 0) * 100 AS CFL_DN_DHAKA_PERCENTAGE,
+                        
+                        -- LC, DN Allocation: Overseas Percentage
+                        SUM(CFL.TOTAL_DN * (CFL.TOTAL_OVERSEAS_CI /
+                            NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))
+                        ) / NULLIF(SUM(CFL.TOTAL_RDL_VALUE), 0) * 100 AS CFL_DN_OVERSEAS_PERCENTAGE,
+                        
+                        -- LC, DN Allocation: Other Percentage
+                        SUM(CFL.TOTAL_DN * (CFL.TOTAL_OTHER_CI /
+                            NULLIF( CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))
+                        ) / NULLIF(SUM(CFL.TOTAL_RDL_VALUE), 0) * 100 AS CFL_DN_OTHER_PERCENTAGE,
+                        
+                        -- TT, DN Allocation: Dhaka Value
+                        SUM(CFT.TOTAL_DN * (CFT.TOTAL_DHAKA_CI /
+                            NULLIF( CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))
+                        ) AS CFT_DN_DHAKA_VALUE,
+                        
+                        -- TT, DN Allocation: Overseas Value
+                        SUM(CFT.TOTAL_DN * (CFT.TOTAL_OVERSEAS_CI /
+                            NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))
+                        ) AS CFT_DN_OVERSEAS_VALUE,
+                        
+                        -- TT, DN Allocation: Other Value
+                        SUM(CFT.TOTAL_DN * (CFT.TOTAL_OTHER_CI /
+                            NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))
+                        ) AS CFT_DN_OTHER_VALUE,
+                        
+                        -- TT, DN Allocation: Dhaka Percentage
+                        SUM(CFT.TOTAL_DN * (CFT.TOTAL_DHAKA_CI /
+                            NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))
+                        ) / NULLIF(SUM(CFT.TOTAL_RDL_VALUE), 0) * 100 AS CFT_DN_DHAKA_PERCENTAGE,
+                        
+                        -- TT, DN Allocation: Overseas Percentage
+                        SUM(CFT.TOTAL_DN * (CFT.TOTAL_OVERSEAS_CI /
+                            NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))
+                        ) / NULLIF(SUM(CFT.TOTAL_RDL_VALUE), 0) * 100 AS CFT_DN_OVERSEAS_PERCENTAGE,
+                        
+                        -- TT, DN Allocation: Other Percentage
+                        SUM(CFT.TOTAL_DN * (CFT.TOTAL_OTHER_CI /
+                            NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))
+                        ) / NULLIF(SUM(CFT.TOTAL_RDL_VALUE), 0) * 100 AS CFT_DN_OTHER_PERCENTAGE
+                    FROM commission_invoice CI
+                        INNER JOIN terms T ON T.id = CI.term_id
+                        LEFT JOIN CI_FOR_LC CFL ON CFL.DS_ID = CI.document_submission_id AND T.name = 'LC'
+                        LEFT JOIN CI_FOR_TT CFT ON CFT.RI_ID = CI.rdl_invoice_id AND T.name = 'TT'
+                    WHERE CI.id = ${input.id};
+                `;
+
+                const commissionDistribution = commission_distribution_data[0] ? {
+                    dhaka_value: isTT 
+                        ? commission_distribution_data[0].cft_dhaka_value 
+                        : commission_distribution_data[0].cfl_dhaka_value,
+                    overseas_value: isTT 
+                        ? commission_distribution_data[0].cft_overseas_value 
+                        : commission_distribution_data[0].cfl_overseas_value,
+                    other_value: isTT 
+                        ? commission_distribution_data[0].cft_other_value 
+                        : commission_distribution_data[0].cfl_other_value,
+                    dhaka_percentage: isTT 
+                        ? commission_distribution_data[0].cft_dhaka_percentage 
+                        : commission_distribution_data[0].cfl_dhaka_percentage,
+                    overseas_percentage: isTT 
+                        ? commission_distribution_data[0].cft_overseas_percentage 
+                        : commission_distribution_data[0].cfl_overseas_percentage,
+                    other_percentage: isTT 
+                        ? commission_distribution_data[0].cft_other_percentage 
+                        : commission_distribution_data[0].cfl_other_percentage,
+                    dn_dhaka_value: isTT 
+                        ? commission_distribution_data[0].cft_dn_dhaka_value 
+                        : commission_distribution_data[0].cfl_dn_dhaka_value,
+                    dn_overseas_value: isTT
+                        ? commission_distribution_data[0].cft_dn_overseas_value
+                        : commission_distribution_data[0].cfl_dn_overseas_value,
+                    dn_other_value: isTT
+                        ? commission_distribution_data[0].cft_dn_other_value
+                        : commission_distribution_data[0].cfl_dn_other_value,
+                    dn_dhaka_percentage: isTT
+                        ? commission_distribution_data[0].cft_dn_dhaka_percentage
+                        : commission_distribution_data[0].cfl_dn_dhaka_percentage,
+                    dn_overseas_percentage: isTT
+                        ? commission_distribution_data[0].cft_dn_overseas_percentage
+                        : commission_distribution_data[0].cfl_dn_overseas_percentage,
+                    dn_other_percentage: isTT
+                        ? commission_distribution_data[0].cft_dn_other_percentage
+                        : commission_distribution_data[0].cfl_dn_other_percentage,
+                } : null;
+
+                const formattedCommissionDistribution = commissionDistribution ? {
+                    dhaka_value: currencyFormatter(commissionDistribution.dhaka_value, symbol ?? '$'),
+                    overseas_value: currencyFormatter(commissionDistribution.overseas_value, symbol ?? '$'),
+                    other_value: currencyFormatter(commissionDistribution.other_value, symbol ?? '$'),
+                    dhaka_percentage: `${commissionDistribution.dhaka_percentage.toFixed(2)}%`,
+                    overseas_percentage: `${commissionDistribution.overseas_percentage.toFixed(2)}%`,
+                    other_percentage: `${commissionDistribution.other_percentage.toFixed(2)}%`,
+                    dn_dhaka_value: currencyFormatter(commissionDistribution.dn_dhaka_value, symbol ?? '$'),
+                    dn_overseas_value: currencyFormatter(commissionDistribution.dn_overseas_value, symbol ?? '$'),
+                    dn_other_value: currencyFormatter(commissionDistribution.dn_other_value, symbol ?? '$'),
+                    dn_dhaka_percentage: `${commissionDistribution.dn_dhaka_percentage.toFixed(2)}%`,
+                    dn_overseas_percentage: `${commissionDistribution.dn_overseas_percentage.toFixed(2)}%`,
+                    dn_other_percentage: `${commissionDistribution.dn_other_percentage.toFixed(2)}%`
+                } : null;
+
+                const totalCiAllocationValue = (commissionDistribution?.dhaka_value ?? 0) 
+                    + (commissionDistribution?.overseas_value ?? 0) 
+                    + (commissionDistribution?.other_value ?? 0);
+
+                const totalCiAllocationPercentage = (commissionDistribution?.dhaka_percentage ?? 0) 
+                    + (commissionDistribution?.overseas_percentage ?? 0) 
+                    + (commissionDistribution?.other_percentage ?? 0);
+
+                const totalDnAllocationValue = (commissionDistribution?.dn_dhaka_value ?? 0) 
+                    + (commissionDistribution?.dn_overseas_value ?? 0) 
+                    + (commissionDistribution?.dn_other_value ?? 0);
+
+                const totalDnAllocationPercentage = (commissionDistribution?.dn_dhaka_percentage ?? 0) 
+                    + (commissionDistribution?.dn_overseas_percentage ?? 0) 
+                    + (commissionDistribution?.dn_other_percentage ?? 0);
+
+                const totalValue = totalCiAllocationValue + totalDnAllocationValue;
+
+                const result = {
+                    totalCiAllocationValue: currencyFormatter(totalCiAllocationValue, symbol ?? '$'),
+                    totalCiAllocationPercentage,
+                    totalDnAllocationValue: currencyFormatter(totalDnAllocationValue, symbol ?? '$'),
+                    totalDnAllocationPercentage,
+                    totalValue: currencyFormatter(totalValue, symbol ?? '$')
+                }
+
+                return {header, formattedRdlInvoices, formattedFactoryInvoice, formattedCommissionDistribution, result};
             }
             catch (error) {
                 handlePrismaError(error);
@@ -940,79 +1266,3 @@ export const commissionInvoiceRouter = createTRPCRouter({
         }),
 });
 
-
-
-/**
- WITH CI_FOR_LC AS (
-	SELECT 
-        DS.ID AS DS_ID,
-		SUM(INV.INVOICE_QUANTITY * SD.FOB_RATE) AS TOTAL_RDL_VALUE,
-        SUM(INV.INVOICE_QUANTITY * SD.FOB_RATE) - SUM(INV.INVOICE_QUANTITY * FSD.TRANSFER_RATE) AS TOTAL_CI,
-		SUM(INV.INVOICE_QUANTITY * (FSD.TRANSFER_RATE - FSD.FACTORY_RATE)) AS TOTAL_DN,
-		SUM(INV.INVOICE_QUANTITY * SD.FOB_RATE * CDD.DHAKA_COMMISSION_PERCENTAGE / 100) AS TOTAL_DHAKA_CI,
-		SUM(INV.INVOICE_QUANTITY * SD.FOB_RATE * CDD.OTHERS_COMMISSION_PERCENTAGE / 100) AS TOTAL_OTHER_CI,
-		SUM(INV.INVOICE_QUANTITY * SD.FOB_RATE * CDD.OVERSEAS_COMMISSION_PERCENTAGE / 100) AS TOTAL_OVERSEAS_CI
-    FROM document_submissions AS DS
-        INNER JOIN document_submissions_details AS DSD ON DSD.document_submissions_id = DS.id
-        INNER JOIN rdl_invoice AS RI ON RI.id = DSD.rdl_invoice_id
-        INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
-		INNER JOIN (
-			SELECT 
-				RISD.rdl_invoice_details_id AS RIDID,
-				ES.shipment_details_id AS SDID,
-				SUM(RISD.INVOICE_QUANTITY) AS INVOICE_QUANTITY
-			FROM rdl_invoice_shipment_details AS RISD
-			INNER JOIN factory_invoice_details AS FID ON FID.ID = RISD.factory_invoice_details_id
-			INNER JOIN exfactory_shipments AS ES ON ES.ID = FID.exfactory_shipment_id
-			GROUP BY RISD.rdl_invoice_details_id, ES.shipment_details_id
-		) INV ON INV.RIDID = RID.ID
-		INNER JOIN shipment_details AS SD ON SD.id = INV.SDID
-		INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = SD.id
-		INNER JOIN commission_distributions_details AS CDD ON CDD.shipment_details_id = SD.id
-    GROUP BY DS.ID
-),
-CI_FOR_TT AS (
-	SELECT 
-        RI.ID AS RI_ID,
-		SUM(INV.INVOICE_QUANTITY * SD.FOB_RATE) AS TOTAL_RDL_VALUE,
-        SUM(INV.INVOICE_QUANTITY * SD.FOB_RATE) - SUM(INV.INVOICE_QUANTITY * FSD.TRANSFER_RATE) AS TOTAL_CI,
-		SUM(INV.INVOICE_QUANTITY * (FSD.TRANSFER_RATE - FSD.FACTORY_RATE)) AS TOTAL_DN,
-		SUM(INV.INVOICE_QUANTITY * SD.FOB_RATE * CDD.DHAKA_COMMISSION_PERCENTAGE / 100) AS TOTAL_DHAKA_CI,
-		SUM(INV.INVOICE_QUANTITY * SD.FOB_RATE * CDD.OTHERS_COMMISSION_PERCENTAGE / 100) AS TOTAL_OTHER_CI,
-		SUM(INV.INVOICE_QUANTITY * SD.FOB_RATE * CDD.OVERSEAS_COMMISSION_PERCENTAGE / 100) AS TOTAL_OVERSEAS_CI
-    FROM rdl_invoice AS RI
-        INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
-		INNER JOIN (
-			SELECT 
-				RISD.rdl_invoice_details_id AS RIDID,
-				ES.shipment_details_id AS SDID,
-				SUM(RISD.INVOICE_QUANTITY) AS INVOICE_QUANTITY
-			FROM rdl_invoice_shipment_details AS RISD
-			INNER JOIN factory_invoice_details AS FID ON FID.ID = RISD.factory_invoice_details_id
-			INNER JOIN exfactory_shipments AS ES ON ES.ID = FID.exfactory_shipment_id
-			GROUP BY RISD.rdl_invoice_details_id, ES.shipment_details_id
-		) INV ON INV.RIDID = RID.ID
-		INNER JOIN shipment_details AS SD ON SD.id = INV.SDID
-		INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = SD.id
-		INNER JOIN commission_distributions_details AS CDD ON CDD.shipment_details_id = SD.id
-    GROUP BY RI.ID
-)
-SELECT 
-	SUM(CFL.TOTAL_CI * (CFL.TOTAL_DHAKA_CI / (CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI))) AS DHAKA_VALUE,
-	SUM(CFL.TOTAL_CI * (CFL.TOTAL_OVERSEAS_CI / (CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI))) AS OVERSEAS_VALUE,
-	SUM(CFL.TOTAL_CI * (CFL.TOTAL_OTHER_CI / (CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI))) AS OTHER_VALUE,
-	SUM(CFT.TOTAL_CI * (CFT.TOTAL_DHAKA_CI / (CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI))) AS DHAKA_VALUE,
-	SUM(CFT.TOTAL_CI * (CFT.TOTAL_OVERSEAS_CI / (CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI))) AS OVERSEAS_VALUE,
-	SUM(CFT.TOTAL_CI * (CFT.TOTAL_OTHER_CI / (CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI))) AS OTHER_VALUE,
-	SUM(CFL.TOTAL_CI * (CFL.TOTAL_DHAKA_CI / (CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI))) / SUM(CFL.TOTAL_RDL_VALUE) AS DHAKA_PERCENTAGE,
-	SUM(CFL.TOTAL_CI * (CFL.TOTAL_OVERSEAS_CI / (CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI))) / SUM(CFL.TOTAL_RDL_VALUE) AS DHAKA_PERCENTAGE,
-	SUM(CFL.TOTAL_CI * (CFL.TOTAL_OTHER_CI / (CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI))) / SUM(CFL.TOTAL_RDL_VALUE) AS DHAKA_PERCENTAGE,
-	SUM(CFT.TOTAL_CI * (CFT.TOTAL_DHAKA_CI / (CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI))) / SUM(CFL.TOTAL_RDL_VALUE) AS DHAKA_PERCENTAGE,
-	SUM(CFT.TOTAL_CI * (CFT.TOTAL_OVERSEAS_CI / (CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI))) / SUM(CFL.TOTAL_RDL_VALUE) AS DHAKA_PERCENTAGE,
-	SUM(CFT.TOTAL_CI * (CFT.TOTAL_OTHER_CI / (CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI))) / SUM(CFL.TOTAL_RDL_VALUE) AS DHAKA_PERCENTAGE
-FROM commission_invoice AS CI
-    INNER JOIN TERMS AS T ON T.id = CI.term_id
-    LEFT JOIN CI_FOR_LC AS CFL ON CFL.DS_ID = CI.document_submission_id AND T.NAME = 'LC'
-    LEFT JOIN CI_FOR_TT AS CFT ON CFT.RI_ID = CI.rdl_invoice_id AND T.NAME = 'TT'
-WHERE CI.ID = '24856d99-ee5b-43bb-afab-f9053997db99';
- */
