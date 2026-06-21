@@ -12,12 +12,9 @@ import StylesDetails from "../../components/styleComponents/stylesDetails";
 import type { shipment_modes } from "@prisma/client";
 import { printingWhiteIcon } from "~/assets";
 import PhotoContainer from "../../components/photoComponents/PhotoContainer";
+import type { ParamsProp } from "~/types/params";
 
-type EditBuyerOrderPageProp = {
-    params: Promise<{ id: string }>
-}
-
-const EditBuyerOrderPage = ({ params }: EditBuyerOrderPageProp) => {
+const EditBuyerOrderPage = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
     const [error, setError] = useState<string | null>(null);
     

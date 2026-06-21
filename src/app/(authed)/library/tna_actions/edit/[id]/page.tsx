@@ -9,12 +9,9 @@ import { parseTRPCError } from "~/utils/parseTRPCError";
 import { useTnaForm } from "../../config/useTnaForm";
 import { useNavigationStore, usePermissionStore } from "~/store";
 import { useModulePath } from "~/hooks";
+import type { ParamsProp } from "~/types/params";
 
-type EditOverseasOfficePageProps = {
-    params: Promise<{ id: string }>
-};
-
-const EditTnaActionPage = ({ params }: EditOverseasOfficePageProps) => {
+const EditTnaActionPage = ({ params }: ParamsProp) => {
     const { id } = React.use(params)
     const [error, setError] = useState<string | null>(null);
 

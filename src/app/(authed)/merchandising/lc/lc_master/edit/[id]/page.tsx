@@ -11,12 +11,9 @@ import { useDecodedUser, useModulePath } from "~/hooks";
 import OrderDetails from "../../components/orderComponents/orderDetails";
 import ShipmentDetails from "../../components/shipmentComponents/ShipmentDetails";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
+import type { ParamsProp } from "~/types/params";
 
-type EditMasterLCPageProp = {
-    params: Promise<{ id: string }>
-}
-
-const EditLCMasterPage = ({ params }: EditMasterLCPageProp) => {
+const EditLCMasterPage = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
     const [error, setError] = useState<string | null>(null);
     

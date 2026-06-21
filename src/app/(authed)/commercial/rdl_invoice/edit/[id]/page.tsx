@@ -14,12 +14,9 @@ import { safeNumber } from "~/utils/numbers";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 import { useWatch } from "react-hook-form";
 import { skipToken } from "@tanstack/react-query";
+import type { ParamsProp } from "~/types/params";
 
-type EditRDLInvoicePageProp = {
-    params: Promise<{ id: string }>
-}
-
-const EditRDLInvoicePage = ({ params }: EditRDLInvoicePageProp) => {
+const EditRDLInvoicePage = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
     const [error, setError] = useState<string | null>(null);
 

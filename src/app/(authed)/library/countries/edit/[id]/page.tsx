@@ -8,12 +8,9 @@ import { toast } from "sonner";
 import { parseTRPCError } from "~/utils/parseTRPCError";
 import { useModulePath } from "~/hooks";
 import { useNavigationStore, usePermissionStore } from "~/store";
+import type { ParamsProp } from "~/types/params";
 
-type EditUserPageProps = {
-    params: Promise<{ id: string }>
-};
-
-const EditCountryPage = ({ params }: EditUserPageProps) => {
+const EditCountryPage = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
 
     const { data: countryData, isLoading } = api.countries.getCountry.useQuery({ id: id });

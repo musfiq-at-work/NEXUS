@@ -5,12 +5,9 @@ import React from "react";
 import FactoryOrderPDF from "../FactoryOrderPDF";
 import { api } from "~/trpc/react";
 import { skipToken } from "@tanstack/react-query";
+import type { ParamsProp } from "~/types/params";
 
-type EditFactoryOrderPdfProp = {
-    params: Promise<{ id: string }>
-}
-
-const PDF = ({ params }: EditFactoryOrderPdfProp) => {
+const PDF = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
 
     const { data } = api.factoryOrder.getPDFData.useQuery(!!id ? { factoryOrderId: id } : skipToken);

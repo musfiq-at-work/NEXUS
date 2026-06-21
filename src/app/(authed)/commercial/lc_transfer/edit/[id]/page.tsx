@@ -30,12 +30,9 @@ import { useModulePath } from "~/hooks";
 import { useLCTransferForm } from "../../config/useLcTransferForm";
 import TransferDetails from "../../components/TransferDetails";
 import { safeNumber } from "~/utils/numbers";
+import type { ParamsProp } from "~/types/params";
 
-type EditLCTransferPageProp = {
-    params: Promise<{ id: string }>
-}
-
-const EditLCTransferPage = ({ params }: EditLCTransferPageProp) => {
+const EditLCTransferPage = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
     const [error, setError] = useState<string | null>(null);
 

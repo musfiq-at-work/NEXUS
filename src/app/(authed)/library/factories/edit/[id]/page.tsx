@@ -4,12 +4,9 @@ import React from "react";
 import FactoryDetailsPage from "../../_components/details";
 import { useNavigationStore, usePermissionStore } from "~/store";
 import { useModulePath } from "~/hooks";
+import type { ParamsProp } from "~/types/params";
 
-type EditOverseasOfficePageProps = {
-    params: Promise<{ id: string }>
-};
-
-const EditFactoryPage = ({ params }: EditOverseasOfficePageProps) => {
+const EditFactoryPage = ({ params }: ParamsProp) => {
     // Get current module path
     const modulePath = useModulePath().path;
         

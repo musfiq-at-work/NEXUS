@@ -9,12 +9,9 @@ import { useNavigationStore, usePermissionStore } from "~/store";
 import { useModulePath } from "~/hooks";
 import { useTnaPlanningForm } from "../../config/useTnaPlanningForm";
 import ActionDetails from "../../components/actionDetails";
+import type { ParamsProp } from "~/types/params";
 
-type EditTnaPlanningPageProp = {
-    params: Promise<{ id: string }>
-}
-
-const EditTnaPlanningPage = ({ params }: EditTnaPlanningPageProp) => {
+const EditTnaPlanningPage = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
     const [error, setError] = useState<string | null>(null);
 

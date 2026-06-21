@@ -14,12 +14,9 @@ import TableForm from "~/components/organisms/table/TableForm";
 import { type FormValues as BankFormValues } from "../../bankConfig/tableFormSchema";
 import { tableFormColumns } from "../../bankConfig/tableFormColumns";
 import type { FormValues } from "../../config/formSchema";
+import type { ParamsProp } from "~/types/params";
 
-type EditOverseasOfficePageProps = {
-    params: Promise<{ id: string }>
-};
-
-const EditCompanyPage = ({ params }: EditOverseasOfficePageProps) => {
+const EditCompanyPage = ({ params }: ParamsProp) => {
     const { id } = React.use(params)
     const [error, setError] = useState<string | null>(null);
 

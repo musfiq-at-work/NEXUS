@@ -10,12 +10,9 @@ import { useNavigationStore, usePermissionStore } from "~/store";
 import { useDecodedUser, useModulePath } from "~/hooks";
 import OrderDetails from "../../components/orderComponents/orderDetails";
 import ShipmentDetails from "../../components/shipmentComponents/ShipmentDetails";
+import type { ParamsProp } from "~/types/params";
 
-type EditLCAmendmentPageProp = {
-    params: Promise<{ id: string }>
-}
-
-const EditLCAmendmentPage = ({ params }: EditLCAmendmentPageProp) => {
+const EditLCAmendmentPage = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
     const [error, setError] = useState<string | null>(null);
 

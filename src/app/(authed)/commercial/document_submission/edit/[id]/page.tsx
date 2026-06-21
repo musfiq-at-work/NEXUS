@@ -10,12 +10,9 @@ import { useNavigationStore, usePermissionStore } from "~/store";
 import { useModulePath } from "~/hooks";
 import RDLInvoiceDetails from "../../components/rdlInvoiceComponents/RDLInvoiceDetails";
 import { safeNumber } from "~/utils/numbers";
+import type { ParamsProp } from "~/types/params";
 
-type EditDocumentSubmissionPageProp = {
-    params: Promise<{ id: string }>
-}
-
-const EditDocumentSubmissionPage = ({ params }: EditDocumentSubmissionPageProp) => {
+const EditDocumentSubmissionPage = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
     const [error, setError] = useState<string | null>(null);
 

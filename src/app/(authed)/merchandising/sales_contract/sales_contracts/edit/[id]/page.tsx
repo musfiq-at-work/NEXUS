@@ -9,12 +9,9 @@ import { parseTRPCError } from "~/utils/parseTRPCError";
 import { useNavigationStore, usePermissionStore } from "~/store";
 import { useDecodedUser, useModulePath } from "~/hooks";
 import ScDetails from "../../components/ScDetails";
+import type { ParamsProp } from "~/types/params";
 
-type EditSalesContractPageProp = {
-    params: Promise<{ id: string }>
-}
-
-const EditSalesContractPage = ({ params }: EditSalesContractPageProp) => {
+const EditSalesContractPage = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
     const [error, setError] = useState<string | null>(null);
 

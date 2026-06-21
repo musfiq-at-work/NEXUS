@@ -8,12 +8,9 @@ import { toast } from 'sonner';
 import { parseTRPCError } from "~/utils/parseTRPCError";
 import { useNavigationStore, usePermissionStore } from "~/store";
 import { useModulePath } from "~/hooks";
+import type { ParamsProp } from "~/types/params";
 
-type EditFabricPageProps = {
-    params: Promise<{ id: string }>
-};
-
-const EditFabricPage = ({ params }: EditFabricPageProps) => {
+const EditFabricPage = ({ params }: ParamsProp) => {
     const { id } = React.use(params)
     const [error, setError] = useState<string | null>(null);
 

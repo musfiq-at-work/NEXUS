@@ -9,12 +9,9 @@ import { parseTRPCError } from "~/utils/parseTRPCError";
 import { useNavigationStore, usePermissionStore } from "~/store";
 import { useModulePath } from "~/hooks";
 import { safeNumber } from "~/utils/numbers";
+import type { ParamsProp } from "~/types/params";
 
-type EditOverseasOfficePageProps = {
-    params: Promise<{ id: string }>
-};
-
-const EditBankPage = ({ params }: EditOverseasOfficePageProps) => {
+const EditBankPage = ({ params }: ParamsProp) => {
     const { id } = React.use(params)
     const [error, setError] = useState<string | null>(null);
 

@@ -4,13 +4,20 @@ import { styles, tableBorderColor } from "../../components/pdfConfig";
 
 const TableHeader = () => (
     <View style={styles.headerRow} fixed>
-        <Text style={[styles.headerCell, { width: 100, padding: 5}]}>SL No.</Text>
-        <Text style={[styles.headerCell, { width: 400, padding: 5}]}>Description</Text>
-        <Text style={[styles.headerCell, { width: 200, padding: 5}]}>Quantity (pcs)</Text>
-        <Text style={[styles.headerCell, { width: 200, padding: 5}]}>Total Value (USD)</Text>
+        <Text style={[styles.headerCell, { width: 100, padding: 5}]}>
+            SL No.
+        </Text>
+        <Text style={[styles.headerCell, { width: 400, padding: 5}]}>
+            Description
+        </Text>
+        <Text style={[styles.headerCell, { width: 200, padding: 5}]}>
+            Quantity (pcs)
+        </Text>
+        <Text style={[styles.headerCell, { width: 200, padding: 5}]}>
+            Total Value (USD)
+        </Text>
     </View>
 );
-
 
 interface InvoiceTableProps {
     rows: React.ReactNode[];

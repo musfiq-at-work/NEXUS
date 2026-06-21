@@ -5,12 +5,9 @@ import React from "react";
 import SalesContractAmendmentPDF from "../SalesContractAmendmentPDF";
 import { api } from "~/trpc/react";
 import { skipToken } from "@tanstack/react-query";
+import type { ParamsProp } from "~/types/params";
 
-type EditSalesContractAmendmentPdfProp = {
-    params: Promise<{ id: string }>
-}
-
-const PDF = ({ params }: EditSalesContractAmendmentPdfProp) => {
+const PDF = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
 
     const { data, isLoading } = api.salesContractAmendments.getPDFData.useQuery(!!id ? { id: id } : skipToken);

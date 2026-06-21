@@ -5,12 +5,9 @@ import React from "react";
 import BuyerOrderPDF from "../BuyerOrderPDF";
 import { api } from "~/trpc/react";
 import { skipToken } from "@tanstack/react-query";
+import type { ParamsProp } from "~/types/params";
 
-type EditBuyerOrderPdfProp = {
-    params: Promise<{ id: string }>
-}
-
-const PDF = ({ params }: EditBuyerOrderPdfProp) => {
+const PDF = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
 
     const { data } = api.buyerOrders.getPDFData.useQuery(!!id ? { id } : skipToken);

@@ -11,12 +11,9 @@ import { useDecodedUser, useModulePath } from "~/hooks";
 import CommissionDetails from "../../detailsComponent/commissionDetails";
 import { printingWhiteIcon } from "~/assets";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
+import type { ParamsProp } from "~/types/params";
 
-type EditCommissionDistributionPageProp = {
-    params: Promise<{ id: string }>
-}
-
-const EditCommissionDistributionPage = ({ params }: EditCommissionDistributionPageProp) => {
+const EditCommissionDistributionPage = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
     const [error, setError] = useState<string | null>(null);
 

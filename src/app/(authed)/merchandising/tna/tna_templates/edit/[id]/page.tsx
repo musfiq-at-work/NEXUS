@@ -9,12 +9,9 @@ import { parseTRPCError } from "~/utils/parseTRPCError";
 import { useNavigationStore, usePermissionStore } from "~/store";
 import { useModulePath } from "~/hooks";
 import TnaActionDetails from "../../actionsComponents/actionDetails";
+import type { ParamsProp } from "~/types/params";
 
-type EditTnaTemplatePageProp = {
-    params: Promise<{ id: string }>
-}
-
-const EditTnaTemplatePage = ({ params }: EditTnaTemplatePageProp) => {
+const EditTnaTemplatePage = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
     const [error, setError] = useState<string | null>(null);
 

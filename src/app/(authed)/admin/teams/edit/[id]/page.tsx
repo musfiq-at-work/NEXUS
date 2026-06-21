@@ -17,12 +17,9 @@ import { tableFormColumns as membersTableFormColumns } from "../../membersConfig
 import { type TableFormValues as MembersFormValues } from "../../membersConfig/tableFormSchema";
 import TableForm from "~/components/organisms/table/TableForm";
 import { safeNumber } from "~/utils/numbers";
+import type { ParamsProp } from "~/types/params";
 
-type BuyersDetailsPageProps = {
-    params: Promise<{ id: string }>
-};
-
-const EditTeamPage = ({ params }: BuyersDetailsPageProps) => {
+const EditTeamPage = ({ params }: ParamsProp) => {
     const { id } = React.use(params)
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);

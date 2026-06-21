@@ -8,12 +8,9 @@ import { parseTRPCError } from "~/utils/parseTRPCError";
 import { useFabricSuppliersForm } from "../../config/useFabricSuppliersForm";
 import { useNavigationStore, usePermissionStore } from "~/store";
 import { useModulePath } from "~/hooks";
+import type { ParamsProp } from "~/types/params";
 
-type EditOverseasOfficePageProps = {
-    params: Promise<{ id: string }>
-};
-
-const EditFabricSupplierPage = ({ params }: EditOverseasOfficePageProps) => {
+const EditFabricSupplierPage = ({ params }: ParamsProp) => {
     const { id } = React.use(params)
     const [error, setError] = useState<string | null>(null);
 

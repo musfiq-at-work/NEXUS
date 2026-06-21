@@ -5,12 +5,9 @@ import React from "react";
 import RDLInvoicePDF from "../RDLInvoicePDF";
 import { api } from "~/trpc/react";
 import { skipToken } from "@tanstack/react-query";
+import type { ParamsProp } from "~/types/params";
 
-type RDLInvoicePdfProp = {
-    params: Promise<{ id: string }>
-}
-
-const PDF = ({ params }: RDLInvoicePdfProp) => {
+const PDF = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
 
     const { data } = api.rdlInvoice.getPDFData.useQuery(!!id ? { id } : skipToken);

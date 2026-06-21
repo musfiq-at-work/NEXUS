@@ -10,12 +10,9 @@ import { useTnaBaseActionForm } from "../../config/useTnaBaseActionForm";
 import { useNavigationStore, usePermissionStore } from "~/store";
 import { useModulePath } from "~/hooks";
 import { formFields } from "../../config/formFields";
+import type { ParamsProp } from "~/types/params";
 
-type EditTNABaseActionProps = {
-    params: Promise<{ id: string }>
-};
-
-const EditTnaBaseActionPage = ({ params }: EditTNABaseActionProps) => {
+const EditTnaBaseActionPage = ({ params }: ParamsProp) => {
     const { id } = React.use(params)
     const [error, setError] = useState<string | null>(null);
 

@@ -31,12 +31,9 @@ import { type FormValues as LatePolicyFormValues } from "../../latePolicyConfig/
 import Brands from "../../components/brands";
 import type { BrandsState } from "~/types/merchandising";
 import { safeNumber } from "~/utils/numbers";
+import type { ParamsProp } from "~/types/params";
 
-type BuyersDetailsPageProps = {
-    params: Promise<{ id: string }>
-};
-
-const EditBuyerPage = ({ params }: BuyersDetailsPageProps) => {
+const EditBuyerPage = ({ params }: ParamsProp) => {
     const { id } = React.use(params)
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);

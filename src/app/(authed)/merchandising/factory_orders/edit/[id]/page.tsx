@@ -11,12 +11,9 @@ import { useDecodedUser, useModulePath } from "~/hooks";
 import StylesDetails from "../../components/styleComponents/styles";
 import { printingWhiteIcon } from "~/assets";
 import { skipToken } from "@tanstack/react-query";
+import type { ParamsProp } from "~/types/params";
 
-type EditFactoryOrderPageProp = {
-    params: Promise<{ id: string }>
-}
-
-const EditFactoryOrderPage = ({ params }: EditFactoryOrderPageProp) => {
+const EditFactoryOrderPage = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
     const [error, setError] = useState<string | null>(null);
 

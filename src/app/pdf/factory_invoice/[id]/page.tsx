@@ -5,12 +5,9 @@ import React from "react";
 import FactoryInvoicePDF from "../FactoryInvoicePDF";
 import { api } from "~/trpc/react";
 import { skipToken } from "@tanstack/react-query";
+import type { ParamsProp } from "~/types/params";
 
-type FactoryInvoicePdfProp = {
-    params: Promise<{ id: string }>
-}
-
-const PDF = ({ params }: FactoryInvoicePdfProp) => {
+const PDF = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
 
     const { data } = api.factoryInvoice.getPDFData.useQuery(!!id ? { id } : skipToken);

@@ -11,9 +11,9 @@ import TableForm from "~/components/organisms/table/TableForm";
 import { tableFormColumns } from "../bankConfig/tableFormColumns";
 import { type FormValues } from "../config/formSchema";
 import { type FormValues as BankFormValues } from "../bankConfig/tableFormSchema";
+import type { ParamsProp } from "~/types/params";
 
-type FactoryDetailsPageProps = {
-    params: Promise<{ id: string }>
+type FactoryDetailsPageProps = ParamsProp & {
     disabled?: boolean;
 };
 

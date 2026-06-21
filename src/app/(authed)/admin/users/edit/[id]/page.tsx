@@ -6,12 +6,9 @@ import { useUserForm } from "../../config/useUserForm";
 import { api } from "~/trpc/react";
 import { toast } from "sonner";
 import { parseTRPCError } from "~/utils/parseTRPCError";
+import type { ParamsProp } from "~/types/params";
 
-type EditUserPageProps = {
-    params: Promise<{ id: string }>
-};
-
-const EditUserPage = ({ params }: EditUserPageProps) => {
+const EditUserPage = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
 
     const { data: userData, isLoading } = api.users.getUser.useQuery({ id: id });

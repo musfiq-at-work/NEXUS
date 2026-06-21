@@ -14,13 +14,9 @@ import { safeNumber } from "~/utils/numbers";
 import { printingWhiteIcon } from "~/assets";
 import { useWatch } from "react-hook-form";
 import { skipToken } from "@tanstack/react-query";
+import type { ParamsProp } from "~/types/params";
 
-
-type EditFactoryInvoicePageProp = {
-    params: Promise<{ id: string }>
-}
-
-const EditFactoryInvoicePage = ({ params }: EditFactoryInvoicePageProp) => {
+const EditFactoryInvoicePage = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
     const [error, setError] = useState<string | null>(null);
 
