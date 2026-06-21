@@ -7,6 +7,7 @@ import { actions, Prisma } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
 import { formatDate } from "~/utils/localDateString";
+import { safeNumber } from "~/utils/numbers";
 
 interface CommissionInvoiceListItem {
     id: string,
@@ -31,8 +32,6 @@ interface PDFHeaderData {
     lc_exfactory_date: Date | null,
     sc_exfactory_date: Date | null,
     fdbc_no: string | null,
-    lc_symbol: string | null,
-    sc_symbol: string | null
 }
 
 interface RDLInvoiceData {
@@ -53,10 +52,12 @@ interface FactoryInvoiceData {
     rfl_invoice_date: Date,
     rfl_invoice_quantity: number,
     rfl_invoice_value: number,
+    rfl_factory_name: string
     rft_invoice_no: string,
     rft_invoice_date: Date,
     rft_invoice_quantity: number,
     rft_invoice_value: number
+    rft_factory_name: string
 }
 
 interface CommissionDistributionData {
@@ -712,10 +713,9 @@ export const commissionInvoiceRouter = createTRPCRouter({
             }
         }),
 
-    getPDFDate: protectedProcedure
+    getPDFData: protectedProcedure
         .input(z.object({
             id: z.string(),
-            fdbc_rdl_invoice_id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
             try {
@@ -758,25 +758,21 @@ export const commissionInvoiceRouter = createTRPCRouter({
                         SELECT 
                             LC.ID,
                             LC.LC_NO AS LC_NO,
-                            MAX(E.EXFACTORY_DATE) AS EXFACTORY_DATE,
-                            C.SYMBOL
+                            MAX(E.EXFACTORY_DATE) AS EXFACTORY_DATE
                         FROM LC_MASTER AS LC
                             INNER JOIN lc_orders AS LO ON LO.lc_master_id = LC.id
                             INNER JOIN lc_shipments AS LCS ON LCS.lc_order_id = LO.id
                             INNER JOIN shipment_details AS SD ON SD.id = LCS.shipment_details_id
                             INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = SD.id
                             INNER JOIN exfactory_orders AS EO ON EO.id = ES.exfactory_orders_id
-                            INNER JOIN buyer_orders AS BO ON BO.ID = EO.order_id
-                            INNER JOIN currencies AS C ON C.id = BO.secondary_currency_id
                             INNER JOIN exfactory AS E ON E.id = EO.exfactory_id
-                        GROUP BY LC.ID, C.ID
+                        GROUP BY LC.ID
                     ),
                     SC AS (
                         SELECT
                             SC.ID,
                             SC.SALES_CONTRACT_NO AS SALES_CONTRACT_NO,
-                            MAX(E.EXFACTORY_DATE) AS EXFACTORY_DATE,
-                            C.SYMBOL
+                            MAX(E.EXFACTORY_DATE) AS EXFACTORY_DATE
                         FROM SALES_CONTRACTS AS SC
                             INNER JOIN sales_contract_details AS SCD ON SCD.sales_contract_id = SC.id
                             INNER JOIN buyer_orders AS BO ON BO.id = SCD.order_id
@@ -785,8 +781,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
                             INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = SD.id
                             INNER JOIN exfactory_orders AS EO ON EO.id = ES.exfactory_orders_id
                             INNER JOIN exfactory AS E ON E.id = EO.exfactory_id
-                            INNER JOIN currencies AS C ON C.id = BO.secondary_currency_id
-                        GROUP BY SC.ID, C.ID
+                        GROUP BY SC.ID
                     )
                     SELECT
                         T.name AS TERM_NAME,
@@ -798,9 +793,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
                         SC.SALES_CONTRACT_NO,
                         LC.EXFACTORY_DATE AS lc_exfactory_date,
                         SC.EXFACTORY_DATE AS sc_exfactory_date,
-                        DS.FDBC_NO,
-                        LC.SYMBOL as lc_symbol,
-                        SC.SYMBOL as sc_symbol
+                        DS.FDBC_NO
                     FROM commission_invoice AS CI
                         INNER JOIN company_banks AS CB ON CB.id = CI.company_bank_id
                         INNER JOIN banks AS B ON B.id = CB.bank_id
@@ -813,16 +806,21 @@ export const commissionInvoiceRouter = createTRPCRouter({
                 `;
 
                 const isTT = headerData[0]?.term_name.toLowerCase() === 'tt';
-                const symbol = isTT ? headerData[0]?.sc_symbol : headerData[0]?.lc_symbol;
 
                 const header = {
                     term_name: headerData[0]?.term_name ?? '',
                     ref_no: headerData[0]?.ref_no ?? '',
                     invoice_date: headerData[0]?.invoice_date ?? new Date(),
+                    month: headerData[0]?.invoice_date ? headerData[0]?.invoice_date.toLocaleString('en-US', { month: 'long' }) : '',
                     buyer_name: headerData[0]?.buyer_name ?? '',
                     bank_name: headerData[0]?.bank_name ?? '',
                     lc_sc_no: isTT ? headerData[0]?.sales_contract_no : headerData[0]?.lc_no ?? null,
-                    exfactory_date: isTT ? headerData[0]?.sc_exfactory_date : headerData[0]?.lc_exfactory_date ?? null,
+                    exfactory_date: (() => {
+                        const scDate = headerData[0]?.sc_exfactory_date ?? null;
+                        const lcDate = headerData[0]?.lc_exfactory_date ?? null;
+                        if (isTT) return scDate ? formatDate(scDate) : null;
+                        return lcDate ? formatDate(lcDate) : null;
+                    })(),
                     fdbc_no: headerData[0]?.fdbc_no ?? null,
                 }
 
@@ -847,7 +845,6 @@ export const commissionInvoiceRouter = createTRPCRouter({
                                     INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
                                 GROUP BY RID.RDL_INVOICE_ID
                             ) RID ON RID.RIID = RI.id 
-                        WHERE DS.ID = ${input.fdbc_rdl_invoice_id}
                     ),
                     RI_FOR_TT AS (
                         SELECT
@@ -857,17 +854,16 @@ export const commissionInvoiceRouter = createTRPCRouter({
                             RID.INVOICE_VALUE,
                             RI.ID AS RI_ID
                         FROM rdl_invoice AS RI
-                        INNER JOIN (
-                            SELECT
-                                RID.RDL_INVOICE_ID AS RIID,
-                                SUM(RISD.INVOICE_QUANTITY) AS INVOICE_QUANTITY,
-                                SUM(RISD.INVOICE_QUANTITY * SD.FOB_RATE) AS INVOICE_VALUE
-                            FROM rdl_invoice_details AS RID
-                                INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
-                                INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
-                            GROUP BY RID.RDL_INVOICE_ID
-                        ) RID ON RID.RIID = RI.id 
-                        WHERE RI.ID = ${input.fdbc_rdl_invoice_id} 
+                            INNER JOIN (
+                                SELECT
+                                    RID.RDL_INVOICE_ID AS RIID,
+                                    SUM(RISD.INVOICE_QUANTITY) AS INVOICE_QUANTITY,
+                                    SUM(RISD.INVOICE_QUANTITY * SD.FOB_RATE) AS INVOICE_VALUE
+                                FROM rdl_invoice_details AS RID
+                                    INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
+                                    INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
+                                GROUP BY RID.RDL_INVOICE_ID
+                            ) RID ON RID.RIID = RI.id 
                     )
                     SELECT DISTINCT
                         T.NAME AS TERM_NAME,
@@ -897,7 +893,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
                     invoice_no: ri.invoice_no,
                     invoice_date: formatDate(ri.invoice_date),
                     invoice_quantity: quantityFormatter(ri.invoice_quantity),
-                    invoice_value: currencyFormatter(ri.invoice_value, symbol ?? '$'),
+                    invoice_value: currencyFormatter(ri.invoice_value, '$'),
                 }));
 
                 const factory_invoices_data = await ctx.db.$queryRaw<FactoryInvoiceData[]>`
@@ -907,12 +903,14 @@ export const commissionInvoiceRouter = createTRPCRouter({
                             FI.INVOICE_DATE,
                             SUM(FAC_INV.INVOICE_QUANTITY) AS INVOICE_QUANTITY,
                             SUM(FAC_INV.INVOICE_VALUE) - COALESCE(FI.DISCOUNT, 0) AS INVOICE_VALUE,
+                            F.NAME AS FACTORY_NAME,
                             DS.ID AS DS_ID
                         FROM document_submissions AS DS
                             INNER JOIN document_submissions_details AS DSD ON DSD.document_submissions_id = DS.id
                             INNER JOIN rdl_invoice AS RI ON RI.id = DSD.rdl_invoice_id
                             INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
                             INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
+                            INNER JOIN factories AS F ON F.id = FI.factory_id
                             INNER JOIN (
                                 SELECT
                                     RISD.RDL_INVOICE_DETAILS_ID AS RIDID,
@@ -926,7 +924,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
                                     INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = RISD.shipment_details_id
                                 GROUP BY RISD.RDL_INVOICE_DETAILS_ID, FSD.factory_rate, FSD.transfer_rate
                             ) FAC_INV ON FAC_INV.RIDID = RID.ID
-                        GROUP BY FI.ID, DS.ID
+                        GROUP BY FI.ID, DS.ID, F.ID
                     ),
                     FI_FOR_TT AS (
                         SELECT
@@ -934,10 +932,12 @@ export const commissionInvoiceRouter = createTRPCRouter({
                             FI.INVOICE_DATE,
                             SUM(FAC_INV.INVOICE_QUANTITY) AS INVOICE_QUANTITY,
                             SUM(FAC_INV.INVOICE_VALUE) - COALESCE(FI.DISCOUNT, 0) AS INVOICE_VALUE,
+                            F.NAME AS FACTORY_NAME,
                             RI.ID AS RI_ID
                         FROM rdl_invoice AS RI
                             INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
                             INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
+                            INNER JOIN factories AS F ON F.id = FI.factory_id
                             INNER JOIN (
                                 SELECT
                                     RISD.RDL_INVOICE_DETAILS_ID AS RIDID,
@@ -951,7 +951,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
                                     INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = RISD.shipment_details_id
                                 GROUP BY RISD.RDL_INVOICE_DETAILS_ID, FSD.factory_rate, FSD.transfer_rate
                             ) FAC_INV ON FAC_INV.RIDID = RID.ID
-                        GROUP BY FI.ID, RI.ID
+                        GROUP BY FI.ID, RI.ID, F.ID
                     )
                     SELECT DISTINCT
                         T.NAME AS TERM_NAME,
@@ -959,10 +959,12 @@ export const commissionInvoiceRouter = createTRPCRouter({
                         RFL.INVOICE_DATE AS rfl_invoice_date,
                         RFL.INVOICE_QUANTITY AS rfl_invoice_quantity,
                         RFL.INVOICE_VALUE AS rfl_invoice_value,
+                        RFL.FACTORY_NAME AS rfl_factory_name,
                         RFT.INVOICE_NO AS rft_invoice_no,
                         RFT.INVOICE_DATE AS rft_invoice_date,
                         RFT.INVOICE_QUANTITY AS rft_invoice_quantity,
-                        RFT.INVOICE_VALUE AS rft_invoice_value
+                        RFT.INVOICE_VALUE AS rft_invoice_value,
+                        RFT.FACTORY_NAME AS rft_factory_name
                     FROM commission_invoice AS CI
                         INNER JOIN TERMS AS T ON T.id = CI.term_id
                         LEFT JOIN FI_FOR_LC AS RFL ON RFL.DS_ID = CI.document_submission_id AND T.NAME = 'LC'
@@ -975,13 +977,15 @@ export const commissionInvoiceRouter = createTRPCRouter({
                     invoice_date: isTT ? data.rft_invoice_date : data.rfl_invoice_date,
                     invoice_quantity: isTT ? data.rft_invoice_quantity : data.rfl_invoice_quantity,
                     invoice_value: isTT ? data.rft_invoice_value : data.rfl_invoice_value,
+                    factory_name: isTT ? data.rft_factory_name : data.rfl_factory_name
                 }));
 
                 const formattedFactoryInvoice = factoryInvoices.map((fi) => ({
                     invoice_no: fi.invoice_no,
                     invoice_date: formatDate(fi.invoice_date),
                     invoice_quantity: quantityFormatter(fi.invoice_quantity),
-                    invoice_value: currencyFormatter(fi.invoice_value, symbol ?? '$'),
+                    invoice_value: currencyFormatter(fi.invoice_value, '$'),
+                    factory_name: fi.factory_name
                 }));
 
                 const commission_distribution_data = await ctx.db.$queryRaw<CommissionDistributionData[]>`
@@ -1218,19 +1222,24 @@ export const commissionInvoiceRouter = createTRPCRouter({
                 } : null;
 
                 const formattedCommissionDistribution = commissionDistribution ? {
-                    dhaka_value: currencyFormatter(commissionDistribution.dhaka_value, symbol ?? '$'),
-                    overseas_value: currencyFormatter(commissionDistribution.overseas_value, symbol ?? '$'),
-                    other_value: currencyFormatter(commissionDistribution.other_value, symbol ?? '$'),
+                    dhaka_value: currencyFormatter(commissionDistribution.dhaka_value, '$'),
+                    overseas_value: currencyFormatter(commissionDistribution.overseas_value, '$'),
+                    other_value: currencyFormatter(commissionDistribution.other_value, '$'),
                     dhaka_percentage: `${commissionDistribution.dhaka_percentage.toFixed(2)}%`,
                     overseas_percentage: `${commissionDistribution.overseas_percentage.toFixed(2)}%`,
                     other_percentage: `${commissionDistribution.other_percentage.toFixed(2)}%`,
-                    dn_dhaka_value: currencyFormatter(commissionDistribution.dn_dhaka_value, symbol ?? '$'),
-                    dn_overseas_value: currencyFormatter(commissionDistribution.dn_overseas_value, symbol ?? '$'),
-                    dn_other_value: currencyFormatter(commissionDistribution.dn_other_value, symbol ?? '$'),
+                    dn_dhaka_value: currencyFormatter(commissionDistribution.dn_dhaka_value, '$'),
+                    dn_overseas_value: currencyFormatter(commissionDistribution.dn_overseas_value, '$'),
+                    dn_other_value: currencyFormatter(commissionDistribution.dn_other_value, '$'),
                     dn_dhaka_percentage: `${commissionDistribution.dn_dhaka_percentage.toFixed(2)}%`,
                     dn_overseas_percentage: `${commissionDistribution.dn_overseas_percentage.toFixed(2)}%`,
                     dn_other_percentage: `${commissionDistribution.dn_other_percentage.toFixed(2)}%`
                 } : null;
+
+                const totalRdlInvoiceValue = rdl_invoices.reduce((sum, ri) => sum + safeNumber(ri.invoice_value), 0);
+                const totalRdlInvoiceQuantity = rdl_invoices.reduce((sum, ri) => sum + safeNumber(ri.invoice_quantity), 0);
+                const totalFactoryInvoiceValue = factoryInvoices.reduce((sum, fi) => sum + safeNumber(fi.invoice_value), 0);
+                const totalFactoryInvoiceQuantity = factoryInvoices.reduce((sum, fi) => sum + safeNumber(fi.invoice_quantity), 0);
 
                 const totalCiAllocationValue = (commissionDistribution?.dhaka_value ?? 0) 
                     + (commissionDistribution?.overseas_value ?? 0) 
@@ -1250,12 +1259,27 @@ export const commissionInvoiceRouter = createTRPCRouter({
 
                 const totalValue = totalCiAllocationValue + totalDnAllocationValue;
 
+                const rdlInvoiceResults = {
+                    total_invoice_value: currencyFormatter(totalRdlInvoiceValue, '$'),
+                    total_invoice_quantity: quantityFormatter(totalRdlInvoiceQuantity),
+                }
+
+                const factoryInvoiceResults = {
+                    total_invoice_value: currencyFormatter(totalFactoryInvoiceValue, '$'),
+                    total_invoice_quantity: quantityFormatter(totalFactoryInvoiceQuantity),
+                }
+
+                const commission = totalRdlInvoiceValue - totalFactoryInvoiceValue;
+
                 const result = {
-                    totalCiAllocationValue: currencyFormatter(totalCiAllocationValue, symbol ?? '$'),
-                    totalCiAllocationPercentage,
-                    totalDnAllocationValue: currencyFormatter(totalDnAllocationValue, symbol ?? '$'),
-                    totalDnAllocationPercentage,
-                    totalValue: currencyFormatter(totalValue, symbol ?? '$')
+                    totalCiAllocationValue: currencyFormatter(totalCiAllocationValue, '$'),
+                    totalCiAllocationPercentage: totalCiAllocationPercentage.toFixed(2) + '%',
+                    totalDnAllocationValue: currencyFormatter(totalDnAllocationValue, '$'),
+                    totalDnAllocationPercentage: totalDnAllocationPercentage.toFixed(2) + '%',
+                    totalValue: currencyFormatter(totalValue, '$'),
+                    commission: commission,
+                    rdlInvoiceResults,
+                    factoryInvoiceResults,
                 }
 
                 return {header, formattedRdlInvoices, formattedFactoryInvoice, formattedCommissionDistribution, result};

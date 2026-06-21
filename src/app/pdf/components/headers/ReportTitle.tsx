@@ -9,7 +9,7 @@ const ReportTitle = ({ title }: { title: string }) => {
                 fontSize: "18px",
                 fontFamily: "Amasis",
                 fontWeight: "bold",
-                marginTop: '-25px',
+                marginTop: '-10px',
                 }}
             >
                 {title}

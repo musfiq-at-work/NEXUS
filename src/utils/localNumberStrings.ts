@@ -64,5 +64,5 @@ export const amountToWords = (amount: number) => {
     const dollarWords = numberToWords(dollars);
     const centWords = numberToWords(cents);
 
-    return `${dollarWords} and ${centWords} Cent${cents !== 1 ? "s" : ""} Only.`;
+    return `${dollarWords} Dollars and ${centWords} Cent${cents !== 1 ? "s" : ""} Only.`;
 };

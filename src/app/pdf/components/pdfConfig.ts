@@ -23,6 +23,20 @@ export const registerPdfFonts = () => {
             { src: "/fonts/Poppins-Bold.ttf", fontWeight: 700 },
         ],
     });
+
+    Font.register({
+        family: "open-sans",
+        fonts: [
+            { src: "/fonts/OpenSans.ttf", fontWeight: 400 },
+        ],
+    });
+
+    Font.register({
+        family: "Roboto",
+        fonts: [
+            { src: "/fonts/Roboto.ttf", fontWeight: 400 },
+        ],
+    });
 };
 
 export const styles = StyleSheet.create({
