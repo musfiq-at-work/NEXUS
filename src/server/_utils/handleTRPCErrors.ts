@@ -10,6 +10,10 @@ function isPrismaError(error: unknown): error is Prisma.PrismaClientKnownRequest
  * Handle errors and convert them into TRPCError with helpful messages
  */
 export function handlePrismaError(error: unknown): never {
+    if (error instanceof TRPCError) {
+        throw error;
+    }
+    
     if (isPrismaError(error)) {
         switch (error.code) {
             case "P2000":

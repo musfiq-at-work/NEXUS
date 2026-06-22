@@ -659,7 +659,7 @@ export const tnaPlanRouter = createTRPCRouter({
             actionIds: z.array(z.number()).min(1, "At least one action must be selected"),
          }))
         .query(async ({ ctx, input }) => {
-            const can_update = ctx.permissions[m.TNA_PLANNING]?.can_update;
+            const can_update = ctx.permissions[m.TNA_EVENTS]?.can_update;
 
             if (!can_update) {
                 throw new TRPCError({ 
@@ -739,7 +739,7 @@ export const tnaPlanRouter = createTRPCRouter({
             actual_date: z.date().optional(),
         })))
         .mutation(async ({ ctx, input }) => {
-            const can_update = ctx.permissions[m.TNA_PLANNING]?.can_update;
+            const can_update = ctx.permissions[m.TNA_EVENTS]?.can_update;
 
             if (!can_update) {
                 throw new TRPCError({
