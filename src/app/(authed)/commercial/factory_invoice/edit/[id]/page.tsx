@@ -65,6 +65,7 @@ const EditFactoryInvoicePage = ({ params }: ParamsProp) => {
                 invoice_no: factoryInvoiceData.invoice_no.toLocaleUpperCase(),
                 invoice_date: new Date(factoryInvoiceData.invoice_date ?? new Date()),
                 remarks: factoryInvoiceData.remarks,
+                discount: factoryInvoiceData.discount ? safeNumber(factoryInvoiceData.discount) : undefined,
                 details: (factoryInvoiceData.details ?? []).map((detail) => ({
                     db_id: detail.db_id,
                     exfactory_shipment_id: detail.exfactory_shipment_id,
@@ -80,7 +81,6 @@ const EditFactoryInvoicePage = ({ params }: ParamsProp) => {
         finally {
             setIsLoadingSubmit(false);
         }
-
     }), [id, updateFactoryInvoice, handleSubmit]);
 
     const db_id = useWatch({ control, name: "db_id" });

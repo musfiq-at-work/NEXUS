@@ -88,14 +88,14 @@ export const useFormFields = ({lcList, isEdit}: PropsType): Field<keyof RDLInvoi
         },
         {
             name: "invoice_quantity",
-            label: "Shipment Quantity (Auto)",
+            label: "Invoice Quantity (Auto)",
             placeholder: "Auto calculated total quantity for the invoice",
             optional: true,
             disabled: true,
         },
         {
             name: "invoice_value",
-            label: "Shipment Value (Auto)",
+            label: "Invoice Value (Auto)",
             placeholder: "Auto calculated total value for the invoice",
             optional: true,
             disabled: true,

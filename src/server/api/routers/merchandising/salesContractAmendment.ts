@@ -410,18 +410,16 @@ export const salesContractAmendmentRouter = createTRPCRouter({
                             }
                         );
 
-                    const amendmentNo =
-                        metadata.amendment_no;
+                    const amendmentNo = metadata.amendment_no;
 
-                    const newAmendment =
-                        await tx.sales_contract_amendment.create({
-                            data: {
-                                sales_contract_id: input.sales_contract_id,
-                                amendment_no: amendmentNo,
-                                amendment_date: input.amendment_date,
-                                remarks: input.remarks,
-                            },
-                        });
+                    const newAmendment = await tx.sales_contract_amendment.create({
+                        data: {
+                            sales_contract_id: input.sales_contract_id,
+                            amendment_no: amendmentNo,
+                            amendment_date: input.amendment_date,
+                            remarks: input.remarks,
+                        },
+                    });
 
                     await tx.sales_contract_amendment_history.create({
                         data: {
@@ -435,86 +433,63 @@ export const salesContractAmendmentRouter = createTRPCRouter({
                         },
                     });
 
-                    const amendmentDetails =
-                        await Promise.all(
-                            (input.details ?? []).map(
-                                async (detail) => {
-                                    const amendmentDetail =
-                                        await tx.sales_contract_amendment_details.create(
-                                            {
-                                                data: {
-                                                    sales_contract_amendment_id: newAmendment.id,
-                                                    order_id: detail.order_id,
-                                                },
-                                            }
-                                        );
+                    const amendmentDetails = await Promise.all(
+                        (input.details ?? []).map(async (detail) => {
+                            const amendmentDetail = await tx.sales_contract_amendment_details.create({
+                                data: {
+                                    sales_contract_amendment_id: newAmendment.id,
+                                    order_id: detail.order_id,
+                                }}
+                            );
 
-                                    await tx.sales_contract_amendment_details_history.create(
-                                        {
-                                            data: {
-                                                sales_contract_amendment_details: amendmentDetail.id,
-                                                sales_contract_amendment_id: newAmendment.id,
-                                                order_id: detail.order_id,
-                                                action_by: ctx.user.id,
-                                                action_type: actions.ADDED,
-                                            },
-                                        }
-                                    );
-
-                                    return amendmentDetail;
+                            await tx.sales_contract_amendment_details_history.create(
+                                {
+                                    data: {
+                                        sales_contract_amendment_details: amendmentDetail.id,
+                                        sales_contract_amendment_id: newAmendment.id,
+                                        order_id: detail.order_id,
+                                        action_by: ctx.user.id,
+                                        action_type: actions.ADDED,
+                                    },
                                 }
-                            )
-                        );
-
-                    const existingDetails =
-                        await tx.sales_contract_details.findMany(
-                            {
-                                where: {
-                                    sales_contract_id:
-                                        input.sales_contract_id,
-                                },
-                                select: {
-                                    id: true,
-                                    order_id: true,
-                                },
-                            }
-                        );
-
-                    const existingOrderIds = new Set(
-                        existingDetails.map(
-                            (detail) => detail.order_id
-                        )
+                            );
+                            return amendmentDetail;
+                        })
                     );
 
-                    const inputOrderIds = new Set(
-                        (input.details ?? []).map(
-                            (detail) => detail.order_id
-                        )
-                    );
+                    const existingDetails = await tx.sales_contract_details.findMany({
+                        where: {
+                            sales_contract_id:
+                                input.sales_contract_id,
+                        },
+                        select: {
+                            id: true,
+                            order_id: true,
+                        },
+                    });
+
+                    const existingOrderIds = new Set(existingDetails.map((detail) => detail.order_id));
+
+                    const inputOrderIds = new Set((input.details ?? []).map((detail) => detail.order_id));
 
                     const newDetails = (input.details ?? []).filter(
-                        (detail) => !existingOrderIds.has(
-                            detail.order_id
-                        )
+                        (detail) => !existingOrderIds.has(detail.order_id)
                     );
 
                     const deletedDetails = existingDetails.filter(
-                        (detail) => !inputOrderIds.has(
-                            detail.order_id
-                        )
+                        (detail) => !inputOrderIds.has(detail.order_id)
                     );
 
                     const createdSalesContractDetails = await Promise.all(
                         newDetails.map(async (detail) => {
                             const newDetail = await tx.sales_contract_details.create({
-                                    data: {
-                                        sales_contract_id:
-                                            input.sales_contract_id,
-                                        order_id:
-                                            detail.order_id,
-                                    },
+                                data: {
+                                    sales_contract_id:
+                                        input.sales_contract_id,
+                                    order_id:
+                                        detail.order_id,
                                 }
-                            );
+                            });
 
                             await tx.sales_contract_details_history.create({
                                 data: {
@@ -859,8 +834,7 @@ export const salesContractAmendmentRouter = createTRPCRouter({
 
                     const metadata = await tx.sales_contract_amendment_no_metadata.findUnique({
                         where: {
-                            sales_contract_id:
-                                existingAmendment.sales_contract_id,
+                            sales_contract_id: existingAmendment.sales_contract_id,
                         },
                         select: {
                             amendment_no: true,
@@ -880,8 +854,7 @@ export const salesContractAmendmentRouter = createTRPCRouter({
                             id: input.id,
                         },
                         data: {
-                            amendment_date:
-                                input.amendment_date,
+                            amendment_date: input.amendment_date,
                             remarks: input.remarks,
                         },
                     });
@@ -901,8 +874,7 @@ export const salesContractAmendmentRouter = createTRPCRouter({
                     // EXISTING DETAILS
                     const existingDetails = await tx.sales_contract_amendment_details.findMany({
                         where: {
-                            sales_contract_amendment_id:
-                                input.id,
+                            sales_contract_amendment_id: input.id,
                         },
                         select: {
                             id: true,

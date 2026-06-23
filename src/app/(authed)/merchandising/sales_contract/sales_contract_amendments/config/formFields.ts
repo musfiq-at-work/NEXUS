@@ -51,7 +51,6 @@ export const formFields = ({ isEdit, salesContracts}: PropsType): Field<keyof Fo
             name: 'remarks',
             label: 'Remarks',
             type: 'textarea',
-            optional: true,
         }
     ];
 };

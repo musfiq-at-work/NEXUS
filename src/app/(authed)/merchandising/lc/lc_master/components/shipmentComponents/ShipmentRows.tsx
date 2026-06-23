@@ -4,6 +4,8 @@ import { formFields as shipmentTableFormFields } from "../../shipmentConfig/tabl
 import { type FieldErrors } from "react-hook-form";
 import React from "react";
 import type { FormValues } from "../../config/formSchema";
+import { api } from "~/trpc/react";
+import { skipToken } from "@tanstack/react-query";
 
 interface Props {
     register: ReturnType<typeof useLCForm>['methods']['register'];
@@ -17,13 +19,20 @@ interface Props {
 
 const ShipmentRows = (props: Props) => {
     const { disabled = false, name, index,  methods, validationError, orderIndex } =  props;
+
+    const shipmentDetailsId = methods.getValues(`details.${orderIndex}.shipments.${index}.shipment_details_id`);
+
+    const { data: hasExfactory, isLoading } = api.lcMaster.checkExfactoryOfShipment.useQuery(
+        !!shipmentDetailsId ? { shipment_details_id: shipmentDetailsId } : skipToken,
+        { enabled: !!shipmentDetailsId }
+    );
     
     return (
         <>
             <GenericFormTableRow
                 fields={shipmentTableFormFields()}
                 register={methods.register}
-                disabled={disabled}
+                disabled={disabled || hasExfactory || isLoading}
                 validationError={validationError?.details?.[orderIndex]?.shipments ?? {}}
                 name={name}
                 control={methods.control}

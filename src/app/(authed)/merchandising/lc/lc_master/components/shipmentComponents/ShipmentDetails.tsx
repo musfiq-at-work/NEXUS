@@ -9,7 +9,6 @@ import { api } from "~/trpc/react";
 import { toast } from "sonner";
 import { parseTRPCError } from "~/utils/parseTRPCError";
 import { skipToken } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 
 interface Props {
     orderIndex: number;
@@ -20,8 +19,6 @@ interface Props {
 }
 
 const ShipmentDetails = (props: Props) => {
-    const router = useRouter();
-
     const { orderIndex, methods, validationError, disabled = false, onCloseShipmentDetails } = props;
 
     const data = methods.getValues(`details.${orderIndex}`);

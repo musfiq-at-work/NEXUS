@@ -6,9 +6,7 @@ function isPrismaError(error: unknown): error is Prisma.PrismaClientKnownRequest
     return typeof error === "object" && error !== null && "code" in error;
 }
 
-/**
- * Handle errors and convert them into TRPCError with helpful messages
- */
+// Handle errors and convert them into TRPCError with helpful messages
 export function handlePrismaError(error: unknown): never {
     if (error instanceof TRPCError) {
         throw error;

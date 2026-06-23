@@ -221,13 +221,13 @@ model users {
   permissions_history_permissions_history_action_byTousers           permissions_history[]                          @relation("permissions_history_action_byTousers")
   permissions_history_permissions_history_added_byTousers            permissions_history[]                          @relation("permissions_history_added_byTousers")
   permissions_history_permissions_history_user_idTousers             permissions_history[]                          @relation("permissions_history_user_idTousers")
-  procced_realization_history                                        procced_realization_history[]
+  proceed_realization_details_history                                proceed_realization_details_history[]
+  proceed_realization_history                                        proceed_realization_history[]
   product_types_history_product_types_history_action_byTousers       product_types_history[]                        @relation("product_types_history_action_byTousers")
   products_history_products_history_action_byTousers                 products_history[]                             @relation("products_history_action_byTousers")
   rdl_invoice_details_history                                        rdl_invoice_details_history[]
   rdl_invoice_history                                                rdl_invoice_history[]
   rdl_invoice_shipment_details_history                               rdl_invoice_shipment_details_history[]
-  realization_details_history                                        realization_details_history[]
   sales_contract_amendment_details_history                           sales_contract_amendment_details_history[]
   sales_contract_amendment_history                                   sales_contract_amendment_history[]
   sales_contract_consignees_history                                  sales_contract_consignees_history[]
@@ -397,7 +397,7 @@ model terms {
   exfactory            exfactory[]
   factory_invoice      factory_invoice[]
   payment_terms        payment_terms[]
-  procced_realization  procced_realization[]
+  proceed_realization  proceed_realization[]
   rdl_invoice          rdl_invoice[]
 }
 
@@ -972,7 +972,7 @@ model buyers {
   factory_invoice          factory_invoice[]
   handover_dates           handover_dates?
   lc_master                lc_master[]
-  procced_realization      procced_realization[]
+  proceed_realization      proceed_realization[]
   rdl_invoice              rdl_invoice[]
   sales_contracts          sales_contracts[]
   seasons                  seasons[]
@@ -2424,12 +2424,12 @@ model rdl_invoice {
   contact_no                   String?                        @db.VarChar(100)
   commission_invoice           commission_invoice[]
   document_submissions_details document_submissions_details[]
+  proceed_realization_details  proceed_realization_details[]
   buyers                       buyers                         @relation(fields: [buyer_id], references: [id], onUpdate: NoAction)
   lc_master                    lc_master?                     @relation(fields: [lc_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   sales_contracts              sales_contracts?               @relation(fields: [sales_contract_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   terms                        terms?                         @relation(fields: [term_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   rdl_invoice_details          rdl_invoice_details[]
-  realization_details          realization_details[]
 }
 
 model rdl_invoice_details {
@@ -2585,7 +2585,7 @@ model document_submissions {
   sales_contracts              sales_contracts?               @relation(fields: [sales_contract_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   terms                        terms                          @relation(fields: [term_id], references: [id], onUpdate: NoAction)
   document_submissions_details document_submissions_details[]
-  procced_realization          procced_realization[]
+  proceed_realization          proceed_realization[]
 }
 
 model document_submissions_details {
@@ -2689,27 +2689,52 @@ model commission_invoice_metadata {
   @@unique([buyer_id, year], map: "unique_rdl_invoice_buyer_ref_year")
 }
 
-model procced_realization {
-  id                         String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  term_id                    Int
-  buyer_id                   Int?
-  document_submission_id     String?               @db.Uuid
-  bank_charge                Float?
-  discount_charge            Float?
-  document_charge            Float?
-  realized_amount            Float?
-  old_pk                     Int?
-  old_buyer_id               Int?
-  old_document_submission_id Int?
-  added_at                   DateTime?             @default(now()) @db.Timestamp(6)
-  buyers                     buyers?               @relation(fields: [buyer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  document_submissions       document_submissions? @relation(fields: [document_submission_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  terms                      terms                 @relation(fields: [term_id], references: [id], onUpdate: NoAction)
-  realization_details        realization_details[]
+model proceed_realization {
+  id                          String                        @id(map: "procced_realization_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  term_id                     Int
+  buyer_id                    Int
+  document_submission_id      String                        @db.Uuid
+  bank_charge                 Float?
+  discount_charge             Float?
+  document_charge             Float?
+  realized_amount             Float?
+  old_pk                      Int?
+  old_buyer_id                Int?
+  old_document_submission_id  Int?
+  added_at                    DateTime?                     @default(now()) @db.Timestamp(6)
+  realization_date            DateTime?                     @db.Date
+  buyers                      buyers                        @relation(fields: [buyer_id], references: [id], onUpdate: NoAction, map: "procced_realization_buyer_id_fkey")
+  document_submissions        document_submissions          @relation(fields: [document_submission_id], references: [id], onUpdate: NoAction, map: "procced_realization_document_submission_id_fkey")
+  terms                       terms                         @relation(fields: [term_id], references: [id], onUpdate: NoAction, map: "procced_realization_term_id_fkey")
+  proceed_realization_details proceed_realization_details[]
 }
 
-model procced_realization_history {
-  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+model proceed_realization_details {
+  id                  String              @id(map: "realization_details_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  realization_id      String              @db.Uuid
+  rdl_invoice_id      String              @db.Uuid
+  realized_amount     Float?
+  old_realization_id  Int?
+  old_rdl_invoice_id  Int?
+  added_at            DateTime?           @default(now()) @db.Timestamp(6)
+  old_pk              Int?
+  rdl_invoice         rdl_invoice         @relation(fields: [rdl_invoice_id], references: [id], onUpdate: NoAction, map: "realization_details_rdl_invoice_id_fkey")
+  proceed_realization proceed_realization @relation(fields: [realization_id], references: [id], onUpdate: NoAction, map: "realization_details_realization_id_fkey")
+}
+
+model proceed_realization_details_history {
+  id                     String    @id(map: "realization_details_history_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  realization_details_id String?   @db.Uuid
+  realization_id         String?   @db.Uuid
+  rdl_invoice_id         String?   @db.Uuid
+  action_type            actions?
+  action_by              String?   @db.Uuid
+  action_at              DateTime? @default(now()) @db.Timestamp(6)
+  users                  users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "realization_details_history_action_by_fkey")
+}
+
+model proceed_realization_history {
+  id                     String    @id(map: "procced_realization_history_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   procced_realization_id String?   @db.Uuid
   term_id                Int?
   buyer_id               Int?
@@ -2721,30 +2746,7 @@ model procced_realization_history {
   action_type            actions?
   action_by              String?   @db.Uuid
   action_at              DateTime? @default(now()) @db.Timestamp(6)
-  users                  users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-}
-
-model realization_details {
-  id                  String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  realization_id      String?              @db.Uuid
-  rdl_invoice_id      String?              @db.Uuid
-  realized_amount     Float?
-  old_realization_id  Int?
-  old_rdl_invoice_id  Int?
-  added_at            DateTime?            @default(now()) @db.Timestamp(6)
-  rdl_invoice         rdl_invoice?         @relation(fields: [rdl_invoice_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  procced_realization procced_realization? @relation(fields: [realization_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
-}
-
-model realization_details_history {
-  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  realization_details_id String?   @db.Uuid
-  realization_id         String?   @db.Uuid
-  rdl_invoice_id         String?   @db.Uuid
-  action_type            actions?
-  action_by              String?   @db.Uuid
-  action_at              DateTime? @default(now()) @db.Timestamp(6)
-  users                  users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users                  users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "procced_realization_history_action_by_fkey")
 }
 
 enum actions {

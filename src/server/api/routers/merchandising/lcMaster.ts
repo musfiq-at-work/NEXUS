@@ -555,13 +555,6 @@ export const lcMasterRouter = createTRPCRouter({
                         ])
                     );
 
-                    const existingOrderMap = new Map(
-                        existingOrders.map((order) => [
-                            order.order_id,
-                            order,
-                        ])
-                    );
-
                     const existingOrderIds = new Set(
                         existingOrders.map((order) => order.order_id)
                     );
@@ -571,18 +564,15 @@ export const lcMasterRouter = createTRPCRouter({
                     );
 
                     const ordersToUpdate = existingOrders.filter(
-                        (order) =>
-                            order.order_id !== null && inputOrderIds.has(order.order_id)
+                        (order) => order.order_id !== null && inputOrderIds.has(order.order_id)
                     );
 
                     const newOrders = inputOrders.filter(
-                        (order) =>
-                            order.order_id !== null && !existingOrderIds.has(order.order_id)
+                        (order) => order.order_id !== null && !existingOrderIds.has(order.order_id)
                     );
 
                     const deletedOrders = existingOrders.filter(
-                        (order) =>
-                            order.order_id !== null && !inputOrderIds.has(order.order_id)
+                        (order) => order.order_id !== null && !inputOrderIds.has(order.order_id)
                     );
 
                     const updatedOrders = await Promise.all(
@@ -595,26 +585,20 @@ export const lcMasterRouter = createTRPCRouter({
                                 return null;
                             }
 
-                            const dm_pi_no =
-                                inputOrder.dm_pi_no ??
-                                existingOrder.dm_pi_no;
+                            const dm_pi_no = inputOrder.dm_pi_no ?? existingOrder.dm_pi_no;
 
-                            if (
-                                existingOrder.dm_pi_no ===
-                                dm_pi_no
-                            ) {
+                            if ( existingOrder.dm_pi_no === dm_pi_no) {
                                 return existingOrder;
                             }
 
-                            const updatedOrder =
-                                await tx.lc_orders.update({
-                                    where: {
-                                        id: existingOrder.id,
-                                    },
-                                    data: {
-                                        dm_pi_no,
-                                    },
-                                });
+                            const updatedOrder = await tx.lc_orders.update({
+                                where: {
+                                    id: existingOrder.id,
+                                },
+                                data: {
+                                    dm_pi_no,
+                                },
+                            });
 
                             await tx.lc_orders_history.create({
                                 data: {
@@ -631,9 +615,7 @@ export const lcMasterRouter = createTRPCRouter({
                         })
                     );
 
-                    let createdOrders: Awaited<
-                        ReturnType<typeof tx.lc_orders.findMany>
-                    > = [];
+                    let createdOrders: Awaited<ReturnType<typeof tx.lc_orders.findMany>> = [];
 
                     if (newOrders.length > 0) {
                         await tx.lc_orders.createMany({
@@ -644,18 +626,17 @@ export const lcMasterRouter = createTRPCRouter({
                             })),
                         });
 
-                        createdOrders =
-                            await tx.lc_orders.findMany({
-                                where: {
-                                    lc_master_id: input.id,
-                                    order_id: {
-                                        in: newOrders.map(
-                                            (order) =>
-                                                order.order_id
-                                        ),
-                                    },
+                        createdOrders =await tx.lc_orders.findMany({
+                            where: {
+                                lc_master_id: input.id,
+                                order_id: {
+                                    in: newOrders.map(
+                                        (order) =>
+                                            order.order_id
+                                    ),
                                 },
-                            });
+                            },
+                        });
 
                         await tx.lc_orders_history.createMany({
                             data: createdOrders.map((order) => ({
@@ -694,9 +675,7 @@ export const lcMasterRouter = createTRPCRouter({
 
                     return {
                         ...updatedLC,
-                        updated_orders: updatedOrders.filter(
-                            Boolean
-                        ),
+                        updated_orders: updatedOrders.filter(Boolean),
                         created_orders: createdOrders,
                         deleted_orders: deletedOrders,
                     };
@@ -1242,6 +1221,34 @@ export const lcMasterRouter = createTRPCRouter({
 
                     return updatedLC;
                 }, {timeout: 30000})
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    checkExfactoryOfShipment: protectedProcedure
+        .input(z.object({
+            shipment_details_id: z.string(),
+        }))
+        .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.LC_MASTER]?.can_view;
+
+            if(!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view Master LC details." 
+                });
+            }
+
+            try {
+                const hasExfactory = await ctx.db.exfactory_shipments.findFirst({
+                    where: {
+                        shipment_details_id: input.shipment_details_id,
+                    },
+                });
+
+                return hasExfactory?.id ? true : false;
             }
             catch (error) {
                 handlePrismaError(error);

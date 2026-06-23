@@ -39,7 +39,7 @@ const EditSalesContractAmendmentPage = ({ params }: ParamsProp) => {
     // Get current module permissions
     const pathId = useNavigationStore((s) => s.getByHref(modulePath));
     const permissions = usePermissionStore(s => (pathId ? s.permission[pathId] : undefined));
-    const { can_update } = permissions ?? {};
+    const { can_update, can_delete } = permissions ?? {};
 
     // Mutation for updating sales contract amendment
     const updateSalesContractAmendment = api.salesContractAmendments.updateSalesContractAmendment.useMutation({
@@ -83,6 +83,8 @@ const EditSalesContractAmendmentPage = ({ params }: ParamsProp) => {
             setIsLoadingSubmit(false);
         }
     });
+
+    console.log("can_update", can_update, isLoadingSubmit, !isLastAmendment, isSalesContractAuthorized)
 
     return (
         <Wrapper

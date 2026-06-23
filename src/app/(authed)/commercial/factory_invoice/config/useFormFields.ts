@@ -98,14 +98,14 @@ export const useFormFields = ({lcList, isEdit, buyer_id}: PropsType): Field<keyo
         },
         {
             name: "invoice_quantity",
-            label: "Shipment Quantity",
+            label: "Invoice Quantity",
             placeholder: "Enter total quantity for the invoice",
             optional: true,
             disabled: true,
         },
         {
             name: "invoice_value",
-            label: "Shipment Value",
+            label: "Invoice Value",
             placeholder: "Enter total value for the invoice",
             optional: true,
             disabled: true,

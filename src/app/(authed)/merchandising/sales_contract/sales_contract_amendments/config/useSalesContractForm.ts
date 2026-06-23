@@ -25,7 +25,6 @@ export const useSalesContractForm = (salesContractData?: any) => {
 
     const { handleSubmit, formState: { errors: validationError }, setFocus, control, setValue } = methods;
 
-
     // Effect to reset form when tnaData changes
     useEffect(() => {
         if (salesContractData) {

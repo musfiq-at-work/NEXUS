@@ -28,10 +28,7 @@ const SelectField = ({ options, value, onChange, error, disabled}: FormSelectPro
             menuPosition="fixed"
             isSearchable
             styles={{
-                menuPortal: (base) => ({
-                    ...base,
-                    zIndex: 9999,
-                }),
+                menuPortal: (base) => ({...base, zIndex: 9999}),
             }}
             components={{
                 DropdownIndicator: disabled ? () => null : components.DropdownIndicator,
@@ -47,9 +44,9 @@ const SelectField = ({ options, value, onChange, error, disabled}: FormSelectPro
                 singleValue: () => "text-gray-900 whitespace-normal break-words leading-snug",
                 input: () => "m-0 p-0 w-full min-w-0",
                 placeholder: () => "text-gray-400 whitespace-normal",
-                menu: () => "rounded-lg bg-white shadow-lg border border-gray-200 min-w-[80px]",
+                menu: () => "rounded-lg bg-white shadow-lg border border-gray-200 min-w-[120px]",
                 option: ({ isFocused, isSelected }) => clsx(
-                    "px-3 py-2 cursor-pointer min-w-[80px]",
+                    "px-3 py-2 cursor-pointer text-wrap min-w-[120px] break-all",
                     isSelected && "bg-primary text-white",
                     isFocused && !isSelected && "bg-secondary-accent text-white"
                 ),

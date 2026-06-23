@@ -16,7 +16,7 @@ export const formSchema = z.object({
     sales_contract_id: z.string(),
     amendment_date: z.string().optional(),
     amendment_no: z.string().optional(),
-    remarks: z.string().optional(),
+    remarks: z.string().min(1, "Remarks are required"),
     details: z.array(salesContractDetailsSchema).optional(),
 });
 

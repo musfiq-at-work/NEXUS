@@ -24,7 +24,7 @@ export const createQueryClient = () => {
 				// Don't retry if it's a forbidden error, otherwise retry up to 3 times
 				retry: (failureCount, error) => {
 					if (error instanceof TRPCClientError && error.data?.code === "FORBIDDEN") {
-						return false;
+						return false; // Fail fast on forbidden errors
 					}
 
 					return failureCount < 3;

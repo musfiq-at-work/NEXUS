@@ -355,18 +355,18 @@ export const salesContractsRouter = createTRPCRouter({
                         }
                     });
 
-                    const deletedSalesContract = await tx.sales_contracts.delete({
-                        where: {
-                            id: input.id,
-                        }
-                    });
-
                     // delete amendment number metadata for this sales contract
                     await tx.sales_contract_amendment_no_metadata.delete({
                         where: {
                             sales_contract_id: input.id
                         }
                     })
+
+                    const deletedSalesContract = await tx.sales_contracts.delete({
+                        where: {
+                            id: input.id,
+                        }
+                    });
 
                     await tx.sales_contracts_history.create({
                         data: {

@@ -29,6 +29,12 @@ const NewExFactoryPage = () => {
         }
     });
 
+    useEffect(() => {
+        if(validationError?.exfactory?.orders?.type === 'too_small') {
+            toast.error("At least one order is required");
+        }
+    }, [validationError]);
+
     // Handle form submission for all fields
     const onSubmitAll =  handleSubmit(async (exFactoryData) => {
         try {
