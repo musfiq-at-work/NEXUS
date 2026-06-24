@@ -8,26 +8,28 @@ import { formatDateForInput } from "~/utils/localDateString";
 import { api } from "~/trpc/react";
 import { skipToken } from "@tanstack/react-query";
 import { safeNumber } from "~/utils/numbers";
-// import type { GetFactoryInvoiceByIdTypes } from "~/types/commercialAPITypes";
+import type { GetProceedRealizationByIdTypes } from "~/types/accountingAPITypes";
 
-// type FactoryInvoiceDetails = NonNullable<GetFactoryInvoiceByIdTypes>['factory_invoice_details'][number];
+type RDLInvoiceTypes = NonNullable<GetProceedRealizationByIdTypes>['details'][number];
 
-export const useFactoryInvoiceForm = (initialData?: any) => {
+export const useProceedRealizationForm = (initialData?: GetProceedRealizationByIdTypes) => {
     const transformedInitialData = useMemo(() => {
         return initialData ? {
             db_id: initialData.id,
             term_id: initialData.term_id,
             buyer_id: initialData.buyer_id ?? undefined,
-            proceed_date: initialData.proceed_date ? formatDateForInput(new Date(initialData.proceed_date)) : '',
+            proceed_date: initialData.realization_date 
+                ? formatDateForInput(new Date(initialData.realization_date)) : '',
             document_submission_id: initialData.document_submission_id,
-            document_submission_no: initialData.document_submission_no,
+            document_submission_no: initialData.document_submission_no ?? undefined,
             bank_charge: initialData.bank_charge ?? undefined,
             document_charge: initialData.document_charge ?? undefined,
             discount_charge: initialData.discount_charge ?? undefined,
             realized_amount: initialData.realized_amount ?? undefined,
-            details: initialData.factory_invoice_details?.map((detail: any) => ({
-                db_id: detail.id,
-                exfactory_shipment_id: detail.exfactory_shipment_id ?? undefined,
+            details: initialData.details?.map((detail: RDLInvoiceTypes) => ({
+                db_id: detail.db_id,
+                rdl_invoice_id: detail.rdl_invoice_id ?? undefined,
+                proceed_value: detail.proceed_value ?? undefined,
             })) ?? [],
         } : undefined;
     }, [initialData]);
@@ -74,7 +76,7 @@ export const useFactoryInvoiceForm = (initialData?: any) => {
     if(isEdit) {
         documentSubmissions = [{ 
             id: initialData.document_submission_id, 
-            fdbc_no: initialData.document_submission_no 
+            fdbc_no: initialData.document_submission_no ?? '' 
         }]
     }
     else {
@@ -82,6 +84,15 @@ export const useFactoryInvoiceForm = (initialData?: any) => {
     }
     
     const formFields = useFormFields({documentSubmissions: documentSubmissions, isEdit, buyer_id});
+
+    const totalProceedValue = useWatch({
+        control,
+        name: 'details',
+    })?.reduce((acc, detail) => acc + (detail.proceed_value || 0), 0) ?? 0;
+
+    useEffect(() => {
+        setValue('invoice_value', totalProceedValue.toFixed(2));
+    }, [totalProceedValue, setValue]);
 
     return {
         methods,

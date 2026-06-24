@@ -5,7 +5,6 @@ import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
-import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
 
 interface DocumentSubmissions {
     id: string;
@@ -454,9 +453,10 @@ export const documentSubmissionRouter = createTRPCRouter({
                         WITH IN_RDL_INVOICE AS (
                             SELECT 
                                 RID.RDL_INVOICE_ID AS RID,
-                                SUM(RISD.INVOICE_QUANTITY) AS RDL_QUANTITY
+                                SUM(RISD.INVOICE_QUANTITY * SD.fob_rate) AS TOTAL_VALUE
                             FROM rdl_invoice_details AS RID
                             INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
+                            INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
                             GROUP BY RID.RDL_INVOICE_ID
                         ),
                         IN_DOCUMENT_SUBMISSION AS (
@@ -475,7 +475,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                             LEFT JOIN IN_DOCUMENT_SUBMISSION AS IDS ON IDS.RID = RI.ID
                         WHERE SC.buyer_id = ${input.buyer_id}
                         GROUP BY SC.ID
-                        HAVING SUM(IRI.RDL_QUANTITY) > SUM(IDS.DOCUMENT_VALUE);
+                        HAVING COALESCE(SUM(IRI.TOTAL_VALUE), 0) > COALESCE(SUM(IDS.DOCUMENT_VALUE), 0);
                     `;
                 }
                 else {
@@ -483,9 +483,10 @@ export const documentSubmissionRouter = createTRPCRouter({
                         WITH IN_RDL_INVOICE AS (
                             SELECT 
                                 RID.RDL_INVOICE_ID AS RID,
-                                SUM(RISD.INVOICE_QUANTITY) AS RDL_QUANTITY
+                                SUM(RISD.INVOICE_QUANTITY * SD.fob_rate) AS TOTAL_VALUE
                             FROM rdl_invoice_details AS RID
                             INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
+                            INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
                             GROUP BY RID.RDL_INVOICE_ID
                         ),
                         IN_DOCUMENT_SUBMISSION AS (
@@ -504,7 +505,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                             LEFT JOIN IN_DOCUMENT_SUBMISSION AS IDS ON IDS.RID = RI.ID
                         WHERE LC.buyer_id = ${input.buyer_id}
                         GROUP BY LC.ID
-                        HAVING SUM(IRI.RDL_QUANTITY) > SUM(IDS.DOCUMENT_VALUE);
+                        HAVING COALESCE(SUM(IRI.TOTAL_VALUE), 0) > COALESCE(SUM(IDS.DOCUMENT_VALUE), 0);
                     `;
                 }
 
@@ -579,7 +580,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                         LEFT JOIN IN_DOCUMENT_SUBMISSION AS IDS ON IDS.RSD_RID = RI.id
                     WHERE ${whereClause} AND RI.buyer_id = ${input.buyer_id} AND RI.is_authorized = true
                     GROUP BY RI.ID, IDS.PREVIOUS_VALUE
-                    HAVING SUM(RISD.INVOICE_QUANTITY) > COALESCE(IDS.PREVIOUS_VALUE, 0);
+                    HAVING COALESCE(SUM(RISD.INVOICE_QUANTITY * SD.fob_rate), 0) > COALESCE(IDS.PREVIOUS_VALUE, 0);
                 `;
 
                 const rdlInvoice = rdlInvoicesList.map((invoice) => ({

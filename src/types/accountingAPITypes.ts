@@ -1,7 +1,12 @@
 import type { inferRouterOutputs } from '@trpc/server';
-import type { commissionInvoiceRouter } from "~/server/api";
+import type { commissionInvoiceRouter, proceedRealizationRouter } from "~/server/api";
 
 // Commission Invoice types
 type CommissionInvoiceRouterOutput = inferRouterOutputs<typeof commissionInvoiceRouter>;
 
 export type GetCommissionInvoiceByIdTypes = CommissionInvoiceRouterOutput['getCommissionInvoiceById'];
+
+// Proceed Realization types
+type ProceedRealizationRouterOutput = inferRouterOutputs<typeof proceedRealizationRouter>;
+
+export type GetProceedRealizationByIdTypes = ProceedRealizationRouterOutput['getProceedRealizationById'];

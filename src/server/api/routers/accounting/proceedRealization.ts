@@ -20,6 +20,12 @@ interface ProceedRealizationResult {
     total_count: number;
 }
 
+interface RdlInvoiceDetailsResult {
+    rdl_invoice_id: string;
+    rdl_invoice_no: string;
+    invoice_value: number;
+}
+
 export const proceedRealizationRouter = createTRPCRouter({
     getProceedRealization: protectedProcedure
         .input(z.object({
@@ -206,7 +212,7 @@ export const proceedRealizationRouter = createTRPCRouter({
 
                     await tx.proceed_realization_history.create({
                         data: {
-                            realization_id: deletedRealization.id,
+                            proceed_realization_id: deletedRealization.id,
                             buyer_id: deletedRealization.buyer_id,
                             document_submission_id: deletedRealization.document_submission_id,
                             term_id: deletedRealization.term_id,
@@ -256,4 +262,211 @@ export const proceedRealizationRouter = createTRPCRouter({
                 handlePrismaError(error);
             }
         }),
+
+    addProceedRealization: protectedProcedure
+        .input(z.object({
+            buyer_id: z.number(),
+            document_submission_id: z.string(),
+            term_id: z.number(),
+            realization_date: z.date(),
+            realized_amount: z.number(),
+            bank_charge: z.number().optional(),
+            document_charge: z.number().optional(),
+            discount_charge: z.number().optional(),
+            rdl_invoice_details: z.array(z.object({
+                rdl_invoice_id: z.string(),
+                proceed_value: z.number(),
+            })),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            try {
+                const can_add = ctx.permissions[m.PROCEED_REALIZATION]?.can_add;
+
+                if (!can_add) {
+                    throw new TRPCError({
+                        code: "FORBIDDEN",
+                        message: "You do not have permission to add proceed realization.",
+                    });
+                }
+
+                await ctx.db.$transaction(async (tx) => {
+                    const newProceedRealization = await tx.proceed_realization.create({
+                        data: {
+                            buyer_id: input.buyer_id,
+                            document_submission_id: input.document_submission_id,
+                            term_id: input.term_id,
+                            realization_date: input.realization_date,
+                            realized_amount: input.realized_amount,
+                        },
+                    });
+
+                    await tx.proceed_realization_history.create({
+                        data: {
+                            proceed_realization_id: newProceedRealization.id,
+                            buyer_id: newProceedRealization.buyer_id,
+                            document_submission_id: newProceedRealization.document_submission_id,
+                            term_id: newProceedRealization.term_id,
+                            realization_date: newProceedRealization.realization_date,
+                            realized_amount: newProceedRealization.realized_amount,
+                            action_type: actions.ADDED,
+                            action_by: ctx.user.id,
+                        },
+                    });
+
+                    await tx.proceed_realization_details.createMany({
+                        data: input.rdl_invoice_details.map((detail) => ({
+                            realization_id: newProceedRealization.id,
+                            rdl_invoice_id: detail.rdl_invoice_id,
+                            realized_amount: detail.proceed_value,
+                        })),
+                    });
+
+                    await tx.proceed_realization_details.findMany({
+                        where: {
+                            realization_id: newProceedRealization.id,
+                        },
+                    }).then(async (details) => {
+                        await tx.proceed_realization_details_history.createMany({
+                            data: details.map((detail) => ({
+                                realization_details_id: detail.id,
+                                realization_id: detail.realization_id,
+                                rdl_invoice_id: detail.rdl_invoice_id,
+                                action_type: actions.ADDED,
+                                action_by: ctx.user.id,
+                            })),
+                        });
+                    })
+
+                    return newProceedRealization.id;
+                }, {timeout: 30000});
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    getProceedRealizationById: protectedProcedure
+        .input(z.object({
+            id: z.string(),
+        }))
+        .query(async ({ ctx, input }) => {
+            try {
+                const can_view = ctx.permissions[m.PROCEED_REALIZATION]?.can_view;
+
+                if (!can_view) {
+                    throw new TRPCError({
+                        code: "FORBIDDEN",
+                        message: "You do not have permission to view proceed realization.",
+                    });
+                }
+
+                const proceedRealizationObj = await ctx.db.proceed_realization.findUnique({
+                    where: {
+                        id: input.id,
+                    },
+                    select: {
+                        id: true,
+                        buyer_id: true,
+                        document_submissions: {
+                            select: {
+                                id: true,
+                                fdbc_no: true,
+                                sales_contracts: {
+                                    select: {
+                                        sales_contract_no: true,
+                                    }
+                                },
+                                lc_master: {
+                                    select: {
+                                        lc_no: true,
+                                    }
+                                }
+                            }
+                        },
+                        term_id: true,
+                        realization_date: true,
+                        realized_amount: true,
+                        bank_charge: true,
+                        document_charge: true,
+                        discount_charge: true,
+                        proceed_realization_details: {
+                            select: {
+                                id: true,
+                                rdl_invoice_id: true,
+                                realized_amount: true,
+                            }
+                        }
+                    }
+                });
+
+                const proceedRealization = proceedRealizationObj ? {
+                    id: proceedRealizationObj.id,
+                    buyer_id: proceedRealizationObj.buyer_id,
+                    document_submission_id: proceedRealizationObj.document_submissions.id,
+                    document_submission_no: proceedRealizationObj.document_submissions.fdbc_no,
+                    lc_sc_no: proceedRealizationObj.document_submissions.sales_contracts?.sales_contract_no 
+                        ?? proceedRealizationObj.document_submissions.lc_master?.lc_no ?? '',
+                    term_id: proceedRealizationObj.term_id,
+                    realization_date: proceedRealizationObj.realization_date,
+                    realized_amount: proceedRealizationObj.realized_amount,
+                    bank_charge: proceedRealizationObj.bank_charge,
+                    document_charge: proceedRealizationObj.document_charge,
+                    discount_charge: proceedRealizationObj.discount_charge,
+                    details: proceedRealizationObj.proceed_realization_details.map((detail) => ({
+                        db_id: detail.id,
+                        rdl_invoice_id: detail.rdl_invoice_id,
+                        proceed_value: detail.realized_amount,
+                    })),
+                } : null;
+
+                return proceedRealization;  
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    getRdlInvoiceDetailsForProceedRealization: protectedProcedure
+        .input(z.object({
+            document_submission_id: z.string(),
+        }))
+        .query(async ({ ctx, input }) => {
+            try {
+                const can_view = ctx.permissions[m.PROCEED_REALIZATION]?.can_view;
+
+                if (!can_view) {
+                    throw new TRPCError({
+                        code: "FORBIDDEN",
+                        message: "You do not have permission to view RDL invoice details for proceed realization.",
+                    });
+                }
+
+                const rdlInvoiceDetails = await ctx.db.$queryRaw<RdlInvoiceDetailsResult[]>`
+                    WITH RDL_INVOICE_DETAILS AS (
+                        SELECT 
+                            RID.rdl_invoice_id AS RIDID,
+                            SUM(RISD.INVOICE_QUANTITY * SD.fob_rate) AS TOTAL_VALUE
+                        FROM rdl_invoice_details AS RID
+                            INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
+                            INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
+                        GROUP BY RID.rdl_invoice_id
+                    )
+                    SELECT
+                        RI.id AS rdl_invoice_id,
+                        RI.invoice_no AS rdl_invoice_no,
+                        RD.TOTAL_VALUE AS invoice_value
+                    FROM document_submissions AS DS
+                        INNER JOIN document_submissions_details AS DSD ON DSD.document_submissions_id = DS.id
+                        INNER JOIN rdl_invoice AS RI ON RI.id = DSD.rdl_invoice_id
+                        INNER JOIN RDL_INVOICE_DETAILS AS RD ON RD.RIDID = RI.id
+                    WHERE DS.id = ${input.document_submission_id};
+                `;
+
+                return rdlInvoiceDetails;
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
 });

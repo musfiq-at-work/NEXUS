@@ -447,7 +447,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             LEFT JOIN IN_RDL_INVOICE AS R ON R.FID = FI.id
                         WHERE SC.buyer_id = ${input.buyer_id}
                         GROUP BY SC.ID
-                        HAVING SUM(E.EF_QUANTITY) < SUM(R.RDL_QUANTITY);
+                        HAVING COALESCE(SUM(E.EF_QUANTITY), 0) > COALESCE(SUM(R.RDL_QUANTITY), 0);
                     `;
                 }
                 else {
@@ -477,7 +477,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             LEFT JOIN IN_RDL_INVOICE AS R ON R.FID = FI.id
                         WHERE LC.buyer_id = ${input.buyer_id}
                         GROUP BY LC.ID
-                        HAVING SUM(E.EF_QUANTITY) < SUM(R.RDL_QUANTITY);
+                        HAVING COALESCE(SUM(E.EF_QUANTITY), 0) > COALESCE(SUM(R.RDL_QUANTITY), 0);
                     `;
                 }
 

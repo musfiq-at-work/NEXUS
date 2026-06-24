@@ -4,7 +4,6 @@ import type { DocumentSubmissionFormValues } from "../../config/formSchema";
 import TableForm from "./FactoryInvoiceTableForm";
 import type { useDocumentSubmissionForm } from "../../config/useDocumentSubmissionForm";
 import React, { useEffect } from "react";
-import { Heading } from "~/components";
 import { api } from "~/trpc/react";
 import { tableFormColumns } from "../../factoryInvoiceConfig/tableFormColumns";
 import { skipToken } from "@tanstack/react-query";
@@ -68,22 +67,9 @@ const FactoryInvoiceDetails = (props: props) => {
         );
     }, [rdlInvoiceDetails, invoiceIndex]);
 
-    
-
-    const ShipmentHeading = () => (
-        <div className="flex flex-row items-center gap-4">
-            <Heading as ='h3' className="mx-8">
-                {invoiceIndex + 1}. Factory Invoice Details of
-                <span className="font-bold rounded-lg bg-primary text-white ml-2 px-3 py-1">
-                    {selectedRdlInvoiceNo}
-                </span>
-            </Heading>
-        </div>
-    );
-
     return (
         <TableForm 
-            title={<ShipmentHeading />}
+            selectedRdlInvoiceNo={selectedRdlInvoiceNo}
             name={`rdlInvoices.${invoiceIndex}.factoryInvoices`}
             rows={shipmentFields}
             columns={tableFormColumns}
