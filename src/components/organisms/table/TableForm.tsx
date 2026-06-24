@@ -24,13 +24,14 @@ type Props<T extends FieldValues> = {
     name: string;
     rows: FieldArrayWithId<T>[];
     addRow?: () => void;
+    canDelete?: boolean;
     removeRow?: (index: number) => void;
     title: string;
     register: UseFormRegister<T>;
 }
 
 const TableForm = <T extends FieldValues, >(props: Props<T>) => {
-    const {title, isLoading, error, columns, fields, rows, register, addRow, removeRow, disabled = false, validationError, name, control} =  props;
+    const {title, isLoading, error, columns, fields, rows, register, addRow, removeRow, disabled = false, validationError, name, control, canDelete = true} =  props;
     
     if(isLoading) return <Loader />
 
@@ -67,6 +68,7 @@ const TableForm = <T extends FieldValues, >(props: Props<T>) => {
                         <TableBody>
                             {rows.map((_, index) => (
                                 <GenericFormTableRow
+                                    canDelete={canDelete}
                                     key={index}
                                     fields={fields}
                                     register={register}

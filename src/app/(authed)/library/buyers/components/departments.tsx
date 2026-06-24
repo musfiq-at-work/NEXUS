@@ -16,9 +16,10 @@ type DepartmentsProps = {
     brandIndex: number;
     newDepartments: Record<number, string>;
     setNewDepartments: React.Dispatch<React.SetStateAction<Record<number, string>>>;
+    canDelete?: boolean;
 }
 
-const Departments = ({departments, setBrands, newSizes, setNewSizes, brandIndex, newDepartments, setNewDepartments}: DepartmentsProps) => {
+const Departments = ({departments, setBrands, newSizes, setNewSizes, brandIndex, newDepartments, setNewDepartments, canDelete}: DepartmentsProps) => {
     const utils = api.useUtils();
 
     const handleAddDepartment = (brandIndex: number, department: string) => {
@@ -77,12 +78,14 @@ const Departments = ({departments, setBrands, newSizes, setNewSizes, brandIndex,
         <div className="ml-2 border-l-2 border-primary pl-4">
             {departments.map((department, departmentIndex) => (
                 <div key={departmentIndex} className="mb-4">
-                    <p className="py-1">Department</p>
+                    <p className="py-2">Department</p>
                     <div className="flex flex-row justify-between items-center border-2 border-secondary rounded-lg pl-2">
                         <p className="text-xl font-medium">{department.department}</p>
-                        <DeleteButton size="md"
-                            onClick={() => handleRemoveDepartment(brandIndex, departmentIndex, department?.id) }
-                        />
+                        {canDelete && (
+                            <DeleteButton size="md"
+                                onClick={() => handleRemoveDepartment(brandIndex, departmentIndex, department?.id) }
+                            />
+                        )}
                     </div>
                     <Sizes
                         sizes={department.buyer_department_sizes}
@@ -91,6 +94,7 @@ const Departments = ({departments, setBrands, newSizes, setNewSizes, brandIndex,
                         setBrands={setBrands}
                         brandIndex={brandIndex}
                         departmentIndex={departmentIndex}
+                        canDelete={canDelete}
                     />
                 </div>
             ))}

@@ -7,6 +7,7 @@ import { api } from "~/trpc/react";
 import { skipToken } from "@tanstack/react-query";
 import { safeNumber } from "~/utils/numbers";
 import ShipmentDetails from "../shipmentComponents/ShipmentDetails";
+import { useModulePermissions } from "~/hooks";
 
 type Props = {
     register: ReturnType<typeof useRDLInvoiceForm>['methods']['register'];
@@ -81,6 +82,8 @@ const FactoryInvoiceRow = (props: Props) => {
         );
     }, [selectedFactoryInvoice, factoryInvoices, index, methods]);
 
+    const { can_delete } = useModulePermissions();
+
     return (
         <>
             <GenericFormTableRow
@@ -88,6 +91,7 @@ const FactoryInvoiceRow = (props: Props) => {
                 register={methods.register}
                 removeRow={removeRow}
                 disabled={disabled}
+                canDelete={can_delete}
                 validationError={validationError?.details}
                 name={name}
                 control={methods.control}

@@ -5,6 +5,7 @@ import { useWatch } from "react-hook-form";
 import React, { useMemo } from "react";
 import { skipToken } from "@tanstack/react-query";
 import { api } from "~/trpc/react";
+import { useModulePermissions } from "~/hooks";
 
 type Props = {
     register: ReturnType<typeof useLCAmendmentForm>['methods']['register'];
@@ -54,6 +55,8 @@ const OrderRow = (props: Props) => {
     }, [orders, allSelectedOrders, index, order_id]);
 
     const lcOrderDbId = useWatch({ control: methods.control, name: "details" })?.[index]?.db_id;  
+
+    const { can_delete } = useModulePermissions();
     
     return (
         <>
@@ -61,6 +64,7 @@ const OrderRow = (props: Props) => {
                 fields={lcAmendmentTableFormFields({filteredOrders: filteredOrders ?? [], id: lcOrderDbId})}
                 register={methods.register}
                 removeRow={removeRow}
+                canDelete={can_delete}
                 disabled={disabled}
                 validationError={validationError?.styles}
                 name={name}

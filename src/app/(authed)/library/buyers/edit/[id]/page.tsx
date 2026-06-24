@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { parseTRPCError } from "~/utils/parseTRPCError";
 
 import { useNavigationStore, usePermissionStore } from "~/store";
-import { useModulePath } from "~/hooks";
+import { useModulePath, useModulePermissions } from "~/hooks";
 
 import { useBuyersForm } from "../../config/useBuyersForm";
 import TableForm from "~/components/organisms/table/TableForm";
@@ -324,6 +324,8 @@ const EditBuyerPage = ({ params }: ParamsProp) => {
         }
     }
 
+    const { can_delete } = useModulePermissions();
+
     return (
          <Wrapper heading="Update Buyer">
             <Form fields={formFields} 
@@ -347,6 +349,7 @@ const EditBuyerPage = ({ params }: ParamsProp) => {
                 addRow={consigneeAddRow}
                 removeRow={removeConsigneeRow}
                 validationError={consigneeTableValidationError.consignees}
+                canDelete={can_delete}
             />
             <TableForm 
                 title={"Buyer Banks"}
@@ -361,6 +364,7 @@ const EditBuyerPage = ({ params }: ParamsProp) => {
                 removeRow={removeBankRow}
                 validationError={bankTableValidationError.banks}
                 control={bankControl}
+                canDelete={can_delete}
             />
             <TableForm 
                 title={"Buyer Additional Clauses"}
@@ -374,6 +378,7 @@ const EditBuyerPage = ({ params }: ParamsProp) => {
                 addRow={clauseAddRow}
                 removeRow={removeClauseRow}
                 validationError={clauseTableValidationError.clause}
+                canDelete={can_delete}
             />
             <TableForm 
                 title={"Buyer Late Delivery Policies"}
@@ -387,8 +392,9 @@ const EditBuyerPage = ({ params }: ParamsProp) => {
                 addRow={latePolicyAddRow}
                 removeRow={removeLatePolicyRow}
                 validationError={latePolicyTableValidationError.policy}
+                canDelete={can_delete}
             />
-            <Brands brands={brands} setBrands={setBrands}/>
+            <Brands brands={brands} setBrands={setBrands} canDelete={can_delete} />
             <div className="w-full flex flex-row justify-end">
                 <Button type="button" 
                     onClick={() => submitAll()}

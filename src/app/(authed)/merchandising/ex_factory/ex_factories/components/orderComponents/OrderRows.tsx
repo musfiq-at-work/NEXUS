@@ -7,6 +7,7 @@ import { api } from "~/trpc/react";
 import { skipToken } from "@tanstack/react-query";
 import { useExfactoryOrderStore } from "~/store/useExfactoryOrderStore";
 import ShipmentDetails from "../shipmentComponents/ShipmentDetails";
+import { useModulePermissions } from "~/hooks";
 
 interface Props {
     register: ReturnType<typeof useExfactoryForm>['methods']['register'];
@@ -52,6 +53,8 @@ const OrderRow = (props: Props) => {
     // Filter out already selected orders from the options
     const filteredOrders = orders?.filter((order) => !usedOrderIds.includes(order.order_id)) ?? [];
 
+    const { can_delete } = useModulePermissions();
+
     return (
         <>
             <GenericFormTableRow
@@ -59,6 +62,7 @@ const OrderRow = (props: Props) => {
                     orders: filteredOrders, 
                     isEdit: !!exfactory_id
                 })}
+                canDelete={can_delete}
                 register={methods.register}
                 removeRow={removeRow}
                 disabled={disabled}

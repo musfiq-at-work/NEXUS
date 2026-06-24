@@ -6,6 +6,7 @@ import React, { useCallback, useState } from "react";
 import ColorPopup from "../ColorPopup";
 import { api } from "~/trpc/react";
 import type { OrderFormValues } from "../../config/formSchema";
+import { useModulePermissions } from "~/hooks";
 
 type Props = {
     register: ReturnType<typeof useBuyerOrderForm>['methods']['register'];
@@ -35,6 +36,8 @@ const ShipmentRows = (props: Props) => {
 
     const colors = api.colors.getAll.useQuery().data ?? [];
 
+    const { can_delete } = useModulePermissions();
+
     return (
         <>
             <GenericFormTableRow
@@ -46,6 +49,7 @@ const ShipmentRows = (props: Props) => {
                 name={name}
                 control={methods.control}
                 index={index}
+                canDelete={can_delete}
                 handleAction={handleAction}
             />
 

@@ -12,6 +12,7 @@ import { tableFormColumns } from "../bankConfig/tableFormColumns";
 import { type FormValues } from "../config/formSchema";
 import { type FormValues as BankFormValues } from "../bankConfig/tableFormSchema";
 import type { ParamsProp } from "~/types/params";
+import { useModulePermissions } from "~/hooks";
 
 type FactoryDetailsPageProps = ParamsProp & {
     disabled?: boolean;
@@ -134,6 +135,8 @@ const FactoryDetailsPage = ({ params, disabled = false }: FactoryDetailsPageProp
         }
     }
 
+    const { can_delete } = useModulePermissions();
+
     return (
         <Wrapper heading="Update Factory">
             <Form fields={formFields} 
@@ -156,6 +159,7 @@ const FactoryDetailsPage = ({ params, disabled = false }: FactoryDetailsPageProp
                 validationError={tableValidationError?.banks}
                 disabled={disabled}
                 control={bankControl}
+                canDelete={can_delete}
             />
             <div className="w-full flex flex-row justify-end">
                 <Button type="button" 

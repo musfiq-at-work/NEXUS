@@ -18,10 +18,11 @@ type Props<T extends FieldValues> = {
     control?: Control<any>;
     handleAction?: (index: number) => void;
     className?: string;
+    canDelete?: boolean;
 }
 
 const GenericFormTableRow = <T extends FieldValues, >(props: Props<T>) => {
-    const {fields, register, removeRow, disabled = false, validationError, name, control, index, handleAction, className} =  props;
+    const {fields, register, removeRow, disabled = false, validationError, name, control, index, handleAction, className, canDelete = true} =  props;
 
     return (
         <TableRow key={index} className={className}>
@@ -150,7 +151,7 @@ const GenericFormTableRow = <T extends FieldValues, >(props: Props<T>) => {
                     })()}
                 </TableCell>
             ))}
-            {!disabled && removeRow && (
+            {canDelete && !disabled && removeRow && (
                 <td className="w-fit">
                     <div className="flex flex-row justify-between items-center h-full text-[0.9rem] border-gray/20 w-fit p-2">
                         <button type="button" className="ml-2 w-4 h-full hover:cursor-pointer" onClick={() => removeRow(index)}>

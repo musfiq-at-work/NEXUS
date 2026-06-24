@@ -6,7 +6,7 @@ import React from "react";
 import type { ExFactoryFormValues } from "../../config/formSchema";
 import { skipToken } from "@tanstack/react-query";
 import { api } from "~/trpc/react";
-import { useDecodedUser } from "~/hooks";
+import { useDecodedUser, useModulePermissions } from "~/hooks";
 
 type Props = {
     register: ReturnType<typeof useExfactoryForm>['methods']['register'];
@@ -34,12 +34,15 @@ const ShipmentRows = (props: Props) => {
 
     const exists = checkCommercialProcedureQuery.data?.exists ?? false;
 
+    const { can_delete } = useModulePermissions();
+
     return (
         <>
             <GenericFormTableRow
                 fields={shipmentTableFormFields({ isEdit: Boolean(exfactory_id), isAdmin: isAdmin })}
                 register={methods.register}
                 disabled={disabled || exists}
+                canDelete={can_delete}
                 removeRow={removeRow}
                 validationError={validationError?.orders?.[orderIndex]?.shipments ?? {}}
                 name={name}

@@ -6,6 +6,7 @@ import { api } from "~/trpc/react";
 import { skipToken } from "@tanstack/react-query";
 import { formatDate } from "~/utils/localDateString";
 import { safeNumber } from "~/utils/numbers";
+import { useModulePermissions } from "~/hooks";
 
 interface Props {
     register: ReturnType<typeof useFactoryInvoiceForm>['methods']['register'];
@@ -40,6 +41,8 @@ const ShipmentRows = (props: Props) => {
         methods.setValue(`details.${index}.factory_value`, safeNumber(exfactoryData?.factory_value));
     }, [exfactoryData]);
 
+    const { can_delete } = useModulePermissions();
+
     return (
         isLoading ? (
             <TableRow className="col-span-full">
@@ -49,6 +52,7 @@ const ShipmentRows = (props: Props) => {
             </TableRow>
         ) : (
             <GenericFormTableRow
+                canDelete={can_delete}
                 fields={formFieldsWithoutCheckbox()}
                 register={methods.register}
                 disabled={disabled || isLoading}

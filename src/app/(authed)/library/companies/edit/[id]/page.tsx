@@ -7,7 +7,7 @@ import { api } from "~/trpc/react";
 import { toast } from 'sonner';
 import { parseTRPCError } from "~/utils/parseTRPCError";
 import { useNavigationStore, usePermissionStore } from "~/store";
-import { useModulePath } from "~/hooks";
+import { useModulePath, useModulePermissions } from "~/hooks";
 import { useCompanyBanksForm } from "../../bankConfig/useCompanyBanksForm";
 import TableForm from "~/components/organisms/table/TableForm";
 
@@ -137,6 +137,8 @@ const EditCompanyPage = ({ params }: ParamsProp) => {
         }
     }
 
+    const { can_delete } = useModulePermissions();
+
     return (
         <Wrapper heading="Update Company">
             <Form fields={formFields} 
@@ -151,6 +153,7 @@ const EditCompanyPage = ({ params }: ParamsProp) => {
             <TableForm 
                 name='banks'
                 title={"Factory Banks"}
+                canDelete={can_delete}
                 fields={tableFormFields}
                 rows={fields}
                 columns={tableFormColumns}

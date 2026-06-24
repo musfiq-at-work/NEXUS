@@ -4,6 +4,7 @@ import { formFields as stylesTableFormFields } from "../../styleConfig/tableForm
 import { useWatch } from "react-hook-form";
 import ShipmentDetails from "../shipmentComponents/ShipmentDetails";
 import React from "react";
+import { useModulePermissions } from "~/hooks";
 
 type Props = {
     register: ReturnType<typeof useBuyerOrderForm>['methods']['register'];
@@ -20,6 +21,8 @@ const StyleRow = (props: Props) => {
 
     const productTypeId = useWatch({ control: methods.control, name: `order.styles.${index}.product_type_id` }) ?? '';
 
+    const { can_delete } = useModulePermissions();
+
     return (
         <>
             <GenericFormTableRow
@@ -29,6 +32,7 @@ const StyleRow = (props: Props) => {
                 disabled={disabled}
                 validationError={validationError?.styles}
                 name={name}
+                canDelete={can_delete}
                 control={methods.control}
                 index={index}
             />

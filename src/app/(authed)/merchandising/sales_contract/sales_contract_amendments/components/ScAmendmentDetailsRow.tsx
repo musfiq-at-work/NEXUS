@@ -6,6 +6,7 @@ import React, { useEffect } from "react";
 import { skipToken } from "@tanstack/react-query";
 import type { FieldErrors } from "react-hook-form";
 import type { FormValues } from "../config/formSchema";
+import { useModulePermissions } from "~/hooks";
 
 type Props = {
     register: ReturnType<typeof useSalesContractForm>['methods']['register'];
@@ -48,6 +49,8 @@ const ScAmendmentDetailsRow = (props: Props) => {
         methods.setValue(`details.${index}.buyer_name`, selectedOrder.buyer_name);
 
     }, [order_id, newOrders, index, methods]);
+
+    const { can_delete } = useModulePermissions();
     
     return (
         <GenericFormTableRow
@@ -56,6 +59,7 @@ const ScAmendmentDetailsRow = (props: Props) => {
                 disabledUpto: detailsCount,
                 index: index
             })}
+            canDelete={can_delete}
             register={methods.register}
             removeRow={removeRow}
             disabled={disabled}

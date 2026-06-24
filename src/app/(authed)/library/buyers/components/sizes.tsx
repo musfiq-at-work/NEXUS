@@ -14,9 +14,10 @@ type SizesProps = {
     setBrands: React.Dispatch<React.SetStateAction<BrandsState | undefined>>
     brandIndex: number;
     departmentIndex: number;
+    canDelete?: boolean;
 }
 
-const Sizes = ({sizes, newSizes, setNewSizes, setBrands, brandIndex, departmentIndex}: SizesProps) => {
+const Sizes = ({sizes, newSizes, setNewSizes, setBrands, brandIndex, departmentIndex, canDelete}: SizesProps) => {
     const handleAddSizeSet = (brandIndex: number, departmentIndex: number, size: string) => {
         const value = size.trim();
         if (!value) return;
@@ -88,10 +89,12 @@ const Sizes = ({sizes, newSizes, setNewSizes, setBrands, brandIndex, departmentI
             <p className="py-1">Sizes</p>
             {sizes.map((sizeSet, sizeIndex) => (
                 <div key={sizeIndex} className="flex flex-row justify-between items-center border-2 border-gray-400 my-2 rounded-lg pl-2">
-                     <p>{sizeSet.size}</p>
-                    <DeleteButton size="sm"
-                        onClick={() => handleRemoveSizeSet( brandIndex, departmentIndex, sizeIndex, sizeSet?.id ) }
-                    />
+                     <p className={'p-1'}>{sizeSet.size}</p>
+                    {canDelete && (
+                        <DeleteButton size="sm"
+                            onClick={() => handleRemoveSizeSet( brandIndex, departmentIndex, sizeIndex, sizeSet?.id ) }
+                        />
+                    )}
                 </div>
             ))}
             <div className="flex gap-2 mt-2">

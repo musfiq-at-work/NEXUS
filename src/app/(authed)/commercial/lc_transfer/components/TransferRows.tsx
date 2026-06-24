@@ -31,6 +31,7 @@ import { api } from "~/trpc/react";
 import { skipToken } from "@tanstack/react-query";
 import type { useLCTransferForm } from "../config/useLcTransferForm";
 import { safeNumber } from "~/utils/numbers";
+import { useModulePermissions } from "~/hooks";
 
 interface Props {
     register: ReturnType<typeof useLCTransferForm>['methods']['register'];
@@ -128,12 +129,15 @@ const TransferRow = (props: Props) => {
         (availableLcOptions) => !usedSCIds.includes(availableLcOptions.id.toString())
     ) ?? [];
 
+    const { can_delete } = useModulePermissions();
+
     return (
         <GenericFormTableRow
             fields={formFields(filteredSC 
                 ? {salesContracts: filteredSC} 
                 : {salesContracts: []})
             }
+            canDelete={can_delete}
             register={methods.register}
             removeRow={removeRow}
             disabled={disabled}

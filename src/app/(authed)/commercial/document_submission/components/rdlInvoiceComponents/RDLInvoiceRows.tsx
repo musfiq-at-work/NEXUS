@@ -8,6 +8,7 @@ import { skipToken } from "@tanstack/react-query";
 import { safeNumber } from "~/utils/numbers";
 import FactoryInvoiceDetails from "../factoryInvoiceComponents/FactoryInvoiceDetails";
 import { formatDate } from "~/utils/localDateString";
+import { useModulePermissions } from "~/hooks";
 
 type Props = {
     register: ReturnType<typeof useDocumentSubmissionForm>['methods']['register'];
@@ -110,6 +111,7 @@ const RdlInvoiceRow = (props: Props) => {
         }
     }, [rdlValue, previouslyReceivedRdlValue, methods, index]);
     
+    const { can_delete } = useModulePermissions();
 
     return (
         <>
@@ -118,6 +120,7 @@ const RdlInvoiceRow = (props: Props) => {
                 register={methods.register}
                 removeRow={removeRow}
                 disabled={disabled}
+                canDelete={can_delete}
                 validationError={validationError?.rdlInvoices}
                 name={name}
                 control={methods.control}

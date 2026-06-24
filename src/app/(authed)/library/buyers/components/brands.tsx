@@ -13,10 +13,11 @@ import Departments from "./departments";
 type BrandsProps = {
     brands: BrandsState | undefined;
     setBrands: React.Dispatch<React.SetStateAction<BrandsState | undefined>>;
+    canDelete?: boolean;
 }
 
 const Brands = (props: BrandsProps) => {
-    const { brands, setBrands } = props;
+    const { brands, setBrands, canDelete } = props;
 
     const [newBrand, setNewBrand] = useState("");
     const [newDepartments, setNewDepartments] = useState<Record<number, string>>({});
@@ -72,14 +73,17 @@ const Brands = (props: BrandsProps) => {
             <div className="flex flex-col gap-4">
                 {brands?.buyer_brands.map((brand, brandIndex) => (
                     <div  key={brandIndex} className="flex-1 emboss p-4 rounded-lg">
-                        <p className="py-1">Brand</p>
+                        <p className="py-2">Brand</p>
                         <div className="flex flex-row justify-between items-center border-2 border-primary rounded-lg pl-2">
                             <p className="text-xl font-semibold">{brand.brand}</p>
-                            <DeleteButton size="lg"
-                                onClick={() => handleRemoveBrands(brandIndex, brand?.id)}
-                            />
+                            {canDelete && (
+                                <DeleteButton size="lg"
+                                    onClick={() => handleRemoveBrands(brandIndex, brand?.id)}
+                                />
+                            )}
                         </div>
                         <Departments 
+                            canDelete={canDelete}
                             departments={brand.buyer_departments}
                             setBrands={setBrands}
                             newSizes={newSizes}
