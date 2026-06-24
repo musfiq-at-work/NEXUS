@@ -1,3 +1,4 @@
+import { toast } from 'sonner';
 import z from 'zod';
 
 export const createExFactoryShipmentSchema = (tolerance: number) =>
@@ -39,6 +40,19 @@ export const createExFactoryOrderSchema = (tolerance: number) => z.object({
 	shipments: z.array(
 		createExFactoryShipmentSchema(tolerance)
 	).optional(),
+}).superRefine((data, ctx) => {
+	const hasShipmentQty = data.shipments?.some(
+		(shipment) => (shipment.shipment_quantity ?? 0) > 0
+	);
+
+	if (!hasShipmentQty) {
+		toast.error("At least one shipment quantity must be greater than 0");
+		ctx.addIssue({
+			code: z.ZodIssueCode.custom,
+			path: ["shipments", 0, "shipment_quantity"],
+			message: "At least one shipment quantity must be greater than 0",
+		});
+	}
 });
 
 export type ExFactoryOrdersValues = z.infer<ReturnType<typeof createExFactoryOrderSchema>>;

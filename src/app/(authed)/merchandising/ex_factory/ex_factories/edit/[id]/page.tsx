@@ -139,6 +139,11 @@ const EditExFactoryPage = ({ params }: ParamsProp) => {
         );
     }, [isAuthorizationLoading, authorizations, user]);
 
+    useEffect(() => {
+        if(validationError?.exfactory?.orders?.type === 'too_small') {
+            toast.error("At least one order is required");
+        }
+    }, [validationError]);
 
     return (
         <Wrapper heading='Update Ex Factory'>
