@@ -394,6 +394,11 @@ export const proceedRealizationRouter = createTRPCRouter({
                                 id: true,
                                 rdl_invoice_id: true,
                                 realized_amount: true,
+                                rdl_invoice: {
+                                    select: {
+                                        invoice_no: true,
+                                    },
+                                },
                             }
                         }
                     }
@@ -415,6 +420,7 @@ export const proceedRealizationRouter = createTRPCRouter({
                     details: proceedRealizationObj.proceed_realization_details.map((detail) => ({
                         db_id: detail.id,
                         rdl_invoice_id: detail.rdl_invoice_id,
+                        rdl_invoice_no: detail.rdl_invoice.invoice_no,
                         proceed_value: detail.realized_amount,
                     })),
                 } : null;
@@ -463,6 +469,90 @@ export const proceedRealizationRouter = createTRPCRouter({
                 `;
 
                 return rdlInvoiceDetails;
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    updateProceedRealization: protectedProcedure
+        .input(z.object({
+            id: z.string(),
+            realization_date: z.date(),
+            realized_amount: z.number(),
+            bank_charge: z.number().optional(),
+            document_charge: z.number().optional(),
+            discount_charge: z.number().optional(),
+            rdl_invoice_details: z.array(z.object({
+                db_id: z.string().optional(),
+                rdl_invoice_id: z.string(),
+                proceed_value: z.number(),
+            })),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            try {
+                const can_edit = ctx.permissions[m.PROCEED_REALIZATION]?.can_update;
+
+                if (!can_edit) {
+                    throw new TRPCError({
+                        code: "FORBIDDEN",
+                        message: "You do not have permission to edit proceed realization.",
+                    });
+                }
+
+                return await ctx.db.$transaction(async (tx) => {
+                    const updatedProceedRealization = await tx.proceed_realization.update({
+                        where: {
+                            id: input.id,
+                        },
+                        data: {
+                            realization_date: input.realization_date,
+                            realized_amount: input.realized_amount,
+                            bank_charge: input.bank_charge,
+                            document_charge: input.document_charge,
+                            discount_charge: input.discount_charge,
+                        },
+                    });
+
+                    await tx.proceed_realization_history.create({
+                        data: {
+                            proceed_realization_id: updatedProceedRealization.id,
+                            buyer_id: updatedProceedRealization.buyer_id,
+                            document_submission_id: updatedProceedRealization.document_submission_id,
+                            term_id: updatedProceedRealization.term_id,
+                            realization_date: updatedProceedRealization.realization_date,
+                            realized_amount: updatedProceedRealization.realized_amount,
+                            bank_charge: updatedProceedRealization.bank_charge,
+                            document_charge: updatedProceedRealization.document_charge,
+                            discount_charge: updatedProceedRealization.discount_charge,
+                            action_type: actions.UPDATE,
+                            action_by: ctx.user.id,
+                        },
+                    });
+
+                    await Promise.all(input.rdl_invoice_details.map(async (detail) => {
+                        if (detail.db_id) {
+                            await tx.proceed_realization_details.update({
+                                where: {
+                                    id: detail.db_id,
+                                },
+                                data: {
+                                    realized_amount: detail.proceed_value,
+                                },
+                            });
+                            
+                            await tx.proceed_realization_details_history.create({
+                                data: {
+                                    realization_details_id: detail.db_id,
+                                    realization_id: updatedProceedRealization.id,
+                                    rdl_invoice_id: detail.rdl_invoice_id,
+                                    action_type: actions.UPDATE,
+                                    action_by: ctx.user.id,
+                                },
+                            });
+                        }
+                    }));
+                })
             }
             catch (error) {
                 handlePrismaError(error);

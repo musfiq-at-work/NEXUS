@@ -11,6 +11,7 @@ export const useModulePermissions = () => {
     return {
         modulePath,
         permissions,
+        can_view: permissions?.can_view,
         can_add: permissions?.can_add,
         can_update: permissions?.can_update,
         can_delete: permissions?.can_delete,

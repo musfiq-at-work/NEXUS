@@ -6,8 +6,7 @@ import { useCommissionInvoiceForm } from "../../config/useCommissionInvoiceForm"
 import { api } from "~/trpc/react";
 import { toast } from 'sonner';
 import { parseTRPCError } from "~/utils/parseTRPCError";
-import { useNavigationStore, usePermissionStore } from "~/store";
-import { useModulePath } from "~/hooks";
+import { useModulePermissions } from "~/hooks";
 import type { ParamsProp } from "~/types/params";
 
 const EditCommissionInvoicePage = ({ params }: ParamsProp) => {
@@ -25,12 +24,7 @@ const EditCommissionInvoicePage = ({ params }: ParamsProp) => {
 
     const utils = api.useUtils();
 
-    // Get current module path
-    const modulePath = useModulePath().path;
-    // Get current module permissions
-    const pathId = useNavigationStore((s) => s.getByHref(modulePath));
-    const permissions = usePermissionStore(s => (pathId ? s.permission[pathId] : undefined));
-    const { can_update } = permissions ?? {};
+    const { can_update } = useModulePermissions();
 
     const updateCommissionInvoice = api.commissionInvoice.updateCommissionInvoice.useMutation({
         onSuccess: async () => {

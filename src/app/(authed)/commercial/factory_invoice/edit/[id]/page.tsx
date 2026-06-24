@@ -5,8 +5,7 @@ import React, { useCallback, useState } from "react";
 import { api } from "~/trpc/react";
 import { toast } from 'sonner';
 import { parseTRPCError } from "~/utils/parseTRPCError";
-import { useNavigationStore, usePermissionStore } from "~/store";
-import { useModulePath } from "~/hooks";
+import { useModulePermissions } from "~/hooks";
 import { useFactoryInvoiceForm } from "../../config/useFactoryInvoiceForm";
 import ShipmentDetails from "../../components/shipmentComponents/ShipmentDetails";
 import Tags from "../../components/tagItems/Tags";
@@ -32,12 +31,7 @@ const EditFactoryInvoicePage = ({ params }: ParamsProp) => {
     // TRPC utils
     const utils = api.useUtils();
 
-    // Get current module path
-    const modulePath = useModulePath().path;
-    // Get current module permissions
-    const pathId = useNavigationStore((s) => s.getByHref(modulePath));
-    const permissions = usePermissionStore(s => (pathId ? s.permission[pathId] : undefined));
-    const { can_view, can_update } = permissions ?? {};
+    const { can_update, can_view } = useModulePermissions();
 
     const updateFactoryInvoice = api.factoryInvoice.updateFactoryInvoice.useMutation({
         onSuccess: async () => {

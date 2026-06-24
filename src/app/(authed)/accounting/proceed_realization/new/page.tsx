@@ -53,7 +53,7 @@ const NewProceedRealizationPage = () => {
 
             console.log("Payload for adding Proceed Realization:", payload);
             const newId = await addProceedRealization.mutateAsync(payload);
-            // router.push(`/accounting/proceed_realization/edit/${newId}`);
+            router.push(`/accounting/proceed_realization/edit/${newId}`);
         }
         catch (error) {
             const message = parseTRPCError(error);

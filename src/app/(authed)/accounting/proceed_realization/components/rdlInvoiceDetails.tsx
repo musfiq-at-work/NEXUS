@@ -41,6 +41,7 @@ const RdlInvoiceDetails = (props: props) => {
         const existingRdlInvoice = methods.getValues(`details`) ?? [];
 
         console.log('rdlInvoiceDetails', rdlInvoiceDetails);
+        console.log('existingRdlInvoice', existingRdlInvoice);
 
         replaceRdlInvoice(
             rdlInvoiceDetails.map((rdlInvoice) => {
@@ -57,8 +58,7 @@ const RdlInvoiceDetails = (props: props) => {
                 };
             })
         );
-
-    }, [rdlInvoiceDetails, selectedDocumentSubmissionId]);
+    }, [rdlInvoiceDetails, selectedDocumentSubmissionId, methods]);
 
     return (
         <TableForm 

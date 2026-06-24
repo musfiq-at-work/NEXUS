@@ -6,8 +6,7 @@ import { useRDLInvoiceForm } from "../../config/useRDLInvoiceForm";
 import { api } from "~/trpc/react";
 import { toast } from 'sonner';
 import { parseTRPCError } from "~/utils/parseTRPCError";
-import { useNavigationStore, usePermissionStore } from "~/store";
-import { useDecodedUser, useModulePath } from "~/hooks";
+import { useDecodedUser, useModulePermissions, } from "~/hooks";
 import FactoryInvoiceDetails from "../../components/factoryInvoiceComponents/FactoryInvoiceDetails";
 import { printingWhiteIcon } from "~/assets";
 import { safeNumber } from "~/utils/numbers";
@@ -37,12 +36,7 @@ const EditRDLInvoicePage = ({ params }: ParamsProp) => {
     // TRPC utils
     const utils = api.useUtils();
 
-    // Get current module path
-    const modulePath = useModulePath().path;
-    // Get current module permissions
-    const pathId = useNavigationStore((s) => s.getByHref(modulePath));
-    const permissions = usePermissionStore(s => (pathId ? s.permission[pathId] : undefined));
-    const { can_update, can_view } = permissions ?? {};
+    const { can_update, can_view } = useModulePermissions();
 
     const updateRDLInvoice = api.rdlInvoice.updateRdlInvoice.useMutation({
         onSuccess: async () => {

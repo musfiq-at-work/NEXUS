@@ -6,8 +6,7 @@ import { useBuyerOrderForm } from "../../config/useBuyerOrderForm";
 import { api } from "~/trpc/react";
 import { toast } from 'sonner';
 import { parseTRPCError } from "~/utils/parseTRPCError";
-import { useNavigationStore, usePermissionStore } from "~/store";
-import { useModulePath } from "~/hooks";
+import { useModulePermissions } from "~/hooks";
 import StylesDetails from "../../components/styleComponents/stylesDetails";
 import type { shipment_modes } from "@prisma/client";
 import { printingWhiteIcon } from "~/assets";
@@ -32,13 +31,7 @@ const EditBuyerOrderPage = ({ params }: ParamsProp) => {
     // TRPC utils
     const utils = api.useUtils();
 
-    // Get current module path
-    const modulePath = useModulePath().path;
-        
-    // Get current module permissions
-    const pathId = useNavigationStore((s) => s.getByHref(modulePath));
-    const permissions = usePermissionStore(s => (pathId ? s.permission[pathId] : undefined));
-    const { can_update, can_view } = permissions ?? {};
+    const { can_update, can_view } = useModulePermissions();
 
     const updateBuyerOrder = api.buyerOrders.updateBuyerOrder.useMutation({
         onSuccess: async () => {

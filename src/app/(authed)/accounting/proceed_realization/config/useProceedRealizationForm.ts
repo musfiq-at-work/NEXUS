@@ -29,6 +29,7 @@ export const useProceedRealizationForm = (initialData?: GetProceedRealizationByI
             details: initialData.details?.map((detail: RDLInvoiceTypes) => ({
                 db_id: detail.db_id,
                 rdl_invoice_id: detail.rdl_invoice_id ?? undefined,
+                rdl_invoice_no: detail.rdl_invoice_no ?? undefined,
                 proceed_value: detail.proceed_value ?? undefined,
             })) ?? [],
         } : undefined;

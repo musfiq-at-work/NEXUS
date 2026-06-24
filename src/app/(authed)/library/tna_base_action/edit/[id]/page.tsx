@@ -7,8 +7,7 @@ import { api } from "~/trpc/react";
 import { toast } from 'sonner';
 import { parseTRPCError } from "~/utils/parseTRPCError";
 import { useTnaBaseActionForm } from "../../config/useTnaBaseActionForm";
-import { useNavigationStore, usePermissionStore } from "~/store";
-import { useModulePath } from "~/hooks";
+import { useModulePermissions } from "~/hooks";
 import { formFields } from "../../config/formFields";
 import type { ParamsProp } from "~/types/params";
 
@@ -25,13 +24,7 @@ const EditTnaBaseActionPage = ({ params }: ParamsProp) => {
     // TRPC utils
     const utils = api.useUtils();
 
-    // Get current module path
-    const modulePath = useModulePath().path;
-        
-    // Get current module permissions
-    const pathId = useNavigationStore((s) => s.getByHref(modulePath));
-    const permissions = usePermissionStore(s => (pathId ? s.permission[pathId] : undefined));
-    const { can_update } = permissions ?? {};
+    const { can_update } = useModulePermissions();
 
     const updateTnaBaseAction = api.tnaBaseAction.updateTnaBaseAction.useMutation({
         onSuccess: async () => {

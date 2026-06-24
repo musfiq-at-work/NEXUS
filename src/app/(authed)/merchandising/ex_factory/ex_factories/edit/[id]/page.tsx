@@ -1,13 +1,12 @@
 'use client';
 
-import { Button, Form, Info, MessageBox, Wrapper } from "~/components";
+import { Button, Form, MessageBox, Wrapper } from "~/components";
 import React, { useCallback, useEffect, useState } from "react";
 import { useExfactoryForm } from "../../config/useExfactoryForm";
 import { api } from "~/trpc/react";
 import { toast } from 'sonner';
 import { parseTRPCError } from "~/utils/parseTRPCError";
-import { useNavigationStore, usePermissionStore } from "~/store";
-import { useDecodedUser, useModulePath } from "~/hooks";
+import { useDecodedUser, useModulePermissions } from "~/hooks";
 import OrderDetails from "../../components/orderComponents/OrderDetails";
 import type { shipment_modes } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
@@ -31,13 +30,7 @@ const EditExFactoryPage = ({ params }: ParamsProp) => {
 
     const { user } = useDecodedUser();
 
-    // Get current module path
-    const modulePath = useModulePath().path;
-
-    // Get current module permissions
-    const pathId = useNavigationStore((s) => s.getByHref(modulePath));
-    const permissions = usePermissionStore(s => (pathId ? s.permission[pathId] : undefined));
-    const { can_update } = permissions ?? {};
+    const { can_update } = useModulePermissions();
 
     const updateExFactory = api.exFactory.updateExFactory.useMutation({
         onSuccess: async () => {

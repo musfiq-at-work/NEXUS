@@ -3,8 +3,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { plusIcon } from "~/assets";
 import { Button, SearchField, Table, Wrapper, Popup } from "~/components";
-import { useDebouncedValue, useModulePath, useTablePagination } from "~/hooks";
-import { useNavigationStore, usePermissionStore } from "~/store";
+import { useDebouncedValue, useModulePermissions, useTablePagination } from "~/hooks";
 import { api } from "~/trpc/react";
 import { toast } from "sonner";
 import { tableHeaders } from "./config/columns";
@@ -23,15 +22,8 @@ const EvPermissionsPage = () => {
     
     const debouncedSearch = useDebouncedValue(searchTerm);
 
-    // Get current module path
-    const modulePath = useModulePath().path;
-        
-    // Get current module permissions
-    const pathId = useNavigationStore((s) => s.getByHref(modulePath));
-    const permissions = usePermissionStore(s => (pathId ? s.permission[pathId] : undefined));
-    const { can_add, can_update, can_delete } = permissions ?? {};
+    const { can_add, can_update, can_delete } = useModulePermissions();
     
-
     // Frontend pagination state and handlers
     const { page, limit, nextPage, prevPage, setPage } = useTablePagination();
 
