@@ -18,6 +18,7 @@ export const useProceedRealizationForm = (initialData?: GetProceedRealizationByI
             db_id: initialData.id,
             term_id: initialData.term_id,
             buyer_id: initialData.buyer_id ?? undefined,
+            lc_sc_no: initialData.lc_sc_no ?? undefined,
             proceed_date: initialData.realization_date 
                 ? formatDateForInput(new Date(initialData.realization_date)) : '',
             document_submission_id: initialData.document_submission_id,
@@ -30,6 +31,7 @@ export const useProceedRealizationForm = (initialData?: GetProceedRealizationByI
                 db_id: detail.db_id,
                 rdl_invoice_id: detail.rdl_invoice_id ?? undefined,
                 rdl_invoice_no: detail.rdl_invoice_no ?? undefined,
+                invoice_value: detail.realized_amount ?? undefined,
                 proceed_value: detail.proceed_value ?? undefined,
             })) ?? [],
         } : undefined;

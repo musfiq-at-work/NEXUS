@@ -2,7 +2,7 @@
 import { useFieldArray, useWatch, type FieldErrors } from "react-hook-form";
 import type { ProceedRealizationFormValues } from "../config/formSchema";
 import type { useProceedRealizationForm } from "../config/useProceedRealizationForm";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { api } from "~/trpc/react";
 import { tableFormColumns } from "../rdlInvoiceConfig/tableFormColumns";
 import { skipToken } from "@tanstack/react-query";
@@ -35,13 +35,38 @@ const RdlInvoiceDetails = (props: props) => {
         !!selectedDocumentSubmissionId ? { document_submission_id: selectedDocumentSubmissionId } : skipToken
     );
 
+    // useEffect(() => {
+    //     if (!rdlInvoiceDetails) return;
+        
+    //     const existingRdlInvoice = methods.getValues(`details`) ?? [];
+
+    //     replaceRdlInvoice(
+    //         rdlInvoiceDetails.map((rdlInvoice) => {
+    //             const existing = existingRdlInvoice.find(
+    //                 (x) => x.rdl_invoice_id === rdlInvoice.rdl_invoice_id
+    //             );
+
+    //             return {
+    //                 rdl_invoice_id: rdlInvoice.rdl_invoice_id ?? existing?.rdl_invoice_id,
+    //                 rdl_invoice_no: rdlInvoice.rdl_invoice_no ?? existing?.rdl_invoice_no,
+    //                 proceed_value: existing?.proceed_value,
+    //                 db_id: existing?.db_id,
+    //                 invoice_value: rdlInvoice.invoice_value ?? existing?.invoice_value,
+    //             };
+    //         })
+    //     );
+    // }, [rdlInvoiceDetails, selectedDocumentSubmissionId, methods]);
+
+    const prevDocumentSubmissionId = useRef<string | undefined>(undefined);
+
     useEffect(() => {
         if (!rdlInvoiceDetails) return;
-        
-        const existingRdlInvoice = methods.getValues(`details`) ?? [];
 
-        console.log('rdlInvoiceDetails', rdlInvoiceDetails);
-        console.log('existingRdlInvoice', existingRdlInvoice);
+        if (prevDocumentSubmissionId.current === selectedDocumentSubmissionId) return;
+        
+        prevDocumentSubmissionId.current = selectedDocumentSubmissionId;
+
+        const existingRdlInvoice = methods.getValues(`details`) ?? [];
 
         replaceRdlInvoice(
             rdlInvoiceDetails.map((rdlInvoice) => {
@@ -50,15 +75,15 @@ const RdlInvoiceDetails = (props: props) => {
                 );
 
                 return {
-                    rdl_invoice_id: rdlInvoice.rdl_invoice_id,
-                    rdl_invoice_no: rdlInvoice.rdl_invoice_no,
+                    rdl_invoice_id: rdlInvoice.rdl_invoice_id ?? existing?.rdl_invoice_id,
+                    rdl_invoice_no: rdlInvoice.rdl_invoice_no ?? existing?.rdl_invoice_no,
                     proceed_value: existing?.proceed_value,
                     db_id: existing?.db_id,
-                    invoice_value: rdlInvoice.invoice_value,
+                    invoice_value: rdlInvoice.invoice_value ?? existing?.invoice_value,
                 };
             })
         );
-    }, [rdlInvoiceDetails, selectedDocumentSubmissionId, methods]);
+    }, [rdlInvoiceDetails, selectedDocumentSubmissionId]);
 
     return (
         <TableForm 

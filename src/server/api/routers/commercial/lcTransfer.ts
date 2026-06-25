@@ -389,7 +389,7 @@ export const lcTransferRouter = createTRPCRouter({
                     )
                     GROUP BY LC.ID
                     -- Only show LCs where total ordered quantity is greater than total transferred quantity
-                    HAVING SUM(LCD.TOTAL_ORDER_QUANTITY) > COALESCE(SUM(LCTD.TOTAL_TRANSFER_QUANTITY), 0)
+                    HAVING SUM(LCD.TOTAL_ORDER_QUANTITY)::NUMERIC(18,2) > COALESCE(SUM(LCTD.TOTAL_TRANSFER_QUANTITY), 0)::NUMERIC(18,2)
                     ORDER BY LC.added_at ASC;
                 `;
 
@@ -509,7 +509,7 @@ export const lcTransferRouter = createTRPCRouter({
                             AND TM.USER_ID = ${ctx.user.id}
                         )
                     )
-                    AND COALESCE(TR.TRANSFER_QUANTITY, 0) < S.SC_QUANTITY
+                    AND COALESCE(TR.TRANSFER_QUANTITY, 0)::NUMERIC(18,2) < S.SC_QUANTITY::NUMERIC(18,2)
                     AND SC.FACTORY_ID = ${input.factory_id}
                     GROUP BY SC.ID;
                 `;

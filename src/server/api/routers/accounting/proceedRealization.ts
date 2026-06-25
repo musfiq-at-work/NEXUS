@@ -404,6 +404,34 @@ export const proceedRealizationRouter = createTRPCRouter({
                     }
                 });
 
+                if(!proceedRealizationObj) {
+                    throw new TRPCError({
+                        code: "NOT_FOUND",
+                        message: "Proceed Realization not found.",
+                    });
+                }
+
+                const rdlInvoiceDetails = await ctx.db.$queryRaw<RdlInvoiceDetailsResult[]>`
+                    WITH RDL_INVOICE_DETAILS AS (
+                        SELECT 
+                            RID.rdl_invoice_id AS RIDID,
+                            SUM(RISD.INVOICE_QUANTITY * SD.fob_rate) AS TOTAL_VALUE
+                        FROM rdl_invoice_details AS RID
+                            INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
+                            INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
+                        GROUP BY RID.rdl_invoice_id
+                    )
+                    SELECT
+                        RI.id AS rdl_invoice_id,
+                        RI.invoice_no AS rdl_invoice_no,
+                        RD.TOTAL_VALUE AS invoice_value
+                    FROM document_submissions AS DS
+                        INNER JOIN document_submissions_details AS DSD ON DSD.document_submissions_id = DS.id
+                        INNER JOIN rdl_invoice AS RI ON RI.id = DSD.rdl_invoice_id
+                        INNER JOIN RDL_INVOICE_DETAILS AS RD ON RD.RIDID = RI.id
+                    WHERE DS.id = ${proceedRealizationObj.document_submissions.id};
+                `;
+
                 const proceedRealization = proceedRealizationObj ? {
                     id: proceedRealizationObj.id,
                     buyer_id: proceedRealizationObj.buyer_id,
@@ -419,9 +447,10 @@ export const proceedRealizationRouter = createTRPCRouter({
                     discount_charge: proceedRealizationObj.discount_charge,
                     details: proceedRealizationObj.proceed_realization_details.map((detail) => ({
                         db_id: detail.id,
-                        rdl_invoice_id: detail.rdl_invoice_id,
-                        rdl_invoice_no: detail.rdl_invoice.invoice_no,
+                        rdl_invoice_id: rdlInvoiceDetails.find((x) => x.rdl_invoice_id === detail.rdl_invoice_id)?.rdl_invoice_id ?? '',
+                        rdl_invoice_no: rdlInvoiceDetails.find((x) => x.rdl_invoice_id === detail.rdl_invoice_id)?.rdl_invoice_no ?? '',
                         proceed_value: detail.realized_amount,
+                        realized_amount: rdlInvoiceDetails.find((x) => x.rdl_invoice_id === detail.rdl_invoice_id)?.invoice_value ?? 0,
                     })),
                 } : null;
 

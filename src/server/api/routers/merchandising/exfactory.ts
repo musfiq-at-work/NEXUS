@@ -534,7 +534,7 @@ export const exFactoryRouter = createTRPCRouter({
                     : Prisma.sql`
                         BO.buyer_id = ${input.buyer_id}
                         AND BO.factory_id = ${input.factory_id}
-                        AND COALESCE(EQ.total_es_qty, 0) < COALESCE(SQ.total_sid_qty * (1 + ${getTolerance?.tolerance_level ?? 10} / 100), 0)
+                        AND COALESCE(EQ.total_es_qty, 0)::NUMERIC(18,2) < COALESCE(SQ.total_sid_qty * (1 + ${getTolerance?.tolerance_level ?? 10} / 100), 0)::NUMERIC(18,2)
                         AND COALESCE(EQ.po_close, false) = false
                         AND EXISTS (
                             SELECT 1
@@ -724,7 +724,7 @@ export const exFactoryRouter = createTRPCRouter({
                         )
                     `
                     : Prisma.sql`
-                        COALESCE(EQ.total_es_qty, 0) < COALESCE(SQ.total_sid_qty * (1 + ${getTolerance?.tolerance_level ?? 10} / 100), 0)
+                        COALESCE(EQ.total_es_qty, 0)::NUMERIC(18,2) < COALESCE(SQ.total_sid_qty * (1 + ${getTolerance?.tolerance_level ?? 10} / 100), 0)::NUMERIC(18,2)
                         AND COALESCE(SEQ.po_close, false) = false
                         ${input.order_id 
                             ? Prisma.sql`AND BO.id = ${input.order_id}` 
@@ -1239,7 +1239,7 @@ export const exFactoryRouter = createTRPCRouter({
                     WHERE                   
                         BO.buyer_id = ${input.buyer_id}
                         AND BO.factory_id = ${input.factory_id}
-                        AND COALESCE(EQ.total_es_qty, 0) < COALESCE(SQ.total_sid_qty * (1 + COALESCE(STL.tolerance_level, 10) / 100), 0)
+                        AND COALESCE(EQ.total_es_qty, 0)::NUMERIC(18,2) < COALESCE(SQ.total_sid_qty * (1 + COALESCE(STL.tolerance_level, 10) / 100), 0)::NUMERIC(18,2)
                         AND COALESCE(EQ.po_close, false) = false
                         AND FSD.exfactory_date BETWEEN ${input.from_date} AND ${input.to_date}
                     GROUP BY BO.ID, B.ID, F.ID, OS.ID, SD.id, SQ.total_sid_qty, EQ.total_es_qty, FSD.exfactory_date
@@ -1273,7 +1273,7 @@ export const exFactoryRouter = createTRPCRouter({
                     WHERE
                         BO.buyer_id = ${input.buyer_id}
                         AND BO.factory_id = ${input.factory_id}
-                        AND COALESCE(EQ.total_es_qty, 0) < COALESCE(SQ.total_sid_qty * (1 + COALESCE(STL.tolerance_level, 10) / 100), 0)
+                        AND COALESCE(EQ.total_es_qty, 0)::NUMERIC(18,2) < COALESCE(SQ.total_sid_qty * (1 + COALESCE(STL.tolerance_level, 10) / 100), 0)::NUMERIC(18,2)
                         AND COALESCE(EQ.po_close, false) = false
                         AND FSD.exfactory_date BETWEEN ${input.from_date} AND ${input.to_date};
                     `;
@@ -1340,7 +1340,7 @@ export const exFactoryRouter = createTRPCRouter({
                     LEFT JOIN exfactory_qty AS EQ ON EQ.shipment_details_id = SD.id
                     LEFT JOIN shipment_tolerance_level as STL on STL.buyer_id = BO.buyer_id
                     WHERE
-                        COALESCE(EQ.total_es_qty, 0) < COALESCE(SQ.total_sid_qty * (1 + COALESCE(STL.tolerance_level, 10) / 100), 0)
+                        COALESCE(EQ.total_es_qty, 0)::NUMERIC(18,2) < COALESCE(SQ.total_sid_qty * (1 + COALESCE(STL.tolerance_level, 10) / 100), 0)::NUMERIC(18,2)
                         AND COALESCE(EQ.po_close, false) = false
                         AND (
                             BO.REF_NO ILIKE '%' || ${input.search_term} || '%' OR
@@ -1380,7 +1380,7 @@ export const exFactoryRouter = createTRPCRouter({
                     ) AS SQ ON SQ.shipment_detail_id = SD.id
                     LEFT JOIN shipment_tolerance_level as STL on STL.buyer_id = BO.buyer_id
                     WHERE
-                        COALESCE(EQ.total_es_qty, 0) < COALESCE(SQ.total_sid_qty * (1 + COALESCE(STL.tolerance_level, 10) / 100), 0)
+                        COALESCE(EQ.total_es_qty, 0)::NUMERIC(18,2) < COALESCE(SQ.total_sid_qty * (1 + COALESCE(STL.tolerance_level, 10) / 100), 0)::NUMERIC(18,2)
                         AND COALESCE(EQ.po_close, false) = false
                         AND (
                             BO.REF_NO ILIKE '%' || ${input.search_term} || '%' OR

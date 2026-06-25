@@ -475,7 +475,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                             LEFT JOIN IN_DOCUMENT_SUBMISSION AS IDS ON IDS.RID = RI.ID
                         WHERE SC.buyer_id = ${input.buyer_id}
                         GROUP BY SC.ID
-                        HAVING COALESCE(SUM(IRI.TOTAL_VALUE), 0) > COALESCE(SUM(IDS.DOCUMENT_VALUE), 0);
+                        HAVING COALESCE(SUM(IRI.TOTAL_VALUE), 0)::NUMERIC(18,2) > COALESCE(SUM(IDS.DOCUMENT_VALUE), 0)::NUMERIC(18,2);
                     `;
                 }
                 else {
@@ -505,7 +505,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                             LEFT JOIN IN_DOCUMENT_SUBMISSION AS IDS ON IDS.RID = RI.ID
                         WHERE LC.buyer_id = ${input.buyer_id}
                         GROUP BY LC.ID
-                        HAVING COALESCE(SUM(IRI.TOTAL_VALUE), 0) > COALESCE(SUM(IDS.DOCUMENT_VALUE), 0);
+                        HAVING COALESCE(SUM(IRI.TOTAL_VALUE), 0)::NUMERIC(18,2) > COALESCE(SUM(IDS.DOCUMENT_VALUE), 0)::NUMERIC(18,2);
                     `;
                 }
 
@@ -580,7 +580,8 @@ export const documentSubmissionRouter = createTRPCRouter({
                         LEFT JOIN IN_DOCUMENT_SUBMISSION AS IDS ON IDS.RSD_RID = RI.id
                     WHERE ${whereClause} AND RI.buyer_id = ${input.buyer_id} AND RI.is_authorized = true
                     GROUP BY RI.ID, IDS.PREVIOUS_VALUE
-                    HAVING COALESCE(SUM(RISD.INVOICE_QUANTITY * SD.fob_rate), 0) > COALESCE(IDS.PREVIOUS_VALUE, 0);
+                    HAVING COALESCE(SUM(RISD.INVOICE_QUANTITY * SD.fob_rate), 0)::NUMERIC(18,2) 
+                           > COALESCE(IDS.PREVIOUS_VALUE, 0)::NUMERIC(18,2);
                 `;
 
                 const rdlInvoice = rdlInvoicesList.map((invoice) => ({

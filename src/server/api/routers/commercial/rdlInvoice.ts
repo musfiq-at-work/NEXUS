@@ -447,7 +447,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             LEFT JOIN IN_RDL_INVOICE AS R ON R.FID = FI.id
                         WHERE SC.buyer_id = ${input.buyer_id}
                         GROUP BY SC.ID
-                        HAVING COALESCE(SUM(E.EF_QUANTITY), 0) > COALESCE(SUM(R.RDL_QUANTITY), 0);
+                        HAVING COALESCE(SUM(E.EF_QUANTITY), 0)::NUMERIC(18,2)  > COALESCE(SUM(R.RDL_QUANTITY), 0)::NUMERIC(18,2);
                     `;
                 }
                 else {
@@ -477,7 +477,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             LEFT JOIN IN_RDL_INVOICE AS R ON R.FID = FI.id
                         WHERE LC.buyer_id = ${input.buyer_id}
                         GROUP BY LC.ID
-                        HAVING COALESCE(SUM(E.EF_QUANTITY), 0) > COALESCE(SUM(R.RDL_QUANTITY), 0);
+                        HAVING COALESCE(SUM(E.EF_QUANTITY), 0)::NUMERIC(18,2)  > COALESCE(SUM(R.RDL_QUANTITY), 0)::NUMERIC(18,2);
                     `;
                 }
 
@@ -676,13 +676,13 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         AND (
                             CRID.ID IS NOT NULL
                             OR PI.FACTORY_INVOICE_ID IS NULL
-                            OR COALESCE(PI.PREVIOUS_QUANTITY, 0) < I.TOTAL_QUANTITY
+                            OR COALESCE(PI.PREVIOUS_QUANTITY, 0)::NUMERIC(18,2) < I.TOTAL_QUANTITY::NUMERIC(18,2)
                         )
                     `
                     : Prisma.sql`
                         AND (
                             PI.FACTORY_INVOICE_ID IS NULL
-                            OR COALESCE(PI.PREVIOUS_QUANTITY, 0) < I.TOTAL_QUANTITY
+                            OR COALESCE(PI.PREVIOUS_QUANTITY, 0)::NUMERIC(18,2) < I.TOTAL_QUANTITY::NUMERIC(18,2)
                         )
                     `;
 
