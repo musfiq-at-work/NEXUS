@@ -190,7 +190,7 @@ export const proceedRealizationRouter = createTRPCRouter({
 
                     await tx.proceed_realization_details_history.createMany({
                         data: deletedDetails.map((detail) => ({
-                            realization_detail_id: detail.id,
+                            realization_details_id: detail.id,
                             realization_id: detail.realization_id,
                             rdl_invoice_id: detail.rdl_invoice_id,
                             action_type: actions.DELETE,
@@ -447,10 +447,16 @@ export const proceedRealizationRouter = createTRPCRouter({
                     discount_charge: proceedRealizationObj.discount_charge,
                     details: proceedRealizationObj.proceed_realization_details.map((detail) => ({
                         db_id: detail.id,
-                        rdl_invoice_id: rdlInvoiceDetails.find((x) => x.rdl_invoice_id === detail.rdl_invoice_id)?.rdl_invoice_id ?? '',
-                        rdl_invoice_no: rdlInvoiceDetails.find((x) => x.rdl_invoice_id === detail.rdl_invoice_id)?.rdl_invoice_no ?? '',
+                        rdl_invoice_id: rdlInvoiceDetails.find(
+                            (x) => x.rdl_invoice_id === detail.rdl_invoice_id
+                        )?.rdl_invoice_id ?? '',
+                        rdl_invoice_no: rdlInvoiceDetails.find(
+                            (x) => x.rdl_invoice_id === detail.rdl_invoice_id
+                        )?.rdl_invoice_no ?? '',
                         proceed_value: detail.realized_amount,
-                        realized_amount: rdlInvoiceDetails.find((x) => x.rdl_invoice_id === detail.rdl_invoice_id)?.invoice_value ?? 0,
+                        realized_amount: rdlInvoiceDetails.find(
+                            (x) => x.rdl_invoice_id === detail.rdl_invoice_id
+                        )?.invoice_value ?? 0,
                     })),
                 } : null;
 

@@ -90,6 +90,8 @@ const sideBarConfig: Record<number, {href: string;}> = {
     [m.COMMISSION_INVOICE]: { href: "/accounting/commission_invoice" },
     [m.PROCEED_REALIZATION]: { href: "/accounting/proceed_realization" },
     [m.FACTORY_PAYMENT]: { href: "/accounting/factory_payment" },
+    [m.REGULAR_PAYMENT]: { href: "/accounting/factory_payment/regular_payment" },
+    [m.CROSS_PAYMENT]: { href: "/accounting/factory_payment/cross_payment" },
     [m.DEBIT_NOTE]: { href: "/accounting/debit_note" },
     [m.COMMISSION_REALIZATION]: { href: "/accounting/commission_realization" },
 };

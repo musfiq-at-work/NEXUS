@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Form, Wrapper } from "~/components";
+import { Button, Form, MessageBox, Wrapper } from "~/components";
 import React, { useCallback, useState } from "react";
 import { useDocumentSubmissionForm } from "../../config/useDocumentSubmissionForm";
 import { api } from "~/trpc/react";
@@ -78,6 +78,8 @@ const EditDocumentSubmissionPage = ({ params }: ParamsProp) => {
         }
     }), [updateDocumentSubmission]);
 
+    const { data: hasProceedRealization, isLoading: isLoadingHasProceedRealization } = api.documentSubmission.hasProceedRealization.useQuery({ id: id });
+
     
     return (
         <Wrapper heading='Update Document Submission' >
@@ -94,7 +96,13 @@ const EditDocumentSubmissionPage = ({ params }: ParamsProp) => {
             <RDLInvoiceDetails 
                 methods={methods}
                 validationError={validationError ?? {}}
-                disabled={isLoading || !can_update}
+                disabled={isLoading || !can_update || hasProceedRealization || isLoadingHasProceedRealization}
+            />
+
+            <MessageBox 
+                message="This Document Submission has proceed realization and can't be updated or deleted."
+                active={!!hasProceedRealization}
+                type="primary"
             />
 
             {/* Shipment Portal anchor */}
@@ -105,7 +113,7 @@ const EditDocumentSubmissionPage = ({ params }: ParamsProp) => {
                     onClick={() => onSubmitAll()}
                     label={"Update Document Submission"} 
                     className="text-lg tracking-wide mt-6 max-w-80 m-8"
-                    disabled={isLoading || !can_update || isLoadingSubmit}
+                    disabled={isLoading || !can_update || isLoadingSubmit || hasProceedRealization || isLoadingHasProceedRealization}
                 />
             </div>
         </Wrapper>

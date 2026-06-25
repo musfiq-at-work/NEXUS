@@ -984,4 +984,35 @@ export const documentSubmissionRouter = createTRPCRouter({
                 handlePrismaError(error);
             }
         }),
+
+    hasProceedRealization: protectedProcedure
+        .input(z.object({
+            id: z.string(),
+        }))
+        .query(async ({ ctx, input }) => {
+            try {
+                const can_view = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_view;
+
+                if (!can_view) {
+                    throw new TRPCError({ 
+                        code: 'FORBIDDEN', 
+                        message: "You don't have permission to view Document Submissions." 
+                    });
+                }
+
+                const result = await ctx.db.proceed_realization.findFirst({
+                    where: {
+                        document_submission_id: input.id,
+                    },
+                    select: {
+                        id: true,
+                    }
+                });
+
+                return result ? true : false;
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
 });

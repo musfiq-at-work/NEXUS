@@ -68,6 +68,9 @@ enum moduleMap {
     CERTIFICATES = 72,
     TNA_EVENTS = 73,
     EV_PERMISSIONS = 74,
+    LIBRARY_COMMISSION_DISTRIBUTION = 75,
+    REGULAR_PAYMENT = 76,
+    CROSS_PAYMENT = 77,
 }
 
 export { moduleMap as m };
