@@ -1,6 +1,12 @@
-'use client'
+'use client';
+import { useRouter } from "next/navigation";
+import { plusIcon } from "~/assets";
+import { Button, SearchField, Table, Wrapper, Popup } from "~/components";
+import { api } from "~/trpc/react";
+import { toast } from "sonner";
+import { tableHeaders } from "./config/columns";
+import { useSearchablePagination, useModulePermissions, useDeleteConfirmation } from "~/hooks";
 
-import { Wrapper } from "~/components"
 
 const FactoryPaymentPage = () => {
     return (
