@@ -2588,6 +2588,8 @@ model document_submissions {
   sales_contracts              sales_contracts?               @relation(fields: [sales_contract_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   terms                        terms                          @relation(fields: [term_id], references: [id], onUpdate: NoAction)
   document_submissions_details document_submissions_details[]
+  factory_payment_header       factory_payment_header?
+  factory_payments             factory_payments[]
   proceed_realization          proceed_realization[]
 }
 
@@ -2706,8 +2708,6 @@ model proceed_realization {
   old_document_submission_id  Int?
   added_at                    DateTime?                     @default(now()) @db.Timestamp(6)
   realization_date            DateTime?                     @db.Date
-  factory_payment_header      factory_payment_header[]
-  factory_payments            factory_payments[]
   buyers                      buyers                        @relation(fields: [buyer_id], references: [id], onUpdate: NoAction, map: "procced_realization_buyer_id_fkey")
   document_submissions        document_submissions          @relation(fields: [document_submission_id], references: [id], onUpdate: NoAction, map: "procced_realization_document_submission_id_fkey")
   terms                       terms                         @relation(fields: [term_id], references: [id], onUpdate: NoAction, map: "procced_realization_term_id_fkey")
@@ -2756,29 +2756,34 @@ model proceed_realization_history {
 }
 
 model factory_payment_header {
-  id                     String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  proceed_realization_id String?              @db.Uuid
-  remarks                String?
-  added_at               DateTime?            @default(now()) @db.Timestamp(6)
-  proceed_realization    proceed_realization? @relation(fields: [proceed_realization_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  id                         String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  document_submission_id     String?               @unique(map: "unique_document_submission_id") @db.Uuid
+  old_document_submission_id Int?
+  remarks                    String?
+  added_at                   DateTime?             @default(now()) @db.Timestamp(6)
+  document_submissions       document_submissions? @relation(fields: [document_submission_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
 }
 
 model factory_payments {
-  id                         String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  proceed_realization_id     String?              @db.Uuid
-  factory_invoice_id         String?              @db.Uuid
+  id                         String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  document_submission_id     String?               @db.Uuid
+  factory_invoice_id         String?               @db.Uuid
   paid_amount                Float?
-  payment_date               DateTime?            @default(dbgenerated("CURRENT_DATE")) @db.Date
-  added_at                   DateTime?            @default(now()) @db.Timestamp(6)
+  payment_date               DateTime?             @default(dbgenerated("CURRENT_DATE")) @db.Date
+  added_at                   DateTime?             @default(now()) @db.Timestamp(6)
   old_factory_invoice_id     Int?
-  old_proceed_realization_id Int?
-  factory_invoice            factory_invoice?     @relation(fields: [factory_invoice_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  proceed_realization        proceed_realization? @relation(fields: [proceed_realization_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  old_document_submission_id Int?
+  is_cross_paid              Boolean?              @default(false)
+  factory_payment_no         String?               @db.VarChar(100)
+  document_submissions       document_submissions? @relation(fields: [document_submission_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  factory_invoice            factory_invoice?      @relation(fields: [factory_invoice_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@unique([document_submission_id, factory_invoice_id], map: "unique_factory_invoice_per_document_submission")
 }
 
 model factory_payments_header_history {
   id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  proceed_realization_id String?   @db.Uuid
+  document_submission_id String?   @db.Uuid
   remarks                DateTime? @db.Date
   action_type            actions?
   action_by              String?   @db.Uuid
@@ -2787,16 +2792,18 @@ model factory_payments_header_history {
 }
 
 model factory_payments_history {
-  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  factory_payments_id    String?   @db.Uuid
-  proceed_realization_id String?   @db.Uuid
-  factory_invoice_id     String?   @db.Uuid
-  paid_amount            Float?
-  payment_date           DateTime? @db.Date
-  action_type            actions?
-  action_by              String?   @db.Uuid
-  action_at              DateTime? @default(now()) @db.Timestamp(6)
-  users                  users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  factory_payments_id        String?   @db.Uuid
+  document_submission_id     String?   @db.Uuid
+  old_document_submission_id Int?
+  factory_invoice_id         String?   @db.Uuid
+  paid_amount                Float?
+  payment_date               DateTime? @db.Date
+  action_type                actions?
+  action_by                  String?   @db.Uuid
+  action_at                  DateTime? @default(now()) @db.Timestamp(6)
+  factory_payment_no         String?   @db.VarChar(100)
+  users                      users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 enum actions {

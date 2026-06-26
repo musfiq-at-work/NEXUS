@@ -8,31 +8,31 @@ import { formatDateForInput } from "~/utils/localDateString";
 import { api } from "~/trpc/react";
 import { skipToken } from "@tanstack/react-query";
 import { safeNumber } from "~/utils/numbers";
-import type { GetProceedRealizationByIdTypes } from "~/types/accountingAPITypes";
+import type { GetFactoryPaymentByIdTypes } from "~/types/accountingAPITypes";
 
-type RDLInvoiceTypes = NonNullable<GetProceedRealizationByIdTypes>['details'][number];
+type FactoryInvoiceTypes = NonNullable<GetFactoryPaymentByIdTypes>['factoryPaymentsDetails'][number];
 
-export const useProceedRealizationForm = (initialData?: GetProceedRealizationByIdTypes) => {
+export const useProceedRealizationForm = (initialData?: GetFactoryPaymentByIdTypes) => {
     const transformedInitialData = useMemo(() => {
-        return initialData ? {
-            db_id: initialData.id,
-            term_id: initialData.term_id,
-            buyer_id: initialData.buyer_id ?? undefined,
-            lc_sc_no: initialData.lc_sc_no ?? undefined,
-            proceed_date: initialData.realization_date 
-                ? formatDateForInput(new Date(initialData.realization_date)) : '',
-            document_submission_id: initialData.document_submission_id,
-            document_submission_no: initialData.document_submission_no ?? undefined,
-            bank_charge: initialData.bank_charge ?? undefined,
-            document_charge: initialData.document_charge ?? undefined,
-            discount_charge: initialData.discount_charge ?? undefined,
-            realized_amount: initialData.realized_amount ?? undefined,
-            details: initialData.details?.map((detail: RDLInvoiceTypes) => ({
+        return initialData?.factoryPayment ? {
+            term_name: initialData.factoryPayment.term_name,
+            fdbc_no: initialData.factoryPayment.fdbc_no ?? undefined,
+            realization_date: initialData.factoryPayment.realization_date ?? undefined,
+            rdl_invoice_value: initialData.factoryPayment.rdl_invoice_value ?? undefined,
+            realized_amount: initialData.factoryPayment.realized_amount ?? undefined,
+            factory_paid_amount: initialData.factoryPayment.factory_paid_amount ?? undefined,
+            remarks: initialData.factoryPayment.remarks ?? undefined,
+            details: initialData.factoryPaymentsDetails?.map((detail: FactoryInvoiceTypes) => ({
                 db_id: detail.db_id,
-                rdl_invoice_id: detail.rdl_invoice_id ?? undefined,
-                rdl_invoice_no: detail.rdl_invoice_no ?? undefined,
-                invoice_value: detail.realized_amount ?? undefined,
-                proceed_value: detail.proceed_value ?? undefined,
+                factory_iname: detail.factory_name ?? undefined,
+                factory_invoice_no: detail.factory_invoice_no ?? undefined,
+                factory_fdbc_no: detail.fdbc_no ?? undefined,
+                invoice_date: detail.factory_invoice_date ?? undefined,
+                invoice_quantity: detail.proceed_value ?? undefined,
+                invoice_value: detail.proceed_value ?? undefined,
+                paid_amount: detail.paid_amount ?? undefined,
+                factory_payment_no: detail.factory_payment_no ?? undefined,
+                payment_date: detail.payment_date ?? undefined,
             })) ?? [],
         } : undefined;
     }, [initialData]);
@@ -86,7 +86,7 @@ export const useProceedRealizationForm = (initialData?: GetProceedRealizationByI
         documentSubmissions = documentSubmissionList;
     }
     
-    const formFields = useFormFields({documentSubmissions: documentSubmissions, isEdit, buyer_id});
+    const formFields = useFormFields();
 
     const totalProceedValue = useWatch({
         control,

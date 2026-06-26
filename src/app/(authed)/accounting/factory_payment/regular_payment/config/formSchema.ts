@@ -2,8 +2,8 @@ import z from 'zod';
 
 export const FactoryPaymentDetails = z.object({
     db_id: z.string().optional(),
-    factory_id: z.string().optional(),
-    factory_invoice_id: z.string().optional(),
+    factory_iname: z.string().optional(),
+    factory_invoice_no: z.string().optional(),
     factory_fdbc_no: z.string().min(1, "Factory FDBC No is required"),
     invoice_date: z.string().optional(),
     invoice_quantity: z.string().optional(),

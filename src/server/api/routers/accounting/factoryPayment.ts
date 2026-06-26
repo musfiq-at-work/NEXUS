@@ -6,16 +6,23 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 
-interface FactoryPaymentResult {
+interface FactoryPayments {
     term_name: string;
     fdbc_no: string;
     realization_date: Date;
     rdl_invoice_value: number;
     realized_amount: number;
     factory_paid_amount: number;
+}
+
+interface FactoryPaymentResult extends FactoryPayments {
     paid_count: number;
     pending_count: number;
     total_count: bigint;
+}
+
+interface FactoryPaymentDetailsById extends FactoryPayments {
+    remarks: string | null;
 }
 
 export const factoryPaymentRouter = createTRPCRouter({
@@ -70,7 +77,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                             INNER JOIN RDL_INVOICE_IN_DOCUMENT_SUBMISSIONS AS RIDS ON RIDS.DSDID = DS.id
                             INNER JOIN terms AS T ON T.id = PR.term_id
                             INNER JOIN FACTORY_INVOICE_COUNT AS FIC ON FIC.DOCUMENT_SUBMISSIONS_ID = DS.id
-                            LEFT JOIN factory_payments AS FP ON FP.proceed_realization_id = PR.id
+                            LEFT JOIN factory_payments AS FP ON FP.document_submission_id = DS.id
                         WHERE (
                             EXISTS (
                                 SELECT 1
@@ -161,7 +168,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                             INNER JOIN terms AS T ON T.id = PR.term_id
                             INNER JOIN FACTORY_INVOICE_COUNT AS FIC ON FIC.DOCUMENT_SUBMISSIONS_ID = DS.id
                             INNER JOIN BUYERS AS B ON B.id = DS.buyer_id
-                            LEFT JOIN factory_payments AS FP ON FP.proceed_realization_id = PR.id
+                            LEFT JOIN factory_payments AS FP ON FP.document_submission_id = DS.id
                         WHERE (
                             EXISTS (
                                 SELECT 1
@@ -226,7 +233,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                     });
                 }
 
-                const result = await ctx.db.$queryRaw<FactoryPaymentResult[]>`
+                const result = await ctx.db.$queryRaw<FactoryPaymentDetailsById[]>`
                     WITH RDL_INVOICE_IN_DOCUMENT_SUBMISSIONS AS (
                         SELECT 
                             DSD.DOCUMENT_SUBMISSIONS_ID AS DSDID,
@@ -251,8 +258,8 @@ export const factoryPaymentRouter = createTRPCRouter({
                         INNER JOIN RDL_INVOICE_IN_DOCUMENT_SUBMISSIONS AS RIDS ON RIDS.DSDID = DS.id
                         INNER JOIN terms AS T ON T.id = PR.term_id
                         INNER JOIN BUYERS AS B ON B.id = DS.buyer_id
-                        LEFT JOIN factory_payments AS FP ON FP.proceed_realization_id = PR.id
-                        LEFT JOIN factory_payment_header AS FPH ON FPH.proceed_realization_id = PR.id
+                        LEFT JOIN factory_payments AS FP ON FP.document_submission_id = DS.id
+                        LEFT JOIN factory_payment_header AS FPH ON FPH.document_submission_id = DS.id
                     WHERE (
                         EXISTS (
                             SELECT 1
@@ -273,6 +280,45 @@ export const factoryPaymentRouter = createTRPCRouter({
                     GROUP BY PR.ID, DS.ID, RIDS.TOTAL_INVOICE_VALUE, T.ID, FPH.ID;
                 `;
 
+                const factoryPaymentsObj = await ctx.db.factory_payments.findMany({
+                    where: {
+                        document_submission_id: input.id,
+                    },
+                    select: {
+                        id: true,
+                        factory_invoice: {
+                            select: {
+                                invoice_no: true,
+                                invoice_date: true,
+                                factories: {
+                                    select: {
+                                        name: true,
+                                    }
+                                }
+                            }
+                        },
+                        document_submissions: {
+                            select: {
+                                fdbc_no: true,
+                            }
+                        },
+                        payment_date: true,
+                        paid_amount: true,
+                        factory_payment_no: true,
+                    }
+                });
+
+                const factoryPaymentsDetails = factoryPaymentsObj.map((payment) => ({
+                    db_id: payment.id,
+                    factory_name: payment.factory_invoice?.factories?.name ?? undefined,
+                    factory_invoice_date: payment.factory_invoice?.invoice_date ?? undefined,
+                    factory_invoice_no: payment.factory_invoice?.invoice_no ?? undefined,
+                    fdbc_no: payment.document_submissions?.fdbc_no ?? undefined,
+                    payment_date: payment.payment_date ?? undefined,
+                    paid_amount: payment.paid_amount ?? undefined,
+                    factory_payment_no: payment.factory_payment_no ?? undefined,
+                }));
+
                 if (result.length === 0) {
                     throw new TRPCError({
                         code: "NOT_FOUND",
@@ -282,7 +328,7 @@ export const factoryPaymentRouter = createTRPCRouter({
 
                 const factoryPayment = result[0];
 
-                return factoryPayment;
+                return {factoryPayment, factoryPaymentsDetails};
             }
             catch (error) {
                 handlePrismaError(error);
