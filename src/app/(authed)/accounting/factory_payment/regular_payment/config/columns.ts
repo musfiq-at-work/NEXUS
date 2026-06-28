@@ -5,7 +5,7 @@ export const tableHeaders= [
     { key: 'rdl_invoice_value', label: 'RDL Invoice Value' },
     { key: 'realized_amount', label: 'Realized Amount' },
     { key: 'factory_paid_amount', label: 'Factory Paid Amount' },
-    { key: 'paid_count', label: 'Paid Count' },
-    { key: 'pending_count', label: 'Pending Count' },
+    { key: 'paid_count', label: 'Paid' },
+    { key: 'pending_count', label: 'Pending' },
     { key: 'actions', label: '', type: 'action' }
 ]

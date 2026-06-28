@@ -147,7 +147,7 @@ const FactoryDetailsPage = ({ params, disabled = false }: FactoryDetailsPageProp
                 error={error}
                 disabled={disabled}
             />
-             <TableForm 
+            <TableForm 
                 name='banks'
                 title={"Factory Banks"}
                 fields={tableFormFields}

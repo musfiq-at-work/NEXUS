@@ -11,12 +11,13 @@ interface FactoryPayments {
     term_name: string;
     fdbc_no: string;
     realization_date: Date;
-    rdl_invoice_value: number;
+    rdl_invoice_value: string;
     realized_amount: number;
     factory_paid_amount: number;
 }
 
 interface FactoryPaymentResult extends FactoryPayments {
+    id: string;
     paid_count: number;
     pending_count: number;
     total_count: bigint;
@@ -29,6 +30,7 @@ interface FactoryPaymentDetailsById extends FactoryPayments {
 interface FactoryPaymentDetails {
     db_id: string;
     factory_name: string;
+    factory_invoice_id: string;
     factory_invoice_no: string;
     fdbc_no: string;
     factory_invoice_date: Date;
@@ -79,6 +81,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                     ),
                     PENDING_FACTORY_PAYMENT AS (
                         SELECT 
+                            DS.id AS ID,
                             T.NAME AS TERM_NAME,
                             DS.FDBC_NO,
                             PR.REALIZATION_DATE,
@@ -121,11 +124,12 @@ export const factoryPaymentRouter = createTRPCRouter({
 
                 const total: number = results.length > 0 ? Number(results[0]?.total_count) : 0;
                 const factoryPayments = results.map(({total_count: _, ...payments}) => ({
+                    id: payments.id,
                     term_name: payments.term_name,
                     fdbc_no: payments.fdbc_no,
                     realization_date: payments.realization_date,
                     factory_paid_amount: currencyFormatter(payments.factory_paid_amount, '$'),
-                    rdl_invoice_value: currencyFormatter(payments.rdl_invoice_value, '$'),
+                    rdl_invoice_value: currencyFormatter(Number(payments.rdl_invoice_value), '$'),
                     realized_amount: currencyFormatter(payments.realized_amount, '$'),
                     paid_count: payments.paid_count,
                     pending_count: payments.pending_count,
@@ -178,6 +182,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                     ),
                     PENDING_FACTORY_PAYMENT AS (
                         SELECT DISTINCT
+                            DS.id AS ID,
                             T.NAME AS TERM_NAME,
                             DS.FDBC_NO,
                             PR.REALIZATION_DATE,
@@ -234,11 +239,12 @@ export const factoryPaymentRouter = createTRPCRouter({
 
                 const total: number = results.length > 0 ? Number(results[0]?.total_count) : 0;
                 const factoryPayments = results.map(({total_count: _, ...payments}) => ({
+                    id: payments.id,
                     term_name: payments.term_name,
                     fdbc_no: payments.fdbc_no,
                     realization_date: payments.realization_date,
                     factory_paid_amount: currencyFormatter(payments.factory_paid_amount, '$'),
-                    rdl_invoice_value: currencyFormatter(payments.rdl_invoice_value, '$'),
+                    rdl_invoice_value: currencyFormatter(Number(payments.rdl_invoice_value), '$'),
                     realized_amount: currencyFormatter(payments.realized_amount, '$'),
                     paid_count: payments.paid_count,
                     pending_count: payments.pending_count,
@@ -358,4 +364,32 @@ export const factoryPaymentRouter = createTRPCRouter({
                 handlePrismaError(error);
             }
         }),
+
+    updateFactoryPayment: protectedProcedure
+        .input(z.object({
+            db_id: z.string(),
+            factoryInvoices: z.array(z.object({
+                db_id: z.string().optional(),
+                factory_invoice_id: z.string(),
+                paid_amount: z.number().optional(),
+                payment_date: z.date().optional(),
+                is_cross_paid: z.boolean().optional(),
+            })).optional(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            try {
+                const can_update = ctx.permissions[m.REGULAR_PAYMENT]?.can_update;
+
+                if (!can_update) {
+                    throw new TRPCError({
+                        code: "FORBIDDEN",
+                        message: "You do not have permission to update factory payments.",
+                    });
+                }
+
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        })
 })

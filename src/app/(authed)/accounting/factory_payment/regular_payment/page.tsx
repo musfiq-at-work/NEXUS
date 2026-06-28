@@ -22,41 +22,39 @@ const FactoryPaymentPage = () => {
         { enabled: debouncedSearch.length > 0 }
     );
 
-    const editURL = '/accounting/factory_payment/edit/';
+    const editURL = '/accounting/factory_payment/regular_payment/edit/';
 
     return (
-        <>
-            <Wrapper
-                heading="Factory Payments"
-                subSectionLeft={
-                    <SearchField
-                        placeholder="Search Factory Payments..."
-                        infoText="FDBC No, Buyer Name, Term and Factory Invoice."
-                        handleSearchChange={handleSearchChange}
-                    />
-                }
-            >
-                <div className="w-full">
-                    <Table
-                        data={searchQuery.data?.factoryPayments && !!debouncedSearch 
-                            ? searchQuery.data.factoryPayments : factoryPaymentList
-                        }
-                        isLoading={isLoading || searchQuery.isLoading}
-                        columns={tableHeaders}
-                        nextPage={nextPage}
-                        prevPage={prevPage}
-                        total={searchQuery.data?.factoryPayments && searchQuery.data.factoryPayments.length > 0 
-                            ? searchQuery.data.total ?? 0 : total
-                        }
-                        page={page}
-                        limit={limit}
-                        editURL={editURL}
-                        allowEdit={can_update}
-                        view={!can_update}
-                    />
-                </div>
-            </Wrapper>
-        </>
+        <Wrapper
+            heading="Factory Payments"
+            subSectionLeft={
+                <SearchField
+                    placeholder="Search Factory Payments..."
+                    infoText="FDBC No, Buyer Name, Term and Factory Invoice."
+                    handleSearchChange={handleSearchChange}
+                />
+            }
+        >
+            <div className="w-full">
+                <Table
+                    data={searchQuery.data?.factoryPayments && !!debouncedSearch 
+                        ? searchQuery.data.factoryPayments : factoryPaymentList
+                    }
+                    isLoading={isLoading || searchQuery.isLoading}
+                    columns={tableHeaders}
+                    nextPage={nextPage}
+                    prevPage={prevPage}
+                    total={searchQuery.data?.factoryPayments && searchQuery.data.factoryPayments.length > 0 
+                        ? searchQuery.data.total ?? 0 : total
+                    }
+                    page={page}
+                    limit={limit}
+                    editURL={editURL}
+                    allowEdit={can_update}
+                    view={!can_update}
+                />
+            </div>
+        </Wrapper>
     )
 }
 
