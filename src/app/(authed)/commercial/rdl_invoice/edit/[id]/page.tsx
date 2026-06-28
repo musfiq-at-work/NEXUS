@@ -69,6 +69,7 @@ const EditRDLInvoicePage = ({ params }: ParamsProp) => {
                         db_id: shipment.db_id,
                         shipment_details_id: shipment.shipment_details_id ?? "",
                         invoice_quantity: safeNumber(shipment.invoice_quantity),
+                        factory_invoice_details_id: shipment.factory_invoice_details_id ?? "",
                     })) ?? [],
                 })),
             };

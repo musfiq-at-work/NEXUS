@@ -1,18 +1,62 @@
 'use client';
-import { useRouter } from "next/navigation";
-import { plusIcon } from "~/assets";
-import { Button, SearchField, Table, Wrapper, Popup } from "~/components";
+import { SearchField, Table, Wrapper } from "~/components";
 import { api } from "~/trpc/react";
-import { toast } from "sonner";
 import { tableHeaders } from "./config/columns";
-import { useSearchablePagination, useModulePermissions, useDeleteConfirmation } from "~/hooks";
-
+import { useSearchablePagination, useModulePermissions } from "~/hooks";
 
 const FactoryPaymentPage = () => {
+    const { page, limit, debouncedSearch, handleSearchChange, nextPage, prevPage } = useSearchablePagination();
+
+    const { can_update } = useModulePermissions();
+
+    const {data: factoryPayments, isLoading} = api.factoryPayment.getFactoryPayments.useQuery({
+        limit,
+        offset: page * limit,
+    });
+
+    const factoryPaymentList = factoryPayments?.factoryPayments ?? [];
+    const total = factoryPayments?.total ?? 0;
+
+    const searchQuery = api.factoryPayment.searchFactoryPayments.useQuery(
+        { query: debouncedSearch, limit, offset: page * limit },
+        { enabled: debouncedSearch.length > 0 }
+    );
+
+    const editURL = '/accounting/factory_payment/edit/';
+
     return (
-        <Wrapper heading="Regular Factory Payment">
-            Factory Payment Content
-        </Wrapper>
+        <>
+            <Wrapper
+                heading="Factory Payments"
+                subSectionLeft={
+                    <SearchField
+                        placeholder="Search Factory Payments..."
+                        infoText="FDBC No, Buyer Name, Term and Factory Invoice."
+                        handleSearchChange={handleSearchChange}
+                    />
+                }
+            >
+                <div className="w-full">
+                    <Table
+                        data={searchQuery.data?.factoryPayments && !!debouncedSearch 
+                            ? searchQuery.data.factoryPayments : factoryPaymentList
+                        }
+                        isLoading={isLoading || searchQuery.isLoading}
+                        columns={tableHeaders}
+                        nextPage={nextPage}
+                        prevPage={prevPage}
+                        total={searchQuery.data?.factoryPayments && searchQuery.data.factoryPayments.length > 0 
+                            ? searchQuery.data.total ?? 0 : total
+                        }
+                        page={page}
+                        limit={limit}
+                        editURL={editURL}
+                        allowEdit={can_update}
+                        view={!can_update}
+                    />
+                </div>
+            </Wrapper>
+        </>
     )
 }
 

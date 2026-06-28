@@ -37,9 +37,10 @@ export const useRDLInvoiceForm = (initialData?: GetRdlInvoiceByIdTypes) => {
                 factory_id: detail.factory_id?.toString() ?? undefined,
                 factory_invoice_id: detail?.factory_invoice?.id ?? undefined,
                 factory_invoice_no: detail?.factory_invoice?.invoice_no ?? undefined,
-                details: detail.rdl_invoice_shipment_details?.map((shipment: RDLInvoiceShipments) => ({
+                factoryInvoiceDetails: detail.rdl_invoice_shipment_details?.map((shipment: RDLInvoiceShipments) => ({
                     db_id: shipment.id,
                     shipment_details_id: shipment.shipment_details_id ?? undefined,
+                    factory_invoice_details_id: shipment.factory_invoice_details_id ?? undefined,
                     invoice_quantity: shipment.invoice_quantity ?? undefined,
                 })) ?? [],
             })) ?? [],

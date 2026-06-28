@@ -5,6 +5,7 @@ import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
+import { currencyFormatter } from "~/utils/localNumberStrings";
 
 interface FactoryPayments {
     term_name: string;
@@ -23,6 +24,20 @@ interface FactoryPaymentResult extends FactoryPayments {
 
 interface FactoryPaymentDetailsById extends FactoryPayments {
     remarks: string | null;
+}
+
+interface FactoryPaymentDetails {
+    db_id: string;
+    factory_name: string;
+    factory_invoice_no: string;
+    fdbc_no: string;
+    factory_invoice_date: Date;
+    invoice_quantity: number;
+    invoice_value: number;
+    paid_amount: number | null;
+    payment_date: Date | null;
+    is_cross_paid: boolean | null;
+    factory_payment_no: string | null;
 }
 
 export const factoryPaymentRouter = createTRPCRouter({
@@ -104,8 +119,17 @@ export const factoryPaymentRouter = createTRPCRouter({
                     OFFSET ${input.offset};
                 `;
 
-                const total = results.length > 0 ? Number(results[0]?.total_count) : 0;
-                const factoryPayments = results.map(({ total_count: _, ...payments}) => payments);
+                const total: number = results.length > 0 ? Number(results[0]?.total_count) : 0;
+                const factoryPayments = results.map(({total_count: _, ...payments}) => ({
+                    term_name: payments.term_name,
+                    fdbc_no: payments.fdbc_no,
+                    realization_date: payments.realization_date,
+                    factory_paid_amount: currencyFormatter(payments.factory_paid_amount, '$'),
+                    rdl_invoice_value: currencyFormatter(payments.rdl_invoice_value, '$'),
+                    realized_amount: currencyFormatter(payments.realized_amount, '$'),
+                    paid_count: payments.paid_count,
+                    pending_count: payments.pending_count,
+                }));
 
                 return { factoryPayments, total };
             }
@@ -208,8 +232,17 @@ export const factoryPaymentRouter = createTRPCRouter({
                     OFFSET ${input.offset};
                 `;
 
-                const total = results.length > 0 ? Number(results[0]?.total_count) : 0;
-                const factoryPayments = results.map(({total_count: _, ...payments}) => payments);
+                const total: number = results.length > 0 ? Number(results[0]?.total_count) : 0;
+                const factoryPayments = results.map(({total_count: _, ...payments}) => ({
+                    term_name: payments.term_name,
+                    fdbc_no: payments.fdbc_no,
+                    realization_date: payments.realization_date,
+                    factory_paid_amount: currencyFormatter(payments.factory_paid_amount, '$'),
+                    rdl_invoice_value: currencyFormatter(payments.rdl_invoice_value, '$'),
+                    realized_amount: currencyFormatter(payments.realized_amount, '$'),
+                    paid_count: payments.paid_count,
+                    pending_count: payments.pending_count,
+                }));
 
                 return { factoryPayments, total };
             }
@@ -253,82 +286,73 @@ export const factoryPaymentRouter = createTRPCRouter({
                         PR.REALIZED_AMOUNT,
                         COALESCE(SUM(FP.PAID_AMOUNT), 0) AS FACTORY_PAID_AMOUNT,
                         FPH.REMARKS
-                    FROM proceed_realization AS PR 
-                        INNER JOIN document_submissions AS DS ON DS.id = PR.document_submission_id
+                    FROM document_submissions AS DS
                         INNER JOIN RDL_INVOICE_IN_DOCUMENT_SUBMISSIONS AS RIDS ON RIDS.DSDID = DS.id
-                        INNER JOIN terms AS T ON T.id = PR.term_id
+                        INNER JOIN terms AS T ON T.id = DS.term_id
                         INNER JOIN BUYERS AS B ON B.id = DS.buyer_id
+                        LEFT JOIN proceed_realization AS PR ON DS.id = PR.document_submission_id
                         LEFT JOIN factory_payments AS FP ON FP.document_submission_id = DS.id
                         LEFT JOIN factory_payment_header AS FPH ON FPH.document_submission_id = DS.id
                     WHERE (
                         EXISTS (
                             SELECT 1
                             FROM USERS AS U
-                            WHERE U.ID = '79dcca24-d57b-43ea-870e-904a6b00b09a'
-                                AND U.DEPARTMENT_ID = 5
-                                AND U.LEVEL_ID = 5
+                            WHERE U.ID = ${ctx.user.id}
+                                AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
+                                AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
                         )
                         OR EXISTS (
                             SELECT 1
                             FROM TEAM_MEMBERS AS TM 
                                 INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
                             WHERE T.BUYER_ID = B.ID
-                                AND TM.USER_ID = '79dcca24-d57b-43ea-870e-904a6b00b09a'
+                                AND TM.USER_ID = ${ctx.user.id}
                         )
                     )
-                    AND PR.ID = '24111e04-3f7d-40a3-802f-14ef98a3e72a'
+                    AND DS.ID = ${input.id}
                     GROUP BY PR.ID, DS.ID, RIDS.TOTAL_INVOICE_VALUE, T.ID, FPH.ID;
                 `;
 
-                const factoryPaymentsObj = await ctx.db.factory_payments.findMany({
-                    where: {
-                        document_submission_id: input.id,
-                    },
-                    select: {
-                        id: true,
-                        factory_invoice: {
-                            select: {
-                                invoice_no: true,
-                                invoice_date: true,
-                                factories: {
-                                    select: {
-                                        name: true,
-                                    }
-                                }
-                            }
-                        },
-                        document_submissions: {
-                            select: {
-                                fdbc_no: true,
-                            }
-                        },
-                        payment_date: true,
-                        paid_amount: true,
-                        factory_payment_no: true,
-                    }
-                });
+                const factoryPayments = await ctx.db.$queryRaw<FactoryPaymentDetails[]>`
+                    WITH FOB_RATE AS (
+                        SELECT
+                            RISD.rdl_invoice_details_id AS RIDI,
+                            RISD.invoice_quantity AS QUANTITY,
+                            CASE 
+                                WHEN FSD.TRANSFER_RATE <> 0
+                                    THEN RISD.invoice_quantity * FSD.TRANSFER_RATE
+                                ELSE RISD.invoice_quantity * FSD.FACTORY_RATE
+                            END AS VALUE
+                        FROM rdl_invoice_shipment_details AS RISD
+                        INNER JOIN factory_invoice_details AS FID ON FID.id = RISD.factory_invoice_details_id
+                        INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = RISD.shipment_details_id
+                    )
+                    SELECT 
+                        FP.ID AS DB_ID,
+                        F.NAME AS FACTORY_NAME,
+                        FI.ID AS FACTORY_INVOICE_ID,
+                        FI.INVOICE_NO AS FACTORY_INVOICE_NO,
+                        DS.FDBC_NO,
+                        FI.INVOICE_DATE AS FACTORY_INVOICE_DATE,
+                        FR.QUANTITY AS INVOICE_QUANTITY,
+                        FR.VALUE AS INVOICE_VALUE,
+                        COALESCE(FP.PAID_AMOUNT, 0) AS PAID_AMOUNT,
+                        FP.PAYMENT_DATE AS PAYMENT_DATE,
+                        COALESCE(FP.is_cross_paid, FALSE) AS is_cross_paid,
+                        FP.factory_payment_no
+                    FROM document_submissions AS DS 
+                        INNER JOIN document_submissions_details AS DSD ON DSD.document_submissions_id = DS.id
+                        INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = DSD.rdl_invoice_id
+                        INNER JOIN FOB_RATE AS FR ON FR.RIDI = RID.id
+                        INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
+                        INNER JOIN factories AS F ON F.id = FI.factory_id
+                        LEFT JOIN factory_payments AS FP ON FP.document_submission_id = DS.id AND FP.factory_invoice_id = FI.id
+                    WHERE DS.ID = ${input.id};
+                `;
 
-                const factoryPaymentsDetails = factoryPaymentsObj.map((payment) => ({
-                    db_id: payment.id,
-                    factory_name: payment.factory_invoice?.factories?.name ?? undefined,
-                    factory_invoice_date: payment.factory_invoice?.invoice_date ?? undefined,
-                    factory_invoice_no: payment.factory_invoice?.invoice_no ?? undefined,
-                    fdbc_no: payment.document_submissions?.fdbc_no ?? undefined,
-                    payment_date: payment.payment_date ?? undefined,
-                    paid_amount: payment.paid_amount ?? undefined,
-                    factory_payment_no: payment.factory_payment_no ?? undefined,
-                }));
+                const factoryPaymentHeader = result[0];
 
-                if (result.length === 0) {
-                    throw new TRPCError({
-                        code: "NOT_FOUND",
-                        message: "Factory payment not found.",
-                    });
-                }
-
-                const factoryPayment = result[0];
-
-                return {factoryPayment, factoryPaymentsDetails};
+                return {factoryPaymentHeader, factoryPayments};
             }
             catch (error) {
                 handlePrismaError(error);

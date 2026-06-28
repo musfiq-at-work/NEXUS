@@ -53,7 +53,6 @@ const ShipmentDetails = (props: props) => {
                 );
 
                 return {
-                    db_id: existing?.db_id,
                     order_no: shipmentDetail.order_no ?? undefined,
                     style: shipmentDetail.styles ?? undefined,
                     po: shipmentDetail.po ?? undefined,
@@ -62,15 +61,20 @@ const ShipmentDetails = (props: props) => {
                     destination_port: shipmentDetail.destination ?? undefined,
                     previous_quantity: shipmentDetail.previous_quantity ?? 0,
                     factory_invoice_details_id: shipmentDetail?.id,
-
+                    invoice_fob: shipmentDetail.fob_rate?.toFixed(2) ?? undefined,
+                    
                     // preserve existing values loaded from initialData
+                    db_id: existing?.db_id,
                     invoice_quantity: existing?.invoice_quantity,
                     invoice_value: existing?.invoice_value,
-                    invoice_fob: shipmentDetail.fob_rate?.toFixed(2) ?? undefined,
                 };
             })
         );
     }, [shipmentDetails.data, replaceShipments, methods, invoiceIndex]);
+
+    useEffect(() => {
+        console.log("Shipment details data updated:", shipmentDetails.data);
+    }, [shipmentDetails.data]);
 
     const ShipmentHeading = () => (
         <div className="flex flex-row items-center gap-4">

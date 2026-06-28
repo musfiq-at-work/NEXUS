@@ -19,7 +19,7 @@ export type FactoryPaymentDetailsFormValues = z.infer<typeof FactoryPaymentDetai
 export const FactoryPaymentFormSchema = z.object({
     db_id: z.string().optional(),
     term_name: z.string().optional(),
-    fdbc_no: z.number().optional(),
+    fdbc_no: z.string().optional(),
     realization_date: z.string().optional(),
     rdl_invoice_value: z.string().optional(),
     realized_amount: z.string().optional(),

@@ -383,6 +383,8 @@ export const rdlInvoiceRouter = createTRPCRouter({
                     })) ?? [],
                 };
 
+                console.log("Fetched RDL Invoice by ID:", result);
+
                 return result;
             }
             catch (error) {
@@ -891,6 +893,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                     db_id: z.string().optional(),
                     shipment_details_id: z.string(),
                     invoice_quantity: z.number(),
+                    factory_invoice_details_id: z.string(),
                 })),
             }))
         }))
@@ -957,6 +960,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                                                 rdl_invoice_details_id: newDetail.id,
                                                 shipment_details_id: shipment.shipment_details_id,
                                                 invoice_quantity: shipment.invoice_quantity,
+                                                factory_invoice_details_id: shipment.factory_invoice_details_id,
                                             },
                                         });
                                         tx.rdl_invoice_shipment_details_history.create({
@@ -964,6 +968,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                                                 rdl_invoice_details_id: newShipment.rdl_invoice_details_id,
                                                 shipment_details_id: newShipment.shipment_details_id,
                                                 invoice_quantity: newShipment.invoice_quantity,
+                                                factory_invoice_details_id: newShipment.factory_invoice_details_id,
                                                 action_type: actions.ADDED,
                                                 action_by: ctx.user.id,
                                             },
@@ -993,6 +998,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                                                     rdl_invoice_details_id: detail.db_id,
                                                     shipment_details_id: shipment.shipment_details_id,
                                                     invoice_quantity: shipment.invoice_quantity,
+                                                    factory_invoice_details_id: shipment.factory_invoice_details_id,
                                                 },
                                             });
                                             tx.rdl_invoice_shipment_details_history.create({
@@ -1000,6 +1006,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                                                     rdl_invoice_details_id: newShipment.rdl_invoice_details_id,
                                                     shipment_details_id: newShipment.shipment_details_id,
                                                     invoice_quantity: newShipment.invoice_quantity,
+                                                    factory_invoice_details_id: newShipment.factory_invoice_details_id, 
                                                     action_type: actions.ADDED,
                                                     action_by: ctx.user.id,
                                                 },
