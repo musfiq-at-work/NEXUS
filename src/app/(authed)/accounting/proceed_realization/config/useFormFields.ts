@@ -89,12 +89,6 @@ export const useFormFields = ({documentSubmissions, isEdit, buyer_id}: PropsType
             optional: true,
         },
         {
-            name: "realized_amount",
-            label: "Realized Amount",
-            type: "number",
-            placeholder: "Enter realized amount",
-        },
-        {
             name: "invoice_value",
             label: "Invoice Value",
             placeholder: "Enter Invoice Value",

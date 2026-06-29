@@ -1,7 +1,7 @@
 'use client';
 
 import { Button, Form, Wrapper } from "~/components";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { api } from "~/trpc/react";
 import { toast } from 'sonner';
 import { parseTRPCError } from "~/utils/parseTRPCError";
@@ -45,6 +45,10 @@ const EditFactoryPaymentPage = ({ params }: ParamsProp) => {
         }
     });
 
+    useEffect(() => {
+        console.log('validationError:', validationError);
+    }, [validationError]);
+
     // Handle form submission for all fields
     const onSubmitAll = useCallback(handleSubmit(async (factoryPaymentData) => {
         try {
@@ -56,7 +60,8 @@ const EditFactoryPaymentPage = ({ params }: ParamsProp) => {
                     db_id: invoice.db_id,
                     factory_invoice_id: invoice.factory_invoice_id,
                     paid_amount: safeNumber(invoice.paid_amount ?? 0),
-                    payment_date: invoice.payment_date ? new Date(invoice.payment_date) : undefined,
+                    factory_payment_no: invoice.factory_payment_no,
+                    payment_date: invoice.payment_date ? new Date(invoice.payment_date) : new Date(),
                     is_cross_paid: invoice.is_cross_paid,
                 })) ?? [],
             };
@@ -70,7 +75,7 @@ const EditFactoryPaymentPage = ({ params }: ParamsProp) => {
         }
     }), [updateFactoryPayment, id, handleSubmit]);
 
-    const { fields, append, remove } = useFieldArray({
+    const { fields } = useFieldArray({
         control,
         name: "details",
     });
@@ -87,12 +92,6 @@ const EditFactoryPaymentPage = ({ params }: ParamsProp) => {
                 control={control}
                 disabled={!can_update}
             />
-
-            {/* <RdlInvoiceDetails 
-                methods={methods}
-                validationError={validationError}
-                disabled={isLoading}
-            /> */}
 
             <TableForm 
                 name='details'

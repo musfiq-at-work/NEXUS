@@ -48,9 +48,10 @@ export const proceedRealizationRouter = createTRPCRouter({
                             DS.fdbc_no,
                             T.NAME AS TERM_NAME,
                             PR.REALIZATION_DATE,
-                            PR.REALIZED_AMOUNT,
+                            SUM(PRD.REALIZED_AMOUNT)::NUMERIC(18,2) AS REALIZED_AMOUNT,
                             PR.ADDED_AT
                         FROM proceed_realization AS PR
+                            INNER JOIN proceed_realization_details AS PRD ON PRD.realization_id = PR.id
                             INNER JOIN document_submissions AS DS ON DS.id = PR.document_submission_id
                             INNER JOIN buyers AS B ON B.id = PR.buyer_id
                             INNER JOIN terms AS T ON T.id = PR.term_id
@@ -70,6 +71,7 @@ export const proceedRealizationRouter = createTRPCRouter({
                                     AND TM.USER_ID = ${ctx.user.id}
                             )
                         )
+                        GROUP BY PR.ID, B.ID, T.ID, DS.ID
                     )
                     SELECT *,
                         COUNT(*) OVER() AS TOTAL_COUNT
@@ -114,9 +116,10 @@ export const proceedRealizationRouter = createTRPCRouter({
                             DS.fdbc_no,
                             T.NAME AS TERM_NAME,
                             PR.REALIZATION_DATE,
-                            PR.REALIZED_AMOUNT,
+                            SUM(PRD.REALIZED_AMOUNT)::NUMERIC(18,2) AS REALIZED_AMOUNT,
                             PR.ADDED_AT
                         FROM proceed_realization AS PR
+                            INNER JOIN proceed_realization_details AS PRD ON PRD.realization_id = PR.id
                             INNER JOIN document_submissions AS DS ON DS.id = PR.document_submission_id
                             INNER JOIN buyers AS B ON B.id = PR.buyer_id
                             INNER JOIN terms AS T ON T.id = PR.term_id
@@ -137,6 +140,7 @@ export const proceedRealizationRouter = createTRPCRouter({
                                 WHERE T.BUYER_ID = B.ID
                                     AND TM.USER_ID = ${ctx.user.id}
                             )
+                            GROUP BY PR.ID, B.ID, T.ID, DS.ID
                         )
                         AND (
                             B.buyer_name ILIKE '%' || ${input.query} || '%'
@@ -214,7 +218,6 @@ export const proceedRealizationRouter = createTRPCRouter({
                             document_submission_id: deletedRealization.document_submission_id,
                             term_id: deletedRealization.term_id,
                             realization_date: deletedRealization.realization_date,
-                            realized_amount: deletedRealization.realized_amount,
                             action_type: actions.DELETE,
                             action_by: ctx.user.id,
                         },
@@ -266,7 +269,6 @@ export const proceedRealizationRouter = createTRPCRouter({
             document_submission_id: z.string(),
             term_id: z.number(),
             realization_date: z.date(),
-            realized_amount: z.number(),
             bank_charge: z.number().optional(),
             document_charge: z.number().optional(),
             discount_charge: z.number().optional(),
@@ -286,14 +288,13 @@ export const proceedRealizationRouter = createTRPCRouter({
                     });
                 }
 
-                await ctx.db.$transaction(async (tx) => {
+                return await ctx.db.$transaction(async (tx) => {
                     const newProceedRealization = await tx.proceed_realization.create({
                         data: {
                             buyer_id: input.buyer_id,
                             document_submission_id: input.document_submission_id,
                             term_id: input.term_id,
                             realization_date: input.realization_date,
-                            realized_amount: input.realized_amount,
                         },
                     });
 
@@ -304,7 +305,6 @@ export const proceedRealizationRouter = createTRPCRouter({
                             document_submission_id: newProceedRealization.document_submission_id,
                             term_id: newProceedRealization.term_id,
                             realization_date: newProceedRealization.realization_date,
-                            realized_amount: newProceedRealization.realized_amount,
                             action_type: actions.ADDED,
                             action_by: ctx.user.id,
                         },
@@ -382,7 +382,6 @@ export const proceedRealizationRouter = createTRPCRouter({
                         },
                         term_id: true,
                         realization_date: true,
-                        realized_amount: true,
                         bank_charge: true,
                         document_charge: true,
                         discount_charge: true,
@@ -421,7 +420,7 @@ export const proceedRealizationRouter = createTRPCRouter({
                     SELECT
                         RI.id AS rdl_invoice_id,
                         RI.invoice_no AS rdl_invoice_no,
-                        RD.TOTAL_VALUE AS invoice_value
+                        RD.TOTAL_VALUE::NUMERIC(18,2) AS invoice_value
                     FROM document_submissions AS DS
                         INNER JOIN document_submissions_details AS DSD ON DSD.document_submissions_id = DS.id
                         INNER JOIN rdl_invoice AS RI ON RI.id = DSD.rdl_invoice_id
@@ -438,7 +437,6 @@ export const proceedRealizationRouter = createTRPCRouter({
                         ?? proceedRealizationObj.document_submissions.lc_master?.lc_no ?? '',
                     term_id: proceedRealizationObj.term_id,
                     realization_date: proceedRealizationObj.realization_date,
-                    realized_amount: proceedRealizationObj.realized_amount,
                     bank_charge: proceedRealizationObj.bank_charge,
                     document_charge: proceedRealizationObj.document_charge,
                     discount_charge: proceedRealizationObj.discount_charge,
@@ -492,7 +490,7 @@ export const proceedRealizationRouter = createTRPCRouter({
                     SELECT
                         RI.id AS rdl_invoice_id,
                         RI.invoice_no AS rdl_invoice_no,
-                        RD.TOTAL_VALUE AS invoice_value
+                        RD.TOTAL_VALUE::NUMERIC(18,2) AS invoice_value
                     FROM document_submissions AS DS
                         INNER JOIN document_submissions_details AS DSD ON DSD.document_submissions_id = DS.id
                         INNER JOIN rdl_invoice AS RI ON RI.id = DSD.rdl_invoice_id
@@ -511,7 +509,6 @@ export const proceedRealizationRouter = createTRPCRouter({
         .input(z.object({
             id: z.string(),
             realization_date: z.date(),
-            realized_amount: z.number(),
             bank_charge: z.number().optional(),
             document_charge: z.number().optional(),
             discount_charge: z.number().optional(),
@@ -539,7 +536,6 @@ export const proceedRealizationRouter = createTRPCRouter({
                         },
                         data: {
                             realization_date: input.realization_date,
-                            realized_amount: input.realized_amount,
                             bank_charge: input.bank_charge,
                             document_charge: input.document_charge,
                             discount_charge: input.discount_charge,
@@ -553,7 +549,6 @@ export const proceedRealizationRouter = createTRPCRouter({
                             document_submission_id: updatedProceedRealization.document_submission_id,
                             term_id: updatedProceedRealization.term_id,
                             realization_date: updatedProceedRealization.realization_date,
-                            realized_amount: updatedProceedRealization.realized_amount,
                             bank_charge: updatedProceedRealization.bank_charge,
                             document_charge: updatedProceedRealization.document_charge,
                             discount_charge: updatedProceedRealization.discount_charge,

@@ -74,11 +74,18 @@ export const factoryPaymentRouter = createTRPCRouter({
                     FACTORY_INVOICE_COUNT AS (
                         SELECT
                             DSD.DOCUMENT_SUBMISSIONS_ID,
-                            COUNT(DSFI.FACTORY_INVOICE_ID) AS TOTAL_INVOICE_COUNT
+                            COUNT(DISTINCT DSFI.FACTORY_INVOICE_ID) AS TOTAL_INVOICE_COUNT
                         FROM document_submissions_details AS DSD 
                             INNER JOIN document_submission_factory_invoices AS DSFI ON DSFI.document_submissions_details_id = DSD.id
                         GROUP BY DSD.DOCUMENT_SUBMISSIONS_ID
                     ),
+                    TOTAL_REALIZATION AS (
+						SELECT
+							PRD.realization_id AS PRD_ID,
+							SUM(PRD.REALIZED_AMOUNT)::NUMERIC(18,2) AS REALIZED_AMOUNT
+						FROM proceed_realization_details AS PRD
+						GROUP BY PRD.realization_id
+					),
                     PENDING_FACTORY_PAYMENT AS (
                         SELECT 
                             DS.id AS ID,
@@ -86,11 +93,12 @@ export const factoryPaymentRouter = createTRPCRouter({
                             DS.FDBC_NO,
                             PR.REALIZATION_DATE,
                             RIDS.TOTAL_INVOICE_VALUE AS RDL_INVOICE_VALUE,
-                            PR.REALIZED_AMOUNT,
+                            TR.REALIZED_AMOUNT,
                             COALESCE(SUM(FP.PAID_AMOUNT), 0) AS FACTORY_PAID_AMOUNT,
                             COALESCE(COUNT(FP.ID), 0) AS PAID_COUNT,
                             COALESCE(FIC.TOTAL_INVOICE_COUNT, 0) - COALESCE(COUNT(FP.ID), 0) AS PENDING_COUNT
                         FROM proceed_realization AS PR 
+                            INNER JOIN TOTAL_REALIZATION AS TR ON TR.PRD_ID = PR.ID
                             INNER JOIN document_submissions AS DS ON DS.id = PR.document_submission_id
                             INNER JOIN RDL_INVOICE_IN_DOCUMENT_SUBMISSIONS AS RIDS ON RIDS.DSDID = DS.id
                             INNER JOIN terms AS T ON T.id = PR.term_id
@@ -112,7 +120,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                                     AND TM.USER_ID = ${ctx.user.id}
                             )
                         )
-                        GROUP BY PR.ID, DS.ID, RIDS.TOTAL_INVOICE_VALUE, T.ID, FIC.TOTAL_INVOICE_COUNT
+                        GROUP BY PR.ID, DS.ID, RIDS.TOTAL_INVOICE_VALUE, T.ID, FIC.TOTAL_INVOICE_COUNT, TR.REALIZED_AMOUNT
                     )
                     SELECT *,
                         COUNT(*) OVER() AS TOTAL_COUNT
@@ -180,18 +188,26 @@ export const factoryPaymentRouter = createTRPCRouter({
                             INNER JOIN factory_invoice AS FI ON FI.id = DSFI.factory_invoice_id
                         GROUP BY DSD.DOCUMENT_SUBMISSIONS_ID
                     ),
+                    TOTAL_REALIZATION AS (
+						SELECT
+							PRD.realization_id AS PRD_ID,
+							SUM(PRD.REALIZED_AMOUNT)::NUMERIC(18,2) AS REALIZED_AMOUNT
+						FROM proceed_realization_details AS PRD
+						GROUP BY PRD.realization_id
+					),
                     PENDING_FACTORY_PAYMENT AS (
-                        SELECT DISTINCT
+                        SELECT 
                             DS.id AS ID,
                             T.NAME AS TERM_NAME,
                             DS.FDBC_NO,
                             PR.REALIZATION_DATE,
                             RIDS.TOTAL_INVOICE_VALUE AS RDL_INVOICE_VALUE,
-                            PR.REALIZED_AMOUNT,
+                            TR.REALIZED_AMOUNT,
                             COALESCE(SUM(FP.PAID_AMOUNT), 0) AS FACTORY_PAID_AMOUNT,
                             COALESCE(COUNT(FP.ID), 0) AS PAID_COUNT,
                             COALESCE(FIC.TOTAL_INVOICE_COUNT, 0) - COALESCE(COUNT(FP.ID), 0) AS PENDING_COUNT
                         FROM proceed_realization AS PR 
+                            INNER JOIN TOTAL_REALIZATION AS TR ON TR.PRD_ID = PR.ID
                             INNER JOIN document_submissions AS DS ON DS.id = PR.document_submission_id
                             INNER JOIN RDL_INVOICE_IN_DOCUMENT_SUBMISSIONS AS RIDS ON RIDS.DSDID = DS.id
                             INNER JOIN terms AS T ON T.id = PR.term_id
@@ -227,7 +243,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                                     AND FI.invoice_no ILIKE '%' || ${input.query} || '%'
                             )
                         )
-                        GROUP BY PR.ID, DS.ID, RIDS.TOTAL_INVOICE_VALUE, T.ID, FIC.TOTAL_INVOICE_COUNT
+                        GROUP BY PR.ID, DS.ID, RIDS.TOTAL_INVOICE_VALUE, T.ID, FIC.TOTAL_INVOICE_COUNT, TR.REALIZED_AMOUNT
                     )
                     SELECT *,
                         COUNT(*) OVER() AS TOTAL_COUNT
@@ -283,13 +299,20 @@ export const factoryPaymentRouter = createTRPCRouter({
                             INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
                             INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
                         GROUP BY DSD.DOCUMENT_SUBMISSIONS_ID
-                    )
+                    ),
+                    TOTAL_REALIZATION AS (
+						SELECT
+							PRD.realization_id AS PRD_ID,
+							SUM(PRD.REALIZED_AMOUNT)::NUMERIC(18,2) AS REALIZED_AMOUNT
+						FROM proceed_realization_details AS PRD
+						GROUP BY PRD.realization_id
+					)
                     SELECT DISTINCT
                         T.NAME AS TERM_NAME,
                         DS.FDBC_NO,
                         PR.REALIZATION_DATE,
                         RIDS.TOTAL_INVOICE_VALUE AS RDL_INVOICE_VALUE,
-                        PR.REALIZED_AMOUNT,
+                        TR.REALIZED_AMOUNT,
                         COALESCE(SUM(FP.PAID_AMOUNT), 0) AS FACTORY_PAID_AMOUNT,
                         FPH.REMARKS
                     FROM document_submissions AS DS
@@ -297,6 +320,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                         INNER JOIN terms AS T ON T.id = DS.term_id
                         INNER JOIN BUYERS AS B ON B.id = DS.buyer_id
                         LEFT JOIN proceed_realization AS PR ON DS.id = PR.document_submission_id
+                        LEFT JOIN TOTAL_REALIZATION AS TR ON TR.PRD_ID = PR.ID
                         LEFT JOIN factory_payments AS FP ON FP.document_submission_id = DS.id
                         LEFT JOIN factory_payment_header AS FPH ON FPH.document_submission_id = DS.id
                     WHERE (
@@ -316,7 +340,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                         )
                     )
                     AND DS.ID = ${input.id}
-                    GROUP BY PR.ID, DS.ID, RIDS.TOTAL_INVOICE_VALUE, T.ID, FPH.ID;
+                    GROUP BY PR.ID, DS.ID, RIDS.TOTAL_INVOICE_VALUE, T.ID, FPH.ID, TR.REALIZED_AMOUNT;
                 `;
 
                 const factoryPayments = await ctx.db.$queryRaw<FactoryPaymentDetails[]>`
@@ -340,9 +364,9 @@ export const factoryPaymentRouter = createTRPCRouter({
                         FI.INVOICE_NO AS FACTORY_INVOICE_NO,
                         DS.FDBC_NO,
                         FI.INVOICE_DATE AS FACTORY_INVOICE_DATE,
-                        FR.QUANTITY AS INVOICE_QUANTITY,
-                        FR.VALUE AS INVOICE_VALUE,
-                        COALESCE(FP.PAID_AMOUNT, 0) AS PAID_AMOUNT,
+                        SUM(FR.QUANTITY)::NUMERIC(18, 2) AS INVOICE_QUANTITY,
+                        SUM(FR.VALUE)::NUMERIC(18, 2) AS INVOICE_VALUE,
+                        COALESCE(FP.PAID_AMOUNT, 0)::NUMERIC(18, 2) AS PAID_AMOUNT,
                         FP.PAYMENT_DATE AS PAYMENT_DATE,
                         COALESCE(FP.is_cross_paid, FALSE) AS is_cross_paid,
                         FP.factory_payment_no
@@ -353,7 +377,8 @@ export const factoryPaymentRouter = createTRPCRouter({
                         INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
                         INNER JOIN factories AS F ON F.id = FI.factory_id
                         LEFT JOIN factory_payments AS FP ON FP.document_submission_id = DS.id AND FP.factory_invoice_id = FI.id
-                    WHERE DS.ID = ${input.id};
+                    WHERE DS.ID = ${input.id}
+                    GROUP BY FI.ID, FP.ID, F.ID, DS.ID;
                 `;
 
                 const factoryPaymentHeader = result[0];
@@ -373,6 +398,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                 factory_invoice_id: z.string(),
                 paid_amount: z.number().optional(),
                 payment_date: z.date().optional(),
+                factory_payment_no: z.string().optional(),
                 is_cross_paid: z.boolean().optional(),
             })).optional(),
         }))
@@ -387,6 +413,45 @@ export const factoryPaymentRouter = createTRPCRouter({
                     });
                 }
 
+                console.log("Updating Factory Payment with input:", input);
+
+                await ctx.db.$transaction(async (tx) => {
+                    for (const factoryInvoice of input.factoryInvoices ?? []) {
+                        if (factoryInvoice.db_id) {
+                            await tx.factory_payments.upsert({
+                                where: {
+                                    id: factoryInvoice.db_id,
+                                },
+                                update: {
+                                    paid_amount: factoryInvoice.paid_amount ?? null,
+                                    payment_date: factoryInvoice.payment_date ?? null,
+                                    is_cross_paid: factoryInvoice.is_cross_paid ?? null,
+                                    factory_payment_no: factoryInvoice.factory_payment_no ?? null,
+                                },
+                                create: {
+                                    id: factoryInvoice.db_id,
+                                    document_submission_id: input.db_id,
+                                    factory_invoice_id: factoryInvoice.factory_invoice_id,
+                                    paid_amount: factoryInvoice.paid_amount ?? null,
+                                    payment_date: factoryInvoice.payment_date ?? null,
+                                    is_cross_paid: factoryInvoice.is_cross_paid ?? null,
+                                    factory_payment_no: factoryInvoice.factory_payment_no ?? null,
+                                },
+                            });
+                        } else {
+                            await tx.factory_payments.create({
+                                data: {
+                                    document_submission_id: input.db_id,
+                                    factory_invoice_id: factoryInvoice.factory_invoice_id,
+                                    paid_amount: factoryInvoice.paid_amount ?? null,
+                                    payment_date: factoryInvoice.payment_date ?? null,
+                                    is_cross_paid: factoryInvoice.is_cross_paid ?? null,
+                                    factory_payment_no: factoryInvoice.factory_payment_no ?? null,
+                                },
+                            });
+                        }
+                    }
+                });
             }
             catch (error) {
                 handlePrismaError(error);

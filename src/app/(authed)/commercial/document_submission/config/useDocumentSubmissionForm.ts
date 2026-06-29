@@ -42,6 +42,7 @@ export const useDocumentSubmissionForm = (initialData?: GetDocumentSubmissionByI
                 received_rdl_value: detail.received_value ? detail.received_value : undefined,
                 factoryInvoices: detail.factoryInvoices?.map((factoryInvoice: FactoryInvoiceShipments) => ({
                     db_id: factoryInvoice.db_id,
+                    factory_invoice_id: factoryInvoice.factory_invoice_id?.toString(),
                     factory_invoice_no: factoryInvoice.factory_invoice_no ?? undefined,
                     factory_fdbc_no: factoryInvoice.factory_fdbc_no ?? undefined,
                     rdl_invoice_details_id: factoryInvoice.rdl_invoice_details_id ?? undefined,

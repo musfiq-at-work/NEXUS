@@ -18,7 +18,7 @@ const RDLInvoicePDF = ({ data }: { data: GetPDFDataOutput }) => {
 		{ key: 'brand', label: 'Brand', width: 250},
 		{ key: 'buyer_po', label: 'Order/PO No', width: 250},
 		{ key: 'style', label: 'Style No', width: 250},
-		{ key: 'delivery_quantity', label: 'Quantity', width: 110 },
+		{ key: 'invoice_quantity', label: 'Quantity', width: 110 },
 		{ key: 'unit_price', label: 'Unit Cost', width: 110 },
 		{ key: 'total_price', label: 'Total Cost', width: 110 },
 	]

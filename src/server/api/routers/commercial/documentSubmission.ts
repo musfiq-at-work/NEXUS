@@ -122,7 +122,7 @@ export const documentSubmissionRouter = createTRPCRouter({
 
                 const result = await ctx.db.$queryRaw<DocumentSubmissions[]>`
                     WITH DOCUMENTS AS (
-                        SELECT
+                        SELECT DISTINCT
                             DS.ID,
                             T.NAME AS TERM,
                             B.BUYER_NAME,
@@ -131,6 +131,10 @@ export const documentSubmissionRouter = createTRPCRouter({
                             DS.SUBMISSION_DATE,
                             DS.ADDED_AT
                         FROM DOCUMENT_SUBMISSIONS AS DS
+                            LEFT JOIN document_submissions_details AS DSD ON DSD.document_submissions_id = DS.id
+                            LEFT JOIN document_submission_factory_invoices AS DSFI ON DSFI.document_submissions_details_id = DSD.id
+                            LEFT JOIN rdl_invoice AS RI ON RI.id = DSD.rdl_invoice_id
+                            LEFT JOIN factory_invoice AS FI ON FI.id = DSFI.factory_invoice_id
                             INNER JOIN TERMS AS T ON DS.term_id = T.id
                             INNER JOIN BUYERS AS B ON B.id = DS.buyer_id
                         WHERE (
@@ -153,6 +157,8 @@ export const documentSubmissionRouter = createTRPCRouter({
                             T.NAME ILIKE '%' || ${input.query} || '%'
                             OR B.BUYER_NAME ILIKE '%' || ${input.query} || '%'
                             OR DS.FDBC_NO ILIKE '%' || ${input.query} || '%'
+                            OR RI.INVOICE_NO ILIKE '%' || ${input.query} || '%'
+		                    OR FI.INVOICE_NO ILIKE '%' || ${input.query} || '%'
                         )
                     )
                     SELECT *,
@@ -679,26 +685,34 @@ export const documentSubmissionRouter = createTRPCRouter({
                 }
 
                 const result = await ctx.db.$queryRaw<FactoryInvoiceDetails[]>`
-                    SELECT 
-                        RISD.id AS risdid,
-                        F.NAME AS FACTORY_NAME,
-                        FI.ID AS FACTORY_INVOICE_ID,
-                        FI.INVOICE_NO AS FACTORY_INVOICE_NO,
-                        FI.INVOICE_DATE AS INVOICE_DATE,
-                        CASE
+                    WITH FACTORY_INVOICE_CALC AS (
+                        SELECT
+                            RISD.rdl_invoice_details_id AS RIDI,
+                            CASE
                             WHEN COALESCE(FSD.TRANSFER_RATE, 0) <> 0	
                                 THEN FSD.TRANSFER_RATE * RISD.INVOICE_QUANTITY
                             ELSE FSD.FACTORY_RATE * RISD.INVOICE_QUANTITY
                         END AS FACTORY_INVOICE_VALUE,
                         RISD.INVOICE_QUANTITY AS QUANTITY
+                        FROM rdl_invoice_shipment_details AS RISD
+                        INNER JOIN SHIPMENT_DETAILS AS SD ON SD.id = RISD.shipment_details_id
+                        INNER JOIN FACTORY_SHIPMENT_DETAILS AS FSD ON FSD.shipment_detail_id = SD.id
+                    )
+                    SELECT 
+                        FI.ID AS risdid,
+                        F.NAME AS FACTORY_NAME,
+                        FI.ID AS FACTORY_INVOICE_ID,
+                        FI.INVOICE_NO AS FACTORY_INVOICE_NO,
+                        FI.INVOICE_DATE AS INVOICE_DATE,
+                        SUM(FIC.FACTORY_INVOICE_VALUE) AS FACTORY_INVOICE_VALUE,
+                        SUM(FIC.QUANTITY) AS QUANTITY
                     FROM rdl_invoice AS RI
                         INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
                         INNER JOIN FACTORY_INVOICE AS FI ON FI.id = RID.factory_invoice_id
                         INNER JOIN factories AS F ON F.id = FI.factory_id
-                        INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
-                        INNER JOIN SHIPMENT_DETAILS AS SD ON SD.id = RISD.shipment_details_id
-                        INNER JOIN FACTORY_SHIPMENT_DETAILS AS FSD ON FSD.shipment_detail_id = SD.id
-                    WHERE RI.ID = ${input.rdl_invoice_id};
+                        INNER JOIN FACTORY_INVOICE_CALC AS FIC ON FIC.RIDI = RID.id
+                    WHERE RI.ID = ${input.rdl_invoice_id}
+                    GROUP BY F.ID, FI.ID;
                 `;
 
                 const factoryInvoices = result.map(item => ({

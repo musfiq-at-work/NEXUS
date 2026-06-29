@@ -26,12 +26,11 @@ export const useProceedRealizationForm = (initialData?: GetProceedRealizationByI
             bank_charge: initialData.bank_charge ?? undefined,
             document_charge: initialData.document_charge ?? undefined,
             discount_charge: initialData.discount_charge ?? undefined,
-            realized_amount: initialData.realized_amount ?? undefined,
             details: initialData.details?.map((detail: RDLInvoiceTypes) => ({
                 db_id: detail.db_id,
                 rdl_invoice_id: detail.rdl_invoice_id ?? undefined,
                 rdl_invoice_no: detail.rdl_invoice_no ?? undefined,
-                invoice_value: detail.realized_amount ?? undefined,
+                invoice_value: detail.realized_amount != null ? detail.realized_amount.toFixed(2) : undefined,
                 proceed_value: detail.proceed_value ?? undefined,
             })) ?? [],
         } : undefined;
@@ -49,7 +48,6 @@ export const useProceedRealizationForm = (initialData?: GetProceedRealizationByI
             bank_charge: undefined,
             discount_charge: undefined,
             document_charge: undefined,
-            realized_amount: undefined,
             details: [],
         },
     });

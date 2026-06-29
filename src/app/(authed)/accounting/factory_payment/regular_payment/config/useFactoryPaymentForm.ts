@@ -4,14 +4,13 @@ import { useEffect, useMemo } from "react";
 import { FactoryPaymentFormSchema } from "./formSchema";
 import type { FactoryPaymentFormValues } from "./formSchema";
 import { useFormFields } from "./useFormFields";
-import { formatDate, formatDateForInput } from "~/utils/localDateString";
+import { formatDateForInput } from "~/utils/localDateString";
 import type { GetFactoryPaymentByIdTypes } from "~/types/accountingAPITypes";
+import { safeNumber } from "~/utils/numbers";
 
 type FactoryInvoiceTypes = NonNullable<GetFactoryPaymentByIdTypes>['factoryPayments'][number];
 
 export const useFactoryPaymentForm = (initialData?: GetFactoryPaymentByIdTypes) => {
-    console.log("Initial Data in useFactoryPaymentForm:", initialData);
-
     const transformedInitialData = useMemo(() => {
         return initialData?.factoryPaymentHeader ? {
             term_name: initialData.factoryPaymentHeader.term_name,
@@ -20,22 +19,23 @@ export const useFactoryPaymentForm = (initialData?: GetFactoryPaymentByIdTypes) 
                 ? formatDateForInput(initialData.factoryPaymentHeader.realization_date) 
                 : undefined,
             rdl_invoice_value: initialData.factoryPaymentHeader.rdl_invoice_value ?? undefined,
-            realized_amount: initialData.factoryPaymentHeader.realized_amount?.toFixed(2) ?? undefined,
+            realized_amount: safeNumber(initialData.factoryPaymentHeader.realized_amount)?.toFixed(2) ?? undefined,
             factory_paid_amount: initialData.factoryPaymentHeader.factory_paid_amount?.toFixed(2) ?? undefined,
             remarks: initialData.factoryPaymentHeader.remarks ?? undefined,
             details: initialData.factoryPayments?.map((detail: FactoryInvoiceTypes) => ({
-                db_id: detail.db_id,
+                db_id: detail.db_id ?? undefined,
                 factory_name: detail.factory_name ?? undefined,
                 factory_invoice_no: detail.factory_invoice_no ?? undefined,
+                factory_invoice_id: detail.factory_invoice_id ?? undefined,
                 factory_fdbc_no: detail.fdbc_no ?? undefined,
                 invoice_date: detail.factory_invoice_date 
                     ? formatDateForInput(detail.factory_invoice_date) 
                     : undefined,
-                invoice_quantity: detail.invoice_quantity.toFixed(2) ?? undefined,
-                invoice_value: detail.invoice_value.toFixed(2) ?? undefined,
+                invoice_quantity: safeNumber(detail.invoice_quantity)?.toFixed(2) ?? undefined,
+                invoice_value: safeNumber(detail.invoice_value)?.toFixed(2) ?? undefined,
                 paid_amount: detail.paid_amount ?? undefined,
                 factory_payment_no: detail.factory_payment_no ?? undefined,
-                payment_date: detail.payment_date ? formatDate(detail.payment_date) : undefined,
+                payment_date: detail.payment_date ? formatDateForInput(detail.payment_date) : undefined,
             })) ?? [],
         } : undefined;
     }, [initialData]);
@@ -62,13 +62,6 @@ export const useFactoryPaymentForm = (initialData?: GetFactoryPaymentByIdTypes) 
             reset(transformedInitialData);
         }
     }, [transformedInitialData, reset]);
-
-    // const formFields = useFormFields();
-
-    // const totalProceedValue = useWatch({
-    //     control,
-    //     name: 'details',
-    // })?.reduce((acc, detail) => acc + (detail.proceed_value || 0), 0) ?? 0;
 
     return {
         methods,

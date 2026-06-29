@@ -1,7 +1,7 @@
 'use client';
 
 import { Button, Form, Wrapper } from "~/components";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { api } from "~/trpc/react";
 import { toast } from "sonner";
 import { parseTRPCError } from "~/utils/parseTRPCError";
@@ -32,6 +32,10 @@ const NewProceedRealizationPage = () => {
         }
     });
 
+    useEffect(() => {
+        console.log('validationError:', validationError);
+    }, [validationError]);
+
     // Handle form submission for all fields
     const onSubmitAll =  handleSubmit(async (proceedRealizationData) => {
         try {
@@ -44,7 +48,6 @@ const NewProceedRealizationPage = () => {
                 bank_charge: proceedRealizationData.bank_charge ? safeNumber(proceedRealizationData.bank_charge) : undefined,
                 document_charge: proceedRealizationData.document_charge ? safeNumber(proceedRealizationData.document_charge) : undefined,
                 discount_charge: proceedRealizationData.discount_charge ? safeNumber(proceedRealizationData.discount_charge) : undefined,
-                realized_amount: proceedRealizationData.realized_amount ?? 0,
                 rdl_invoice_details: (proceedRealizationData.details ?? []).map((detail) => ({
                     rdl_invoice_id: detail.rdl_invoice_id,
                     proceed_value: safeNumber(detail.proceed_value ?? 0),
@@ -53,6 +56,7 @@ const NewProceedRealizationPage = () => {
 
             console.log("Payload for adding Proceed Realization:", payload);
             const newId = await addProceedRealization.mutateAsync(payload);
+            console.log("New Proceed Realization ID:", newId);
             router.push(`/accounting/proceed_realization/edit/${newId}`);
         }
         catch (error) {

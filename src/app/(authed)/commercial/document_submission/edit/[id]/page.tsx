@@ -67,6 +67,7 @@ const EditDocumentSubmissionPage = ({ params }: ParamsProp) => {
                 })),
             };
 
+            console.log("Payload for updateDocumentSubmission:", payload);
             await updateDocumentSubmission.mutateAsync(payload);
         }
         catch (error) {
@@ -99,14 +100,14 @@ const EditDocumentSubmissionPage = ({ params }: ParamsProp) => {
                 disabled={isLoading || !can_update || hasProceedRealization || isLoadingHasProceedRealization}
             />
 
+            {/* Shipment Portal anchor */}
+            <div id='document_submissions_rdl_invoice_portal'/> 
+            
             <MessageBox 
                 message="This Document Submission has proceed realization and can't be updated or deleted."
                 active={!!hasProceedRealization}
                 type="primary"
             />
-
-            {/* Shipment Portal anchor */}
-            <div id='document_submissions_rdl_invoice_portal'/> 
 
             <div className="w-full flex flex-row justify-end">
                 <Button type="button" 

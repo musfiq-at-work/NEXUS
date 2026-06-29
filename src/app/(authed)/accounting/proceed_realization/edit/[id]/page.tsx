@@ -52,7 +52,6 @@ const EditProceedRealizationPage = ({ params }: ParamsProp) => {
                 bank_charge: proceedRealizationData.bank_charge ? safeNumber(proceedRealizationData.bank_charge) : undefined,
                 document_charge: proceedRealizationData.document_charge ? safeNumber(proceedRealizationData.document_charge) : undefined,
                 discount_charge: proceedRealizationData.discount_charge ? safeNumber(proceedRealizationData.discount_charge) : undefined,
-                realized_amount: proceedRealizationData.realized_amount ?? 0,
                 rdl_invoice_details: (proceedRealizationData.details ?? []).map((detail) => ({
                     db_id: detail.db_id,
                     rdl_invoice_id: detail.rdl_invoice_id,

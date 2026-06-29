@@ -43,13 +43,14 @@ const FactoryInvoiceDetails = (props: props) => {
 
         replaceShipments(
             rdlInvoiceDetails.map((factoryInvoice) => {
+                const factoryInvoiceId = factoryInvoice.factory_invoice_id?.toString();
                 const existing = existingFactoryInvoice.find(
-                    (x) => x.rdl_invoice_details_id === factoryInvoice.risdid
+                    (x) => x.factory_invoice_id === factoryInvoiceId
                 );
 
                 return {
-                    rdl_invoice_details_id: factoryInvoice.risdid ?? existing?.db_id ?? undefined,
-                    factory_invoice_id: factoryInvoice.factory_invoice_id ?? undefined,
+                    rdl_invoice_details_id: existing?.rdl_invoice_details_id ?? factoryInvoiceId ?? undefined,
+                    factory_invoice_id: factoryInvoiceId ?? undefined,
                     factory_name: factoryInvoice.factory_name ?? undefined,
                     factory_invoice_no: factoryInvoice.factory_invoice_no ?? undefined,
                     factory_invoice_date: factoryInvoice.invoice_date 

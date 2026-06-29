@@ -53,7 +53,7 @@ const DocumentSubmissionPage = () => {
                 subSectionLeft={
                     <SearchField
                         placeholder="Search Document Submissions..."
-                        infoText="Document Submission No, Buyer Name, Order Reference, Style No, Po no."
+                        infoText="Document Submission No, Buyer Name, Payment Term, RDL Invoice No, Factory Invoice No"
                         handleSearchChange={handleSearchChange}
                     />
                 }

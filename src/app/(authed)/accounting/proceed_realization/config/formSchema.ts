@@ -4,7 +4,7 @@ export const RDLInvoiceDetails = z.object({
     db_id: z.string().optional(),
     rdl_invoice_id: z.string().min(1, "Exfactory Shipment is required"),
     rdl_invoice_no: z.string().min(1, "Exfactory Shipment is required"),
-    invoice_value: z.number().optional(),
+    invoice_value: z.string().optional(),
     proceed_value: z.number().optional(),
 })
 
@@ -43,7 +43,6 @@ export const ProceedRealizationFormSchema = z.object({
         },
         z.number().optional()
     ) as z.ZodType<number | undefined>,
-    realized_amount: z.number().min(0, "Realized Amount must be a positive number"),
     invoice_value: z.string().optional(),
     details: z.array(RDLInvoiceDetails).optional(),
 });
