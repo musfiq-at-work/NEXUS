@@ -449,10 +449,7 @@ export const lcMasterRouter = createTRPCRouter({
                         })
                     );
 
-                    return {
-                        ...newLC,
-                        orders,
-                    };
+                    return newLC.id;
                 }, {timeout: 30000});
             } catch (error) {
                 handlePrismaError(error);
@@ -866,6 +863,8 @@ export const lcMasterRouter = createTRPCRouter({
                     message: "You do not have permission to view this LC."
                 });
             }
+
+            console.log("Fetching LC by ID:", input.id);
 
             try {
                 const lcDataObj = await ctx.db.lc_master.findUnique({

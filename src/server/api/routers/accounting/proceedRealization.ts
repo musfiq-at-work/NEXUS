@@ -5,6 +5,7 @@ import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
+import { currencyFormatter } from "~/utils/localNumberStrings";
 
 interface ProceedRealizationResult {
     id: string;
@@ -82,7 +83,10 @@ export const proceedRealizationRouter = createTRPCRouter({
                 `;
 
                 const total = result.length > 0 ? Number(result[0]?.total_count) : 0;
-                const proceedRealizations = result.map(({ total_count: _, ...invoice}) => invoice);
+                const proceedRealizations = result.map(({ total_count: _, ...invoice}) => ({
+                    ...invoice,
+                    realized_amount: currencyFormatter(Number(invoice.realized_amount), '$'),
+                }));
 
                 return { proceedRealizations, total };
             }
@@ -158,7 +162,10 @@ export const proceedRealizationRouter = createTRPCRouter({
                 `;
 
                 const total = result.length > 0 ? Number(result[0]?.total_count) : 0;
-                const proceedRealizations = result.map(({ total_count: _, ...invoice}) => invoice);
+                const proceedRealizations = result.map(({ total_count: _, ...invoice}) => ({
+                    ...invoice,
+                    realized_amount: currencyFormatter(Number(invoice.realized_amount), '$'),
+                }));
 
                 return { proceedRealizations, total };
             }

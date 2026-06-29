@@ -9,6 +9,7 @@ import { api } from "~/trpc/react";
 import { skipToken } from "@tanstack/react-query";
 import { safeNumber } from "~/utils/numbers";
 import type { GetProceedRealizationByIdTypes } from "~/types/accountingAPITypes";
+import { currencyFormatter } from "~/utils/localNumberStrings";
 
 type RDLInvoiceTypes = NonNullable<GetProceedRealizationByIdTypes>['details'][number];
 
@@ -30,7 +31,7 @@ export const useProceedRealizationForm = (initialData?: GetProceedRealizationByI
                 db_id: detail.db_id,
                 rdl_invoice_id: detail.rdl_invoice_id ?? undefined,
                 rdl_invoice_no: detail.rdl_invoice_no ?? undefined,
-                invoice_value: detail.realized_amount != null ? detail.realized_amount.toFixed(2) : undefined,
+                invoice_value: detail.realized_amount != null ? currencyFormatter(safeNumber(detail.realized_amount), '$') : undefined,
                 proceed_value: detail.proceed_value ?? undefined,
             })) ?? [],
         } : undefined;

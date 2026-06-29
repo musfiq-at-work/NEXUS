@@ -136,9 +136,9 @@ export const factoryPaymentRouter = createTRPCRouter({
                     term_name: payments.term_name,
                     fdbc_no: payments.fdbc_no,
                     realization_date: payments.realization_date,
-                    factory_paid_amount: currencyFormatter(payments.factory_paid_amount, '$'),
+                    factory_paid_amount: currencyFormatter(Number(payments.factory_paid_amount), '$'),
                     rdl_invoice_value: currencyFormatter(Number(payments.rdl_invoice_value), '$'),
-                    realized_amount: currencyFormatter(payments.realized_amount, '$'),
+                    realized_amount: currencyFormatter(Number(payments.realized_amount), '$'),
                     paid_count: payments.paid_count,
                     pending_count: payments.pending_count,
                 }));
@@ -259,9 +259,9 @@ export const factoryPaymentRouter = createTRPCRouter({
                     term_name: payments.term_name,
                     fdbc_no: payments.fdbc_no,
                     realization_date: payments.realization_date,
-                    factory_paid_amount: currencyFormatter(payments.factory_paid_amount, '$'),
+                    factory_paid_amount: currencyFormatter(Number(payments.factory_paid_amount), '$'),
                     rdl_invoice_value: currencyFormatter(Number(payments.rdl_invoice_value), '$'),
-                    realized_amount: currencyFormatter(payments.realized_amount, '$'),
+                    realized_amount: currencyFormatter(Number(payments.realized_amount), '$'),
                     paid_count: payments.paid_count,
                     pending_count: payments.pending_count,
                 }));

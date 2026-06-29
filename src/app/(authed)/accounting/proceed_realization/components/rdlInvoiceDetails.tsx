@@ -9,6 +9,8 @@ import { skipToken } from "@tanstack/react-query";
 import TableForm from "./rdlInvoiceTableForm";
 import { formatDate } from "~/utils/localDateString";
 import { formFields } from "../rdlInvoiceConfig/tableFormFields";
+import { currencyFormatter } from "~/utils/localNumberStrings";
+import { safeNumber } from "~/utils/numbers";
 
 type props = {
     methods: ReturnType<typeof useProceedRealizationForm>['methods'];
@@ -35,28 +37,6 @@ const RdlInvoiceDetails = (props: props) => {
         !!selectedDocumentSubmissionId ? { document_submission_id: selectedDocumentSubmissionId } : skipToken
     );
 
-    // useEffect(() => {
-    //     if (!rdlInvoiceDetails) return;
-        
-    //     const existingRdlInvoice = methods.getValues(`details`) ?? [];
-
-    //     replaceRdlInvoice(
-    //         rdlInvoiceDetails.map((rdlInvoice) => {
-    //             const existing = existingRdlInvoice.find(
-    //                 (x) => x.rdl_invoice_id === rdlInvoice.rdl_invoice_id
-    //             );
-
-    //             return {
-    //                 rdl_invoice_id: rdlInvoice.rdl_invoice_id ?? existing?.rdl_invoice_id,
-    //                 rdl_invoice_no: rdlInvoice.rdl_invoice_no ?? existing?.rdl_invoice_no,
-    //                 proceed_value: existing?.proceed_value,
-    //                 db_id: existing?.db_id,
-    //                 invoice_value: rdlInvoice.invoice_value ?? existing?.invoice_value,
-    //             };
-    //         })
-    //     );
-    // }, [rdlInvoiceDetails, selectedDocumentSubmissionId, methods]);
-
     const prevDocumentSubmissionId = useRef<string | undefined>(undefined);
 
     useEffect(() => {
@@ -79,7 +59,7 @@ const RdlInvoiceDetails = (props: props) => {
                     rdl_invoice_no: rdlInvoice.rdl_invoice_no ?? existing?.rdl_invoice_no,
                     proceed_value: existing?.proceed_value,
                     db_id: existing?.db_id,
-                    invoice_value: rdlInvoice.invoice_value ?? existing?.invoice_value,
+                    invoice_value: currencyFormatter(safeNumber(rdlInvoice.invoice_value ?? existing?.invoice_value), '$'),
                 };
             })
         );

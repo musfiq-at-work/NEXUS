@@ -1916,7 +1916,7 @@ model lc_master {
   old_rdl_bank_id       Int?
   old_currency_id       Int?
   buyer_id              Int?
-  old_buyer_id          Int
+  old_buyer_id          Int?
   company_id            Int?
   is_authorized         Boolean?               @default(false)
   approved_once         Boolean?               @default(false)

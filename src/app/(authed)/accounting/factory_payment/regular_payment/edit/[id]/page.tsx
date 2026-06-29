@@ -56,7 +56,7 @@ const EditFactoryPaymentPage = ({ params }: ParamsProp) => {
 
             const payload = {
                 db_id: id,
-                factoryInvoices: factoryPaymentData.details?.map((invoice) => ({
+                factoryInvoices: factoryPaymentData.details?.filter(invoice => safeNumber(invoice.paid_amount) > 0)?.map((invoice) => ({
                     db_id: invoice.db_id,
                     factory_invoice_id: invoice.factory_invoice_id,
                     paid_amount: safeNumber(invoice.paid_amount ?? 0),

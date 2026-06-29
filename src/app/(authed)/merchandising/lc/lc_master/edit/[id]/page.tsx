@@ -19,6 +19,7 @@ const EditLCMasterPage = ({ params }: ParamsProp) => {
     
     const [isLoadingSubmit, setIsLoadingSubmit] = useState(false);
 
+    console.log("EditLCMasterPage params:", id);
     const { data: lcMasterData, isLoading } = api.lcMaster.getLCbyId.useQuery({ id });
 
     const { methods, handleSubmit, formFields, validationError, control } = useLCForm(lcMasterData);

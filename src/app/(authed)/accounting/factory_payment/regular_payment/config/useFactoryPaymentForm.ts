@@ -4,9 +4,10 @@ import { useEffect, useMemo } from "react";
 import { FactoryPaymentFormSchema } from "./formSchema";
 import type { FactoryPaymentFormValues } from "./formSchema";
 import { useFormFields } from "./useFormFields";
-import { formatDateForInput } from "~/utils/localDateString";
+import { formatDate, formatDateForInput } from "~/utils/localDateString";
 import type { GetFactoryPaymentByIdTypes } from "~/types/accountingAPITypes";
 import { safeNumber } from "~/utils/numbers";
+import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
 
 type FactoryInvoiceTypes = NonNullable<GetFactoryPaymentByIdTypes>['factoryPayments'][number];
 
@@ -18,8 +19,8 @@ export const useFactoryPaymentForm = (initialData?: GetFactoryPaymentByIdTypes) 
             realization_date: initialData.factoryPaymentHeader.realization_date 
                 ? formatDateForInput(initialData.factoryPaymentHeader.realization_date) 
                 : undefined,
-            rdl_invoice_value: initialData.factoryPaymentHeader.rdl_invoice_value ?? undefined,
-            realized_amount: safeNumber(initialData.factoryPaymentHeader.realized_amount)?.toFixed(2) ?? undefined,
+            rdl_invoice_value: currencyFormatter(safeNumber(initialData.factoryPaymentHeader.rdl_invoice_value), '$') ?? undefined,
+            realized_amount: currencyFormatter(safeNumber(initialData.factoryPaymentHeader.realized_amount), '$') ?? undefined,
             factory_paid_amount: initialData.factoryPaymentHeader.factory_paid_amount?.toFixed(2) ?? undefined,
             remarks: initialData.factoryPaymentHeader.remarks ?? undefined,
             details: initialData.factoryPayments?.map((detail: FactoryInvoiceTypes) => ({
@@ -29,13 +30,13 @@ export const useFactoryPaymentForm = (initialData?: GetFactoryPaymentByIdTypes) 
                 factory_invoice_id: detail.factory_invoice_id ?? undefined,
                 factory_fdbc_no: detail.fdbc_no ?? undefined,
                 invoice_date: detail.factory_invoice_date 
-                    ? formatDateForInput(detail.factory_invoice_date) 
+                    ? formatDate(detail.factory_invoice_date) 
                     : undefined,
-                invoice_quantity: safeNumber(detail.invoice_quantity)?.toFixed(2) ?? undefined,
-                invoice_value: safeNumber(detail.invoice_value)?.toFixed(2) ?? undefined,
-                paid_amount: detail.paid_amount ?? undefined,
+                invoice_quantity: quantityFormatter(safeNumber(detail.invoice_quantity)) ?? undefined,
+                invoice_value: currencyFormatter(safeNumber(detail.invoice_value), '$') ?? undefined,
+                paid_amount: safeNumber(detail.paid_amount) ?? undefined,
                 factory_payment_no: detail.factory_payment_no ?? undefined,
-                payment_date: detail.payment_date ? formatDateForInput(detail.payment_date) : undefined,
+                payment_date: detail.payment_date ? formatDateForInput(detail.payment_date) : formatDateForInput(new Date()),
             })) ?? [],
         } : undefined;
     }, [initialData]);
