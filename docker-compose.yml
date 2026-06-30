@@ -1,5 +1,7 @@
 services:
   app:
+    image: musfiquer/rdl-nexus-test:latest
+
     build:
       context: .
       dockerfile: Dockerfile

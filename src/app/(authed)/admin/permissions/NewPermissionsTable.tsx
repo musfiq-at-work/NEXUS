@@ -125,6 +125,13 @@ const NewPermissionsTable = (props: NewPermissionsProps) => {
                                                                         <CheckBox
                                                                             checked={!!newPermissions.find(item => item.module_id === id)?.[col.key as keyof NewPermissions]}
                                                                             onClick={(e) => handleNewPermissionsChange(e, id, col.key)}
+                                                                            disabled={ // Disable checkboxes for Reports module except for 'View' permission
+                                                                                permissionHash[safeNumber(rootId)]?.module_name === 'Reports' && (
+                                                                                    col.key === 'can_add'
+                                                                                    || col.key === 'can_update'
+                                                                                    || col.key === 'can_delete'
+                                                                                )
+                                                                            }
                                                                         />
                                                                     ) : (
                                                                         String(permissionHash[id]?.[col.key as keyof typeof permissionHash[number]] ?? "-")
@@ -156,3 +163,5 @@ const NewPermissionsTable = (props: NewPermissionsProps) => {
 }
 
 export default NewPermissionsTable;
+
+//  ssh rdlerpadmin@192.168.21.253 -p 60011

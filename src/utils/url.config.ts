@@ -94,6 +94,16 @@ const sideBarConfig: Record<number, {href: string;}> = {
     [m.CROSS_PAYMENT]: { href: "/accounting/factory_payment/cross_payment" },
     [m.DEBIT_NOTE]: { href: "/accounting/debit_note" },
     [m.COMMISSION_REALIZATION]: { href: "/accounting/commission_realization" },
+
+    // Reports Module
+    [m.REPORTS]: { href: "/reports" },
+    [m.SALES_REPORT]: { href: "/reports/merchandising/sales_report" },
+    [m.EXPORT_REPORT]: { href: "/reports/merchandising/export_report" },
+    [m.ORDER_SUMMARY_REPORT]: { href: "/reports/merchandising/order_summary_report" },
+    [m.EXPORT_SUMMARY_LC_WISE]: { href: "/reports/commercial/export_summary_lc_wise" },
+    [m.EXPORT_SUMMARY_SC_WISE]: { href: "/reports/commercial/export_summary_sc_wise" },
+    [m.LC_SC_CLOSING]: { href: "/reports/commercial/lc_sc_closing" },
+    [m.COMMERCIAL_ACTIVITY_REPORT]: { href: "/reports/commercial/commercial_activity_report" }
 };
 
 export default sideBarConfig;
