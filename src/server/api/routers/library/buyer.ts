@@ -3,7 +3,7 @@ import z from "zod";
 import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { actions } from "@prisma/client";
+import { actions, Prisma } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 
 export const buyerRouter = createTRPCRouter({
@@ -1792,4 +1792,31 @@ export const buyerRouter = createTRPCRouter({
                 select: { id: true, consignee_name: true }
             });
         }),
+
+    getDepartmentByBuyer: protectedProcedure
+        .input(
+            z.array(z.number()).min(1, "At least one buyer ID is required")
+        )
+        .query(async ({ ctx, input }) => {
+            try {
+                return await ctx.db.$queryRaw<{ id: number; departments: string; }[]>`
+                    SELECT DISTINCT
+                        BD.ID,
+                        STRING_AGG(
+                            REGEXP_REPLACE(BD.department, E'[\\r\\n]+', '', 'g') 
+                            || ' (' 
+                            || REGEXP_REPLACE(BB.brand, E'[\\r\\n]+', '', 'g') 
+                            || ')', ', '
+                        ) AS departments
+                    FROM BUYERS AS B
+                        INNER JOIN buyer_brands AS BB ON BB.buyer_id = B.id
+                        INNER JOIN buyer_departments AS BD ON BD.buyer_brand_id = BB.id
+                    WHERE B.ID IN (${Prisma.join(input)})
+                    GROUP BY BD.ID;
+                `;
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        })
 });

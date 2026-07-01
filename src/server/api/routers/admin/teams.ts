@@ -434,6 +434,20 @@ export const teamsRouter = createTRPCRouter({
             return teams;
         }),
 
+    getTeamsByBuyers: protectedProcedure
+        .input(
+            z.array(z.number().min(1))
+        ).query(async ({ input, ctx }) => {
+            const teams = await ctx.db.teams.findMany({
+                where: { buyer_id: { in: input } },
+                select: {
+                    id: true,
+                    team_name: true,
+                }
+            });
+            return teams;
+        }),
+
     getTeamMemberByLevel: protectedProcedure
         .input(z.object({
             team_id: z.number(),

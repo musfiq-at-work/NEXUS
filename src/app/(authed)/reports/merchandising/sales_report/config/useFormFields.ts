@@ -6,13 +6,14 @@ export type Field<T extends keyof SalesReportFormValues> = BaseField<T>;
 
 
 interface PropsType {
-    fdbcRdlInvoiceList: FdbcRdlInvoiceListItem[];
-    companyBankList: CompanyBankListItem[];
+    buyer_ids?: number[];
 }
 
-export const useFormFields = ({lcScList, isEdit, fdbcRdlInvoiceList, companyBankList}: PropsType): Field<keyof SalesReportFormValues>[] => {
+export const useFormFields = ({buyer_ids}: PropsType): Field<keyof SalesReportFormValues>[] => {
     const buyers = api.buyers.getAllBuyersByTeam.useQuery().data ?? [];
     const factories = api.factory.getAllFactories.useQuery().data ?? [];
+    const productTypes = api.buyers.getDepartmentByBuyer.useQuery(buyer_ids || []).data ?? [];
+    const teams = api.teams.getTeamsByBuyers.useQuery(buyer_ids || []).data ?? [];
 
     return [
         {
@@ -56,28 +57,46 @@ export const useFormFields = ({lcScList, isEdit, fdbcRdlInvoiceList, companyBank
             optional: true,
         },
         {
-            name: "lc_sc_id",
-            label: "LC/Sales Contract No",
-            type: "select",
-            options: lcScList.map((lc) => ({ label: lc.sc_lc_no, value: lc.id })),
-            disabled: isEdit,
-            optional: isEdit
+            name: "product_type_ids",
+            label: "Select Product Types",
+            placeholder: "Select product types",
+            type: "multiselect",
+            options: productTypes.map((pt) => ({ label: pt.departments, value: pt.id.toString() })),
+            disabled: true,
+            optional: true,
         },
         {
-            name: "fdbc_rdl_invoice_id",
-            label: "FDBC/RDL Invoice No",
-            type: "select",
-            options: fdbcRdlInvoiceList.map((invoice) => ({ label: invoice.fdbc_rdl_invoice_no, value: invoice.id })),
-            disabled: isEdit,
-            optional: isEdit
+            name: "team_id",
+            label: "Select Teams",
+            placeholder: "Select teams",
+            type: "multiselect",
+            options: teams.map((team) => ({ label: team.team_name, value: team.id.toString() })),
+            disabled: true,
+            optional: true,
         },
         {
-            name: 'company_bank_id',
-            label: 'Company Bank',
-            type: "select",
-            options: companyBankList.map((bank) => ({ label: bank.bank_name, value: bank.id })),
-            disabled: isEdit,
-            optional: isEdit
+            name: 'quantity',
+            label: 'Quantity',
+            type: "checkbox",
+            optional: true
         },
+        {
+            name: 'rdl_value',
+            label: 'RDL Value',
+            type: "checkbox",
+            optional: true
+        },
+        {
+            name: 'factory_value',
+            label: 'Factory Value',
+            type: "checkbox",
+            optional: true
+        },
+        {
+            name: 'commission_value',
+            label: 'Commission Value',
+            type: "checkbox",
+            optional: true
+        }
     ]
 }

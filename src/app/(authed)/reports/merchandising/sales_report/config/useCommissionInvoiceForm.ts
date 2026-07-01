@@ -29,7 +29,9 @@ export const useCommissionInvoiceForm = () => {
 
     const { handleSubmit, formState: { errors: validationError }, trigger, watch, control, reset, setValue } = methods;
 
-    const formFields = useFormFields({lcScList, isEdit, fdbcRdlInvoiceList, companyBankList});
+    const buyer_ids = useWatch({ control, name: "buyer_ids" });
+
+    const formFields = useFormFields({buyer_ids});
 
     return { methods, handleSubmit, formFields, validationError, trigger, watch, control };
 }
