@@ -1003,19 +1003,19 @@ export const commissionInvoiceRouter = createTRPCRouter({
                         SELECT
                             DS.id AS DS_ID,
                             SUM(INV.INVOICE_QUANTITY * (SD.FOB_RATE / BO.CURRENCY_RATE)) AS TOTAL_RDL_VALUE,
-                            SUM(INV.INVOICE_QUANTITY * (SD.FOB_RATE / BO.CURRENCY_RATE)) - SUM(INV.INVOICE_QUANTITY * FSD.TRANSFER_RATE) AS TOTAL_CI,
-                            COALESCE(SUM(INV.INVOICE_QUANTITY * 
-                                (FSD.TRANSFER_RATE - FSD.FACTORY_RATE) / FO.CURRENCY_RATE), 0
-                            ) AS TOTAL_DN,
-                            COALESCE(SUM(INV.INVOICE_QUANTITY * 
-                                (SD.FOB_RATE / BO.CURRENCY_RATE) * CDD.DHAKA_COMMISSION_PERCENTAGE / 100), 0
-                            ) AS TOTAL_DHAKA_CI,
-                            COALESCE(SUM(INV.INVOICE_QUANTITY * 
-                                (SD.FOB_RATE / BO.CURRENCY_RATE) * CDD.OTHERS_COMMISSION_PERCENTAGE / 100), 0
-                            ) AS TOTAL_OTHER_CI,
-                            COALESCE(SUM(INV.INVOICE_QUANTITY * 
-                                (SD.FOB_RATE / BO.CURRENCY_RATE) * CDD.OVERSEAS_COMMISSION_PERCENTAGE / 100), 0
-                            ) AS TOTAL_OVERSEAS_CI
+                            CASE
+                                WHEN COALESCE(AVG(FSD.TRANSFER_RATE), 0) <> 0
+                                    THEN SUM(INV.INVOICE_QUANTITY * (SD.FOB_RATE / BO.CURRENCY_RATE)) - SUM(INV.INVOICE_QUANTITY * FSD.TRANSFER_RATE)
+                                ELSE SUM(INV.INVOICE_QUANTITY * (SD.FOB_RATE / BO.CURRENCY_RATE)) - SUM(INV.INVOICE_QUANTITY * FSD.FACTORY_RATE)
+                            END AS TOTAL_CI,
+							CASE
+                                WHEN COALESCE(AVG(FSD.TRANSFER_RATE), 0) <> 0
+                                    THEN COALESCE(SUM(INV.INVOICE_QUANTITY * (FSD.TRANSFER_RATE - FSD.FACTORY_RATE) / FO.CURRENCY_RATE), 0)
+                                ELSE 0
+                            END AS TOTAL_DN,
+                            COALESCE(SUM(INV.INVOICE_QUANTITY * (SD.FOB_RATE / BO.CURRENCY_RATE) * CDD.DHAKA_COMMISSION_PERCENTAGE / 100), 0) AS TOTAL_DHAKA_CI,
+                            COALESCE(SUM(INV.INVOICE_QUANTITY * (SD.FOB_RATE / BO.CURRENCY_RATE) * CDD.OTHERS_COMMISSION_PERCENTAGE / 100), 0) AS TOTAL_OTHER_CI,
+                            COALESCE(SUM(INV.INVOICE_QUANTITY * (SD.FOB_RATE / BO.CURRENCY_RATE) * CDD.OVERSEAS_COMMISSION_PERCENTAGE / 100), 0) AS TOTAL_OVERSEAS_CI
                         FROM document_submissions DS
                             INNER JOIN document_submissions_details DSD ON DSD.document_submissions_id = DS.id
                             INNER JOIN rdl_invoice RI ON RI.id = DSD.rdl_invoice_id
@@ -1033,17 +1033,19 @@ export const commissionInvoiceRouter = createTRPCRouter({
                         SELECT
                             RI.id AS RI_ID,
                             SUM(INV.INVOICE_QUANTITY * (SD.FOB_RATE / BO.CURRENCY_RATE)) AS TOTAL_RDL_VALUE,
-                            SUM(INV.INVOICE_QUANTITY * (SD.FOB_RATE / BO.CURRENCY_RATE)) - SUM(INV.INVOICE_QUANTITY * FSD.TRANSFER_RATE) AS TOTAL_CI,
-                            COALESCE(SUM(INV.INVOICE_QUANTITY * (FSD.TRANSFER_RATE - FSD.FACTORY_RATE) / FO.CURRENCY_RATE), 0) AS TOTAL_DN,
-                            COALESCE(SUM(INV.INVOICE_QUANTITY * 
-                                (SD.FOB_RATE / BO.CURRENCY_RATE) * CDD.DHAKA_COMMISSION_PERCENTAGE / 100), 0
-                            ) AS TOTAL_DHAKA_CI,
-                            COALESCE(SUM(INV.INVOICE_QUANTITY * 
-                                (SD.FOB_RATE / BO.CURRENCY_RATE) * CDD.OTHERS_COMMISSION_PERCENTAGE / 100), 0
-                            ) AS TOTAL_OTHER_CI,
-                            COALESCE(SUM(INV.INVOICE_QUANTITY * 
-                                (SD.FOB_RATE / BO.CURRENCY_RATE) * CDD.OVERSEAS_COMMISSION_PERCENTAGE / 100), 0
-                            ) AS TOTAL_OVERSEAS_CI
+                            CASE
+                                WHEN COALESCE(AVG(FSD.TRANSFER_RATE), 0) <> 0
+                                    THEN SUM(INV.INVOICE_QUANTITY * (SD.FOB_RATE / BO.CURRENCY_RATE)) - SUM(INV.INVOICE_QUANTITY * FSD.TRANSFER_RATE)
+                                ELSE SUM(INV.INVOICE_QUANTITY * (SD.FOB_RATE / BO.CURRENCY_RATE)) - SUM(INV.INVOICE_QUANTITY * FSD.FACTORY_RATE)
+                            END AS TOTAL_CI,
+							CASE
+                                WHEN COALESCE(AVG(FSD.TRANSFER_RATE), 0) <> 0
+                                    THEN COALESCE(SUM(INV.INVOICE_QUANTITY * (FSD.TRANSFER_RATE - FSD.FACTORY_RATE) / FO.CURRENCY_RATE), 0)
+                                ELSE 0
+                            END AS TOTAL_DN,
+                            COALESCE(SUM(INV.INVOICE_QUANTITY * (SD.FOB_RATE / BO.CURRENCY_RATE) * CDD.DHAKA_COMMISSION_PERCENTAGE / 100), 0) AS TOTAL_DHAKA_CI,
+                            COALESCE(SUM(INV.INVOICE_QUANTITY * (SD.FOB_RATE / BO.CURRENCY_RATE) * CDD.OTHERS_COMMISSION_PERCENTAGE / 100), 0) AS TOTAL_OTHER_CI,
+                            COALESCE(SUM(INV.INVOICE_QUANTITY * (SD.FOB_RATE / BO.CURRENCY_RATE) * CDD.OVERSEAS_COMMISSION_PERCENTAGE / 100), 0) AS TOTAL_OVERSEAS_CI
                         FROM rdl_invoice RI
                             INNER JOIN rdl_invoice_details RID ON RID.rdl_invoice_id = RI.id
                             INNER JOIN INV ON INV.RIDID = RID.id
@@ -1057,19 +1059,13 @@ export const commissionInvoiceRouter = createTRPCRouter({
                     )
                     SELECT
                         -- LC, CI Allocation: Dhaka Value
-                        SUM(CFL.TOTAL_CI * (CFL.TOTAL_DHAKA_CI /
-                            NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))
-                        ) AS CFL_DHAKA_VALUE,
+                        SUM(CFL.TOTAL_CI * (CFL.TOTAL_DHAKA_CI / NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))) AS CFL_DHAKA_VALUE,
 
                         -- LC, CI Allocation: Overseas Value
-                        SUM(CFL.TOTAL_CI * (CFL.TOTAL_OVERSEAS_CI /
-                            NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))
-                        ) AS CFL_OVERSEAS_VALUE,
+                        SUM(CFL.TOTAL_CI * (CFL.TOTAL_OVERSEAS_CI / NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))) AS CFL_OVERSEAS_VALUE,
                         
                         -- LC, CI Allocation: Other Value
-                        SUM(CFL.TOTAL_CI * (CFL.TOTAL_OTHER_CI /
-                            NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))
-                        ) AS CFL_OTHER_VALUE,
+                        SUM(CFL.TOTAL_CI * (CFL.TOTAL_OTHER_CI /NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))) AS CFL_OTHER_VALUE,
                         
                         -- LC, CI Allocation: Dhaka Percentage
                         SUM(CFL.TOTAL_CI * (CFL.TOTAL_DHAKA_CI /
@@ -1087,19 +1083,13 @@ export const commissionInvoiceRouter = createTRPCRouter({
                         ) / NULLIF(SUM(CFL.TOTAL_RDL_VALUE), 0) * 100 AS CFL_OTHER_PERCENTAGE,
                         
                         -- TT, CI Allocation: Dhaka Value
-                        SUM(CFT.TOTAL_CI * (CFT.TOTAL_DHAKA_CI /
-                            NULLIF( CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))
-                        ) AS CFT_DHAKA_VALUE,
+                        SUM(CFT.TOTAL_CI * (CFT.TOTAL_DHAKA_CI /NULLIF( CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))) AS CFT_DHAKA_VALUE,
                         
                         -- TT, CI Allocation: Overseas Value
-                        SUM(CFT.TOTAL_CI * (CFT.TOTAL_OVERSEAS_CI /
-                            NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))
-                        ) AS CFT_OVERSEAS_VALUE,
+                        SUM(CFT.TOTAL_CI * (CFT.TOTAL_OVERSEAS_CI /NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))) AS CFT_OVERSEAS_VALUE,
                         
                         -- TT, CI Allocation: Other Value
-                        SUM(CFT.TOTAL_CI * (CFT.TOTAL_OTHER_CI /
-                            NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))
-                        ) AS CFT_OTHER_VALUE,
+                        SUM(CFT.TOTAL_CI * (CFT.TOTAL_OTHER_CI /NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))) AS CFT_OTHER_VALUE,
                         
                         -- TT, CI Allocation: Dhaka Percentage
                         SUM(CFT.TOTAL_CI * (CFT.TOTAL_DHAKA_CI /
@@ -1117,19 +1107,13 @@ export const commissionInvoiceRouter = createTRPCRouter({
                         ) / NULLIF(SUM(CFT.TOTAL_RDL_VALUE), 0) * 100 AS CFT_OTHER_PERCENTAGE,
 
                         -- LC, DN Allocation: Dhaka Value
-                        SUM(CFL.TOTAL_DN * (CFL.TOTAL_DHAKA_CI /
-                            NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))
-                        ) AS CFL_DN_DHAKA_VALUE,
+                        SUM(CFL.TOTAL_DN * (CFL.TOTAL_DHAKA_CI /NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))) AS CFL_DN_DHAKA_VALUE,
                         
                         -- LC, DN Allocation: Overseas Value
-                        SUM(CFL.TOTAL_DN * (CFL.TOTAL_OVERSEAS_CI /
-                            NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))
-                        ) AS CFL_DN_OVERSEAS_VALUE,
+                        SUM(CFL.TOTAL_DN * (CFL.TOTAL_OVERSEAS_CI /NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))) AS CFL_DN_OVERSEAS_VALUE,
                         
                         -- LC, DN Allocation: Other Value
-                        SUM(CFL.TOTAL_DN * (CFL.TOTAL_OTHER_CI /
-                            NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))
-                        ) AS CFL_DN_OTHER_VALUE,
+                        SUM(CFL.TOTAL_DN * (CFL.TOTAL_OTHER_CI /NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))) AS CFL_DN_OTHER_VALUE,
 
                         -- LC, DN Allocation: Dhaka Percentage
                         SUM(CFL.TOTAL_DN * (CFL.TOTAL_DHAKA_CI /
@@ -1147,19 +1131,13 @@ export const commissionInvoiceRouter = createTRPCRouter({
                         ) / NULLIF(SUM(CFL.TOTAL_RDL_VALUE), 0) * 100 AS CFL_DN_OTHER_PERCENTAGE,
                         
                         -- TT, DN Allocation: Dhaka Value
-                        SUM(CFT.TOTAL_DN * (CFT.TOTAL_DHAKA_CI /
-                            NULLIF( CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))
-                        ) AS CFT_DN_DHAKA_VALUE,
+                        SUM(CFT.TOTAL_DN * (CFT.TOTAL_DHAKA_CI /NULLIF( CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))) AS CFT_DN_DHAKA_VALUE,
                         
                         -- TT, DN Allocation: Overseas Value
-                        SUM(CFT.TOTAL_DN * (CFT.TOTAL_OVERSEAS_CI /
-                            NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))
-                        ) AS CFT_DN_OVERSEAS_VALUE,
+                        SUM(CFT.TOTAL_DN * (CFT.TOTAL_OVERSEAS_CI /NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))) AS CFT_DN_OVERSEAS_VALUE,
                         
                         -- TT, DN Allocation: Other Value
-                        SUM(CFT.TOTAL_DN * (CFT.TOTAL_OTHER_CI /
-                            NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))
-                        ) AS CFT_DN_OTHER_VALUE,
+                        SUM(CFT.TOTAL_DN * (CFT.TOTAL_OTHER_CI /NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))) AS CFT_DN_OTHER_VALUE,
                         
                         -- TT, DN Allocation: Dhaka Percentage
                         SUM(CFT.TOTAL_DN * (CFT.TOTAL_DHAKA_CI /

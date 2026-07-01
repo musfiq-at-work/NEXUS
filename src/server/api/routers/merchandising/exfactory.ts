@@ -777,7 +777,7 @@ export const exFactoryRouter = createTRPCRouter({
                         SQ.COLORS AS COLORS,
                         SQ.total_sid_qty AS LOT_QUANTITY,
                         SEQ.ES_ID AS DB_ID,
-                        EQ.total_es_qty AS PREVIOUS_SHIPMENT_QUANTITY,
+                        SUM(EQ.total_es_qty) AS PREVIOUS_SHIPMENT_QUANTITY,
                         COALESCE(SEQ.delivery_qty, 0) AS SHIPMENT_QUANTITY,
                         CASE 
                             WHEN SEQ.changed_shipment_mode IS NOT NULL THEN SEQ.changed_shipment_mode
@@ -798,7 +798,6 @@ export const exFactoryRouter = createTRPCRouter({
                         D.ID, 
                         SQ.COLORS, 
                         SQ.total_sid_qty, 
-                        EQ.total_es_qty,
                         SEQ.ES_ID,
                         SEQ.delivery_qty, 
                         SEQ.changed_shipment_mode,

@@ -114,6 +114,7 @@ export const styles = StyleSheet.create({
     doubleColumnContainer: {
         display: "flex",
         flexDirection: "row",
+        gap: 20,
         justifyContent: "space-around",
         width: "100%",
         marginBottom: 5,

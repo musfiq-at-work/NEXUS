@@ -577,7 +577,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                         RI.INVOICE_NO,
                         RI.INVOICE_DATE,
                         SUM(RISD.INVOICE_QUANTITY) AS TOTAL_QUANTITY,
-	                    SUM(RISD.INVOICE_QUANTITY * SD.fob_rate) AS TOTAL_VALUE,
+	                    SUM(RISD.INVOICE_QUANTITY * SD.fob_rate) - COALESCE(RI.discount, 0) AS TOTAL_VALUE,
                         IDS.PREVIOUS_VALUE AS PREVIOUS_VALUE
                     FROM rdl_invoice AS RI
                         INNER JOIN RDL_INVOICE_DETAILS AS RID ON RID.rdl_invoice_id = RI.id

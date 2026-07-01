@@ -681,12 +681,17 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             OR COALESCE(PI.PREVIOUS_QUANTITY, 0)::NUMERIC(18,2) < I.TOTAL_QUANTITY::NUMERIC(18,2)
                         )
                     `
+                    : Prisma.sql``;
+
+                const havingClause = input.rdl_invoice_id
+                    ? Prisma.sql``
                     : Prisma.sql`
-                        AND (
-                            PI.FACTORY_INVOICE_ID IS NULL
-                            OR COALESCE(PI.PREVIOUS_QUANTITY, 0)::NUMERIC(18,2) < I.TOTAL_QUANTITY::NUMERIC(18,2)
+                        HAVING (
+                            COALESCE(PI.PREVIOUS_QUANTITY, 0)::NUMERIC(18,2) < SUM(I.TOTAL_QUANTITY)::NUMERIC(18,2)
+                            OR PI.FACTORY_INVOICE_ID IS NULL
                         )
                     `;
+                        
 
                 const excludeCurrentInvoiceClause = input.rdl_invoice_id 
                     ? Prisma.sql`WHERE RI.ID <> ${input.rdl_invoice_id}` 
@@ -707,7 +712,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         SELECT
                             ES.id AS EFSD_ID,
                             CASE
-                                WHEN FSD.TRANSFER_RATE IS NOT NULL
+                                WHEN COALESCE(FSD.TRANSFER_RATE, 0) <> 0
                                     THEN FSD.TRANSFER_RATE * SUM(ES.delivery_quantity)
                                 ELSE FSD.FACTORY_RATE * SUM(ES.delivery_quantity)
                             END AS FACTORY_VALUE,
@@ -720,7 +725,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         FI.ID,
                         FI.INVOICE_NO,
                         SUM(I.TOTAL_QUANTITY) AS TOTAL_QUANTITY,
-                        SUM(I.FACTORY_VALUE) AS FACTORY_VALUE
+                        SUM(I.FACTORY_VALUE) - COALESCE(FI.discount, 0) AS FACTORY_VALUE
                     FROM FACTORY_INVOICE FI
                         INNER JOIN factory_invoice_details FID ON FID.factory_invoice_id = FI.ID
                         INNER JOIN INVOICE I ON I.EFSD_ID = FID.exfactory_shipment_id
@@ -731,6 +736,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         AND ${whereClause}
                         ${invoiceFilter}
                     GROUP BY FI.ID, FI.INVOICE_NO, PI.FACTORY_INVOICE_ID, PI.PREVIOUS_QUANTITY
+                    ${havingClause}
                 `;
 
                 const factoryInvoice = factoryInvoiceList.map(invoice => ({
@@ -833,7 +839,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             INNER JOIN rdl_invoice_details RID ON RID.rdl_invoice_id = RI.ID
                             INNER JOIN RDL_INVOICE_SHIPMENT_DETAILS RISD ON RISD.rdl_invoice_details_id = RID.ID
                             ${excludeCurrentInvoiceClause}
-                        GROUP BY RID.factory_invoice_id
+                        GROUP BY RISD.factory_invoice_details_id, RID.factory_invoice_id
                     )
                     SELECT 
                         FID.id AS id,
@@ -1087,7 +1093,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
             approval_status: z.boolean(),
         }))
         .mutation(async ({ ctx, input }) => {
-            const can_approve = ctx.permissions[m.COMMISSION_DISTRIBUTION]?.can_update;
+            const can_approve = ctx.permissions[m.RDL_INVOICE]?.can_update;
 
             if(!can_approve) {
                 throw new TRPCError({ 
@@ -1148,7 +1154,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
         }))
         .query(async ({ ctx, input }) => {
             try {
-                const can_view = ctx.permissions[m.FACTORY_INVOICE]?.can_view;
+                const can_view = ctx.permissions[m.RDL_INVOICE]?.can_view;
 
                 if (!can_view) {
                     throw new TRPCError({ 
@@ -1302,7 +1308,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                                                                         city: true,
                                                                         zip_code: true,
                                                                     }
-                                                                }
+                                                                },
                                                             }
                                                         }
                                                     }
@@ -1413,7 +1419,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         INNER JOIN sales_contracts AS SC ON SC.id = SCD.sales_contract_id
                         INNER JOIN company_banks AS CB ON CB.id = SC.rdl_bank_id
                         INNER JOIN banks AS B ON B.id = CB.bank_id
-                    WHERE RI.ID = '3388fa67-6967-441b-a6aa-ab5dc0185ab3'
+                    WHERE RI.ID = ${input.id}
                     GROUP BY RI.ID, B.ID, CB.ID;
                 `;
 
