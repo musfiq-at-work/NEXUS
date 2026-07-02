@@ -864,8 +864,6 @@ export const lcMasterRouter = createTRPCRouter({
                 });
             }
 
-            console.log("Fetching LC by ID:", input.id);
-
             try {
                 const lcDataObj = await ctx.db.lc_master.findUnique({
                     where: {

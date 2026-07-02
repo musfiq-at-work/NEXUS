@@ -67,7 +67,6 @@ const EditDocumentSubmissionPage = ({ params }: ParamsProp) => {
                 })),
             };
 
-            console.log("Payload for updateDocumentSubmission:", payload);
             await updateDocumentSubmission.mutateAsync(payload);
         }
         catch (error) {

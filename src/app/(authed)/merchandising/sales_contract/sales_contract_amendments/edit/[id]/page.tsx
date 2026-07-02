@@ -84,8 +84,6 @@ const EditSalesContractAmendmentPage = ({ params }: ParamsProp) => {
         }
     });
 
-    console.log("can_update", can_update, isLoadingSubmit, !isLastAmendment, isSalesContractAuthorized)
-
     return (
         <Wrapper
             heading="Update Sales Contract Amendment"

@@ -11,18 +11,31 @@ type CheckBoxProps = Omit<
     disabled?: boolean;
 };
 
-const CheckBox = ({ value, onChange, className, disabled, ...rest }: CheckBoxProps) => {
+const CheckBox = ({
+    value,
+    onChange,
+    className,
+    disabled,
+    ...rest
+}: CheckBoxProps) => {
     return (
-        <div className="flex items-center mb-4">
+        <label className="inline-flex items-center justify-center">
             <input
                 type="checkbox"
-                className={clsx("w-full h-5 cursor-pointer", className)}
                 checked={!!value}
                 onChange={(e) => onChange?.(e.target.checked)}
                 disabled={disabled}
+                className={clsx(
+                    "h-5 w-5 cursor-pointer rounded-md border-gray-300",
+                    "accent-secondary",
+                    "transition-all duration-200",
+                    "focus:ring-2 focus:ring-secondary focus:ring-offset-2",
+                    "disabled:cursor-not-allowed disabled:opacity-50",
+                    className
+                )}
                 {...rest}
             />
-        </div>
+        </label>
     );
 };
 

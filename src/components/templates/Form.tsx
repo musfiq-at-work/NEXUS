@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Loader, Toggle, FormSelect, TextField, Button, MultiSelect} from '~/components'
+import { Loader, Toggle, FormSelect, TextField, Button, MultiSelect, CheckBox, Label} from '~/components'
 import { Controller, type Control, type FieldErrors, type FieldValues, type Path, type UseFormRegister } from "react-hook-form";
 import type { BaseField } from "~/types/form";
 
@@ -31,6 +31,7 @@ const Form = <T extends FieldValues, >(props: Props<T>) => {
                 </div>
             )}
             <form onSubmit={onSubmit} className="flex flex-col justify-center w-full p-8">
+                {/* Main dynamic layout grid */}
                 <div className="grid grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-4 w-full">
                     {fields.map((field, index) => (
                         <React.Fragment key={index}>
@@ -106,6 +107,35 @@ const Form = <T extends FieldValues, >(props: Props<T>) => {
                                                     />
                                                 )}
                                             />
+                                        )
+
+                                    case 'checkbox':
+                                        return (
+                                            /* CHANGES HERE:
+                                              1. Added col-span-full to break out of the row grid.
+                                              2. Forced a clean row layout where checkbox is on the left 
+                                                 and labels align perfectly in a straight vertical column line.
+                                            */
+                                            <div className="col-span-full flex items-center gap-3 p-2 min-h-10 max-w-md">
+                                                <Controller
+                                                    name={fieldName as Path<T>}
+                                                    control={control}
+                                                    render={({ field }) => (
+                                                        <div className="flex items-center justify-center h-5 w-5">
+                                                            <CheckBox
+                                                                value={field.value}
+                                                                onChange={field.onChange}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                />
+                                                <Label
+                                                    htmlFor={fieldName}
+                                                    label={field.label}
+                                                    optional={field.optional}
+                                                    className="cursor-pointer select-none text-sm font-medium"
+                                                />
+                                            </div>
                                         )
 
                                     default:

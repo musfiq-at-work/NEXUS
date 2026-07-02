@@ -87,15 +87,13 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             C.SYMBOL,
                             RI.ADDED_AT
                         FROM rdl_invoice AS RI
-                            LEFT JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
-                            LEFT JOIN FACTORY_INVOICE AS FI ON FI.id = RID.factory_invoice_id
-                            LEFT JOIN factory_invoice_details AS FID ON FI.id = FID.factory_invoice_id
-                            LEFT JOIN EXFACTORY_SHIPMENTS AS ES ON ES.ID = FID.exfactory_shipment_id
-                            LEFT JOIN SHIPMENT_DETAILS AS SD ON SD.ID = ES.shipment_details_id
-                            LEFT JOIN rdl_invoice_shipment_details AS RISD ON RISD.shipment_details_id = SD.id
-                            LEFT JOIN ORDER_STYLES AS OS ON OS.id = SD.order_style_id
-                            LEFT JOIN BUYER_ORDERS AS BO ON BO.ID = OS.order_id
-                            LEFT JOIN CURRENCIES AS C ON C.id = BO.secondary_currency_id
+                            INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
+                            INNER JOIN FACTORY_INVOICE AS FI ON FI.id = RID.factory_invoice_id
+                            INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
+                            INNER JOIN SHIPMENT_DETAILS AS SD ON SD.ID = RISD.shipment_details_id
+                            INNER JOIN ORDER_STYLES AS OS ON OS.id = SD.order_style_id
+                            INNER JOIN BUYER_ORDERS AS BO ON BO.ID = OS.order_id
+                            INNER JOIN CURRENCIES AS C ON C.id = BO.secondary_currency_id
                             INNER JOIN BUYERS AS B ON B.id = RI.buyer_id
                         WHERE (
                             EXISTS ( -- Admin
@@ -164,15 +162,13 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             C.SYMBOL,
                             RI.ADDED_AT
                         FROM rdl_invoice AS RI
-                            LEFT JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
-                            LEFT JOIN FACTORY_INVOICE AS FI ON FI.id = RID.factory_invoice_id
-                            LEFT JOIN factory_invoice_details AS FID ON FI.id = FID.factory_invoice_id
-                            LEFT JOIN EXFACTORY_SHIPMENTS AS ES ON ES.ID = FID.exfactory_shipment_id
-                            LEFT JOIN SHIPMENT_DETAILS AS SD ON SD.ID = ES.shipment_details_id
-                            LEFT JOIN rdl_invoice_shipment_details AS RISD ON RISD.shipment_details_id = SD.id
-                            LEFT JOIN ORDER_STYLES AS OS ON OS.id = SD.order_style_id
-                            LEFT JOIN BUYER_ORDERS AS BO ON BO.ID = OS.order_id
-                            LEFT JOIN CURRENCIES AS C ON C.id = BO.secondary_currency_id
+                            INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
+                            INNER JOIN FACTORY_INVOICE AS FI ON FI.id = RID.factory_invoice_id
+                            INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
+                            INNER JOIN SHIPMENT_DETAILS AS SD ON SD.ID = RISD.shipment_details_id
+                            INNER JOIN ORDER_STYLES AS OS ON OS.id = SD.order_style_id
+                            INNER JOIN BUYER_ORDERS AS BO ON BO.ID = OS.order_id
+                            INNER JOIN CURRENCIES AS C ON C.id = BO.secondary_currency_id
                             INNER JOIN BUYERS AS B ON B.id = RI.buyer_id
                         WHERE (
                             EXISTS ( -- Admin
@@ -382,8 +378,6 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         } : null,
                     })) ?? [],
                 };
-
-                console.log("Fetched RDL Invoice by ID:", result);
 
                 return result;
             }
@@ -848,7 +842,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         SD.BUYER_PO AS PO,
                         SD.id AS SHIPMENT_DETAILS_ID,
                         D.NAME AS DESTINATION,
-                        SUM(ES.delivery_quantity) AS ORDER_QUANTITY,
+                        ES.delivery_quantity AS ORDER_QUANTITY,
                         PI.PREVIOUS_QUANTITY,
                         SD.FOB_RATE AS FOB_RATE
                     FROM factory_invoice AS FI
@@ -860,7 +854,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         INNER JOIN DESTINATIONS AS D ON D.id = SD.destination_id
                         LEFT JOIN PREVIOUS_INVOICE PI ON PI.FACTORY_INVOICE_ID = FI.ID
                     WHERE FI.ID = ${input.factory_invoice_id}
-                    GROUP BY BO.ID, OS.ID, SD.ID, FID.ID, D.ID, PI.PREVIOUS_QUANTITY;
+                    GROUP BY BO.ID, OS.ID, SD.ID, FID.ID, D.ID, PI.PREVIOUS_QUANTITY, ES.ID;
                 `;
 
                 const shipmentDetails = shipmentDetailsObj.map(detail => ({

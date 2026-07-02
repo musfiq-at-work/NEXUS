@@ -72,10 +72,6 @@ const ShipmentDetails = (props: props) => {
         );
     }, [shipmentDetails.data, replaceShipments, methods, invoiceIndex]);
 
-    useEffect(() => {
-        console.log("Shipment details data updated:", shipmentDetails.data);
-    }, [shipmentDetails.data]);
-
     const ShipmentHeading = () => (
         <div className="flex flex-row items-center gap-4">
             <Heading as ='h3' className="mx-8">

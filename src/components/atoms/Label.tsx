@@ -6,16 +6,17 @@ type LabelProps = {
   htmlFor: string;
   isErrored?: boolean;
   optional?: boolean; 
+  className?: string;
 }
 
-const Label = ({ label, htmlFor, isErrored = false, optional }: LabelProps) => {
+const Label = ({ label, htmlFor, isErrored = false, optional, className }: LabelProps) => {
   const variantClasses = {
     error: 'text-red',
     default: 'text-inherit'
   }[isErrored ? 'error' : 'default']
 
   return (
-    <label htmlFor={htmlFor} className={clsx("py-0.5", variantClasses)}>
+    <label htmlFor={htmlFor} className={clsx("py-0.5", variantClasses, className)}>
       {label} {!optional ? "*" : ''}
     </label>
   );

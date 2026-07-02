@@ -45,10 +45,6 @@ const EditFactoryPaymentPage = ({ params }: ParamsProp) => {
         }
     });
 
-    useEffect(() => {
-        console.log('validationError:', validationError);
-    }, [validationError]);
-
     // Handle form submission for all fields
     const onSubmitAll = useCallback(handleSubmit(async (factoryPaymentData) => {
         try {

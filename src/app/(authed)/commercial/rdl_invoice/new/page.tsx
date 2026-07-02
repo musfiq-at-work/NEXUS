@@ -58,7 +58,6 @@ const NewRDLInvoicePage = () => {
                 })),
             };
 
-            console.log("Payload for adding RDL Invoice:", payload); // Debugging line
             const res = await addRDLInvoice.mutateAsync(payload);
             router.push(`/commercial/rdl_invoice/edit/${res.id}`);
         }   

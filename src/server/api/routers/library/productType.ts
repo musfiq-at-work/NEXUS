@@ -249,7 +249,7 @@ export const productTypeRouter = createTRPCRouter({
         }),
 
 
-        getAll: protectedProcedure
+    getAll: protectedProcedure
         .query(async ({ ctx }) => {
             const productTypes = await ctx.db.product_types.findMany({
                 orderBy: { added_at: "desc" },

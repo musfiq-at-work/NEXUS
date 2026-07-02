@@ -32,10 +32,6 @@ const NewProceedRealizationPage = () => {
         }
     });
 
-    useEffect(() => {
-        console.log('validationError:', validationError);
-    }, [validationError]);
-
     // Handle form submission for all fields
     const onSubmitAll =  handleSubmit(async (proceedRealizationData) => {
         try {
@@ -54,9 +50,7 @@ const NewProceedRealizationPage = () => {
                 })),
             };
 
-            console.log("Payload for adding Proceed Realization:", payload);
             const newId = await addProceedRealization.mutateAsync(payload);
-            console.log("New Proceed Realization ID:", newId);
             router.push(`/accounting/proceed_realization/edit/${newId}`);
         }
         catch (error) {

@@ -1793,7 +1793,28 @@ export const buyerRouter = createTRPCRouter({
             });
         }),
 
-    getDepartmentByBuyer: protectedProcedure
+    getBrandsByBuyers: protectedProcedure
+        .input(
+            z.array(z.number()).min(1, "At least one buyer ID is required")
+        )
+        .query(async ({ ctx, input }) => {
+            try {
+                return await ctx.db.buyer_brands.findMany({
+                    where: {
+                        buyer_id: { in: input }
+                    },
+                    select: {
+                        id: true,
+                        brand: true,
+                    }
+                })
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    getDepartmentsByBrands: protectedProcedure
         .input(
             z.array(z.number()).min(1, "At least one buyer ID is required")
         )
@@ -1811,7 +1832,7 @@ export const buyerRouter = createTRPCRouter({
                     FROM BUYERS AS B
                         INNER JOIN buyer_brands AS BB ON BB.buyer_id = B.id
                         INNER JOIN buyer_departments AS BD ON BD.buyer_brand_id = BB.id
-                    WHERE B.ID IN (${Prisma.join(input)})
+                    WHERE BB.ID IN (${Prisma.join(input)})
                     GROUP BY BD.ID;
                 `;
             }

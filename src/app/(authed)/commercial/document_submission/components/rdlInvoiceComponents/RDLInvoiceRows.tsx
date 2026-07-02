@@ -95,7 +95,12 @@ const RdlInvoiceRow = (props: Props) => {
         );
     }, [selectedRDLInvoice, rdlInvoices, index, methods]);
 
-    const isEdit = !!documentSubmissionDBid;
+    const rdlInvoiceDbId = useWatch({
+        control: methods.control,
+        name: `rdlInvoices.${index}.db_id`,
+    });
+    
+    const isEdit = !!rdlInvoiceDbId;
 
     const rdlValue = methods.watch(`rdlInvoices.${index}.rdl_value`);
 
