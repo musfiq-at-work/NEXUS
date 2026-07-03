@@ -7,16 +7,11 @@ export const quantityFormatter = (value: number) => {
 }
 
 const ones = [
-    "", "One", "Two", "Three", "Four", "Five", "Six",
-    "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve",
-    "Thirteen", "Fourteen", "Fifteen", "Sixteen",
-    "Seventeen", "Eighteen", "Nineteen"
+    "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", 
+    "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"
 ];
 
-const tens = [
-    "", "", "Twenty", "Thirty", "Forty",
-    "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"
-];
+const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
 
 const thousands = ["", "Thousand", "Million", "Billion"];
 
@@ -58,11 +53,19 @@ const numberToWords = (num: number): string => {
 }
 
 export const amountToWords = (amount: number) => {
-    const dollars = Math.floor(amount);
-    const cents = Math.round((amount - dollars) * 100);
+    const rounded = Math.round(amount * 100);
+
+    const dollars = Math.floor(rounded / 100);
+    const cents = rounded % 100;
 
     const dollarWords = numberToWords(dollars);
-    const centWords = numberToWords(cents);
 
-    return `${dollarWords} Dollars and ${centWords} Cent${cents !== 1 ? "s" : ""} Only.`;
+    let result = `${dollarWords} Dollar${dollars !== 1 ? "s" : ""}`;
+
+    if (cents > 0) {
+        const centWords = numberToWords(cents);
+        result += ` and ${centWords} Cent${cents !== 1 ? "s" : ""}`;
+    }
+
+    return `${result} Only.`;
 };

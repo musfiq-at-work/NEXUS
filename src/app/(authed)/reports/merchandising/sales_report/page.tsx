@@ -5,7 +5,6 @@ import React from "react";
 import { useSalesReportForm } from "./config/useSalesReportForm";
 
 const SalesReportPage = () => {
-	
 	// Form setup
 	const { methods, handleSubmit, formFields, validationError, control } = useSalesReportForm();
 

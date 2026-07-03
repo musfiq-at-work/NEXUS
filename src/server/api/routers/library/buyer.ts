@@ -1816,28 +1816,48 @@ export const buyerRouter = createTRPCRouter({
 
     getDepartmentsByBrands: protectedProcedure
         .input(
-            z.array(z.number()).min(1, "At least one buyer ID is required")
+            z.array(z.number()).min(1, "At least one brand ID is required")
         )
         .query(async ({ ctx, input }) => {
             try {
-                return await ctx.db.$queryRaw<{ id: number; departments: string; }[]>`
-                    SELECT DISTINCT
-                        BD.ID,
-                        STRING_AGG(
-                            REGEXP_REPLACE(BD.department, E'[\\r\\n]+', '', 'g') 
-                            || ' (' 
-                            || REGEXP_REPLACE(BB.brand, E'[\\r\\n]+', '', 'g') 
-                            || ')', ', '
-                        ) AS departments
-                    FROM BUYERS AS B
-                        INNER JOIN buyer_brands AS BB ON BB.buyer_id = B.id
-                        INNER JOIN buyer_departments AS BD ON BD.buyer_brand_id = BB.id
-                    WHERE BB.ID IN (${Prisma.join(input)})
-                    GROUP BY BD.ID;
-                `;
-            }
-            catch (error) {
+                const hasAll = input.includes(-1);
+                const brandIds = input.filter(id => id > 0);
+
+                return await ctx.db.$queryRaw<{ id: number; departments: string }[]>(
+                    hasAll ? Prisma.sql`
+                        SELECT DISTINCT
+                            BD.ID,
+                            STRING_AGG(
+                                REGEXP_REPLACE(BD.department, E'[\\r\\n]+', '', 'g')
+                                || ' ('
+                                || REGEXP_REPLACE(BB.brand, E'[\\r\\n]+', '', 'g')
+                                || ')',
+                                ', '
+                            ) AS departments
+                        FROM BUYERS AS B
+                            INNER JOIN buyer_brands AS BB ON BB.buyer_id = B.id
+                            INNER JOIN buyer_departments AS BD ON BD.buyer_brand_id = BB.id
+                        GROUP BY BD.ID;
+                        `
+                    : Prisma.sql`
+                        SELECT DISTINCT
+                            BD.ID,
+                            STRING_AGG(
+                                REGEXP_REPLACE(BD.department, E'[\\r\\n]+', '', 'g')
+                                || ' ('
+                                || REGEXP_REPLACE(BB.brand, E'[\\r\\n]+', '', 'g')
+                                || ')',
+                                ', '
+                            ) AS departments
+                        FROM BUYERS AS B
+                            INNER JOIN buyer_brands AS BB ON BB.buyer_id = B.id
+                            INNER JOIN buyer_departments AS BD ON BD.buyer_brand_id = BB.id
+                        WHERE BB.ID IN (${Prisma.join(brandIds)})
+                        GROUP BY BD.ID;
+                        `
+                );
+            } catch (error) {
                 handlePrismaError(error);
             }
-        })
+    })
 });

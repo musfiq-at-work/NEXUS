@@ -40,11 +40,34 @@ const PDF = () => {
         toDate,
     });
 
+    const { data } = api.salesReport.getSalesReport.useQuery(
+        {
+            buyerIds: buyerIds.length > 0 ? buyerIds : undefined,
+            factoryIds: factoryIds.length > 0 ? factoryIds : undefined,
+            brandIds: brandIds.length > 0 ? brandIds : undefined,
+            departmentIds: departmentIds.length > 0 ? departmentIds : undefined,
+            productTypeIds: productTypeIds.length > 0 ? productTypeIds : undefined,
+            teamIds: teamIds.length > 0 ? teamIds : undefined,
+            quantity,
+            rdlValue: rdlValue,
+            factoryValue: factoryValue,
+            commissionValue: commissionValue,
+            base,
+            fromDate: fromDate,
+            toDate: toDate,
+        },
+        {
+            enabled: !!fromDate && !!toDate,
+        }
+    );
+
+    console.log("PDF Data:", data);
+
     return (
         // <PDFViewer style={{ minHeight: "100vh", minWidth: "100vw" }} showToolbar={true}>
         //     <RDLInvoicePDF data={data} />
         // </PDFViewer>
-        <div>Hello</div>
+        <div>{JSON.stringify(data)}</div>
     );
 };
 

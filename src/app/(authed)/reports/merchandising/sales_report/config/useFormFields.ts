@@ -13,21 +13,44 @@ interface PropsType {
 export const useFormFields = ({buyer_ids, brand_ids}: PropsType): Field<keyof SalesReportFormValues>[] => {
     const buyers = api.buyers.getAllBuyersByTeam.useQuery().data ?? [];
 
-    const factories = api.factory.getAllFactories.useQuery().data ?? [];
+    const factories = [
+        { id: -1, name: "All" },
+        { id: -2, name: "None" },
+        ...(api.factory.getAllFactories.useQuery().data ?? []),
+    ]
 
-    const brands = api.buyers.getBrandsByBuyers.useQuery(
-        !!buyer_ids ? buyer_ids ?? [] : skipToken
-    ).data ?? [];
+    const brands = [
+        { id: -1, brand: "All" },
+        { id: -2, brand: "None" },
+        ...(api.buyers.getBrandsByBuyers.useQuery(
+            !!buyer_ids?.length ? buyer_ids : skipToken
+        ).data ?? []),
+    ];
 
-    const teams = api.teams.getTeamsByBuyers.useQuery(
-        !!buyer_ids ? buyer_ids ?? [] : skipToken
-    ).data ?? [];
+    const teams = [
+        { id: -1, team_name: "All" },
+        { id: -2, team_name: "None" },
+        ...(api.teams.getTeamsByBuyers.useQuery(
+            !!buyer_ids?.length ? buyer_ids ?? [] : skipToken
+        ).data ?? []),
+    ]
 
-    const departments = api.buyers.getDepartmentsByBrands.useQuery(
-        !!brand_ids ? brand_ids ?? [] : skipToken
-    ).data ?? [];
+    const departments = [
+        { id: -1, departments: "All" },
+        { id: -2, departments: "None" },
+        ...(api.buyers.getDepartmentsByBrands.useQuery(
+            brand_ids?.includes(-2) || !brand_ids?.length ? skipToken : brand_ids
+        ).data ?? []),
+    ];
 
-    const productTypes = api.productType.getAll.useQuery().data ?? [];
+    const productTypes = [
+        { id: -1, name: "All" },
+        { id: -2, name: "None" },
+        ...(api.productType.getAll.useQuery(
+            brand_ids?.includes(-2) || !brand_ids?.length ? skipToken : undefined
+        ).data ?? []),
+    ];
+
 
     return [
         {

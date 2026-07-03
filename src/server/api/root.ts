@@ -10,7 +10,7 @@ import {
 	tnaBaseActionRouter, tnaTemplatesRouter, tnaPlanRouter, commissionDistributionRouter,
 	scContactPersonRouter, salesContractsRouter, salesContractAmendmentRouter, lcMasterRouter, 
 	lcAmendmentRouter, toleranceLevelRouter, exFactoryRouter, lcTransferRouter, factoryInvoiceRouter, 
-	evPermissionRouter, rdlInvoiceRouter, documentSubmissionRouter, commissionInvoiceRouter, 
+	evPermissionRouter, rdlInvoiceRouter, documentSubmissionRouter, commissionInvoiceRouter, salesReport,
 	proceedRealizationRouter, factoryPaymentRouter,
 } from '.';
 
@@ -75,6 +75,9 @@ export const appRouter = createTRPCRouter({
 	commissionInvoice: commissionInvoiceRouter,
 	proceedRealization: proceedRealizationRouter,
 	factoryPayment: factoryPaymentRouter,
+
+	// reports routers
+	salesReport: salesReport,
 });
 
 // export type definition of API

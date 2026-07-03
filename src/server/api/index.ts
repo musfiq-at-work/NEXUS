@@ -57,3 +57,7 @@ export { documentSubmissionRouter } from "./routers/commercial/documentSubmissio
 export { commissionInvoiceRouter } from "./routers/accounting/commissionInvoice";
 export { proceedRealizationRouter } from "./routers/accounting/proceedRealization";
 export { factoryPaymentRouter } from "./routers/accounting/factoryPayment";
+
+
+// Reports routers
+export { salesReport } from "./routers/reports/salesReport";
