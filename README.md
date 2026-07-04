@@ -171,3 +171,5 @@ docker build -t nexus .
 
 docker run -p 7000:7000 -e DATABASE_URL="postgresql://musfiq:Musfiquer%263468%23%23@192.168.33.4:5432/nexus_db" -e SHADOW_DATABASE_URL="postgresql://musfiq:Musfiquer%263468%23%23@192.168.33.4:5432/nexus_db" -e JWT_SECRET="xU7i7z9U4y8oVLSe0Pti00k9o2fb0phPWQuf4Dx8RumEC0K7lZOyCDUEHy6WubkS" nexus 
 ```
+
+ssh rdlerpadmin@192.168.21.253 -p 60011

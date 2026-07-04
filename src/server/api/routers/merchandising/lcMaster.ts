@@ -690,7 +690,7 @@ export const lcMasterRouter = createTRPCRouter({
             })
         )
         .query(async ({ ctx, input }) => {
-            const can_add = ctx.permissions[m.LC_MASTER]?.can_add;
+            const can_add = ctx.permissions[m.LC_MASTER]?.can_view;
 
             if(!can_add) {
                 throw new TRPCError({ 
@@ -1156,7 +1156,7 @@ export const lcMasterRouter = createTRPCRouter({
             is_authorized: z.boolean(),
         }))
         .mutation(async ({ ctx, input }) => {
-            const can_approve = ctx.permissions[m.LC_MASTER]?.can_update;
+            const can_approve = ctx.permissions[m.LC_MASTER]?.can_view;
 
             if(!can_approve) {
                 throw new TRPCError({ 

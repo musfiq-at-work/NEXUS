@@ -78,19 +78,9 @@ model levels_history {
   levels    levels   @relation(fields: [level_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
-model login_history {
-  id           String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id      String              @db.Uuid
-  attempted_at DateTime            @default(now()) @db.Timestamptz(6)
-  ip           Unsupported("cidr")
-  user_agent   String
-  login_status Boolean             @default(false)
-  users        users               @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-}
-
 model modules {
   id                       Int                        @id @default(autoincrement())
-  name                     String                     @db.VarChar(25)
+  name                     String                     @db.VarChar(50)
   parent_module_id         Int?
   authorizations           authorizations[]
   level_permission         level_permission[]
@@ -214,7 +204,6 @@ model users {
   level_permission_history_level_permission_history_action_byTousers level_permission_history[]                     @relation("level_permission_history_action_byTousers")
   level_permission_history_level_permission_history_added_byTousers  level_permission_history[]                     @relation("level_permission_history_added_byTousers")
   levels_history                                                     levels_history[]
-  login_history                                                      login_history[]
   order_styles_history                                               order_styles_history[]
   overseas_office_history_overseas_office_history_action_byTousers   overseas_office_history[]                      @relation("overseas_office_history_action_byTousers")
   payment_terms_history_payment_terms_history_action_byTousers       payment_terms_history[]                        @relation("payment_terms_history_action_byTousers")
@@ -2060,9 +2049,6 @@ model exfactory_orders {
   exfactory           exfactory?            @relation(fields: [exfactory_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   buyer_orders        buyer_orders?         @relation(fields: [order_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   exfactory_shipments exfactory_shipments[]
-
-  @@unique([exfactory_id, order_id], map: "unique_exfactory_order")
-  @@unique([exfactory_id, order_id], map: "unique_orders_per_exfactory")
 }
 
 model exfactory_orders_history {

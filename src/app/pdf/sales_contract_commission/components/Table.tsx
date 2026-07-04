@@ -135,7 +135,7 @@ const SalesContractCommissionTable = ({data, amendment_no, amendment_date}: Sale
                 <View style={{marginTop: 15}}>
                     <View style={styles.doubleColumnContainer}>
                         <Text style={{...styles.textBold, flex: 3}}>
-                            SALES CONTRACT NO: {amendment_no}
+                            SALES CONTRACT AMENDMENT NO: {amendment_no}
                         </Text>
                         <View style={{flex: 2, display: 'flex', flexDirection: 'row'}}>
                             <Text style={styles.textBold}>Amendment Date:</Text>

@@ -88,7 +88,8 @@ export const salesContractsRouter = createTRPCRouter({
             })
         )
         .query(async ({ ctx, input }) => {
-            const can_view = ctx.permissions[m.SALES_CONTRACT]?.can_view;
+            console.log("Fetching sales contracts with input:", input, m.SALES_CONTRACTS);
+            const can_view = ctx.permissions[m.SALES_CONTRACTS]?.can_view;
 
             if(!can_view) {
                 throw new TRPCError({ 
@@ -181,7 +182,7 @@ export const salesContractsRouter = createTRPCRouter({
             })
         )
         .query(async ({ ctx, input }) => {
-            const can_view = ctx.permissions[m.SALES_CONTRACT]?.can_view;
+            const can_view = ctx.permissions[m.SALES_CONTRACTS]?.can_view;
 
             if(!can_view) {
                 throw new TRPCError({ 
@@ -292,7 +293,7 @@ export const salesContractsRouter = createTRPCRouter({
             })
         )
         .mutation(async ({ ctx, input }) => {
-            const can_delete = ctx.permissions[m.SALES_CONTRACT]?.can_delete;
+            const can_delete = ctx.permissions[m.SALES_CONTRACTS]?.can_delete;
 
             if(!can_delete) {
                 throw new TRPCError({ 
@@ -421,7 +422,7 @@ export const salesContractsRouter = createTRPCRouter({
             })
         )
         .mutation(async ({ ctx, input }) => {
-            const can_add = ctx.permissions[m.SALES_CONTRACT]?.can_add;
+            const can_add = ctx.permissions[m.SALES_CONTRACTS]?.can_add;
 
             if (!can_add) {
                 throw new TRPCError({
@@ -569,7 +570,7 @@ export const salesContractsRouter = createTRPCRouter({
             })
         )
         .query(async ({ ctx, input }) => {
-            const can_view = ctx.permissions[m.SALES_CONTRACT]?.can_view;
+            const can_view = ctx.permissions[m.SALES_CONTRACTS]?.can_view;
 
             if(!can_view) {
                 throw new TRPCError({ 
@@ -622,7 +623,7 @@ export const salesContractsRouter = createTRPCRouter({
             })
         )
         .query(async ({ ctx, input }) => {
-            const can_view = ctx.permissions[m.SALES_CONTRACT]?.can_view;
+            const can_view = ctx.permissions[m.SALES_CONTRACTS]?.can_view;
 
             if(!can_view) {
                 throw new TRPCError({ 
@@ -753,7 +754,7 @@ export const salesContractsRouter = createTRPCRouter({
         )
         .mutation(async ({ ctx, input }) => {
             try {
-                const can_edit = ctx.permissions[m.SALES_CONTRACT]?.can_update;
+                const can_edit = ctx.permissions[m.SALES_CONTRACTS]?.can_update;
 
                 if (!can_edit) {
                     throw new TRPCError({
@@ -1011,7 +1012,7 @@ export const salesContractsRouter = createTRPCRouter({
             })
         )
         .mutation(async ({ ctx, input }) => {
-            const can_delete = ctx.permissions[m.SALES_CONTRACT]?.can_delete;
+            const can_delete = ctx.permissions[m.SALES_CONTRACTS]?.can_delete;
 
             if(!can_delete) {
                 throw new TRPCError({ 
@@ -1085,7 +1086,7 @@ export const salesContractsRouter = createTRPCRouter({
             id: z.string()
         }))
         .query(async ({ ctx, input }) => {
-            const can_view = ctx.permissions[m.SALES_CONTRACT]?.can_view;
+            const can_view = ctx.permissions[m.SALES_CONTRACTS]?.can_view;
 
             if (!can_view) {
                 throw new TRPCError({ 
@@ -1117,13 +1118,13 @@ export const salesContractsRouter = createTRPCRouter({
                     SELECT 
                         department_id, level_id, approval_level
                     FROM AUTHORIZATIONS 
-                    WHERE module_id = ${m.SALES_CONTRACT}
+                    WHERE module_id = ${m.SALES_CONTRACTS}
                         AND level_id = ${ctx.user.level_id}
                         AND department_id = ${ctx.user.department_id}
                     LIMIT 1;
                 `;
 
-                console.log('Authorization Permission:', authorizationPermission);
+                console.log('Authorization Permission:', authorizationPermission, );
 
                 return {authorization: authorizationState, permission: authorizationPermission[0]};
             }
@@ -1140,7 +1141,7 @@ export const salesContractsRouter = createTRPCRouter({
             previous_approval_status: z.number()
         }))
         .mutation(async ({ ctx, input }) => {
-            const can_update = ctx.permissions[m.SALES_CONTRACT]?.can_update;
+            const can_update = ctx.permissions[m.SALES_CONTRACTS]?.can_view;
 
             if (!can_update) {
                 throw new TRPCError({ 
@@ -1180,7 +1181,7 @@ export const salesContractsRouter = createTRPCRouter({
                         SELECT 
                             department_id, level_id, approval_level
                         FROM AUTHORIZATIONS 
-                        WHERE module_id = ${m.SALES_CONTRACT}
+                        WHERE module_id = ${m.SALES_CONTRACTS}
                             AND level_id = ${ctx.user.level_id}
                             AND department_id = ${ctx.user.department_id}
                         LIMIT 1;
@@ -1228,7 +1229,7 @@ export const salesContractsRouter = createTRPCRouter({
             id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
-            const can_view = ctx.permissions[m.SALES_CONTRACT]?.can_view;
+            const can_view = ctx.permissions[m.SALES_CONTRACTS]?.can_view;
 
             if (!can_view) {
                 throw new TRPCError({ 
@@ -1567,7 +1568,7 @@ export const salesContractsRouter = createTRPCRouter({
             sales_contract_id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
-            const can_view = ctx.permissions[m.SALES_CONTRACT]?.can_view;
+            const can_view = ctx.permissions[m.SALES_CONTRACTS]?.can_view;
 
             if (!can_view) {
                 throw new TRPCError({ 
@@ -1602,7 +1603,7 @@ export const salesContractsRouter = createTRPCRouter({
             id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
-            const can_view = ctx.permissions[m.SALES_CONTRACT]?.can_view;
+            const can_view = ctx.permissions[m.SALES_CONTRACTS]?.can_view;
 
             if (!can_view) {
                 throw new TRPCError({ 

@@ -513,9 +513,9 @@ export const exFactoryRouter = createTRPCRouter({
 
                 const lcTransferCheck = isLC
                     ? Prisma.sql`
-                        INNER JOIN SALES_CONTRACT_DETAILS AS SCD ON SCD.order_id = BO.id
-                        INNER JOIN SALES_CONTRACTS AS SC ON SC.ID = SCD.sales_contract_id
-                        INNER JOIN lc_transfer_details AS LTD ON LTD.sales_contract_id = SCD.sales_contract_id
+                        LEFT JOIN SALES_CONTRACT_DETAILS AS SCD ON SCD.order_id = BO.id
+                        LEFT JOIN SALES_CONTRACTS AS SC ON SC.ID = SCD.sales_contract_id
+                        LEFT JOIN lc_transfer_details AS LTD ON LTD.sales_contract_id = SCD.sales_contract_id
                     `
                     : Prisma.sql``;
 
@@ -671,6 +671,8 @@ export const exFactoryRouter = createTRPCRouter({
         }))
         .query(async ({ ctx, input }) => {
             const can_view = ctx.permissions[m.EX_FACTORIES]?.can_view;
+
+            console.log("getShipmentsForExFactoryOrder input:", input);
 
             if (!can_view) {
                 throw new TRPCError({ 
@@ -1063,7 +1065,7 @@ export const exFactoryRouter = createTRPCRouter({
             approval_status: z.boolean(),
         }))
         .mutation(async ({ ctx, input }) => {
-            const can_approve = ctx.permissions[m.EX_FACTORIES]?.can_update;
+            const can_approve = ctx.permissions[m.EX_FACTORIES]?.can_view;
 
             if(!can_approve) {
                 throw new TRPCError({ 
@@ -1081,8 +1083,7 @@ export const exFactoryRouter = createTRPCRouter({
                     SELECT 
                         1 as can_approve
                     FROM AUTHORIZATIONS
-                    WHERE approval_level = ${input.approval_status ? 1 : 0}
-                        AND module_id = ${m.EX_FACTORIES}
+                    WHERE module_id = ${m.EX_FACTORIES}
                         AND level_id = ${userLevel}
                         AND department_id = ${userDepartment}
                     LIMIT 1;
