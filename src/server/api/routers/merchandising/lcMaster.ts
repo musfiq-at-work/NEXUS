@@ -32,16 +32,6 @@ interface LcDetailsResponse {
     factory_transfer_value: number;
 }
 
-interface LcOrderInput {
-    order_id: string;
-    dm_pi_no?: string;
-}
-
-interface LcOrderLookup {
-    order_id: string | null;
-    dm_pi_no: string | null;
-}
-
 export const lcMasterRouter = createTRPCRouter({
     getLc: protectedProcedure
         .input(
@@ -360,14 +350,10 @@ export const lcMasterRouter = createTRPCRouter({
                 buyer_bank_id: z.number(),
                 status: z.boolean(),
                 remarks: z.string().optional(),
-                orders: z
-                    .array(
-                        z.object({
-                            order_id: z.string(),
-                            pi_no: z.string().optional(),
-                        })
-                    )
-                    .optional(),
+                orders: z.array(z.object({
+                    order_id: z.string(),
+                    pi_no: z.string().optional(),
+                })).optional(),
             })
         )
         .mutation(async ({ ctx, input }) => {
@@ -392,8 +378,7 @@ export const lcMasterRouter = createTRPCRouter({
                             lc_open_date: input.lc_open_date,
                             lc_received_date: input.lc_received_date,
                             lc_expire_date: input.lc_expire_date,
-                            latest_shipment_date:
-                                input.latest_shipment_date,
+                            latest_shipment_date: input.latest_shipment_date,
                             currency_id: input.currency_id,
                             rdl_bank_id: input.rdl_bank_id,
                             buyer_bank_id: input.buyer_bank_id,
@@ -413,8 +398,7 @@ export const lcMasterRouter = createTRPCRouter({
                             buyer_bank_id: newLC.buyer_bank_id,
                             lc_received_date: newLC.lc_received_date,
                             lc_expire_date: newLC.lc_expire_date,
-                            latest_shipment_date:
-                                newLC.latest_shipment_date,
+                            latest_shipment_date: newLC.latest_shipment_date,
                             rdl_bank_id: newLC.rdl_bank_id,
                             remarks: newLC.remarks,
                             company_id: newLC.company_id,
@@ -424,7 +408,7 @@ export const lcMasterRouter = createTRPCRouter({
                         },
                     });
 
-                    const orders = await Promise.all(
+                    await Promise.all(  
                         (input.orders ?? []).map(async (order) => {
                             const lcOrder = await tx.lc_orders.create({
                                 data: {

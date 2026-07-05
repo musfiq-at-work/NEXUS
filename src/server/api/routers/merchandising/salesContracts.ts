@@ -88,7 +88,6 @@ export const salesContractsRouter = createTRPCRouter({
             })
         )
         .query(async ({ ctx, input }) => {
-            console.log("Fetching sales contracts with input:", input, m.SALES_CONTRACTS);
             const can_view = ctx.permissions[m.SALES_CONTRACTS]?.can_view;
 
             if(!can_view) {
@@ -1123,8 +1122,6 @@ export const salesContractsRouter = createTRPCRouter({
                         AND department_id = ${ctx.user.department_id}
                     LIMIT 1;
                 `;
-
-                console.log('Authorization Permission:', authorizationPermission, );
 
                 return {authorization: authorizationState, permission: authorizationPermission[0]};
             }

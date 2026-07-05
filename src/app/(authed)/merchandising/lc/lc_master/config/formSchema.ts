@@ -42,7 +42,7 @@ export const formSchema = z.object({
     buyer_bank_id: z.number(),
     lc_status: z.boolean(),
     latest_shipment_date: z.string().optional(),
-    expire_date: z.string().optional(),
+    expire_date: z.string(),
     remarks: z.string().optional(),
     order_lc_quantity: z.string().optional(),
     order_lc_value: z.string().optional(),

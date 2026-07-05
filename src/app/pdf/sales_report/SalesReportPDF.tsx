@@ -34,8 +34,6 @@ interface SalesReportPDFProps {
 }
 
 const SalesReportPDF = ({ data, base, fromDate, toDate, selectedFields }: SalesReportPDFProps) => {
-	console.log('Selected Fields:', selectedFields);
-
 	const width = 1000 / ((selectedFields?.buyers ? 2 : 0) + 
 		(selectedFields?.factory_name ? 2 : 0) +
 		(selectedFields?.brand ? 1 : 0) + 
@@ -61,6 +59,7 @@ const SalesReportPDF = ({ data, base, fromDate, toDate, selectedFields }: SalesR
 	]
 
 	const tableWidth = tableColumns.reduce((total, column) => total + (column.width ?? 1000 / tableColumns.length), 0);
+	
 	const summaryValueWidth =
 		(selectedFields?.quantity ? width : 0) +
 		(selectedFields?.rdl_value ? width : 0) +

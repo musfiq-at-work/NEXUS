@@ -96,8 +96,6 @@ const EditSalesContractPage = ({ params }: ParamsProp) => {
 
     const [canAuthorize, setCanAuthorize] = useState<boolean>(false);
 
-    console.log("Authorizations:", authorizations);
-
     const approveSalesContract = api.salesContracts.approveSalesContract.useMutation({
         onSuccess: async () => {
             toast.success("Sales Contract approved successfully!");

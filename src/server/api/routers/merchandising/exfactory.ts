@@ -672,8 +672,6 @@ export const exFactoryRouter = createTRPCRouter({
         .query(async ({ ctx, input }) => {
             const can_view = ctx.permissions[m.EX_FACTORIES]?.can_view;
 
-            console.log("getShipmentsForExFactoryOrder input:", input);
-
             if (!can_view) {
                 throw new TRPCError({ 
                     code: "FORBIDDEN", 

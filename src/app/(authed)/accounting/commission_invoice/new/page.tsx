@@ -31,9 +31,6 @@ const NewCommissionInvoicePage = () => {
         }
     });
 
-    useEffect(() => {
-        console.log("Form validation errors:", validationError);
-    }, [validationError]);
 
     const onSubmitAll =  handleSubmit(async (commissionInvoiceData) => {
         try {

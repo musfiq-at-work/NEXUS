@@ -6,6 +6,7 @@ import SalesReportPDF from "./SalesReportPDF";
 import { api } from "~/trpc/react";
 import { skipToken } from "@tanstack/react-query";
 import { useSearchParams } from 'next/navigation';
+import { Loader } from "~/components";
 
 const PDF = () => {
     const searchParams = useSearchParams();
@@ -24,23 +25,7 @@ const PDF = () => {
     const fromDate = searchParams.get("from_date") ?? "";
     const toDate = searchParams.get("to_date") ?? "";
 
-    console.log("PDF Params:", {
-        buyerIds,
-        factoryIds,
-        brandIds,
-        departmentIds,
-        productTypeIds,
-        teamIds,
-        quantity,
-        rdlValue,
-        factoryValue,
-        commissionValue,
-        base,
-        fromDate,
-        toDate,
-    });
-
-    const { data } = api.salesReport.getSalesReport.useQuery(
+    const { data, isLoading } = api.salesReport.getSalesReport.useQuery(
         !!fromDate && !!toDate ? {
             buyerIds: buyerIds.length > 0 ? buyerIds : undefined,
             factoryIds: factoryIds.length > 0 ? factoryIds : undefined,
@@ -58,8 +43,6 @@ const PDF = () => {
         } : skipToken 
     );
 
-    console.log("PDF Data:", data);
-    
     const selectedFields = {
         buyers: true,
         factory_name: factoryIds.length > 0 && !factoryIds.includes(-2),
@@ -72,6 +55,10 @@ const PDF = () => {
         factory_value: factoryValue,
         commission_value: commissionValue,
     };
+
+    if (isLoading) {
+        return <Loader />;
+    }
     
     return (
         <PDFViewer style={{ minHeight: "100vh", minWidth: "100vw" }} showToolbar={true}>

@@ -70,7 +70,7 @@ export const styles = StyleSheet.create({
         backgroundColor: tableHeaderColor,
     },
     headerCell: {
-        padding: 3,
+        padding: 5,
         fontSize: 9,
         fontFamily: "Amasis",
         borderRightWidth: 1.5,
