@@ -90,7 +90,7 @@ export const useFormFields = ({documentSubmissions, isEdit, buyer_id}: PropsType
         },
         {
             name: "invoice_value",
-            label: "Invoice Value",
+            label: "Proceed Value",
             placeholder: "Enter Invoice Value",
             optional: true,
             disabled: true,

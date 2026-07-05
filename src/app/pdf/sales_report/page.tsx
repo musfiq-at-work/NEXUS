@@ -2,7 +2,7 @@
 
 import { PDFViewer } from "@react-pdf/renderer";
 import React from "react";
-import RDLInvoicePDF from "./RDLInvoicePDF";
+import SalesReportPDF from "./SalesReportPDF";
 import { api } from "~/trpc/react";
 import { skipToken } from "@tanstack/react-query";
 import { useSearchParams } from 'next/navigation';
@@ -41,7 +41,7 @@ const PDF = () => {
     });
 
     const { data } = api.salesReport.getSalesReport.useQuery(
-        {
+        !!fromDate && !!toDate ? {
             buyerIds: buyerIds.length > 0 ? buyerIds : undefined,
             factoryIds: factoryIds.length > 0 ? factoryIds : undefined,
             brandIds: brandIds.length > 0 ? brandIds : undefined,
@@ -55,19 +55,42 @@ const PDF = () => {
             base,
             fromDate: fromDate,
             toDate: toDate,
-        },
-        {
-            enabled: !!fromDate && !!toDate,
-        }
+        } : skipToken 
     );
 
     console.log("PDF Data:", data);
-
+    
+    const selectedFields = {
+        buyers: true,
+        factory_name: factoryIds.length > 0 && !factoryIds.includes(-2),
+        brand: brandIds.length > 0 && !brandIds.includes(-2),
+        department: departmentIds.length > 0 && !departmentIds.includes(-2),
+        productTypes: productTypeIds.length > 0 && !productTypeIds.includes(-2),
+        teams: teamIds.length > 0 && !teamIds.includes(-2),
+        quantity: quantity,
+        rdl_value: rdlValue,
+        factory_value: factoryValue,
+        commission_value: commissionValue,
+    };
+    
     return (
-        // <PDFViewer style={{ minHeight: "100vh", minWidth: "100vw" }} showToolbar={true}>
-        //     <RDLInvoicePDF data={data} />
-        // </PDFViewer>
-        <div>{JSON.stringify(data)}</div>
+        <PDFViewer style={{ minHeight: "100vh", minWidth: "100vw" }} showToolbar={true}>
+            <SalesReportPDF 
+                data={data ?? { 
+                    salesReportData: [], 
+                    totals: { 
+                        quantity: '0',
+                        rdl_value: '0', 
+                        factory_value: '0', 
+                        commission_value: '0' 
+                    } 
+                }} 
+                base={base}
+                fromDate={fromDate}
+                toDate={toDate}
+                selectedFields={selectedFields}
+            />
+        </PDFViewer>
     );
 };
 

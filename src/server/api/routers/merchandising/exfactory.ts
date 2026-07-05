@@ -513,9 +513,9 @@ export const exFactoryRouter = createTRPCRouter({
 
                 const lcTransferCheck = isLC
                     ? Prisma.sql`
-                        LEFT JOIN SALES_CONTRACT_DETAILS AS SCD ON SCD.order_id = BO.id
-                        LEFT JOIN SALES_CONTRACTS AS SC ON SC.ID = SCD.sales_contract_id
-                        LEFT JOIN lc_transfer_details AS LTD ON LTD.sales_contract_id = SCD.sales_contract_id
+                        INNER JOIN SALES_CONTRACT_DETAILS AS SCD ON SCD.order_id = BO.id
+                        INNER JOIN SALES_CONTRACTS AS SC ON SC.ID = SCD.sales_contract_id
+                        INNER JOIN lc_transfer_details AS LTD ON LTD.sales_contract_id = SCD.sales_contract_id
                     `
                     : Prisma.sql``;
 
