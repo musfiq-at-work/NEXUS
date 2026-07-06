@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, type JSX } from "react";
+import { useEffect, type JSX } from "react";
 import Button from "../atoms/Button";
 import { motion } from "framer-motion";
 
 import { caretDownIcon, caretUpIcon } from "~/assets";
+import { useSidebarStore } from "~/store/useSidebarStore";
 
 import type { StaticImageData } from "next/image";
 
 type AccordionProps = {
+  id: number;
   items: JSX.Element[];
   label: string;
   icon?: StaticImageData;
@@ -16,12 +18,22 @@ type AccordionProps = {
 };
 
 // Accordion component with expandable/collapsible functionality
-const Accordion = ({items, label, icon, isLinkOpen}: AccordionProps) => {
-  const [isOpen, setIsOpen] = useState(isLinkOpen || false);
+const Accordion = ({id, items, label, icon, isLinkOpen}: AccordionProps) => {
+  const storedIsOpen = useSidebarStore((state) => state.accordionStates[id]);
+  const setAccordionState = useSidebarStore((state) => state.setAccordionState);
+  const toggleAccordionState = useSidebarStore((state) => state.toggleAccordionState);
+
+  const isOpen = storedIsOpen ?? Boolean(isLinkOpen);
+
+  useEffect(() => {
+    if (isLinkOpen) {
+      setAccordionState(id, true);
+    }
+  }, [id, isLinkOpen, setAccordionState]);
 
   return (
     <div>
-      <Button onClick={() => setIsOpen(!isOpen)} 
+      <Button onClick={() => toggleAccordionState(id)} 
         variant="accordion"
         type="button" 
         label={label} 

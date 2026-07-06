@@ -37,7 +37,7 @@ const NavTree = ({ data }: { data: TreeNode[] }) => {
                             </Link>
                         </div>
                     ) : (
-                        <Accordion icon={icons[node.id]} 
+                        <Accordion id={node.id} icon={icons[node.id]} 
                             label={node.name} 
                             isLinkOpen={pathname.includes(sideBarConfig[node.id]?.href ?? '#')} 
                             items={[ 

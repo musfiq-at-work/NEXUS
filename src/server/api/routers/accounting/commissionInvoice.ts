@@ -1203,15 +1203,15 @@ export const commissionInvoiceRouter = createTRPCRouter({
                     dhaka_value: currencyFormatter(commissionDistribution.dhaka_value, '$'),
                     overseas_value: currencyFormatter(commissionDistribution.overseas_value, '$'),
                     other_value: currencyFormatter(commissionDistribution.other_value, '$'),
-                    dhaka_percentage: `${commissionDistribution.dhaka_percentage.toFixed(2)}%`,
-                    overseas_percentage: `${commissionDistribution.overseas_percentage.toFixed(2)}%`,
-                    other_percentage: `${commissionDistribution.other_percentage.toFixed(2)}%`,
+                    dhaka_percentage: `${commissionDistribution.dhaka_percentage?.toFixed(2) || 0}%`,
+                    overseas_percentage: `${commissionDistribution.overseas_percentage?.toFixed(2) || 0}%`,
+                    other_percentage: `${commissionDistribution.other_percentage?.toFixed(2) || 0}%`,
                     dn_dhaka_value: currencyFormatter(commissionDistribution.dn_dhaka_value, '$'),
                     dn_overseas_value: currencyFormatter(commissionDistribution.dn_overseas_value, '$'),
                     dn_other_value: currencyFormatter(commissionDistribution.dn_other_value, '$'),
-                    dn_dhaka_percentage: `${commissionDistribution.dn_dhaka_percentage.toFixed(2)}%`,
-                    dn_overseas_percentage: `${commissionDistribution.dn_overseas_percentage.toFixed(2)}%`,
-                    dn_other_percentage: `${commissionDistribution.dn_other_percentage.toFixed(2)}%`
+                    dn_dhaka_percentage: `${commissionDistribution.dn_dhaka_percentage?.toFixed(2) || 0}%`,
+                    dn_overseas_percentage: `${commissionDistribution.dn_overseas_percentage?.toFixed(2) || 0}%`,
+                    dn_other_percentage: `${commissionDistribution.dn_other_percentage?.toFixed(2) || 0}%`
                 } : null;
 
                 const totalRdlInvoiceValue = rdl_invoices.reduce((sum, ri) => sum + safeNumber(ri.invoice_value), 0);
@@ -1263,6 +1263,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
                 return {header, formattedRdlInvoices, formattedFactoryInvoice, formattedCommissionDistribution, result};
             }
             catch (error) {
+                console.error('Error fetching commission invoice details:', error);
                 handlePrismaError(error);
             }
         }),

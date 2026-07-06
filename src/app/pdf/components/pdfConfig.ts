@@ -24,12 +24,6 @@ export const registerPdfFonts = () => {
         ],
     });
 
-    Font.register({
-        family: "open-sans",
-        fonts: [
-            { src: "/fonts/OpenSans.ttf", fontWeight: 400 },
-        ],
-    });
 
     Font.register({
         family: "Roboto",

@@ -4,10 +4,10 @@ import React from 'react';
 
 type BurgerProps = {
     isOpen: boolean;
-    setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
+    toggleIsOpen: () => void;
 }
 
-const Burger = ({ isOpen, setIsOpen }: BurgerProps) => {
+const Burger = ({ isOpen, toggleIsOpen }: BurgerProps) => {
     return (
         <motion.div
             className="absolute top-1 z-10"
@@ -15,7 +15,7 @@ const Burger = ({ isOpen, setIsOpen }: BurgerProps) => {
             animate={{ x: isOpen ? 198 : 0 }}
             transition={{ type: "tween" }}
         >
-            <button onClick={() => setIsOpen(current => !current)} 
+            <button onClick={toggleIsOpen} 
                 className={clsx(
                     'absolute top-2 left-1 rounded-lg w-10 h-10 z-10 hover:cursor-pointer group', 
                     isOpen ? 'bg-primary/10 hover:bg-primary backdrop-blur-sm' : 'bg-transparent hover:bg-primary-accent'

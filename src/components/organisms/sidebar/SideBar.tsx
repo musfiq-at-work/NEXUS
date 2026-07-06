@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import NavTree from './NavTree';
 import { motion } from 'framer-motion';
 import Burger from './Burger';
 import clsx from 'clsx';
 import Image from 'next/image';
+import { useSidebarStore } from '~/store/useSidebarStore';
 
 type NavData = { 
     name: string; 
@@ -51,7 +52,8 @@ const buildTree = (items: NavData[]): TreeNode[] => {
 }
 
 const SideBar = ({navData, children}: SideBarProps) => {
-    const [isOpen, setIsOpen] = useState<boolean>(true);
+    const isOpen = useSidebarStore((state) => state.isOpen);
+    const toggleIsOpen = useSidebarStore((state) => state.toggleIsOpen);
 
     // temporary filter to remove the DOES NOT EXIST item with id 64
     // this is for the DB migration phase, to maintain data integrity
@@ -79,7 +81,7 @@ const SideBar = ({navData, children}: SideBarProps) => {
                     </div>
                 </motion.div>
 
-                <Burger isOpen={isOpen} setIsOpen={setIsOpen} />
+                <Burger isOpen={isOpen} toggleIsOpen={toggleIsOpen} />
             </div>
 
             <motion.div

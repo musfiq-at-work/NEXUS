@@ -7,19 +7,6 @@ import { Prisma } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
 
-interface ExportReportRow {
-    buyer_name: string;
-    factory_name?: string;
-    team_name?: string;
-    brand?: string;
-    department?: string;
-    product_type?: string;
-    quantity?: number;
-    rdl_value?: number;
-    factory_value?: number;
-    commission_value?: number;
-}
-
 interface ExportReportBaseRow {
     buyer_id: string;
     buyer_name: string;
