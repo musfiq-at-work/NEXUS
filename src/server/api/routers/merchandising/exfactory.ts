@@ -376,9 +376,7 @@ export const exFactoryRouter = createTRPCRouter({
 
                     const newRef = (meta.last_ref ?? 0) + 1;
 
-                    const exfactory_no = `XFAC/${currentYear}/${String(
-                        newRef
-                    ).padStart(6, "0")}`;
+                    const exfactory_no = `XFAC/${currentYear}/${String(newRef).padStart(6, "0")}`;
 
                     const addedExfactory = await tx.exfactory.create({
                         data: {

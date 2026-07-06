@@ -58,7 +58,6 @@ export const exportReportRouter = createTRPCRouter({
 
                 const fromDate = input.fromDate;
                 const toDate = input.toDate;
-                const base = input.base;
 
                 const buyerIds = input.buyerIds ?? [];
                 const factoryIds = input.factoryIds ?? [];
@@ -291,7 +290,7 @@ export const exportReportRouter = createTRPCRouter({
                             )
                     )
                     SELECT
-                            ${Prisma.join(outerSelectFields, ", ")},
+                        ${Prisma.join(outerSelectFields, ", ")},
                         SUM(quantity) AS quantity,
                         SUM(rdl_value) AS rdl_value,
                             SUM(factory_value) AS factory_value

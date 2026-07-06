@@ -3,7 +3,7 @@ import z from "zod";
 import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { actions, Prisma } from "@prisma/client";
+import { actions } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
 import { formatDate } from "~/utils/localDateString";
@@ -830,7 +830,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
                             RI.INVOICE_NO,
                             RI.INVOICE_DATE,
                             RID.INVOICE_QUANTITY,
-                            RID.INVOICE_VALUE,
+                            (RID.INVOICE_VALUE - COALESCE(RI.DISCOUNT, 0)) AS INVOICE_VALUE,
                             DS.ID AS DS_ID
                         FROM document_submissions AS DS
                             INNER JOIN document_submissions_details AS DSD ON DSD.document_submissions_id = DS.id
@@ -851,7 +851,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
                             RI.INVOICE_NO,
                             RI.INVOICE_DATE,
                             RID.INVOICE_QUANTITY,
-                            RID.INVOICE_VALUE,
+                            (RID.INVOICE_VALUE - COALESCE(RI.DISCOUNT, 0)) AS INVOICE_VALUE,
                             RI.ID AS RI_ID
                         FROM rdl_invoice AS RI
                             INNER JOIN (

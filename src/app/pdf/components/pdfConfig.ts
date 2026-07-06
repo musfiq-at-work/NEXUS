@@ -24,7 +24,6 @@ export const registerPdfFonts = () => {
         ],
     });
 
-
     Font.register({
         family: "Roboto",
         fonts: [
