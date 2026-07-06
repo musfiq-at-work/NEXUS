@@ -1,12 +1,12 @@
 import { Document, Page, Text, View } from "@react-pdf/renderer";
 import { registerPdfFonts, styles, tableBorderColor } from "../components/pdfConfig";
-import { PrintByAndDate, RenaissanceLogo, ReportTitle, HeaderPart, Table, TableSummary, Signature } from "../components";
+import { PrintByAndDate, RenaissanceLogo, ReportTitle, Table } from "../components";
 import { formatDate } from "~/utils/localDateString";
 
 import type { inferRouterOutputs } from '@trpc/server';
-import type { salesReport } from '~/server/api/routers/reports/salesReport'
+import type { salesReportRouter } from '~/server/api/routers/reports/salesReport'
 
-type SalesReportOutput = inferRouterOutputs<typeof salesReport>;
+type SalesReportOutput = inferRouterOutputs<typeof salesReportRouter>;
 
 type GetPDFDataOutput = SalesReportOutput['getSalesReport'];
 
@@ -43,7 +43,8 @@ const SalesReportPDF = ({ data, base, fromDate, toDate, selectedFields }: SalesR
 		(selectedFields?.quantity ? 1 : 0) + 
 		(selectedFields?.rdl_value ? 1 : 0) + 
 		(selectedFields?.factory_value ? 1 : 0) + 
-		(selectedFields?.commission_value ? 1 : 0));
+		(selectedFields?.commission_value ? 1 : 0)
+	);
 
 	const tableColumns = [
 		...((selectedFields?.buyers) ? [{ key: 'buyer_name', label: 'Buyer', width: width * 2 }] : []),
@@ -65,14 +66,23 @@ const SalesReportPDF = ({ data, base, fromDate, toDate, selectedFields }: SalesR
 		(selectedFields?.rdl_value ? width : 0) +
 		(selectedFields?.factory_value ? width : 0) +
 		(selectedFields?.commission_value ? width : 0);
+
 	const summaryLabelWidth = Math.max(tableWidth - summaryValueWidth, 0);
 
 	const results = [
 		{ label: "Total", value: 'Total', width: summaryLabelWidth },
-		...((selectedFields?.quantity && data.totals.quantity !== undefined) ? [{ label: "Total Quantity", value: String(data.totals.quantity), width: width }] : []),
-		...((selectedFields?.rdl_value && data.totals.rdl_value !== undefined) ? [{ label: "Total FOB Value", value: String(data.totals.rdl_value), width: width }] : []),
-		...((selectedFields?.factory_value && data.totals.factory_value !== undefined) ? [{ label: "Total Factory Value", value: String(data.totals.factory_value), width: width }] : []),
-		...((selectedFields?.commission_value && data.totals.commission_value !== undefined) ? [{ label: "Total Commission Value", value: String(data.totals.commission_value), width: width }] : []),
+		...((selectedFields?.quantity && data.totals.quantity !== undefined) 
+			? [{ label: "Total Quantity", value: String(data.totals.quantity), width: width }] : []
+		),
+		...((selectedFields?.rdl_value && data.totals.rdl_value !== undefined) 
+			? [{ label: "Total FOB Value", value: String(data.totals.rdl_value), width: width }] : []
+		),
+		...((selectedFields?.factory_value && data.totals.factory_value !== undefined) 
+			? [{ label: "Total Factory Value", value: String(data.totals.factory_value), width: width }] : []
+		),
+		...((selectedFields?.commission_value && data.totals.commission_value !== undefined) 
+			? [{ label: "Total Commission Value", value: String(data.totals.commission_value), width: width }] : []
+		),
 	];
 
 	const title = `SALES REPORT BASED ON ${base} DATE`;

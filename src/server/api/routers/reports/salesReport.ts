@@ -20,7 +20,7 @@ interface SalesReportRow {
     commission_value?: number;
 }
 
-export const salesReport = createTRPCRouter({
+export const salesReportRouter = createTRPCRouter({
     getSalesReport: protectedProcedure
         .input(
             z.object({
@@ -239,6 +239,11 @@ export const salesReport = createTRPCRouter({
                     );
                 }
 
+                const filterClause =
+                    filters.length > 0
+                        ? Prisma.join(filters, " AND ")
+                        : Prisma.sql`1=1`;
+
                 // -----------------------------------------------------------------------------
                 // GROUP BY
                 // -----------------------------------------------------------------------------
@@ -278,7 +283,7 @@ export const salesReport = createTRPCRouter({
                         INNER JOIN factory_orders AS FO ON FO.order_id = BO.id
                         ${Prisma.join(joins, "\n")}
                     WHERE
-                        ${Prisma.join(filters, " AND ")}
+                        ${filterClause}
                         AND (
                             EXISTS ( -- Admin
                                 SELECT 1

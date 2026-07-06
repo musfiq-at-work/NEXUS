@@ -59,4 +59,5 @@ export { proceedRealizationRouter } from "./routers/accounting/proceedRealizatio
 export { factoryPaymentRouter } from "./routers/accounting/factoryPayment";
 
 // Reports routers
-export { salesReport } from "./routers/reports/salesReport";
+export { salesReportRouter } from "./routers/reports/salesReport";
+export { exportReportRouter } from "./routers/reports/exportReport";
