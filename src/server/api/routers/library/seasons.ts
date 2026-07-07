@@ -310,4 +310,21 @@ export const seasonsRouter = createTRPCRouter({
             
             return seasonsObj;
         }),
+
+    getSeasonsByBuyers: protectedProcedure
+        .input(
+            z.array(z.number().min(1))
+        )
+        .query(async ({ ctx, input }) => {
+            const seasonsObj = await ctx.db.seasons.findMany({
+                where: { buyer_id: { in: input }, active_status: true },
+                orderBy: { added_at: "desc" },
+                select: {
+                    id: true,
+                    season_name: true,
+                },
+            });
+
+            return seasonsObj;
+        }),
 });

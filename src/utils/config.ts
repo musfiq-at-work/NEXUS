@@ -10,4 +10,4 @@ export const QUALITY_DEPARTMENT_ID = 4;
 export const ADMIN_DEPARTMENT_ID = 5;
 export const COMPLIANCE_DEPARTMENT_ID = 6;
 
-export const baseUrl = process.env.NODE_ENV === 'production' ? "http://192.168.21.253:7000" : "http://localhost:4000";
+export const baseUrl = process.env.NODE_ENV === 'production' ? "http://rdlerp.rgbd.local:60005" : "http://localhost:4000";

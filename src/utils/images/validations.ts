@@ -13,11 +13,9 @@ export const isValidImage = (file: File) => {
 
     const allowedExt = ["jpg", "jpeg", "png", "webp", "heic", "heif"];
 
-    const mimeValid =
-        !file.type || ACCEPTED_TYPES.includes(file.type);
+    const mimeValid = !file.type || ACCEPTED_TYPES.includes(file.type);
 
-    const extValid =
-        !!ext && allowedExt.includes(ext);
+    const extValid = !!ext && allowedExt.includes(ext);
 
     return mimeValid && extValid;
 };

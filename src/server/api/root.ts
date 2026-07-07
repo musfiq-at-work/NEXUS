@@ -11,7 +11,8 @@ import {
 	scContactPersonRouter, salesContractsRouter, salesContractAmendmentRouter, lcMasterRouter, 
 	lcAmendmentRouter, toleranceLevelRouter, exFactoryRouter, lcTransferRouter, factoryInvoiceRouter, 
 	evPermissionRouter, rdlInvoiceRouter, documentSubmissionRouter, commissionInvoiceRouter,
-	proceedRealizationRouter, factoryPaymentRouter, salesReportRouter, exportReportRouter
+	proceedRealizationRouter, factoryPaymentRouter, salesReportRouter, exportReportRouter,
+	orderSummaryReportRouter,
 } from '.';
 
 // All routers added in /api/routers should be manually added here.
@@ -79,6 +80,7 @@ export const appRouter = createTRPCRouter({
 	// reports routers
 	salesReport: salesReportRouter,
 	exportReport: exportReportRouter,
+	orderSummaryReport: orderSummaryReportRouter,
 });
 
 // export type definition of API

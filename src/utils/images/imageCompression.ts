@@ -37,9 +37,7 @@ const compressImage = (file: File, maxKB: number): Promise<File> => {
                         if (blob.size / 1024 <= maxKB || quality <= 0.1) {
                             URL.revokeObjectURL(url);
                             resolve(
-                                new File([blob], file.name, {
-                                    type: "image/jpeg",
-                                })
+                                new File([blob], file.name, { type: "image/jpeg" })
                             );
                         } else {
                             quality -= 0.1;

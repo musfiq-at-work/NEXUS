@@ -61,3 +61,4 @@ export { factoryPaymentRouter } from "./routers/accounting/factoryPayment";
 // Reports routers
 export { salesReportRouter } from "./routers/reports/salesReport";
 export { exportReportRouter } from "./routers/reports/exportReport";
+export { orderSummaryReportRouter } from "./routers/reports/orderSummaryReport";

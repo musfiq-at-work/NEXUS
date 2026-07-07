@@ -50,6 +50,7 @@ const PhotoContainer = ({ methods, id, can_update }: PhotoContainerProps) => {
     })) || [];
 
 
+    // Initialize images state with existing photo URLs from styles
     useEffect(() => {
         if (!styles.length) return;
 
@@ -147,7 +148,6 @@ const PhotoContainer = ({ methods, id, can_update }: PhotoContainerProps) => {
                     if (data.success) {
                         toast.success("Photos deleted successfully!");
                         await utils.buyerOrders.getBuyerOrderById.invalidate({ id });
-                        // Optionally, you can trigger a refetch of the buyer order data here to get updated photo URLs
                     } else {
                         throw new Error(data.message || "Failed to delete photos.");
                     }
@@ -201,7 +201,6 @@ const PhotoContainer = ({ methods, id, can_update }: PhotoContainerProps) => {
                 if (data.success) {
                     toast.success("Photos uploaded successfully!");
                     await utils.buyerOrders.getBuyerOrderById.invalidate({ id });
-                    // Optionally, you can trigger a refetch of the buyer order data here to get updated photo URLs
                 } else {
                     throw new Error(data.message || "Failed to upload photos.");
                 }
