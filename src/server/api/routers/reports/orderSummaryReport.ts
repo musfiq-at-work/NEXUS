@@ -120,12 +120,15 @@ export const orderSummaryReportRouter = createTRPCRouter({
                     case 'ACTUAL EXFACTORY':
                         dateFilter = Prisma.sql`E.exfactory_date BETWEEN ${input.fromDate} AND ${input.toDate}`;
                         break;
+
                     case "EXFACTORY":
                         dateFilter = Prisma.sql`FSD.exfactory_date BETWEEN ${input.fromDate} AND ${input.toDate}`;
                         break;
+
                     case "HANDOVER":
                         dateFilter = Prisma.sql`SD.handover_date BETWEEN ${input.fromDate} AND ${input.toDate}`;
                         break;
+                        
                     case "ETD":
                         dateFilter = Prisma.sql`SD.etd_date BETWEEN ${input.fromDate} AND ${input.toDate}`;
                         break;

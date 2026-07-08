@@ -190,6 +190,30 @@ export const proceedRealizationRouter = createTRPCRouter({
                 }
 
                 await ctx.db.$transaction(async (tx) => {
+                    const deletedRealization = await tx.proceed_realization.delete({
+                        where: {
+                            id: input.id,
+                        },
+                    });
+
+                    const factoryPayments = await tx.factory_payments.findMany({
+                        where: {
+                            document_submission_id: deletedRealization.document_submission_id,
+                        }
+                    });
+
+                    await tx.factory_payments.deleteMany({
+                        where: {
+                            document_submission_id: deletedRealization.document_submission_id,
+                        }
+                    });
+
+                    await tx.factory_payment_header.deleteMany({
+                        where: {
+                            document_submission_id: deletedRealization.document_submission_id,
+                        }
+                    });
+
                     const deletedDetails = await tx.proceed_realization_details.findMany({
                         where: {
                             realization_id: input.id,
@@ -211,12 +235,18 @@ export const proceedRealizationRouter = createTRPCRouter({
                             realization_id: input.id,
                         },
                     });
-                    
-                    const deletedRealization = await tx.proceed_realization.delete({
-                        where: {
-                            id: input.id,
-                        },
+
+                    await tx.factory_payments_history.createMany({
+                        data: factoryPayments.map((payment) => ({
+                            factory_payment_id: payment.id,
+                            document_submission_id: payment.document_submission_id,
+                            payment_date: payment.payment_date,
+                            paid_amount: payment.paid_amount,
+                            action_type: actions.DELETE,
+                            action_by: ctx.user.id,
+                        })),
                     });
+
 
                     await tx.proceed_realization_history.create({
                         data: {

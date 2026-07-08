@@ -1,12 +1,11 @@
 import ExcelJS from "exceljs";
 import type { OrderSummaryReportRow } from "../orderSummaryReport";
 import { formatDate } from "~/utils/localDateString";
+import { DOLLAR_SIGN_NUMBER_FORMAT, QUANTITY_NUMBER_FORMAT, TEXT_FORMAT } from "./config";
 
-const dollarSignNumberformat = '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)';
-const quantityNumberformat = "#,##0";
-const textFormat = "@";
-const tableHeaderRow = 6;
-const tableColumnCount = 29;
+const TABLE_HEADER_ROW = 6;
+const TABLE_COLUMN_COUNT = 29;
+
 const tableHeaders = [
     "Order References",
     "Factory",
@@ -66,7 +65,7 @@ export const generateOrderSummaryExcel = async (rows: OrderSummaryReportRow[], r
         views: [
             {
                 state: "frozen",
-                ySplit: tableHeaderRow,
+                ySplit: TABLE_HEADER_ROW,
             },
         ],
     });
@@ -145,7 +144,7 @@ export const generateOrderSummaryExcel = async (rows: OrderSummaryReportRow[], r
         fgColor: { argb: "1F4E78" },
     };
 
-    worksheet.getRow(tableHeaderRow).values = [...tableHeaders];
+    worksheet.getRow(TABLE_HEADER_ROW).values = [...tableHeaders];
 
     worksheet.autoFilter = {
         from: "A6",
@@ -161,12 +160,12 @@ export const generateOrderSummaryExcel = async (rows: OrderSummaryReportRow[], r
 
     // Quantity columns
     ["T", "U"].forEach((col) => {
-        worksheet.getColumn(col).numFmt = quantityNumberformat;
+        worksheet.getColumn(col).numFmt = QUANTITY_NUMBER_FORMAT;
     });
 
     // Currency columns
     ["V", "W", "Y", "Z", "AA", "AB"].forEach((col) => {
-        worksheet.getColumn(col).numFmt = dollarSignNumberformat;
+        worksheet.getColumn(col).numFmt = DOLLAR_SIGN_NUMBER_FORMAT;
     });
 
     // Boolean column
@@ -176,7 +175,7 @@ export const generateOrderSummaryExcel = async (rows: OrderSummaryReportRow[], r
 
     // Remove borders from the first 4 rows and all columns
     for (let row = 1; row <= 5; row++) {
-        for (let col = 1; col <= tableColumnCount; col++) {
+        for (let col = 1; col <= TABLE_COLUMN_COUNT; col++) {
             const cell = worksheet.getCell(row, col);
             cell.fill = {
                 type: "pattern",
@@ -187,7 +186,7 @@ export const generateOrderSummaryExcel = async (rows: OrderSummaryReportRow[], r
     }
 
     ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "X", "AC"].forEach((col) => {
-        worksheet.getColumn(col).numFmt = textFormat;
+        worksheet.getColumn(col).numFmt = TEXT_FORMAT;
     });
 
     worksheet.eachRow((row) => {
