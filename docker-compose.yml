@@ -14,5 +14,6 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=7000
+      - TZ=Asia/Dhaka
     volumes:
       - ./public:/app/public

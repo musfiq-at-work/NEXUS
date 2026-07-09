@@ -12,7 +12,7 @@ export type DebitNoteDetailsFormValues = z.infer<typeof DebitNoteDetails>;
 // Define the form fields schema using Zod
 export const DebitNoteFormSchema = z.object({
     db_id: z.string().optional(),
-    term_name: z.string(),
+    term_id: z.string(),
     dn_date: z.string(),
     factory_id: z.string(),
     dn_ref: z.string().optional(),

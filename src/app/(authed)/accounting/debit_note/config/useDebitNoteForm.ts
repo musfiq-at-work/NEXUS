@@ -1,57 +1,60 @@
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo } from "react";
 import { DebitNoteFormSchema } from "./formSchema";
-import type { FactoryPaymentFormValues } from "./formSchema";
+import type { DebitNoteFormValues } from "./formSchema";
 import { useFormFields } from "./useFormFields";
 import { formatDate, formatDateForInput } from "~/utils/localDateString";
 import type { GetFactoryPaymentByIdTypes } from "~/types/accountingAPITypes";
 import { safeNumber } from "~/utils/numbers";
 import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
+import { api } from "~/trpc/react";
+import { skipToken } from "@tanstack/react-query";
 
-type FactoryInvoiceTypes = NonNullable<GetFactoryPaymentByIdTypes>['factoryPayments'][number];
+// type FactoryInvoiceTypes = NonNullable<GetFactoryPaymentByIdTypes>['factoryPayments'][number];
 
-export const useFactoryPaymentForm = (initialData?: GetFactoryPaymentByIdTypes) => {
+export const useFactoryPaymentForm = (initialData?: any) => {
     const transformedInitialData = useMemo(() => {
         return initialData?.factoryPaymentHeader ? {
-            term_name: initialData.factoryPaymentHeader.term_name,
-            fdbc_no: initialData.factoryPaymentHeader.fdbc_no ?? undefined,
-            realization_date: initialData.factoryPaymentHeader.realization_date 
-                ? formatDateForInput(initialData.factoryPaymentHeader.realization_date) 
+            term_id: initialData.term_id ?? undefined,
+            dn_date: initialData.realization_date 
+                ? formatDateForInput(initialData.realization_date) 
                 : undefined,
-            rdl_invoice_value: currencyFormatter(safeNumber(initialData.factoryPaymentHeader.rdl_invoice_value), '$') ?? undefined,
-            realized_amount: currencyFormatter(safeNumber(initialData.factoryPaymentHeader.realized_amount), '$') ?? undefined,
-            factory_paid_amount: initialData.factoryPaymentHeader.factory_paid_amount?.toFixed(2) ?? undefined,
-            remarks: initialData.factoryPaymentHeader.remarks ?? undefined,
-            details: initialData.factoryPayments?.map((detail: FactoryInvoiceTypes) => ({
+            factory_id: initialData.factory_id ?? undefined,
+            dn_ref: initialData.dn_ref ?? undefined,
+            buyer_id: initialData.buyer_id ?? undefined,
+            lc_sc_id: initialData.lc_sc_id ?? undefined,
+            less: safeNumber(initialData.less) ?? undefined,
+            processing_charges: safeNumber(initialData.processing_charges) ?? undefined,
+            conversion_rate: safeNumber(initialData.conversion_rate) ?? undefined,
+            additional_charges: safeNumber(initialData.additional_charges) ?? undefined,
+            remarks: initialData.remarks ?? undefined,
+            details: initialData.factoryPayments?.map((detail: any) => ({
                 db_id: detail.db_id ?? undefined,
                 factory_name: detail.factory_name ?? undefined,
-                factory_invoice_no: detail.factory_invoice_no ?? undefined,
+                po_no: detail.po_no ?? undefined,
                 factory_invoice_id: detail.factory_invoice_id ?? undefined,
-                factory_fdbc_no: detail.fdbc_no ?? undefined,
-                invoice_date: detail.factory_invoice_date 
-                    ? formatDate(detail.factory_invoice_date) 
-                    : undefined,
-                invoice_quantity: quantityFormatter(safeNumber(detail.invoice_quantity)) ?? undefined,
-                invoice_value: currencyFormatter(safeNumber(detail.invoice_value), '$') ?? undefined,
-                paid_amount: safeNumber(detail.paid_amount) ?? undefined,
-                factory_payment_no: detail.factory_payment_no ?? undefined,
-                payment_date: detail.payment_date ? formatDateForInput(detail.payment_date) : formatDateForInput(new Date()),
+                factory_invoice_no: detail.factory_invoice_no ?? undefined,
+                value: quantityFormatter(safeNumber(detail.value)) ?? undefined,
             })) ?? [],
         } : undefined;
     }, [initialData]);
 
-    const methods = useForm<FactoryPaymentFormValues>({
+    const methods = useForm<DebitNoteFormValues>({
         resolver: zodResolver(DebitNoteFormSchema),
         defaultValues: transformedInitialData ?? {
             db_id: undefined,
-            term_name: undefined,
-            fdbc_no: undefined,
-            realization_date: formatDateForInput(new Date()),
-            rdl_invoice_value: undefined,
-            realized_amount: undefined,
-            factory_paid_amount: undefined,
+            term_id: undefined,
+            dn_date: formatDateForInput(new Date()),
+            factory_id: undefined,
+            dn_ref: undefined,
+            buyer_id: undefined,
+            lc_sc_id: undefined,
             remarks: undefined,
+            less: undefined,
+            processing_charges: undefined,
+            conversion_rate: undefined,
+            additional_charges: undefined,
             details: [],
         },
     });
@@ -64,10 +67,33 @@ export const useFactoryPaymentForm = (initialData?: GetFactoryPaymentByIdTypes) 
         }
     }, [transformedInitialData, reset]);
 
+    const isEdit = !!initialData;
+
+    const term_id = useWatch({ control, name: 'term_id' });
+    const buyer_id = useWatch({ control, name: 'buyer_id' });
+
+    const lcList = api.debitNotes.getLCScForDebitNotes.useQuery(
+       (!!term_id && !!buyer_id && !isEdit) ? {
+            term_id: safeNumber(term_id),
+            buyer_id: safeNumber(buyer_id),
+        } : skipToken
+    ).data || [];
+
+    let lcScList: { id: string; sc_lc_no: string }[];
+
+    if(isEdit) {
+        const id = initialData.lc_sc_id;
+
+        lcScList = id ? [{ id: String(id), sc_lc_no: String(initialData.sc_lc_no) }] : [];
+    }
+    else {
+        lcScList = lcList;
+    }
+
     return {
         methods,
         handleSubmit,
-        formFields: useFormFields(),
+        formFields: useFormFields({lcList: lcScList, isEdit}),
         validationError,
         trigger,
         watch,

@@ -12,7 +12,7 @@ import {
 	lcAmendmentRouter, toleranceLevelRouter, exFactoryRouter, lcTransferRouter, factoryInvoiceRouter, 
 	evPermissionRouter, rdlInvoiceRouter, documentSubmissionRouter, commissionInvoiceRouter,
 	proceedRealizationRouter, factoryPaymentRouter, salesReportRouter, exportReportRouter,
-	orderSummaryReportRouter,
+	orderSummaryReportRouter, debitNotesRouter,
 } from '.';
 
 // All routers added in /api/routers should be manually added here.
@@ -76,6 +76,7 @@ export const appRouter = createTRPCRouter({
 	commissionInvoice: commissionInvoiceRouter,
 	proceedRealization: proceedRealizationRouter,
 	factoryPayment: factoryPaymentRouter,
+	debitNotes: debitNotesRouter,
 
 	// reports routers
 	salesReport: salesReportRouter,
