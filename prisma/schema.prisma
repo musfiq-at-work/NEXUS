@@ -668,6 +668,7 @@ model factories {
   old_pk              Int?
   added_at            DateTime?             @default(now()) @db.Timestamp(6)
   buyer_orders        buyer_orders[]
+  debit_note          debit_note[]
   exfactory           exfactory[]
   factory_bank        factory_bank[]
   factory_invoice     factory_invoice[]
@@ -2771,7 +2772,6 @@ model factory_payments {
   old_document_submission_id Int?
   is_cross_paid              Boolean?              @default(false)
   factory_payment_no         String?               @db.VarChar(100)
-  debit_note_details         debit_note_details[]
   document_submissions       document_submissions? @relation(fields: [document_submission_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   factory_invoice            factory_invoice?      @relation(fields: [factory_invoice_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
 
@@ -2805,10 +2805,10 @@ model factory_payments_history {
 
 model debit_note {
   id                    String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  term_id               Int?
-  buyer_id              Int?
-  debit_note_date       DateTime?            @default(dbgenerated("CURRENT_DATE")) @db.Date
-  debit_note_ref        String?              @db.VarChar(50)
+  term_id               Int
+  buyer_id              Int
+  debit_note_date       DateTime             @default(dbgenerated("CURRENT_DATE")) @db.Date
+  debit_note_ref        String               @db.VarChar(50)
   lc_id                 String?              @db.Uuid
   sales_contract_id     String?              @db.Uuid
   less                  Float?
@@ -2821,10 +2821,13 @@ model debit_note {
   old_buyer_id          Int?
   old_lc_id             Int?
   old_sc_id             Int?
-  buyers                buyers?              @relation(fields: [buyer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  factory_id            Int
+  old_factory_id        Int?
+  buyers                buyers               @relation(fields: [buyer_id], references: [id], onUpdate: NoAction)
+  factories             factories            @relation(fields: [factory_id], references: [id], onUpdate: NoAction)
   lc_master             lc_master?           @relation(fields: [lc_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   sales_contracts       sales_contracts?     @relation(fields: [sales_contract_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  terms                 terms?               @relation(fields: [term_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  terms                 terms                @relation(fields: [term_id], references: [id], onUpdate: NoAction)
   debit_note_details    debit_note_details[]
 }
 
@@ -2849,17 +2852,15 @@ model debit_note_history {
 }
 
 model debit_note_details {
-  id                       String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  debit_note_header_id     String?                   @db.Uuid
-  factory_payment_id       String?                   @db.Uuid
-  factory_shipment_id      String?                   @db.Uuid
+  id                       String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  debit_note_header_id     String                   @db.Uuid
+  factory_shipment_id      String                   @db.Uuid
   old_pk                   Int?
-  old_factory_payment_id   Int?
+  old_debit_note_header_id Int?
   old_factory_shipment_id  Int?
-  added_at                 DateTime?                 @default(now()) @db.Timestamp(6)
-  debit_note               debit_note?               @relation(fields: [debit_note_header_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  factory_payments         factory_payments?         @relation(fields: [factory_payment_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
-  factory_shipment_details factory_shipment_details? @relation(fields: [factory_shipment_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  added_at                 DateTime?                @default(now()) @db.Timestamp(6)
+  debit_note               debit_note               @relation(fields: [debit_note_header_id], references: [id], onUpdate: NoAction)
+  factory_shipment_details factory_shipment_details @relation(fields: [factory_shipment_id], references: [id], onUpdate: NoAction)
 }
 
 model debit_note_details_history {

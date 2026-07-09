@@ -1,9 +1,9 @@
 export const tableHeaders= [
     { key: 'factory_name', label: 'Proceed Type' },
-    { key: 'dn_ref_no', label: 'FDBC No' },
-    { key: 'payment_type', label: 'Realization Date' },
-    { key: 'lc_sc_no', label: 'RDL Invoice Value' },
-    { key: 'buyer_name', label: 'Realized Amount' },
-    { key: 'date', label: 'Factory Paid Amount', type: 'date' },
+    { key: 'debit_note_ref', label: 'Debit Note No' },
+    { key: 'term_name', label: 'Term' },
+    { key: 'lc_sc_no', label: 'LC/SC No' },
+    { key: 'buyer_name', label: 'Buyer Name' },
+    { key: 'debit_note_date', label: 'Date', type: 'date' },
     { key: 'actions', label: '', type: 'action' }
 ]
