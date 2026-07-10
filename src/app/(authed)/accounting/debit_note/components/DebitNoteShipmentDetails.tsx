@@ -12,15 +12,13 @@ import { parseTRPCError } from "~/utils/parseTRPCError";
 import { toast } from "sonner";
 
 type props = {
-    invoiceIndex: number;
     methods: ReturnType<typeof useDebitNoteForm>['methods'];
     validationError: FieldErrors<DebitNoteFormValues>;
     disabled?: boolean;
-    selectedRdlInvoiceNo: string;
 }
 
 const DebitNoteDetails = (props: props) => {
-    const { invoiceIndex, methods, validationError, disabled = false, selectedRdlInvoiceNo } = props;
+    const { methods, validationError, disabled = false } = props;
 
     const { 
         fields: shipmentFields, append: addShipment, remove: removeShipment,
@@ -64,7 +62,6 @@ const DebitNoteDetails = (props: props) => {
 
     return (
         <TableForm 
-            selectedRdlInvoiceNo={selectedRdlInvoiceNo}
             name={`details`}
             rows={shipmentFields}
             addRow={addShipmentRow}
@@ -73,7 +70,6 @@ const DebitNoteDetails = (props: props) => {
             disabled={disabled}
             methods={methods}
             validationError={validationError}
-            invoiceIndex={invoiceIndex}
         />
     )
 }

@@ -22,14 +22,12 @@ type Props = {
     name: string;
     methods: ReturnType<typeof useDebitNoteForm>['methods'];
     validationError: FieldErrors<DebitNoteFormValues>;
-    invoiceIndex: number;
-    selectedRdlInvoiceNo: string;
     addRow: () => void;
     removeRow: (index: number) => void;
 }
 
 const TableForm = (props: Props) => {
-    const {columns, rows, disabled = false, name, methods, validationError, invoiceIndex, selectedRdlInvoiceNo, addRow, removeRow} = props;
+    const {columns, rows, disabled = false, name, methods, validationError, addRow, removeRow} = props;
 
     const lc_sc_id = methods.getValues('lc_sc_id');
     const term_id = methods.getValues('term_id');
@@ -42,10 +40,7 @@ const TableForm = (props: Props) => {
         <>
             <div className="flex flex-row items-center gap-4">
                 <Heading as ='h3' className="mx-8">
-                    {invoiceIndex + 1}. Factory Invoice Details of
-                    <span className="font-bold rounded-lg bg-primary text-white ml-2 px-3 py-1">
-                        {selectedRdlInvoiceNo}
-                    </span>
+                    Debit Note Details
                 </Heading>
             </div>
 

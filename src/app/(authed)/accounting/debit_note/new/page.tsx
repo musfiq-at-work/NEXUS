@@ -8,6 +8,7 @@ import { parseTRPCError } from "~/utils/parseTRPCError";
 import { useDebitNoteForm } from "../config/useDebitNoteForm";
 import { useRouter } from "next/navigation";
 import { safeNumber } from "~/utils/numbers";
+import DebitNoteShipmentDetails from "../components/DebitNoteShipmentDetails";
 
 const NewDebitNotePage = () => {
     const router = useRouter();
@@ -73,6 +74,12 @@ const NewDebitNotePage = () => {
                 validationError={validationError ?? {}}
                 error={error}
                 control={control}
+            />
+
+            <DebitNoteShipmentDetails 
+                methods={methods}
+                validationError={validationError}
+                disabled={isLoading}
             />
 
             <div className="w-full flex flex-row justify-end">
