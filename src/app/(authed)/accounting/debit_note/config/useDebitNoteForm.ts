@@ -13,7 +13,7 @@ import { skipToken } from "@tanstack/react-query";
 
 // type FactoryInvoiceTypes = NonNullable<GetFactoryPaymentByIdTypes>['factoryPayments'][number];
 
-export const useFactoryPaymentForm = (initialData?: any) => {
+export const useDebitNoteForm = (initialData?: any) => {
     const transformedInitialData = useMemo(() => {
         return initialData?.factoryPaymentHeader ? {
             term_id: initialData.term_id ?? undefined,
@@ -79,12 +79,12 @@ export const useFactoryPaymentForm = (initialData?: any) => {
         } : skipToken
     ).data || [];
 
-    let lcScList: { id: string; sc_lc_no: string }[];
+    let lcScList: { lc_sc_id: string; sc_lc_no: string }[];
 
     if(isEdit) {
         const id = initialData.lc_sc_id;
 
-        lcScList = id ? [{ id: String(id), sc_lc_no: String(initialData.sc_lc_no) }] : [];
+        lcScList = id ? [{ lc_sc_id: String(id), sc_lc_no: String(initialData.sc_lc_no) }] : [];
     }
     else {
         lcScList = lcList;

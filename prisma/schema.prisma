@@ -962,6 +962,7 @@ model buyers {
   overseas_offices         overseas_offices?         @relation(fields: [overseas_office_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   commission_invoice       commission_invoice[]
   debit_note               debit_note[]
+  debit_note_metadata      debit_note_metadata[]
   document_submissions     document_submissions[]
   ev_permissions           ev_permissions[]
   exfactory                exfactory[]
@@ -2873,6 +2874,16 @@ model debit_note_details_history {
   action_by            String?   @db.Uuid
   action_at            DateTime? @default(now()) @db.Timestamp(6)
   users                users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model debit_note_metadata {
+  id       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  buyer_id Int?
+  last_ref Int?
+  year     Int?
+  buyers   buyers? @relation(fields: [buyer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@unique([buyer_id, year], map: "unique_buyer_in_debit_notes")
 }
 
 enum actions {

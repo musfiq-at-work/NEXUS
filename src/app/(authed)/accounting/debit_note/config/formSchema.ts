@@ -2,7 +2,8 @@ import z from 'zod';
 
 export const DebitNoteDetails = z.object({
     db_id: z.string().optional(),
-    po_no: z.string(),
+    po_no: z.string().optional(),
+    factory_shipment_id: z.string(),
     factory_invoice_no: z.string().optional(),
     value: z.string().optional(),
 });

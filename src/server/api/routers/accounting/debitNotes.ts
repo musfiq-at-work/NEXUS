@@ -18,109 +18,14 @@ interface LCListItem {
     total_count: number;
 }
 
+interface ShipmentDetails { 
+    id: string; 
+    buyer_po: string; 
+    invoice_no: string; 
+    dn_value: number 
+}
+
 export const debitNotesRouter = createTRPCRouter({
-    getLCScForDebitNotes: protectedProcedure
-        .input(z.object({
-            term_id: z.number(),
-            buyer_id: z.number(),
-        }))
-        .query(async ({ ctx, input }) => {
-            try {
-                const terms = await ctx.db.terms.findUnique({
-                    where: { id: input.term_id },
-                    select: { name: true },
-                });
-
-                if (!terms) {
-                    throw new TRPCError({ 
-                        code: 'NOT_FOUND', 
-                        message: "Terms not found." 
-                    });
-                }
-
-                const isTT = terms.name.toLowerCase() === 'tt';
-
-                let lcScList: { id: string; sc_lc_no: string }[];
-
-                if (isTT) {
-                    lcScList = await ctx.db.$queryRaw<{ id: string; sc_lc_no: string }[]>`
-                        SELECT DISTINCT
-                            SC.ID AS SC_ID,
-                            SC.sales_contract_no AS sc_lc_no
-                        FROM sales_contracts AS SC 
-                            INNER JOIN sales_contract_details AS SCD ON SCD.sales_contract_id = SC.id
-                            INNER JOIN order_styles AS SO ON SO.order_id = SCD.order_id
-                            INNER JOIN shipment_details AS SD ON SD.order_style_id = SO.id
-                            INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = SD.id
-                            INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = SD.id
-                            INNER JOIN factory_invoice_details AS FID ON FID.exfactory_shipment_id = ES.id
-                            INNER JOIN factory_payments AS FP ON FP.factory_invoice_id = FID.factory_invoice_id
-                        WHERE FSD.FACTORY_RATE <> COALESCE(FSD.TRANSFER_RATE, 0)
-                            AND NOT EXISTS (
-                                SELECT 1
-                                FROM debit_note_details AS DND
-                                WHERE DND.factory_shipment_id = FSD.ID
-                            )
-                            AND SC.buyer_id = ${input.buyer_id}
-                            AND EXISTS ( -- Admin
-                                SELECT 1
-                                FROM USERS AS U
-                                WHERE U.ID = ${ctx.user.id}
-                                    AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
-                                    AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
-                            )
-                            OR EXISTS ( -- Team Member
-                                SELECT 1
-                                FROM TEAM_MEMBERS AS TM 
-                                    INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
-                                WHERE T.BUYER_ID = SC.BUYER_ID
-                                    AND TM.USER_ID = ${ctx.user.id}
-                            );
-                        `;
-                }
-                else {
-                    lcScList = await ctx.db.$queryRaw<{ id: string; sc_lc_no: string }[]>`
-                        SELECT DISTINCT
-                            LC.ID AS LC_ID,
-                            LC.LC_NO AS sc_lc_no
-                        FROM LC_MASTER AS LC
-                            INNER JOIN lc_orders AS LO ON LO.lc_master_id = LC.id
-                            INNER JOIN lc_shipments AS LS ON LS.lc_order_id = LO.id
-                            INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = LS.shipment_details_id
-                            INNER JOIN factory_invoice_details AS FID ON FID.exfactory_shipment_id = ES.id
-                            INNER JOIN factory_payments AS FP ON FP.factory_invoice_id = FID.factory_invoice_id
-                            INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = ES.shipment_details_id
-                        WHERE FSD.FACTORY_RATE <> COALESCE(FSD.TRANSFER_RATE, 0)
-                            AND NOT EXISTS (
-                                SELECT 1
-                                FROM debit_note_details AS DND
-                                WHERE DND.factory_shipment_id = FSD.ID
-                            )
-                            AND LC.buyer_id = ${input.buyer_id}
-                            AND EXISTS ( -- Admin
-                                SELECT 1
-                                FROM USERS AS U
-                                WHERE U.ID = ${ctx.user.id}
-                                    AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
-                                    AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
-                            )
-                            OR EXISTS ( -- Team Member
-                                SELECT 1
-                                FROM TEAM_MEMBERS AS TM 
-                                    INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
-                                WHERE T.BUYER_ID = LC.BUYER_ID
-                                    AND TM.USER_ID = ${ctx.user.id}
-                            );
-                    `;
-                }
-
-                return lcScList;
-            }
-            catch (error) {
-                handlePrismaError(error);
-            }
-        }),
-
     getAllDebitNotes: protectedProcedure
         .input(z.object({
             offset: z.number().optional(),
@@ -339,6 +244,335 @@ export const debitNotesRouter = createTRPCRouter({
             catch (error) {
                 handlePrismaError(error);
             }
-        })
+        }),
 
+    getLCScForDebitNotes: protectedProcedure
+        .input(z.object({
+            term_id: z.number(),
+            buyer_id: z.number(),
+        }))
+        .query(async ({ ctx, input }) => {
+            try {
+                const terms = await ctx.db.terms.findUnique({
+                    where: { id: input.term_id },
+                    select: { name: true },
+                });
+
+                if (!terms) {
+                    throw new TRPCError({ 
+                        code: 'NOT_FOUND', 
+                        message: "Terms not found." 
+                    });
+                }
+
+                const isTT = terms.name.toLowerCase() === 'tt';
+
+                let lcScList: { lc_sc_id: string; sc_lc_no: string }[];
+
+                if (isTT) {
+                    lcScList = await ctx.db.$queryRaw<{ lc_sc_id: string; sc_lc_no: string }[]>`
+                        SELECT DISTINCT
+                            SC.ID AS lc_sc_id,
+                            SC.sales_contract_no AS sc_lc_no
+                        FROM sales_contracts AS SC 
+                            INNER JOIN sales_contract_details AS SCD ON SCD.sales_contract_id = SC.id
+                            INNER JOIN order_styles AS SO ON SO.order_id = SCD.order_id
+                            INNER JOIN shipment_details AS SD ON SD.order_style_id = SO.id
+                            INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = SD.id
+                            INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = SD.id
+                            INNER JOIN factory_invoice_details AS FID ON FID.exfactory_shipment_id = ES.id
+                            INNER JOIN factory_payments AS FP ON FP.factory_invoice_id = FID.factory_invoice_id
+                        WHERE FSD.FACTORY_RATE <> COALESCE(FSD.TRANSFER_RATE, 0)
+                            AND NOT EXISTS (
+                                SELECT 1
+                                FROM debit_note_details AS DND
+                                WHERE DND.factory_shipment_id = FSD.ID
+                            )
+                            AND SC.buyer_id = ${input.buyer_id}
+                            AND EXISTS ( -- Admin
+                                SELECT 1
+                                FROM USERS AS U
+                                WHERE U.ID = ${ctx.user.id}
+                                    AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
+                                    AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
+                            )
+                            OR EXISTS ( -- Team Member
+                                SELECT 1
+                                FROM TEAM_MEMBERS AS TM 
+                                    INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
+                                WHERE T.BUYER_ID = SC.BUYER_ID
+                                    AND TM.USER_ID = ${ctx.user.id}
+                            );
+                        `;
+                }
+                else {
+                    lcScList = await ctx.db.$queryRaw<{ lc_sc_id: string; sc_lc_no: string }[]>`
+                        SELECT DISTINCT
+                            LC.ID AS lc_sc_id,
+                            LC.LC_NO AS sc_lc_no
+                        FROM LC_MASTER AS LC
+                            INNER JOIN lc_orders AS LO ON LO.lc_master_id = LC.id
+                            INNER JOIN lc_shipments AS LS ON LS.lc_order_id = LO.id
+                            INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = LS.shipment_details_id
+                            INNER JOIN factory_invoice_details AS FID ON FID.exfactory_shipment_id = ES.id
+                            INNER JOIN factory_payments AS FP ON FP.factory_invoice_id = FID.factory_invoice_id
+                            INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = ES.shipment_details_id
+                        WHERE FSD.FACTORY_RATE <> COALESCE(FSD.TRANSFER_RATE, 0)
+                            AND NOT EXISTS (
+                                SELECT 1
+                                FROM debit_note_details AS DND
+                                WHERE DND.factory_shipment_id = FSD.ID
+                            )
+                            AND LC.buyer_id = ${input.buyer_id}
+                            AND EXISTS ( -- Admin
+                                SELECT 1
+                                FROM USERS AS U
+                                WHERE U.ID = ${ctx.user.id}
+                                    AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
+                                    AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
+                            )
+                            OR EXISTS ( -- Team Member
+                                SELECT 1
+                                FROM TEAM_MEMBERS AS TM 
+                                    INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
+                                WHERE T.BUYER_ID = LC.BUYER_ID
+                                    AND TM.USER_ID = ${ctx.user.id}
+                            );
+                    `;
+                }
+
+                return lcScList;
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+
+    addDebitNote: protectedProcedure
+        .input(z.object({
+            term_id: z.number(),
+            dn_date: z.date(),
+            factory_id: z.number(),
+            buyer_id: z.number(),
+            lc_sc_id: z.string(),
+            less: z.number().optional(),
+            processing_charges: z.number().optional(),
+            conversion_rate: z.number().optional(),
+            additional_charges: z.number().optional(),
+            remarks: z.string().optional(),
+            details: z.array(z.object({
+                factory_shipment_id: z.string(),
+                value: z.number().optional(),
+            })).optional(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            try {
+                const can_add = ctx.permissions[m.DEBIT_NOTE]?.can_add;
+
+                if(!can_add) {
+                    throw new TRPCError({
+                        code: 'FORBIDDEN',
+                        message: "You do not have permission to add debit notes."
+                    });
+                }
+
+                const currentYear = new Date().getFullYear();
+
+                const meta = await ctx.db.debit_note_metadata.upsert({
+                    where: { buyer_id_year: { buyer_id: input.buyer_id, year: currentYear } },
+                    update: {
+                        last_ref: {
+                            increment: 1,
+                        },
+                    },
+                    create: {
+                        year: currentYear,
+                        last_ref: 1,
+                    },
+                });
+                
+                const buyer_prefix = await ctx.db.buyers.findUnique({
+                    where: { id: input.buyer_id },
+                    select: { prefix: true },
+                });
+
+                if(!buyer_prefix) {
+                    throw new TRPCError({
+                        code: 'NOT_FOUND',
+                        message: "Buyer prefix not found."
+                    });
+                }
+
+                const factory_prefix = await ctx.db.factories.findUnique({
+                    where: { id: input.factory_id },
+                    select: { prefix: true },
+                });
+
+                if(!factory_prefix) {
+                    throw new TRPCError({
+                        code: 'NOT_FOUND',
+                        message: "Factory prefix not found."
+                    });
+                }
+
+                const terms = await ctx.db.terms.findUnique({
+                    where: { id: input.term_id },
+                    select: { name: true },
+                });
+
+                if (!terms) {
+                    throw new TRPCError({ 
+                        code: 'NOT_FOUND', 
+                        message: "Terms not found." 
+                    });
+                }
+
+                const isTT = terms.name.toLowerCase() === 'tt'
+
+                const debitNotes= await ctx.db.$transaction(async (tx) => {
+                    const dn_ref = `DBN/${buyer_prefix?.prefix}/${factory_prefix?.prefix}/${String((meta?.last_ref ?? 0)).padStart(4, '0')}}`;
+
+                    const debitNoteHeader = await tx.debit_note.create({
+                        data: {
+                            term_id: input.term_id,
+                            debit_note_date: input.dn_date,
+                            factory_id: input.factory_id,
+                            debit_note_ref: dn_ref,
+                            buyer_id: input.buyer_id,
+                            lc_id: isTT ? null : input.lc_sc_id,
+                            sales_contract_id: isTT ? input.lc_sc_id : null,
+                            less: input.less,
+                            processing_charge: input.processing_charges,
+                            conversion_rate: input.conversion_rate,
+                            additional_adjustment: input.additional_charges,
+                            remarks: input.remarks,
+                        },
+                    });
+
+                    await tx.debit_note_history.create({
+                        data: {
+                            ...debitNoteHeader,
+                            action_type: actions.ADDED,
+                            action_by: ctx.user.id,
+                            action_at: new Date(),
+                        },
+                    });
+
+                    if (input.details && input.details.length > 0) {
+                        const debitNoteDetails = input.details.map(detail => ({
+                            debit_note_header_id: debitNoteHeader.id,
+                            factory_shipment_id: detail.factory_shipment_id,
+                            value: detail.value,
+                        }));
+                        await tx.debit_note_details.createMany({
+                            data: debitNoteDetails,
+                        });
+                    }
+
+                    return debitNoteHeader;
+                }, {timeout: 30000});
+
+                const newDebitNoteDetails = await ctx.db.debit_note_details.findMany({
+                    where: { debit_note_header_id: debitNotes.id },
+                });
+
+                await ctx.db.debit_note_details_history.createMany({
+                    data: newDebitNoteDetails?.map(detail => ({
+                        ...detail,
+                        action_type: actions.ADDED,
+                        action_by: ctx.user.id,
+                        action_at: new Date(),
+                    })) ?? [],
+                });
+
+                return debitNotes;
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    getShipmentDetailsForDebitNote: protectedProcedure
+        .input(z.object({
+            lc_sc_id: z.string(),
+            term_id: z.number(),
+        }))
+        .query(async ({ ctx, input }) => {
+            try {
+                const terms = await ctx.db.terms.findUnique({
+                    where: { id: input.term_id },
+                    select: { name: true },
+                });
+
+                if (!terms) {
+                    throw new TRPCError({ 
+                        code: 'NOT_FOUND', 
+                        message: "Terms not found." 
+                    });
+                }
+
+                const isTT = terms.name.toLowerCase() === 'tt';
+
+                let shipmentDetails: ShipmentDetails[];
+
+                if (isTT) {
+                    shipmentDetails = await ctx.db.$queryRaw<ShipmentDetails[]>`
+                        SELECT
+                            FSD.id,
+                            SD.buyer_po,
+                            FI.invoice_no,
+                            SUM(ES.delivery_quantity) * (FSD.transfer_rate - FSD.factory_rate) AS dn_value
+                        FROM sales_contracts AS SC
+                            INNER JOIN sales_contract_details AS SCD ON SCD.sales_contract_id = SC.id
+                            INNER JOIN order_styles AS SO ON SO.order_id = SCD.order_id
+                            INNER JOIN shipment_details AS SD ON SD.order_style_id = SO.id
+                            INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = SD.id
+                            INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = SD.id
+                            INNER JOIN factory_invoice_details AS FID ON FID.exfactory_shipment_id = ES.id
+                            INNER JOIN factory_invoice AS FI ON FI.id = FID.factory_invoice_id
+                        WHERE NOT EXISTS (
+                            SELECT 1
+                            FROM debit_note_details AS DND
+                            WHERE DND.factory_shipment_id = FSD.id
+                        )
+                        AND FSD.factory_rate <> FSD.transfer_rate
+                        AND SC.id = ${input.lc_sc_id}
+                        GROUP BY SD.ID, FI.ID, FSD.ID
+                        ORDER BY SD.added_at DESC;
+                    `;
+                }
+                else {
+                    shipmentDetails = await ctx.db.$queryRaw<ShipmentDetails[]>`
+                        SELECT
+                            FSD.id,
+                            SD.buyer_po,
+                            FI.invoice_no,
+                            SUM(ES.delivery_quantity) * (FSD.transfer_rate - FSD.factory_rate) AS dn_value
+                        FROM lc_master AS LC
+                            INNER JOIN lc_orders AS LO ON LO.lc_master_id = LC.id
+                            INNER JOIN lc_shipments AS LS ON LS.lc_order_id = LO.id
+                            INNER JOIN shipment_details AS SD ON SD.id = LS.shipment_details_id
+                            INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = SD.id
+                            INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = SD.id
+                            INNER JOIN factory_invoice_details AS FID ON FID.exfactory_shipment_id = ES.id
+                            INNER JOIN factory_invoice AS FI ON FI.id = FID.factory_invoice_id
+                        WHERE NOT EXISTS (
+                            SELECT 1
+                            FROM debit_note_details AS DND
+                            WHERE DND.factory_shipment_id = FSD.id
+                        )
+                        AND FSD.factory_rate <> FSD.transfer_rate
+                        AND LC.id = ${input.lc_sc_id}
+                        GROUP BY SD.ID, FI.ID, FSD.ID
+                        ORDER BY SD.added_at DESC;
+                    `;
+                }
+
+                return shipmentDetails;
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        })
 })

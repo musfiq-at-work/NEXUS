@@ -5,7 +5,7 @@ import type { BaseField } from "~/types/form";
 export type Field<T extends keyof DebitNoteFormValues> = BaseField<T>;
 
 interface LCListItem {
-    id: string;
+    lc_sc_id: string;
     sc_lc_no: string;
 }
 
@@ -53,7 +53,7 @@ export const useFormFields = ({lcList, isEdit}: PropsType): Field<keyof DebitNot
             name: "lc_sc_id",
             label: "Select LC/SC",
             type: "select",
-            options: lcList.map((lc) => ({ label: lc.sc_lc_no, value: lc.id })),
+            options: lcList.map((lc) => ({ label: lc.sc_lc_no, value: lc.lc_sc_id })),
             disabled: isEdit,
             optional: isEdit
         },

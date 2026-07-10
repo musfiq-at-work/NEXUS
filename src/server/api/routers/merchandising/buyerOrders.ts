@@ -502,7 +502,7 @@ export const buyerOrdersRouter = createTRPCRouter({
                     });
 
                     return deletedBuyerOrder;
-                }, {timeout: 30000});
+                }, {timeout: 60000});
             } catch (error) {
                 handlePrismaError(error);
             }
@@ -1274,7 +1274,7 @@ export const buyerOrdersRouter = createTRPCRouter({
                             styles,
                         },
                     };
-                }, {timeout: 30000});
+                }, {timeout: 60000});
             } catch (error) {
                 handlePrismaError(error);
             }
