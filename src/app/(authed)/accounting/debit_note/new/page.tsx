@@ -1,7 +1,7 @@
 'use client';
 
 import { Button, Form, Wrapper } from "~/components";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { api } from "~/trpc/react";
 import { toast } from "sonner";
 import { parseTRPCError } from "~/utils/parseTRPCError";
@@ -32,6 +32,10 @@ const NewDebitNotePage = () => {
         }
     });
 
+    useEffect(() => {
+        console.log("Validation Errors:", validationError);
+    }, [validationError]);
+
     const onSubmitAll =  handleSubmit(async (debitNoteData) => {
         try {
             setIsLoading(true);
@@ -48,11 +52,12 @@ const NewDebitNotePage = () => {
                 additional_charges: safeNumber(debitNoteData.additional_charges),
                 details: (debitNoteData.details ?? []).map((detail) => ({
                     factory_shipment_id: detail.factory_shipment_id,
-                    value: safeNumber(detail.value),
                 })),
             };
-            await addDebitNote.mutateAsync(payload);
-            router.push('/accounting/debit_note');
+
+            console.log("Payload for adding debit note:", payload);
+            // await addDebitNote.mutateAsync(payload);
+            // router.push('/accounting/debit_note');
         }
         catch (error) {
             const parsedError = parseTRPCError(error);

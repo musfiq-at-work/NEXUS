@@ -13,16 +13,44 @@ export type DebitNoteDetailsFormValues = z.infer<typeof DebitNoteDetails>;
 // Define the form fields schema using Zod
 export const DebitNoteFormSchema = z.object({
     db_id: z.string().optional(),
-    term_id: z.string(),
+    term_id: z.number(),
     dn_date: z.string(),
-    factory_id: z.string(),
+    factory_id: z.number(),
     dn_ref: z.string().optional(),
-    buyer_id: z.string(),
+    buyer_id: z.number(),
     lc_sc_id: z.string(),
-    less: z.number().optional(),
-    processing_charges: z.number().optional(),
-    conversion_rate: z.number().optional(),
-    additional_charges: z.number().optional(),
+    less: z.preprocess(
+        (val) => {
+            if (val === "" || val === null || val === undefined) return undefined;
+            const num = Number(val);
+            return isNaN(num) ? undefined : num;
+        },
+        z.number().optional()
+    ) as z.ZodType<number | undefined>,
+    processing_charges: z.preprocess(
+        (val) => {
+            if (val === "" || val === null || val === undefined) return undefined;
+            const num = Number(val);
+            return isNaN(num) ? undefined : num;
+        },
+        z.number().optional()
+    ) as z.ZodType<number | undefined>,
+    conversion_rate: z.preprocess(
+        (val) => {
+            if (val === "" || val === null || val === undefined) return undefined;
+            const num = Number(val);
+            return isNaN(num) ? undefined : num;
+        },
+        z.number().optional()
+    ) as z.ZodType<number | undefined>,
+    additional_charges: z.preprocess(
+        (val) => {
+            if (val === "" || val === null || val === undefined) return undefined;
+            const num = Number(val);
+            return isNaN(num) ? undefined : num;
+        },
+        z.number().optional()
+    ) as z.ZodType<number | undefined>,
     remarks: z.string().optional(),
     details: z.array(DebitNoteDetails).optional(),
 });

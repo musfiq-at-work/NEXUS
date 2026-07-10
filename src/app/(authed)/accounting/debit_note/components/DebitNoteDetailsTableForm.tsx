@@ -1,16 +1,16 @@
 'use client';
 
-import React from "react";
-import { GenericFormTableRow, Heading, TableBody, TableWrapper } from "~/components";
-import { type FieldArrayWithId, type FieldErrors } from "react-hook-form";
+import React, { useEffect } from "react";
+import { Heading, TableBody, TableWrapper } from "~/components";
+import { useWatch, type FieldArrayWithId, type FieldErrors } from "react-hook-form";
 import type { useDebitNoteForm } from "../config/useDebitNoteForm";
 import TableHeader, { type TableHeaderType } from "~/components/organisms/table/TableHeader";
 import type { DebitNoteFormValues } from "../config/formSchema";
-import { formFields as shipmentTableFormFields } from "../shipmentConfig/tableFormFields";
 import { plusIcon } from "~/assets";
 import Image from "next/image";
 import { api } from "~/trpc/react";
 import { skipToken } from "@tanstack/react-query";
+import DebitNoteDetailsRow from "./DebitNoteDetailsRow";
 
 type ShipmentRow = FieldArrayWithId<DebitNoteFormValues>;
 
@@ -29,13 +29,50 @@ type Props = {
 const TableForm = (props: Props) => {
     const {columns, rows, disabled = false, name, methods, validationError, addRow, removeRow} = props;
 
-    const lc_sc_id = methods.getValues('lc_sc_id');
-    const term_id = methods.getValues('term_id');
+    const lc_sc_id = methods.watch("lc_sc_id");
+    const term_id = methods.watch("term_id");
+    const factory_id = methods.watch("factory_id");
 
     const { data: shipmentDetails } = api.debitNotes.getShipmentDetailsForDebitNote.useQuery(
-        (!!lc_sc_id || !!term_id) ? { lc_sc_id, term_id: Number(term_id) } : skipToken,
-    )
+        (!!lc_sc_id && !!term_id && !!factory_id) 
+            ? { lc_sc_id, term_id: Number(term_id), factory_id: Number(factory_id) } 
+            : skipToken,
+    );
 
+    const details = useWatch({ control: methods.control, name: "details" });
+    
+    useEffect(() => {
+        if (!shipmentDetails) return;
+        
+        details?.forEach((detail, index) => {
+            if (!detail.factory_shipment_id) return;
+            
+            const shipment = shipmentDetails.find(
+                (item) => item.id === detail.factory_shipment_id,
+            );
+
+            if (!shipment) return;
+
+            const poNoPath = `details.${index}.po_no` as const;
+            const factoryInvoiceNoPath = `details.${index}.factory_invoice_no` as const;
+            const valuePath = `details.${index}.value` as const;
+
+            if (methods.getValues(poNoPath) !== shipment.buyer_po) {
+                methods.setValue(poNoPath, shipment.buyer_po);
+            }
+
+            if (methods.getValues(factoryInvoiceNoPath) !== shipment.invoice_no) {
+                methods.setValue(factoryInvoiceNoPath, shipment.invoice_no);
+            }
+
+            const dnValue = Number(shipment.dn_value);
+            const dnValueStr = dnValue.toFixed(2);
+            if (methods.getValues(valuePath) !== dnValueStr) {
+                methods.setValue(valuePath, dnValueStr);
+            }
+        });
+    }, [details, shipmentDetails, methods]);
+    
     return (
         <>
             <div className="flex flex-row items-center gap-4">
@@ -50,16 +87,15 @@ const TableForm = (props: Props) => {
                         <TableHeader columns={columns} rows={rows} />
                         <TableBody>
                             {rows.map((row, index) => (
-                                <GenericFormTableRow
+                                <DebitNoteDetailsRow
                                     key={row.id}
-                                    fields={shipmentTableFormFields(shipmentDetails)}
                                     register={methods.register}
                                     removeRow={removeRow}
                                     disabled={disabled}
-                                    validationError={validationError?.details ?? {}}
                                     name={name}
-                                    control={methods.control}
                                     index={index}
+                                    methods={methods}
+                                    validationError={validationError?.details ?? {}}
                                 />
                             ))}
                         </TableBody>

@@ -1,13 +1,10 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import { useFieldArray, useWatch, type FieldErrors } from "react-hook-form";
+import { useFieldArray, type FieldErrors } from "react-hook-form";
 import type { DebitNoteFormValues } from "../config/formSchema";
 import TableForm from "./DebitNoteDetailsTableForm";
 import type { useDebitNoteForm } from "../config/useDebitNoteForm";
 import React, { useCallback, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { tableFormColumns } from "../shipmentConfig/tableFormColumns";
-import { skipToken } from "@tanstack/react-query";
-import { formatDate } from "~/utils/localDateString";
 import { parseTRPCError } from "~/utils/parseTRPCError";
 import { toast } from "sonner";
 
@@ -39,9 +36,9 @@ const DebitNoteDetails = (props: props) => {
 
     const utils = api.useUtils();
 
-    const deleteShipmentMutation = api.buyerOrders.deleteShipment.useMutation({
+    const deleteShipmentMutation = api.debitNotes.deleteShipment.useMutation({
         onSuccess: async () => {
-            await utils.buyerOrders.getBuyerOrders.invalidate();
+            await utils.debitNotes.getAllDebitNotes.invalidate();
             toast.success("Shipment deleted successfully!");
         },
     });
@@ -49,7 +46,7 @@ const DebitNoteDetails = (props: props) => {
     const removeShipmentRow = useCallback(async (index: number) => {
         try {
             if(!!shipmentFields[index]?.db_id) {
-                await deleteShipmentMutation.mutateAsync({ shipment_id: shipmentFields[index].db_id });
+                await deleteShipmentMutation.mutateAsync({ db_id: shipmentFields[index].db_id });
             }
 
             removeShipment(index);

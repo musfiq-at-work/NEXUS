@@ -13,7 +13,7 @@ interface ShipmentDetails {
 export const formFields = (shipmentDetails: ShipmentDetails[] | undefined): Field<keyof DebitNoteDetailsFormValues>[] => {
     return [
         {
-            name: 'po_no',
+            name: 'factory_shipment_id',
             label: 'PO No',
             placeholder: 'Enter PO number',
             type: 'select',

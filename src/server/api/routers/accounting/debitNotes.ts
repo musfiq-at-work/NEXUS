@@ -363,7 +363,6 @@ export const debitNotesRouter = createTRPCRouter({
             remarks: z.string().optional(),
             details: z.array(z.object({
                 factory_shipment_id: z.string(),
-                value: z.number().optional(),
             })).optional(),
         }))
         .mutation(async ({ ctx, input }) => {
@@ -463,7 +462,6 @@ export const debitNotesRouter = createTRPCRouter({
                         const debitNoteDetails = input.details.map(detail => ({
                             debit_note_header_id: debitNoteHeader.id,
                             factory_shipment_id: detail.factory_shipment_id,
-                            value: detail.value,
                         }));
                         await tx.debit_note_details.createMany({
                             data: debitNoteDetails,
@@ -497,6 +495,7 @@ export const debitNotesRouter = createTRPCRouter({
         .input(z.object({
             lc_sc_id: z.string(),
             term_id: z.number(),
+            factory_id: z.number(),
         }))
         .query(async ({ ctx, input }) => {
             try {
@@ -538,6 +537,7 @@ export const debitNotesRouter = createTRPCRouter({
                         )
                         AND FSD.factory_rate <> FSD.transfer_rate
                         AND SC.id = ${input.lc_sc_id}
+                        AND FI.factory_id = ${input.factory_id}
                         GROUP BY SD.ID, FI.ID, FSD.ID
                         ORDER BY SD.added_at DESC;
                     `;
@@ -564,6 +564,7 @@ export const debitNotesRouter = createTRPCRouter({
                         )
                         AND FSD.factory_rate <> FSD.transfer_rate
                         AND LC.id = ${input.lc_sc_id}
+                        AND FI.factory_id = ${input.factory_id}
                         GROUP BY SD.ID, FI.ID, FSD.ID
                         ORDER BY SD.added_at DESC;
                     `;
@@ -574,5 +575,56 @@ export const debitNotesRouter = createTRPCRouter({
             catch (error) {
                 handlePrismaError(error);
             }
+        }),
+
+    deleteShipment: protectedProcedure
+        .input(z.object({
+            db_id: z.string(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            try {
+                const can_delete = ctx.permissions[m.DEBIT_NOTE]?.can_delete;
+
+                if(!can_delete) {
+                    throw new TRPCError({
+                        code: 'FORBIDDEN',
+                        message: "You do not have permission to delete debit note shipments."
+                    });
+                }
+
+                const deletedShipment = await ctx.db.$transaction(async (db) => {
+                    const deletedDetail = await db.debit_note_details.findUnique({
+                        where: { id: input.db_id },
+                    });
+
+                    if (!deletedDetail) {
+                        throw new TRPCError({
+                            code: 'NOT_FOUND',
+                            message: "Debit note shipment not found."
+                        });
+                    }
+
+                    await db.debit_note_details.delete({
+                        where: { id: input.db_id },
+                    });
+
+                    await db.debit_note_details_history.create({
+                        data: {
+                            ...deletedDetail,
+                            action_type: actions.DELETE,
+                            action_by: ctx.user.id,
+                            action_at: new Date(),
+                        },
+                    });
+
+                    return deletedDetail;
+                })
+          
+                return deletedShipment;
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
         })
+                
 })

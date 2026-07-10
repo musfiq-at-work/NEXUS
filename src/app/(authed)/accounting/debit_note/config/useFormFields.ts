@@ -17,6 +17,7 @@ interface PropsType {
 export const useFormFields = ({lcList, isEdit}: PropsType): Field<keyof DebitNoteFormValues>[] => {
     const buyers = api.buyers.getAllBuyersByTeam.useQuery().data ?? [];
     const terms = api.terms.getAllTerms.useQuery().data ?? [];
+    const factories = api.factory.getAllFactories.useQuery().data ?? [];
 
     return [
         {
@@ -46,6 +47,14 @@ export const useFormFields = ({lcList, isEdit}: PropsType): Field<keyof DebitNot
             label: 'Buyer',
             type: "select",
             options: buyers.map((buyer) => ({ label: buyer.buyer_name, value: buyer.id })),
+            disabled: isEdit,
+            optional: isEdit,
+        },
+        {
+            name: 'factory_id',
+            label: 'Factory',
+            type: "select",
+            options: factories.map((factory) => ({ label: factory.name, value: factory.id })),
             disabled: isEdit,
             optional: isEdit,
         },
