@@ -44,7 +44,7 @@ export const debitNotesRouter = createTRPCRouter({
 
                 const result = await ctx.db.$queryRaw<LCListItem[]>`
                     WITH DEBIT_NOTES AS (	
-                        SELECT
+                        SELECT DISTINCT
                             DN.id,
                             F.NAME AS FACTORY_NAME,
                             DN.DEBIT_NOTE_REF,
@@ -122,7 +122,7 @@ export const debitNotesRouter = createTRPCRouter({
 
                 const result = await ctx.db.$queryRaw<LCListItem[]>`
                     WITH DEBIT_NOTES AS (	
-                        SELECT
+                        SELECT DISTINCT
                             DN.id,
                             F.NAME AS FACTORY_NAME,
                             DN.DEBIT_NOTE_REF,
@@ -234,7 +234,17 @@ export const debitNotesRouter = createTRPCRouter({
 
                     await db.debit_note_history.create({
                         data: {
-                            ...deletedHeader,
+                            additional_adjustment: deletedHeader.additional_adjustment,
+                            buyer_id: deletedHeader.buyer_id,
+                            conversion_rate: deletedHeader.conversion_rate,
+                            debit_note_date: deletedHeader.debit_note_date,
+                            debit_note_ref: deletedHeader.debit_note_ref,
+                            less: deletedHeader.less,
+                            debit_note_id: deletedHeader.id,
+                            processing_charge: deletedHeader.processing_charge,
+                            sales_contract_id: deletedHeader.sales_contract_id,
+                            lc_id: deletedHeader.lc_id,
+                            term_id: deletedHeader.term_id,
                             action_type: actions.DELETE,
                             action_by: ctx.user.id,
                         },

@@ -1,7 +1,6 @@
 export const tableFormColumns = [
     { key: 'factory_name', label: 'Factory Name' },
     { key: 'factory_invoice_no', label: 'Invoice No' },
-    { key: 'fdbc_no', label: 'FDBC No' },
     { key: 'factory_invoice_date', label: 'Invoice Date', type: 'date' },
     { key: 'invoice_quantity', label: 'Invoice Quantity' },
     { key: 'invoice_value', label: 'Invoice Value' },

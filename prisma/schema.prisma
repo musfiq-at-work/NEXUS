@@ -165,6 +165,8 @@ model users {
   company_banks_history                                              company_banks_history[]
   countries_history_countries_history_action_byTousers               countries_history[]                            @relation("countries_history_action_byTousers")
   courier_history_courier_history_action_byTousers                   courier_history[]                              @relation("courier_history_action_byTousers")
+  cross_payment_details_history                                      cross_payment_details_history[]
+  cross_payments_history                                             cross_payments_history[]
   currencies_history_currencies_history_action_byTousers             currencies_history[]                           @relation("currencies_history_action_byTousers")
   debit_note_details_history                                         debit_note_details_history[]
   debit_note_history                                                 debit_note_history[]
@@ -386,6 +388,7 @@ model terms {
   id                   Int                    @id @default(autoincrement())
   name                 String                 @db.VarChar(5)
   commission_invoice   commission_invoice[]
+  cross_payments       cross_payments[]
   debit_note           debit_note[]
   document_submissions document_submissions[]
   exfactory            exfactory[]
@@ -961,6 +964,8 @@ model buyers {
   countries                countries?                @relation(fields: [country_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   overseas_offices         overseas_offices?         @relation(fields: [overseas_office_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   commission_invoice       commission_invoice[]
+  cross_payments           cross_payments[]
+  cross_payments_metadata  cross_payments_metadata[]
   debit_note               debit_note[]
   debit_note_metadata      debit_note_metadata[]
   document_submissions     document_submissions[]
@@ -2304,6 +2309,7 @@ model factory_invoice {
   shipment_mode                        shipment_modes?
   port_of_loading                      Int?
   freight_term_id                      Int?
+  cross_payment_details                cross_payment_details[]
   document_submission_factory_invoices document_submission_factory_invoices[]
   buyers                               buyers?                                @relation(fields: [buyer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   factories                            factories                              @relation(fields: [factory_id], references: [id], onUpdate: NoAction)
@@ -2884,6 +2890,68 @@ model debit_note_metadata {
   buyers   buyers? @relation(fields: [buyer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
 
   @@unique([buyer_id, year], map: "unique_buyer_in_debit_notes")
+}
+
+model cross_payment_details {
+  id                   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cross_payment_id     String          @db.Uuid
+  factory_invoice_id   String          @db.Uuid
+  value                Float?
+  added_at             DateTime?       @default(now()) @db.Timestamp(6)
+  factory_payment_no   String?         @db.VarChar(50)
+  factory_payment_date DateTime?       @db.Date
+  cross_payments       cross_payments  @relation(fields: [cross_payment_id], references: [id], onUpdate: NoAction)
+  factory_invoice      factory_invoice @relation(fields: [factory_invoice_id], references: [id], onUpdate: NoAction)
+}
+
+model cross_payment_details_history {
+  id                       String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cross_payment_details_id String?   @db.Uuid
+  cross_payment_id         String?   @db.Uuid
+  factory_invoice_id       String?   @db.Uuid
+  value                    Float?
+  action_type              actions?
+  action_by                String?   @db.Uuid
+  action_at                DateTime? @default(now()) @db.Timestamp(6)
+  users                    users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model cross_payments {
+  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cross_payment_ref     String                  @db.VarChar(25)
+  cross_payment_date    DateTime?               @default(dbgenerated("CURRENT_DATE")) @db.Date
+  buyer_id              Int
+  term_id               Int
+  added_at              DateTime?               @default(now()) @db.Timestamp(6)
+  remarks               String?
+  cross_payment_details cross_payment_details[]
+  buyers                buyers                  @relation(fields: [buyer_id], references: [id], onUpdate: NoAction)
+  terms                 terms                   @relation(fields: [term_id], references: [id], onUpdate: NoAction)
+}
+
+model cross_payments_history {
+  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cross_payments_id    String?   @db.Uuid
+  cross_payment_ref    String?   @db.VarChar(25)
+  cross_payment_date   DateTime? @db.Date
+  buyer_id             Int?
+  term_id              Int?
+  action_type          actions?
+  action_by            String?   @db.Uuid
+  action_at            DateTime? @default(now()) @db.Timestamp(6)
+  factory_payment_no   String?   @db.VarChar(50)
+  factory_payment_date DateTime? @db.Date
+  users                users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model cross_payments_metadata {
+  id       String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  year     Int?
+  last_ref Int?
+  buyer_id Int?
+  buyers   buyers? @relation(fields: [buyer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@unique([year, buyer_id], map: "unique_buyer_year_cross_payment")
 }
 
 enum actions {
