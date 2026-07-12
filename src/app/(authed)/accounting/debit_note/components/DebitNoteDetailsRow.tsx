@@ -23,10 +23,11 @@ const DebitNoteDetailsRow = (props: Props) => {
     const term_id = useWatch({ control: methods.control, name: `term_id`});
     const lc_sc_id = useWatch({ control: methods.control, name: `lc_sc_id`});
     const factory_id = useWatch({ control: methods.control, name: `factory_id`});
+    const debitNoteId = useWatch({ control: methods.control, name: `db_id`});
 
     const { data: shipmentDetails } = api.debitNotes.getShipmentDetailsForDebitNote.useQuery(
         (!!lc_sc_id && !!term_id && !!factory_id) 
-            ? { lc_sc_id, term_id: Number(term_id), factory_id: Number(factory_id) } 
+            ? { lc_sc_id, term_id: Number(term_id), factory_id: Number(factory_id), debit_note_id: debitNoteId } 
             : skipToken,
     );
 
@@ -49,19 +50,21 @@ const DebitNoteDetailsRow = (props: Props) => {
         name: "details",
     });
 
-    const selectedRDLInvoiceIds = details
+    const selectedFactoryShipmentIds = details
         ?.filter((_, i) => i !== index)
         .map((detail) => detail.factory_shipment_id);
 
-    const filteredRDLInvoices = shipmentDetails?.filter(
-        (invoice) => !selectedRDLInvoiceIds?.includes(invoice.id)
+    const filteredFactoryShipments = shipmentDetails?.filter(
+        (invoice) => !selectedFactoryShipmentIds?.includes(invoice.id)
     );
 
     const { can_delete } = useModulePermissions();
 
+    const isEdit = !!useWatch({ control: methods.control, name: `details.${index}.db_id`});
+
     return (
         <GenericFormTableRow
-            fields={shipmentTableFormFields(filteredRDLInvoices)}
+            fields={shipmentTableFormFields(filteredFactoryShipments, isEdit)}
             register={methods.register}
             removeRow={removeRow}
             disabled={disabled}

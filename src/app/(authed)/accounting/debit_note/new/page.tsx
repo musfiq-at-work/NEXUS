@@ -55,9 +55,8 @@ const NewDebitNotePage = () => {
                 })),
             };
 
-            console.log("Payload for adding debit note:", payload);
-            // await addDebitNote.mutateAsync(payload);
-            // router.push('/accounting/debit_note');
+            await addDebitNote.mutateAsync(payload);
+            router.push('/accounting/debit_note');
         }
         catch (error) {
             const parsedError = parseTRPCError(error);

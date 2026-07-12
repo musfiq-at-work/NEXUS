@@ -3,7 +3,7 @@ import z from "zod";
 import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { actions } from "@prisma/client";
+import { actions, Prisma } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 import { currencyFormatter } from "~/utils/localNumberStrings";
 
@@ -55,7 +55,8 @@ export const debitNotesRouter = createTRPCRouter({
                                 ELSE LC.LC_NO
                             END AS LC_SC_NO,
                             B.BUYER_NAME,
-                            DN.DEBIT_NOTE_DATE
+                            DN.DEBIT_NOTE_DATE,
+                            DN.ADDED_AT
                         FROM DEBIT_NOTE AS DN
                             INNER JOIN debit_note_details AS DND ON DND.debit_note_header_id = DN.id
                             INNER JOIN factories AS F ON F.id = DN.factory_id
@@ -87,6 +88,7 @@ export const debitNotesRouter = createTRPCRouter({
                     SELECT *, 
                         COUNT(*) OVER() AS TOTAL_COUNT
                     FROM DEBIT_NOTES
+                    ORDER BY ADDED_AT DESC
                     LIMIT 15
                     OFFSET 0;
                 `;
@@ -131,7 +133,8 @@ export const debitNotesRouter = createTRPCRouter({
                                 ELSE LC.LC_NO
                             END AS LC_SC_NO,
                             B.BUYER_NAME,
-                            DN.DEBIT_NOTE_DATE
+                            DN.DEBIT_NOTE_DATE,
+                            DN.ADDED_AT
                         FROM DEBIT_NOTE AS DN
                             INNER JOIN debit_note_details AS DND ON DND.debit_note_header_id = DN.id
                             INNER JOIN factories AS F ON F.id = DN.factory_id
@@ -175,6 +178,7 @@ export const debitNotesRouter = createTRPCRouter({
                     SELECT *, 
                         COUNT(*) OVER() AS TOTAL_COUNT
                     FROM DEBIT_NOTES
+                    ORDER BY ADDED_AT DESC
                     LIMIT 15
                     OFFSET 0;
                 `;
@@ -216,7 +220,8 @@ export const debitNotesRouter = createTRPCRouter({
 
                     await db.debit_note_details_history.createMany({
                         data: deletedDetails.map(detail => ({
-                            ...detail,
+                            debit_note_header_id: detail.debit_note_header_id,
+                            factory_shipment_id: detail.factory_shipment_id,
                             action_type: actions.DELETE,
                             action_by: ctx.user.id,
                             action_at: new Date(),
@@ -232,7 +237,6 @@ export const debitNotesRouter = createTRPCRouter({
                             ...deletedHeader,
                             action_type: actions.DELETE,
                             action_by: ctx.user.id,
-                            action_at: new Date(),
                         },
                     });
 
@@ -367,6 +371,8 @@ export const debitNotesRouter = createTRPCRouter({
         }))
         .mutation(async ({ ctx, input }) => {
             try {
+                console.log("Adding Debit Note with input:", input);
+
                 const can_add = ctx.permissions[m.DEBIT_NOTE]?.can_add;
 
                 if(!can_add) {
@@ -430,7 +436,7 @@ export const debitNotesRouter = createTRPCRouter({
                 const isTT = terms.name.toLowerCase() === 'tt'
 
                 const debitNotes= await ctx.db.$transaction(async (tx) => {
-                    const dn_ref = `DBN/${buyer_prefix?.prefix}/${factory_prefix?.prefix}/${String((meta?.last_ref ?? 0)).padStart(4, '0')}}`;
+                    const dn_ref = `DBN/${buyer_prefix?.prefix}/${factory_prefix?.prefix}/${String((meta?.last_ref ?? 0)).padStart(4, '0')}`;
 
                     const debitNoteHeader = await tx.debit_note.create({
                         data: {
@@ -451,10 +457,20 @@ export const debitNotesRouter = createTRPCRouter({
 
                     await tx.debit_note_history.create({
                         data: {
-                            ...debitNoteHeader,
+                            debit_note_id: debitNoteHeader.id,
+                            additional_adjustment: input.additional_charges,
+                            buyer_id: input.buyer_id,
+                            conversion_rate: input.conversion_rate,
+                            debit_note_date: input.dn_date,
+                            debit_note_ref: dn_ref,
+                            lc_id: input.lc_sc_id,
+                            less: input.less,
+                            processing_charge: input.processing_charges,
+                            remarks: input.remarks,
+                            sales_contract_id: input.lc_sc_id,
+                            term_id: input.term_id,
                             action_type: actions.ADDED,
                             action_by: ctx.user.id,
-                            action_at: new Date(),
                         },
                     });
 
@@ -477,10 +493,10 @@ export const debitNotesRouter = createTRPCRouter({
 
                 await ctx.db.debit_note_details_history.createMany({
                     data: newDebitNoteDetails?.map(detail => ({
-                        ...detail,
+                        debit_note_header_id: detail.debit_note_header_id,
+                        factory_shipment_id: detail.factory_shipment_id,
                         action_type: actions.ADDED,
                         action_by: ctx.user.id,
-                        action_at: new Date(),
                     })) ?? [],
                 });
 
@@ -496,9 +512,12 @@ export const debitNotesRouter = createTRPCRouter({
             lc_sc_id: z.string(),
             term_id: z.number(),
             factory_id: z.number(),
+            debit_note_id: z.string().optional(),
         }))
         .query(async ({ ctx, input }) => {
             try {
+                console.log("Fetching shipment details for debit note with input:", input);
+
                 const terms = await ctx.db.terms.findUnique({
                     where: { id: input.term_id },
                     select: { name: true },
@@ -514,6 +533,10 @@ export const debitNotesRouter = createTRPCRouter({
                 const isTT = terms.name.toLowerCase() === 'tt';
 
                 let shipmentDetails: ShipmentDetails[];
+
+                const addExistingDNCondition = input.debit_note_id 
+                    ? Prisma.sql`AND DND.debit_note_header_id <> ${input.debit_note_id}` 
+                    :  Prisma.sql``;
 
                 if (isTT) {
                     shipmentDetails = await ctx.db.$queryRaw<ShipmentDetails[]>`
@@ -534,6 +557,7 @@ export const debitNotesRouter = createTRPCRouter({
                             SELECT 1
                             FROM debit_note_details AS DND
                             WHERE DND.factory_shipment_id = FSD.id
+                                ${addExistingDNCondition}
                         )
                         AND FSD.factory_rate <> FSD.transfer_rate
                         AND SC.id = ${input.lc_sc_id}
@@ -561,6 +585,7 @@ export const debitNotesRouter = createTRPCRouter({
                             SELECT 1
                             FROM debit_note_details AS DND
                             WHERE DND.factory_shipment_id = FSD.id
+                                ${addExistingDNCondition}
                         )
                         AND FSD.factory_rate <> FSD.transfer_rate
                         AND LC.id = ${input.lc_sc_id}
@@ -610,7 +635,8 @@ export const debitNotesRouter = createTRPCRouter({
 
                     await db.debit_note_details_history.create({
                         data: {
-                            ...deletedDetail,
+                            debit_note_header_id: deletedDetail.debit_note_header_id,
+                            factory_shipment_id: deletedDetail.factory_shipment_id,
                             action_type: actions.DELETE,
                             action_by: ctx.user.id,
                             action_at: new Date(),
@@ -625,6 +651,197 @@ export const debitNotesRouter = createTRPCRouter({
             catch (error) {
                 handlePrismaError(error);
             }
+        }),
+
+    getDebitNoteById: protectedProcedure
+        .input(z.object({
+            debit_note_id: z.string(),
+        }))
+        .query(async ({ ctx, input }) => {
+            try {
+                const can_view = ctx.permissions[m.DEBIT_NOTE]?.can_view;
+
+                if(!can_view) {
+                    throw new TRPCError({
+                        code: 'FORBIDDEN',
+                        message: "You do not have permission to view debit notes."
+                    });
+                }
+
+                const debitNoteObj = await ctx.db.debit_note.findUnique({
+                    where: { id: input.debit_note_id },
+                    select: {
+                        id: true,
+                        term_id: true,
+                        debit_note_date: true,
+                        factory_id: true,
+                        debit_note_ref: true,
+                        buyer_id: true,
+                        lc_id: true,
+                        sales_contract_id: true,
+                        lc_master: {
+                            select: {
+                                lc_no: true,
+                            }
+                        },
+                        sales_contracts: {
+                            select: {
+                                sales_contract_no: true,
+                            }
+                        },
+                        less: true,
+                        processing_charge: true,
+                        conversion_rate: true,
+                        additional_adjustment: true,
+                        remarks: true,
+                        debit_note_details: {
+                            select: {
+                                id: true,
+                                factory_shipment_id: true,
+                            },
+                        },
+                    },
+                });
+
+                if (!debitNoteObj) {
+                    throw new TRPCError({
+                        code: 'NOT_FOUND',
+                        message: "Debit note not found."
+                    });
+                }
+
+                const debitNotePoDetails = await ctx.db.$queryRaw<ShipmentDetails[]>`
+                    SELECT
+                        FSD.id,
+                        SD.buyer_po,
+                        FI.invoice_no,
+                        SUM(ES.delivery_quantity) * (FSD.transfer_rate - FSD.factory_rate) AS dn_value
+                    FROM debit_note_details AS DND
+                        INNER JOIN factory_shipment_details AS FSD ON FSD.id = DND.factory_shipment_id
+                        INNER JOIN shipment_details AS SD ON SD.id = FSD.shipment_detail_id
+                        INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = SD.id
+                        INNER JOIN factory_invoice_details AS FID ON FID.exfactory_shipment_id = ES.id
+                        INNER JOIN factory_invoice AS FI ON FI.id = FID.factory_invoice_id
+                    WHERE DND.debit_note_header_id = ${input.debit_note_id}
+                    GROUP BY SD.ID, FI.ID, FSD.ID
+                    ORDER BY SD.added_at DESC;
+                `;
+
+                const debitNote = {
+                    db_id: debitNoteObj.id,
+                    term_id: debitNoteObj.term_id,
+                    dn_date: debitNoteObj.debit_note_date,
+                    factory_id: debitNoteObj.factory_id,
+                    dn_ref: debitNoteObj.debit_note_ref,
+                    buyer_id: debitNoteObj.buyer_id,
+                    lc_sc_id: debitNoteObj.lc_id ?? debitNoteObj.sales_contract_id,
+                    lc_sc_no: debitNoteObj.lc_master?.lc_no ?? debitNoteObj.sales_contracts?.sales_contract_no ?? '',
+                    less: debitNoteObj.less,
+                    processing_charges: debitNoteObj.processing_charge,
+                    conversion_rate: debitNoteObj.conversion_rate,
+                    additional_charges: debitNoteObj.additional_adjustment,
+                    remarks: debitNoteObj.remarks,
+                    details: debitNoteObj.debit_note_details.map(detail => ({
+                        db_id: detail.id,
+                        factory_shipment_id: detail.factory_shipment_id,
+                        po_no: debitNotePoDetails.find(poDetail => poDetail.id === detail.factory_shipment_id)?.buyer_po ?? '',
+                        factory_invoice_no: debitNotePoDetails.find(poDetail => poDetail.id === detail.factory_shipment_id)?.invoice_no ?? '',
+                        value: debitNotePoDetails.find(poDetail => poDetail.id === detail.factory_shipment_id)?.dn_value ?? 0,
+                    })),
+                };
+
+                return debitNote;
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    updateDebitNote: protectedProcedure
+        .input(z.object({
+            id: z.string(),
+            dn_date: z.date(),
+            less: z.number().optional(),
+            processing_charges: z.number().optional(),
+            conversion_rate: z.number().optional(),
+            additional_charges: z.number().optional(),
+            remarks: z.string().optional(),
+            details: z.array(z.object({
+                db_id: z.string().optional(),
+                factory_shipment_id: z.string(),
+            })).optional(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            try {
+                const can_update = ctx.permissions[m.DEBIT_NOTE]?.can_update;
+
+                if(!can_update) {
+                    throw new TRPCError({
+                        code: 'FORBIDDEN',
+                        message: "You do not have permission to update debit notes."
+                    });
+                }
+
+                return await ctx.db.$transaction(async (db) => {
+                    const updatedHeader = await db.debit_note.update({
+                        where: { id: input.id },
+                        data: {
+                            debit_note_date: input.dn_date,
+                            less: input.less,
+                            processing_charge: input.processing_charges,
+                            conversion_rate: input.conversion_rate,
+                            additional_adjustment: input.additional_charges,
+                            remarks: input.remarks,
+                        },
+                    });
+
+                    await db.debit_note_history.create({
+                        data: {
+                            additional_adjustment: input.additional_charges,
+                            conversion_rate: input.conversion_rate,
+                            debit_note_date: input.dn_date,
+                            debit_note_id: input.id,
+                            less: input.less,
+                            processing_charge: input.processing_charges,
+                            remarks: input.remarks,
+                            debit_note_ref: updatedHeader.debit_note_ref,
+                            lc_id: updatedHeader.lc_id,
+                            sales_contract_id: updatedHeader.sales_contract_id,
+                            buyer_id: updatedHeader.buyer_id,
+                            term_id: updatedHeader.term_id,
+                            action_type: actions.UPDATE,
+                            action_by: ctx.user.id,
+                        },
+                    });
+
+                    if (input.details && input.details.length > 0) {
+                        for (const detail of input.details) {
+                            if (!detail.db_id) {
+                                await db.debit_note_details.create({
+                                    data: {
+                                        debit_note_header_id: input.id,
+                                        factory_shipment_id: detail.factory_shipment_id,
+                                    },
+                                });
+                            }
+        
+                            await db.debit_note_details_history.create({
+                                data: {
+                                    debit_note_header_id: input.id,
+                                    factory_shipment_id: detail.factory_shipment_id,
+                                    action_type: actions.UPDATE,
+                                    action_by: ctx.user.id,
+                                },
+                            });
+                        }
+                    }
+
+                    return updatedHeader;
+                })
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
         })
-                
+
 })

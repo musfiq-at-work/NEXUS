@@ -10,7 +10,7 @@ interface ShipmentDetails {
     dn_value: number 
 }
 
-export const formFields = (shipmentDetails: ShipmentDetails[] | undefined): Field<keyof DebitNoteDetailsFormValues>[] => {
+export const formFields = (shipmentDetails: ShipmentDetails[] | undefined, isEdit: boolean): Field<keyof DebitNoteDetailsFormValues>[] => {
     return [
         {
             name: 'factory_shipment_id',
@@ -18,6 +18,8 @@ export const formFields = (shipmentDetails: ShipmentDetails[] | undefined): Fiel
             placeholder: 'Enter PO number',
             type: 'select',
             options: shipmentDetails?.map((shipment) => ({ label: shipment.buyer_po, value: shipment.id })) ?? [],
+            disabled: isEdit,
+            optional: isEdit,
         },
         {
             name: "factory_invoice_no",

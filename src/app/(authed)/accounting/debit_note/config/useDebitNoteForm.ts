@@ -5,20 +5,21 @@ import { DebitNoteFormSchema } from "./formSchema";
 import type { DebitNoteFormValues } from "./formSchema";
 import { useFormFields } from "./useFormFields";
 import { formatDate, formatDateForInput } from "~/utils/localDateString";
-import type { GetFactoryPaymentByIdTypes } from "~/types/accountingAPITypes";
+import type { GetDebitNoteByIdTypes } from "~/types/accountingAPITypes";
 import { safeNumber } from "~/utils/numbers";
-import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
+import { quantityFormatter } from "~/utils/localNumberStrings";
 import { api } from "~/trpc/react";
 import { skipToken } from "@tanstack/react-query";
 
-// type FactoryInvoiceTypes = NonNullable<GetFactoryPaymentByIdTypes>['factoryPayments'][number];
+type DebitNoteType = NonNullable<GetDebitNoteByIdTypes>;
 
-export const useDebitNoteForm = (initialData?: any) => {
+export const useDebitNoteForm = (initialData?: DebitNoteType) => {
     const transformedInitialData = useMemo(() => {
-        return initialData?.factoryPaymentHeader ? {
+        return initialData ? {
+            db_id: initialData.db_id ?? undefined,
             term_id: initialData.term_id ?? undefined,
-            dn_date: initialData.realization_date 
-                ? formatDateForInput(initialData.realization_date) 
+            dn_date: initialData.dn_date 
+                ? formatDateForInput(initialData.dn_date) 
                 : undefined,
             factory_id: initialData.factory_id ?? undefined,
             dn_ref: initialData.dn_ref ?? undefined,
@@ -29,12 +30,12 @@ export const useDebitNoteForm = (initialData?: any) => {
             conversion_rate: safeNumber(initialData.conversion_rate) ?? undefined,
             additional_charges: safeNumber(initialData.additional_charges) ?? undefined,
             remarks: initialData.remarks ?? undefined,
-            details: initialData.factoryPayments?.map((detail: any) => ({
+            details: initialData.details?.map((detail: any) => ({
                 db_id: detail.db_id ?? undefined,
-                factory_name: detail.factory_name ?? undefined,
                 po_no: detail.po_no ?? undefined,
                 factory_invoice_id: detail.factory_invoice_id ?? undefined,
                 factory_invoice_no: detail.factory_invoice_no ?? undefined,
+                factory_shipment_id: detail.factory_shipment_id ?? undefined,
                 value: quantityFormatter(safeNumber(detail.value)) ?? undefined,
             })) ?? [],
         } : undefined;
@@ -59,7 +60,7 @@ export const useDebitNoteForm = (initialData?: any) => {
         },
     });
 
-    const { handleSubmit, formState: { errors: validationError }, trigger, watch, control, reset, setValue } = methods;
+    const { handleSubmit, formState: { errors: validationError }, trigger, watch, control, reset } = methods;
     
     useEffect(() => {    
         if (transformedInitialData) {
@@ -84,7 +85,7 @@ export const useDebitNoteForm = (initialData?: any) => {
     if(isEdit) {
         const id = initialData.lc_sc_id;
 
-        lcScList = id ? [{ lc_sc_id: String(id), sc_lc_no: String(initialData.sc_lc_no) }] : [];
+        lcScList = id ? [{ lc_sc_id: String(id), sc_lc_no: String(initialData.lc_sc_no) }] : [];
     }
     else {
         lcScList = lcList;

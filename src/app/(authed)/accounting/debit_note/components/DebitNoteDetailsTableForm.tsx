@@ -11,6 +11,7 @@ import Image from "next/image";
 import { api } from "~/trpc/react";
 import { skipToken } from "@tanstack/react-query";
 import DebitNoteDetailsRow from "./DebitNoteDetailsRow";
+import ShipmentSummaryRow from "./ShipmentSummaryRow";
 
 type ShipmentRow = FieldArrayWithId<DebitNoteFormValues>;
 
@@ -33,9 +34,11 @@ const TableForm = (props: Props) => {
     const term_id = methods.watch("term_id");
     const factory_id = methods.watch("factory_id");
 
+    const debitNoteId = useWatch({ control: methods.control, name: `db_id`});
+
     const { data: shipmentDetails } = api.debitNotes.getShipmentDetailsForDebitNote.useQuery(
         (!!lc_sc_id && !!term_id && !!factory_id) 
-            ? { lc_sc_id, term_id: Number(term_id), factory_id: Number(factory_id) } 
+            ? { lc_sc_id, term_id: Number(term_id), factory_id: Number(factory_id), debit_note_id: debitNoteId } 
             : skipToken,
     );
 
@@ -98,6 +101,7 @@ const TableForm = (props: Props) => {
                                     validationError={validationError?.details ?? {}}
                                 />
                             ))}
+                            <ShipmentSummaryRow methods={methods} />
                         </TableBody>
                     </TableWrapper>
                 </div>
