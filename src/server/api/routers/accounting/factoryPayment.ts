@@ -42,6 +42,17 @@ interface FactoryPaymentDetails {
     factory_payment_no: string | null;
 }
 
+interface GetCrossPaymentByIdTypes {
+    factory_payment_detail_id: string;
+    factory_invoice_id: string;
+    factory_invoice_no: string;
+    factory_name: string;
+    factory_payment_no: string;
+    factory_payment_date: Date;
+    paid_amount: number;
+    regularized: boolean;
+}
+
 export const factoryPaymentRouter = createTRPCRouter({
     getFactoryPayments: protectedProcedure
         .input(z.object({
@@ -450,6 +461,102 @@ export const factoryPaymentRouter = createTRPCRouter({
                         }
                     }
                 });
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    checkCrossPaymentForDocumentSubmission: protectedProcedure
+        .input(z.object({
+            document_submission_id: z.string(),
+        }))
+        .query(async ({ ctx, input }) => {
+            try {
+                const can_view = ctx.permissions[m.REGULAR_PAYMENT]?.can_view;
+
+                if (!can_view) {
+                    throw new TRPCError({
+                        code: "FORBIDDEN",
+                        message: "You do not have permission to check cross payment for document submission.",
+                    });
+                }
+
+                const crossPaymentDetails = await ctx.db.$queryRaw<GetCrossPaymentByIdTypes[]>`
+                    SELECT 
+                        CPD.id AS factory_payment_detail_id,
+                        FI.ID AS factory_invoice_id,
+                        FI.invoice_no AS factory_invoice_no,
+                        F.name AS factory_name,
+                        CPD.factory_payment_no,
+                        CPD.factory_payment_date,
+                        CPD.value AS paid_amount,
+                        CPD.regularized AS regularized
+                    FROM document_submissions AS DS
+                        INNER JOIN document_submissions_details AS DSD ON DSD.document_submissions_id = DS.id
+                        INNER JOIN document_submission_factory_invoices AS DSFI ON DSFI.document_submissions_details_id = DSD.id
+                        INNER JOIN factory_invoice AS FI ON FI.id = DSFI.factory_invoice_id
+                        INNER JOIN factories AS F ON F.id = FI.factory_id
+                        INNER JOIN cross_payment_details AS CPD ON CPD.factory_invoice_id = FI.id
+                    WHERE DS.ID = ${input.document_submission_id};
+                `;
+
+                return { details: crossPaymentDetails };
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    regularizeCrossPayment: protectedProcedure
+        .input(z.object({
+            document_submission_id: z.string(),
+            cross_payment_details_id: z.string()
+        }))
+        .mutation(async ({ ctx, input }) => {
+            try {
+                const can_update = ctx.permissions[m.REGULAR_PAYMENT]?.can_update;
+
+                if (!can_update) {
+                    throw new TRPCError({
+                        code: "FORBIDDEN",
+                        message: "You do not have permission to regularize cross payment.",
+                    });
+                }
+
+                await ctx.db.$transaction(async (tx) => {
+                    const crossPaymentDetail = await tx.cross_payment_details.findUnique({
+                        where: {
+                            id: input.cross_payment_details_id,
+                        },
+                    });
+
+                    if (!crossPaymentDetail) {
+                        throw new TRPCError({
+                            code: "NOT_FOUND",
+                            message: "Cross payment detail not found.",
+                        });
+                    }
+
+                    await tx.factory_payments.create({
+                        data: {
+                            document_submission_id: input.document_submission_id,
+                            factory_invoice_id: crossPaymentDetail.factory_invoice_id,
+                            paid_amount: crossPaymentDetail.value,
+                            payment_date: crossPaymentDetail.factory_payment_date,
+                            factory_payment_no: crossPaymentDetail.factory_payment_no,
+                        },
+                    });
+
+                    await tx.cross_payment_details.update({
+                        where: {
+                            id: input.cross_payment_details_id,
+                        },
+                        data: {
+                            regularized: true,
+                        },
+                    });
+                })
             }
             catch (error) {
                 handlePrismaError(error);

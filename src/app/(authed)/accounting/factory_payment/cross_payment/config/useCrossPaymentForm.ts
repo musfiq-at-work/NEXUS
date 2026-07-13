@@ -29,6 +29,7 @@ export const useCrossPaymentForm = (initialData?: CrossPaymentsType) => {
             details: initialData.cross_payment_details?.map((detail: CrossPaymentDetailsType) => ({
                 db_id: detail.id ?? undefined,
                 factory_invoice_id: detail.factory_invoice_id ?? undefined,
+                factory_invoice_no: detail.factory_invoice?.invoice_no ?? undefined,
                 factory_payment_no: detail.factory_payment_no ?? undefined,
                 factory_payment_date: detail.factory_payment_date 
                     ? formatDateForInput(detail.factory_payment_date) 

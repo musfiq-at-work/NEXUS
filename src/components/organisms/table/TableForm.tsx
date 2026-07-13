@@ -28,10 +28,11 @@ type Props<T extends FieldValues> = {
     removeRow?: (index: number) => void;
     title: string;
     register: UseFormRegister<T>;
+    handleAction?: (index: number) => void;
 }
-
+    
 const TableForm = <T extends FieldValues, >(props: Props<T>) => {
-    const {title, isLoading, error, columns, fields, rows, register, addRow, removeRow, disabled = false, validationError, name, control, canDelete = true} =  props;
+    const {title, isLoading, error, columns, fields, rows, register, addRow, removeRow, disabled = false, validationError, name, control, canDelete = true, handleAction} =  props;
     
     if(isLoading) return <Loader />
 
@@ -78,6 +79,7 @@ const TableForm = <T extends FieldValues, >(props: Props<T>) => {
                                     name={name}
                                     control={control}
                                     index={index}
+                                    handleAction={handleAction}
                                 />
                             ))}
                         </TableBody>

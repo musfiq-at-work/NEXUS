@@ -14,6 +14,8 @@ import TableForm from "~/components/organisms/table/TableForm";
 import { useFieldArray } from "react-hook-form";
 import { tableFormColumns } from "../../factoryInvoiceConfig/tableFormColumns";
 import { formFields as tableFormFields } from "../../factoryInvoiceConfig/tableFormFields";
+import { useCrossPaymentForm } from "../../crossPaymentConfig/useCrossPaymentForm";
+import CrossPaymentDetails from "../../crossPaymentComponents/CrossPaymentDetails";
 
 const EditFactoryPaymentPage = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
@@ -76,6 +78,19 @@ const EditFactoryPaymentPage = ({ params }: ParamsProp) => {
         name: "details",
     });
 
+    const { data: crossPayments} = api.factoryPayment.checkCrossPaymentForDocumentSubmission.useQuery(
+        {document_submission_id: id}
+    );
+
+    // Form setup
+    const { 
+        methods: crossPaymentMethod, 
+        validationError: crossPaymentValidationError,
+        control: crossPaymentControl
+    } = useCrossPaymentForm(
+        crossPayments ?? undefined
+    );
+
     return (
         <Wrapper heading='Update Factory Payment'>
             <Form 
@@ -100,6 +115,17 @@ const EditFactoryPaymentPage = ({ params }: ParamsProp) => {
                 disabled={!can_update || isLoading}
                 control={control}
             />
+
+            {crossPayments && crossPayments?.details.length > 0 && (
+                <div className="mt-8">
+                    <CrossPaymentDetails 
+                        methods={crossPaymentMethod}
+                        validationError={crossPaymentValidationError}
+                        disabled={!can_update || isLoading}
+                        documentSubmissionId={id}
+                    />
+                </div>
+            )}
 
             <div className="w-full flex flex-row justify-end">
                 <Button type="button" 

@@ -19,6 +19,8 @@ type FactoryPaymentRouterOutput = inferRouterOutputs<typeof factoryPaymentRouter
 
 export type GetFactoryPaymentByIdTypes = FactoryPaymentRouterOutput['getFactoryPaymentById'];
 
+export type GetCrossPaymentDetailsByIdTypes = FactoryPaymentRouterOutput['checkCrossPaymentForDocumentSubmission'];
+
 // Debit Note types
 type DebitNoteRouterOutput = inferRouterOutputs<typeof debitNotesRouter>;
 

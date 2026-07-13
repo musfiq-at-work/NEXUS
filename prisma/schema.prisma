@@ -2900,6 +2900,7 @@ model cross_payment_details {
   added_at             DateTime?       @default(now()) @db.Timestamp(6)
   factory_payment_no   String?         @db.VarChar(50)
   factory_payment_date DateTime?       @db.Date
+  regularized          Boolean?        @default(false)
   cross_payments       cross_payments  @relation(fields: [cross_payment_id], references: [id], onUpdate: NoAction)
   factory_invoice      factory_invoice @relation(fields: [factory_invoice_id], references: [id], onUpdate: NoAction)
 }
