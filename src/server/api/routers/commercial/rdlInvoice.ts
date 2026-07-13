@@ -665,7 +665,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         LEFT JOIN rdl_invoice_details CRID ON CRID.factory_invoice_id = FI.ID
                         AND CRID.rdl_invoice_id = ${input.rdl_invoice_id}
                     `
-                    : Prisma.sql``;
+                    : Prisma.empty;
 
                 const invoiceFilter = input.rdl_invoice_id
                     ? Prisma.sql`
@@ -675,10 +675,10 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             OR COALESCE(PI.PREVIOUS_QUANTITY, 0)::NUMERIC(18,2) < I.TOTAL_QUANTITY::NUMERIC(18,2)
                         )
                     `
-                    : Prisma.sql``;
+                    : Prisma.empty;
 
                 const havingClause = input.rdl_invoice_id
-                    ? Prisma.sql``
+                    ? Prisma.empty
                     : Prisma.sql`
                         HAVING (
                             COALESCE(PI.PREVIOUS_QUANTITY, 0)::NUMERIC(18,2) < SUM(I.TOTAL_QUANTITY)::NUMERIC(18,2)
@@ -689,7 +689,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
 
                 const excludeCurrentInvoiceClause = input.rdl_invoice_id 
                     ? Prisma.sql`WHERE RI.ID <> ${input.rdl_invoice_id}` 
-                    : Prisma.sql``;
+                    : Prisma.empty;
 
                 const factoryInvoiceList = await ctx.db.$queryRaw<FactoryInvoiceForRDLInvoice[]>`
                     WITH PREVIOUS_INVOICE AS (
@@ -822,7 +822,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                 }
                 const excludeCurrentInvoiceClause = input.rdl_invoice_id 
                     ? Prisma.sql`WHERE RI.ID <> ${input.rdl_invoice_id}` 
-                    : Prisma.sql``;
+                    : Prisma.empty;
 
                 const shipmentDetailsObj = await ctx.db.$queryRaw<ShipmentDetailForFactoryInvoice[]>`
                     WITH PREVIOUS_INVOICE AS (

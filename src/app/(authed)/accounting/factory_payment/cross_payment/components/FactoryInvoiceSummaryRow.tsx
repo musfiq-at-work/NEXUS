@@ -20,7 +20,7 @@ const FactoryInvoiceSummaryRow = ({methods}: Props) => {
     return (
         totalFactoryValueUsd > 0 && (
             <TableRow>
-                <TableCell colSpan={8}>&nbsp;</TableCell>
+                <TableCell colSpan={5}>&nbsp;</TableCell>
                 <TableCell className='text-left px-3 py-2 bg-secondary text-white' colSpan={1}>
                     {totalFactoryValueUsd.toFixed(2)}
                 </TableCell>

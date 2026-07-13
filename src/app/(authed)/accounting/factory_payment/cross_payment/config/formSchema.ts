@@ -7,9 +7,9 @@ export const CrossPaymentDetails = z.object({
     factory_payment_no: z.string().optional(),
     factory_invoice_date: z.string().optional(),
     factory_name: z.string().optional(),
-    invoice_quantity: z.number().optional(),
-    invoice_value: z.number().optional(),
-    value: z.string().optional(),
+    invoice_quantity: z.string().optional(),
+    invoice_value: z.string().optional(),
+    value: z.number().min(1, { message: "Paid Amount must be greater than 0" }),
     factory_payment_date: z.string().optional(),
 });
 

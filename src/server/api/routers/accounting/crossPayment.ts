@@ -16,21 +16,36 @@ interface CrossPaymentDetails {
     invoice_value: number;
 }
 
+interface CrossPaymentList {
+    id: string;
+    cross_payment_ref: string;
+    cross_payment_date: Date;
+    buyer_name: string;
+    term_name: string;
+    paid_amount: number;
+    added_at: Date;
+    total_count: number;
+}
+
 export const crossPaymentsRouter = createTRPCRouter({
     addCrossPayment: protectedProcedure
         .input(z.object({
             term_id: z.number(),
             buyer_id: z.number(),
-            cross_payment_date: z.string(),
+            cross_payment_date: z.date(),
             remarks: z.string().optional(),
             details: z.array(z.object({
                 factory_invoice_id: z.string(),
                 value: z.number(),
+                factory_payment_no: z.string().optional(),
+                factory_payment_date: z.date().optional(),
             })).optional(),
         }))
         .mutation(async ({ ctx, input }) => {
             try {
                 const can_add = ctx.permissions[m.CROSS_PAYMENT]?.can_add;
+
+                console.log('input', input);
 
                 if (!can_add) {
                     throw new TRPCError({
@@ -41,89 +56,95 @@ export const crossPaymentsRouter = createTRPCRouter({
 
                 const currentYear = new Date().getFullYear();
                 
-                const meta = await ctx.db.cross_payments_metadata.upsert({
-                    where: { 
-                        year_buyer_id: {
-                            year: currentYear,
-                            buyer_id: input.buyer_id,
-                        }
-                    },
-                    update: {
-                        last_ref: {
-                            increment: 1,
+                return await ctx.db.$transaction(async (tx) => {
+                    const meta = await tx.cross_payments_metadata.upsert({
+                        where: { 
+                            year_buyer_id: {
+                                year: currentYear,
+                                buyer_id: input.buyer_id,
+                            }
                         },
-                    },
-                    create: {
-                        year: currentYear,
-                        last_ref: 1,
-                    },
-                });
-                
-                const buyer_prefix = await ctx.db.buyers.findUnique({
-                    where: { id: input.buyer_id },
-                    select: { prefix: true },
-                });
-
-                if(!buyer_prefix) {
-                    throw new TRPCError({
-                        code: 'NOT_FOUND',
-                        message: "Buyer prefix not found."
+                        update: {
+                            last_ref: {
+                                increment: 1,
+                            },
+                        },
+                        create: {
+                            year: currentYear,
+                            last_ref: 1,
+                            buyer_id: input.buyer_id,
+                        },
                     });
-                }
-
-                const crossPayment = await ctx.db.cross_payments.create({
-                    data: {
-                        term_id: input.term_id,
-                        buyer_id: input.buyer_id,
-                        cross_payment_ref: `CROSS_PAY/${buyer_prefix.prefix}/${currentYear}/${String(meta.last_ref).padStart(4, '0')}`, // Generate a unique reference
-                        cross_payment_date: input.cross_payment_date,
-                        remarks: input.remarks,
-                    },
-                });
-
-                await ctx.db.cross_payments_history.create({
-                    data: {
-                        cross_payments_id: crossPayment.id,
-                        buyer_id: input.buyer_id,
-                        cross_payment_date: input.cross_payment_date,
-                        cross_payment_ref: crossPayment.cross_payment_ref,
-                        action: actions.ADDED,
-                        performed_by: ctx.user.id,
-                        performed_at: new Date(),
-                    },
-                });
-
-                if (input.details && input.details.length > 0) {
-                    const crossPaymentDetailsData = input.details.map((detail) => ({
-                        cross_payment_id: crossPayment.id,
-                        factory_invoice_id: detail.factory_invoice_id,
-                        value: detail.value,
-                    }));
-
-                    await ctx.db.cross_payment_details.createMany({
-                        data: crossPaymentDetailsData,
+                    
+                    const buyer_prefix = await tx.buyers.findUnique({
+                        where: { id: input.buyer_id },
+                        select: { prefix: true },
                     });
-                }
 
-                const addedDetails = await ctx.db.cross_payment_details.findMany({
-                    where: { cross_payment_id: crossPayment.id },
-                });
+                    if(!buyer_prefix) {
+                        throw new TRPCError({
+                            code: 'NOT_FOUND',
+                            message: "Buyer prefix not found."
+                        });
+                    }
 
-                await ctx.db.cross_payment_details_history.createMany({
-                    data: addedDetails.map((detail) => ({
-                        cross_payment_details_id: detail.id,
-                        cross_payment_id: crossPayment.id,
-                        factory_invoice_id: detail.factory_invoice_id,
-                        value: detail.value,
-                        action: actions.ADDED,
-                        action_by: ctx.user.id,
-                        action_at: new Date(),
-                    })),
-                });
+                    const crossPayment = await tx.cross_payments.create({
+                        data: {
+                            term_id: input.term_id,
+                            buyer_id: input.buyer_id,
+                            cross_payment_ref: `CROSS PAY/${buyer_prefix.prefix}/${currentYear}/${String(meta.last_ref).padStart(4, '0')}`, // Generate a unique reference
+                            cross_payment_date: new Date(input.cross_payment_date),
+                            remarks: input.remarks,
+                        },
+                    });
 
-                return crossPayment;
+                    await tx.cross_payments_history.create({
+                        data: {
+                            cross_payments_id: crossPayment.id,
+                            buyer_id: input.buyer_id,
+                            cross_payment_date: input.cross_payment_date,
+                            cross_payment_ref: crossPayment.cross_payment_ref,
+                            action_type: actions.ADDED,
+                            action_by: ctx.user.id,
+                        },
+                    });
+
+                    if (input.details && input.details.length > 0) {
+                        const crossPaymentDetailsData = input.details.map((detail) => ({
+                            cross_payment_id: crossPayment.id,
+                            factory_invoice_id: detail.factory_invoice_id,
+                            value: detail.value,
+                            factory_payment_no: detail.factory_payment_no,
+                            factory_payment_date: detail.factory_payment_date,
+                        }));
+
+                        await tx.cross_payment_details.createMany({
+                            data: crossPaymentDetailsData,
+                        });
+                    }
+
+                    const addedDetails = await tx.cross_payment_details.findMany({
+                        where: { cross_payment_id: crossPayment.id },
+                    });
+
+                    await tx.cross_payment_details_history.createMany({
+                        data: addedDetails.map((detail) => ({
+                            cross_payment_details_id: detail.id,
+                            cross_payment_id: crossPayment.id,
+                            factory_invoice_id: detail.factory_invoice_id,
+                            factory_payment_no: detail.factory_payment_no,
+                            factory_payment_date: detail.factory_payment_date,
+                            value: detail.value,
+                            action_type: actions.ADDED,
+                            action_by: ctx.user.id,
+                        })),
+                    });
+
+                    return crossPayment;
+                })
             }
             catch (error) {
+                console.log('Error in addCrossPayment:', error);
                 handlePrismaError(error);
             }
         }),
@@ -132,10 +153,10 @@ export const crossPaymentsRouter = createTRPCRouter({
         .input(z.object({
             buyer_id: z.number(),
             term_id: z.number(),
+            cross_payment_id: z.string().optional(),
         }))
         .query(async ({ ctx, input }) => {
             try {
-
                 const can_view = ctx.permissions[m.CROSS_PAYMENT]?.can_view;
 
                 if (!can_view) {
@@ -144,6 +165,10 @@ export const crossPaymentsRouter = createTRPCRouter({
                         message: "You do not have permission to view factory invoices.",
                     });
                 }
+
+                const crossPaymentClause = !!input.cross_payment_id ?
+                    Prisma.sql`AND CP.id <> ${input.cross_payment_id}` :
+                    Prisma.empty;
 
                 const factoryInvoices = await ctx.db.$queryRaw<{ id: string; invoice_no: string }[]>`
                     SELECT DISTINCT
@@ -159,6 +184,13 @@ export const crossPaymentsRouter = createTRPCRouter({
                         SELECT 1
                         FROM rdl_invoice_details AS RID
                         WHERE RID.FACTORY_INVOICE_ID = FI.ID
+                    )
+                    AND NOT EXISTS (
+                        SELECT 1
+                        FROM cross_payment_details AS CPD
+                            INNER JOIN cross_payments AS CP ON CP.id = CPD.cross_payment_id
+                        WHERE CPD.factory_invoice_id = FI.id
+                        ${crossPaymentClause}
                     )
                     AND FI.buyer_id = ${input.buyer_id}
                     AND FI.term_id = ${input.term_id};
@@ -186,8 +218,6 @@ export const crossPaymentsRouter = createTRPCRouter({
                         message: "You do not have permission to view factory invoice details.",
                     });
                 }
-
-                console.log("Fetching details for factory_invoice_id:", input.factory_invoice_id);
 
                 const factoryInvoiceDetails = await ctx.db.$queryRaw<CrossPaymentDetails[]>`
                     WITH FOB_RATE AS (
@@ -225,4 +255,406 @@ export const crossPaymentsRouter = createTRPCRouter({
                 handlePrismaError(error);
             }
         }),
+
+    getCrossPaymentList: protectedProcedure
+        .input(z.object({
+            offset: z.number().optional(),
+            limit: z.number().optional(),
+        }))
+        .query(async ({ ctx, input }) => {
+            try {
+                const can_view = ctx.permissions[m.CROSS_PAYMENT]?.can_view;
+
+                if (!can_view) {
+                    throw new TRPCError({
+                        code: "FORBIDDEN",
+                        message: "You do not have permission to view cross payments.",
+                    });
+                }
+
+                const result = await ctx.db.$queryRaw<CrossPaymentList[]>`
+                    WITH CROSS_PAYS AS (
+                        SELECT 
+                            CP.id,
+                            CP.CROSS_PAYMENT_REF,
+                            CP.CROSS_PAYMENT_DATE,
+                            B.BUYER_NAME,
+                            T.NAME AS TERM_NAME,
+                            SUM(CPD.VALUE) AS PAID_AMOUNT,
+                            CP.ADDED_AT
+                        FROM CROSS_PAYMENTS AS CP
+                            INNER JOIN CROSS_PAYMENT_DETAILS AS CPD ON CPD.cross_payment_id = CP.id
+                            INNER JOIN BUYERS AS B ON B.id = CP.buyer_id
+                            INNER JOIN TERMS AS T ON T.id = CP.term_id
+                        WHERE EXISTS ( -- Admin
+                            SELECT 1
+                            FROM USERS AS U
+                            WHERE U.ID = ${ctx.user.id}
+                                AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
+                                AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
+                        )
+                        OR EXISTS ( -- Team Member
+                            SELECT 1
+                            FROM TEAM_MEMBERS AS TM 
+                                INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
+                            WHERE T.BUYER_ID = B.id
+                                AND TM.USER_ID = ${ctx.user.id}
+                        )
+                        GROUP BY CP.ID, B.ID, T.ID
+                    )
+                    SELECT 
+                        *,
+                        COUNT(*) OVER() AS TOTAL_COUNT
+                    FROM CROSS_PAYS
+                    ORDER BY ADDED_AT DESC
+                    LIMIT ${input.limit ?? 15}
+                    OFFSET ${input.offset ?? 0};
+                `;
+
+                const total = result.length > 0 ? Number(result[0]?.total_count) : 0;
+                const crossPayments = result.map(({ total_count: _, ...invoice}) => invoice);
+
+                return { total, crossPayments };
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    searchCrossPayments: protectedProcedure
+        .input(z.object({
+            query: z.string(),
+            offset: z.number().optional(),
+            limit: z.number().optional(),
+        }))
+        .query(async ({ ctx, input }) => {
+            try {
+                const can_view = ctx.permissions[m.CROSS_PAYMENT]?.can_view;
+
+                if (!can_view) {    
+                    throw new TRPCError({
+                        code: "FORBIDDEN",
+                        message: "You do not have permission to search cross payments.",
+                    });
+                }
+
+                const result = await ctx.db.$queryRaw<CrossPaymentList[]>`
+                    WITH CROSS_PAYS AS (
+                        SELECT DISTINCT
+                            CP.id,
+                            CP.CROSS_PAYMENT_REF,
+                            CP.CROSS_PAYMENT_DATE,
+                            B.BUYER_NAME,
+                            T.NAME AS TERM_NAME,
+                            SUM(CPD.VALUE) AS PAID_AMOUNT,
+                            CP.ADDED_AT
+                        FROM CROSS_PAYMENTS AS CP
+                            INNER JOIN CROSS_PAYMENT_DETAILS AS CPD ON CPD.cross_payment_id = CP.id
+                            INNER JOIN BUYERS AS B ON B.id = CP.buyer_id
+                            INNER JOIN TERMS AS T ON T.id = CP.term_id
+                            INNER JOIN FACTORY_INVOICE AS FI ON FI.id = CPD.factory_invoice_id
+                        WHERE (
+                            EXISTS ( -- Admin
+                                SELECT 1
+                                FROM USERS AS U
+                                WHERE U.ID = ${ctx.user.id}
+                                    AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
+                                    AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
+                            )
+                            OR EXISTS ( -- Team Member
+                                SELECT 1
+                                FROM TEAM_MEMBERS AS TM 
+                                    INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
+                                WHERE T.BUYER_ID = B.id
+                                    AND TM.USER_ID = ${ctx.user.id}
+                            )
+                        )
+                        AND (
+                            CP.CROSS_PAYMENT_REF ILIKE '%' || ${input.query} || '%'
+                            OR B.BUYER_NAME ILIKE '%' || ${input.query} || '%'
+                            OR T.NAME ILIKE '%' || ${input.query} || '%'
+                            OR FI.INVOICE_NO ILIKE '%' || ${input.query} || '%'
+                        )
+                        GROUP BY CP.ID, B.ID, T.ID
+                    )
+                    SELECT 
+                        *,
+                        COUNT(*) OVER() AS TOTAL_COUNT
+                    FROM CROSS_PAYS
+                    ORDER BY ADDED_AT DESC
+                    LIMIT ${input.limit ?? 15}
+                    OFFSET ${input.offset ?? 0};
+                `;
+
+                const total = result.length > 0 ? Number(result[0]?.total_count) : 0;
+                const crossPayments = result.map(({ total_count: _, ...invoice}) => invoice);
+
+                return { total, crossPayments };
+            }
+            catch (error) {
+                console.error('Error in searchCrossPayments:', error);
+                handlePrismaError(error);
+            }
+        }),
+
+    deleteCrossPayment: protectedProcedure
+        .input(z.object({
+            cross_payment_id: z.string(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            try {
+                const can_delete = ctx.permissions[m.CROSS_PAYMENT]?.can_delete;
+
+                if (!can_delete) {
+                    throw new TRPCError({
+                        code: "FORBIDDEN",
+                        message: "You do not have permission to delete cross payments.",
+                    });
+                }
+
+                return await ctx.db.$transaction(async (tx) => {
+                    const crossPaymentDetails = await tx.cross_payment_details.findMany({
+                        where: { cross_payment_id: input.cross_payment_id },
+                    });
+
+                    await tx.cross_payment_details_history.createMany({
+                        data: crossPaymentDetails.map((detail) => ({
+                            cross_payment_details_id: detail.id,
+                            cross_payment_id: input.cross_payment_id,
+                            factory_invoice_id: detail.factory_invoice_id,
+                            factory_payment_no: detail.factory_payment_no,
+                            factory_payment_date: detail.factory_payment_date,
+                            value: detail.value,
+                            action_type: actions.DELETE,
+                            action_by: ctx.user.id,
+                        })),
+                    });
+
+                    await tx.cross_payment_details.deleteMany({
+                        where: { cross_payment_id: input.cross_payment_id },
+                    });
+
+                    const deletedCrossPayment = await tx.cross_payments.delete({
+                        where: { id: input.cross_payment_id },
+                    });
+
+                    await tx.cross_payments_history.create({
+                        data: {
+                            cross_payments_id: deletedCrossPayment.id,
+                            buyer_id: deletedCrossPayment.buyer_id,
+                            cross_payment_date: deletedCrossPayment.cross_payment_date,
+                            cross_payment_ref: deletedCrossPayment.cross_payment_ref,
+                            action_type: actions.DELETE,
+                            action_by: ctx.user.id,
+                        },
+                    });
+                })
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    getCrossPaymentById: protectedProcedure
+        .input(z.object({
+            cross_payment_id: z.string(),
+        }))
+        .query(async ({ ctx, input }) => {
+            try {
+                const can_view = ctx.permissions[m.CROSS_PAYMENT]?.can_view;
+
+                if (!can_view) {
+                    throw new TRPCError({
+                        code: "FORBIDDEN",
+                        message: "You do not have permission to view cross payment details.",
+                    });
+                }
+
+                const crossPayment = await ctx.db.cross_payments.findUnique({
+                    where: { id: input.cross_payment_id },
+                    select: {
+                        id: true,
+                        cross_payment_ref: true,
+                        term_id: true,
+                        buyer_id: true,
+                        cross_payment_date: true,
+                        remarks: true,
+                        cross_payment_details: {
+                            select: {
+                                id: true,
+                                factory_invoice_id: true,
+                                factory_payment_no: true,
+                                factory_payment_date: true,
+                                value: true,
+                            },
+                        }
+                    },
+                });
+
+                if (!crossPayment) {
+                    throw new TRPCError({
+                        code: "NOT_FOUND",
+                        message: "Cross payment not found.",
+                    });
+                }
+
+                return crossPayment;
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    updateCrossPayment: protectedProcedure
+        .input(z.object({
+            cross_payment_id: z.string(),
+            cross_payment_date: z.date(),
+            remarks: z.string().optional(),
+            details: z.array(z.object({
+                db_id: z.string().optional(),
+                value: z.number(),
+                factory_invoice_id: z.string(),
+                factory_payment_no: z.string().optional(),
+                factory_payment_date: z.date().optional(),
+            })).optional(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            try {
+                const can_edit = ctx.permissions[m.CROSS_PAYMENT]?.can_update;
+
+                if (!can_edit) {
+                    throw new TRPCError({
+                        code: "FORBIDDEN",
+                        message: "You do not have permission to update cross payments.",
+                    });
+                }
+
+                return await ctx.db.$transaction(async (tx) => {
+                    const updatedCrossPayment = await tx.cross_payments.update({
+                        where: { id: input.cross_payment_id },
+                        data: {
+                            cross_payment_date: input.cross_payment_date,
+                            remarks: input.remarks,
+                        },
+                    });
+
+                    await tx.cross_payments_history.create({
+                        data: {
+                            cross_payments_id: updatedCrossPayment.id,
+                            buyer_id: updatedCrossPayment.buyer_id,
+                            cross_payment_date: updatedCrossPayment.cross_payment_date,
+                            cross_payment_ref: updatedCrossPayment.cross_payment_ref,
+                            action_type: actions.UPDATE,
+                            action_by: ctx.user.id,
+                        },
+                    });
+
+                    if (input.details && input.details.length > 0) {
+                        for (const detail of input.details) {
+                            if (detail.db_id) {
+                                // Update existing detail
+                                await tx.cross_payment_details.update({
+                                    where: { id: detail.db_id },
+                                    data: {
+                                        value: detail.value,
+                                        factory_payment_no: detail.factory_payment_no,
+                                        factory_payment_date: detail.factory_payment_date,
+                                    },
+                                });
+
+                                await tx.cross_payment_details_history.create({
+                                    data: {
+                                        cross_payment_details_id: detail.db_id,
+                                        cross_payment_id: input.cross_payment_id,
+                                        factory_invoice_id: detail.factory_invoice_id,
+                                        factory_payment_no: detail.factory_payment_no,
+                                        factory_payment_date: detail.factory_payment_date,
+                                        value: detail.value,
+                                        action_type: actions.UPDATE,
+                                        action_by: ctx.user.id,
+                                    },
+                                });
+                            }
+                            else {
+                                // Create new detail
+                                await tx.cross_payment_details.create({
+                                    data: {
+                                        cross_payment_id: input.cross_payment_id,
+                                        factory_invoice_id: detail.factory_invoice_id,
+                                        value: detail.value,
+                                        factory_payment_no: detail.factory_payment_no,
+                                        factory_payment_date: detail.factory_payment_date,
+                                    },
+                                });
+
+                                await tx.cross_payment_details_history.create({
+                                    data: {
+                                        cross_payment_id: input.cross_payment_id,
+                                        factory_invoice_id: detail.factory_invoice_id,
+                                        factory_payment_no: detail.factory_payment_no,
+                                        factory_payment_date: detail.factory_payment_date,
+                                        value: detail.value,
+                                        action_type: actions.ADDED,
+                                        action_by: ctx.user.id,
+                                    },
+                                });
+                            }
+                        }
+                    }
+                })
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    deleteFactoryInvoiceFromCrossPayment: protectedProcedure
+        .input(z.object({
+            db_id: z.string(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            try {
+                const can_edit = ctx.permissions[m.CROSS_PAYMENT]?.can_update;
+
+                if (!can_edit) {
+                    throw new TRPCError({
+                        code: "FORBIDDEN",
+                        message: "You do not have permission to delete factory invoice from cross payment.",
+                    });
+                }
+
+                return await ctx.db.$transaction(async (tx) => {
+                    const detailToDelete = await tx.cross_payment_details.findUnique({
+                        where: { id: input.db_id },
+                    });
+
+                    if (!detailToDelete) {
+                        throw new TRPCError({
+                            code: "NOT_FOUND",
+                            message: "Cross payment detail not found.",
+                        });
+                    }
+
+                    await tx.cross_payment_details_history.create({
+                        data: {
+                            cross_payment_details_id: detailToDelete.id,
+                            cross_payment_id: detailToDelete.cross_payment_id,
+                            factory_invoice_id: detailToDelete.factory_invoice_id,
+                            factory_payment_no: detailToDelete.factory_payment_no,
+                            factory_payment_date: detailToDelete.factory_payment_date,
+                            value: detailToDelete.value,
+                            action_type: actions.DELETE,
+                            action_by: ctx.user.id,
+                        },
+                    });
+
+                    await tx.cross_payment_details.delete({
+                        where: { id: input.db_id },
+                    });
+                })
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        })
 })

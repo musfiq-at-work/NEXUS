@@ -1,6 +1,7 @@
 import type { inferRouterOutputs } from '@trpc/server';
 import type { 
-    commissionInvoiceRouter, proceedRealizationRouter, factoryPaymentRouter, debitNotesRouter
+    commissionInvoiceRouter, proceedRealizationRouter, factoryPaymentRouter, debitNotesRouter,
+    crossPaymentsRouter
 } from "~/server/api";
 
 // Commission Invoice types
@@ -22,3 +23,8 @@ export type GetFactoryPaymentByIdTypes = FactoryPaymentRouterOutput['getFactoryP
 type DebitNoteRouterOutput = inferRouterOutputs<typeof debitNotesRouter>;
 
 export type GetDebitNoteByIdTypes = DebitNoteRouterOutput['getDebitNoteById'];
+
+// Cross Payment types
+type CrossPaymentRouterOutput = inferRouterOutputs<typeof crossPaymentsRouter>;
+
+export type GetCrossPaymentByIdTypes = CrossPaymentRouterOutput['getCrossPaymentById'];

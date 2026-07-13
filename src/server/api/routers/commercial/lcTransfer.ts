@@ -532,7 +532,7 @@ export const lcTransferRouter = createTRPCRouter({
 
                 const currentTransferQuery = hasLcTransferId 
                     ? Prisma.sql`WHERE LCT.ID <> ${input.lcTransferId} ` 
-                    : Prisma.sql``;
+                    : Prisma.empty;
 
                 const result = await ctx.db.$queryRaw<GetSalesContractValueAndQuantity[]>`
                     WITH SHIPMENTS AS ( -- Calculate total shipped quantity and value for the given sales contract

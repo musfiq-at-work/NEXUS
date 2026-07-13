@@ -303,19 +303,21 @@ export const debitNotesRouter = createTRPCRouter({
                                 WHERE DND.factory_shipment_id = FSD.ID
                             )
                             AND SC.buyer_id = ${input.buyer_id}
-                            AND EXISTS ( -- Admin
-                                SELECT 1
-                                FROM USERS AS U
-                                WHERE U.ID = ${ctx.user.id}
-                                    AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
-                                    AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
-                            )
-                            OR EXISTS ( -- Team Member
-                                SELECT 1
-                                FROM TEAM_MEMBERS AS TM 
-                                    INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
-                                WHERE T.BUYER_ID = SC.BUYER_ID
-                                    AND TM.USER_ID = ${ctx.user.id}
+                            AND (
+                                EXISTS ( -- Admin
+                                    SELECT 1
+                                    FROM USERS AS U
+                                    WHERE U.ID = ${ctx.user.id}
+                                        AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
+                                        AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
+                                )
+                                OR EXISTS ( -- Team Member
+                                    SELECT 1
+                                    FROM TEAM_MEMBERS AS TM 
+                                        INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
+                                    WHERE T.BUYER_ID = SC.BUYER_ID
+                                        AND TM.USER_ID = ${ctx.user.id}
+                                )
                             );
                         `;
                 }
@@ -338,19 +340,21 @@ export const debitNotesRouter = createTRPCRouter({
                                 WHERE DND.factory_shipment_id = FSD.ID
                             )
                             AND LC.buyer_id = ${input.buyer_id}
-                            AND EXISTS ( -- Admin
-                                SELECT 1
-                                FROM USERS AS U
-                                WHERE U.ID = ${ctx.user.id}
-                                    AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
-                                    AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
-                            )
-                            OR EXISTS ( -- Team Member
-                                SELECT 1
-                                FROM TEAM_MEMBERS AS TM 
-                                    INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
-                                WHERE T.BUYER_ID = LC.BUYER_ID
-                                    AND TM.USER_ID = ${ctx.user.id}
+                            AND (
+                                EXISTS ( -- Admin
+                                    SELECT 1
+                                    FROM USERS AS U
+                                    WHERE U.ID = ${ctx.user.id}
+                                        AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
+                                        AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
+                                )
+                                OR EXISTS ( -- Team Member
+                                    SELECT 1
+                                    FROM TEAM_MEMBERS AS TM 
+                                        INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
+                                    WHERE T.BUYER_ID = LC.BUYER_ID
+                                        AND TM.USER_ID = ${ctx.user.id}
+                                )
                             );
                     `;
                 }
@@ -546,7 +550,7 @@ export const debitNotesRouter = createTRPCRouter({
 
                 const addExistingDNCondition = input.debit_note_id 
                     ? Prisma.sql`AND DND.debit_note_header_id <> ${input.debit_note_id}` 
-                    :  Prisma.sql``;
+                    : Prisma.empty;
 
                 if (isTT) {
                     shipmentDetails = await ctx.db.$queryRaw<ShipmentDetails[]>`

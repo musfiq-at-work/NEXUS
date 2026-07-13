@@ -16,6 +16,37 @@ const FactoryPaymentPage = () => {
 
     const { can_add, can_update, can_delete } = useModulePermissions();
 
+    const {data: crossPayments, isLoading} = api.crossPayments.getCrossPaymentList.useQuery({
+        limit,
+        offset: page * limit,
+    });
+
+    const crossPaymentList = crossPayments?.crossPayments ?? [];
+    const total = crossPayments?.total ?? 0;
+    const editURL = '/accounting/factory_payment/cross_payment/edit/';
+
+    const searchQuery = api.crossPayments.searchCrossPayments.useQuery(
+        { query: debouncedSearch, limit, offset: page * limit },
+        { enabled: debouncedSearch.length > 0 }
+    );
+
+    const deleteMutation = api.crossPayments.deleteCrossPayment.useMutation({
+        onSuccess: async () => {
+            await Promise.all([
+                utils.crossPayments.getCrossPaymentList.invalidate(),
+                utils.crossPayments.searchCrossPayments.invalidate(),
+            ]);
+        }
+    });
+
+    const { 
+        deleteID, isLoadingDelete, deleteClicked, setDeleteClicked, handleDeleteClicked, handleDeleteConfirmed 
+    } = useDeleteConfirmation({
+        mutation: deleteMutation,
+        successMessage: 'Cross Payment deleted successfully',
+        payloadBuilder: id => ({ cross_payment_id: id }),
+    });
+
     return (
         <>
             <Wrapper
@@ -40,17 +71,16 @@ const FactoryPaymentPage = () => {
                     ) : null
                 }
             >
-                <p>Cross Payments</p>
-                {/* <div className="w-full">
+                <div className="w-full">
                     <Table
-                        data={searchQuery.data?.proceedRealizations && !!debouncedSearch 
-                            ? searchQuery.data.proceedRealizations : proceedRealizationList
+                        data={searchQuery.data?.crossPayments && !!debouncedSearch 
+                            ? searchQuery.data.crossPayments : crossPaymentList
                         }
                         isLoading={isLoading || searchQuery.isLoading}
                         columns={tableHeaders}
                         nextPage={nextPage}
                         prevPage={prevPage}
-                        total={searchQuery.data?.proceedRealizations && searchQuery.data.proceedRealizations.length > 0 
+                        total={searchQuery.data?.crossPayments && searchQuery.data.crossPayments.length > 0 
                             ? searchQuery.data.total ?? 0 : total
                         }
                         deleteFunction={handleDeleteClicked}
@@ -61,21 +91,21 @@ const FactoryPaymentPage = () => {
                         allowEdit={can_update}
                         view={!can_update}
                     />
-                </div> */}
+                </div>
             </Wrapper>
-            {/* <Popup
+            <Popup
                 open={deleteClicked}
                 onClose={() => setDeleteClicked(false)}
                 heading="Confirm Deletion"
                 description={`Are you sure you want to delete "${(
-                    searchQuery.data?.proceedRealizations && !!debouncedSearch 
-                        ? searchQuery.data.proceedRealizations : proceedRealizationList
-                ).find((proceedRealization) => proceedRealization.id === deleteID)?.fdbc_no}"?`}
+                    searchQuery.data?.crossPayments && !!debouncedSearch 
+                        ? searchQuery.data.crossPayments : crossPaymentList
+                ).find((crossPayment) => crossPayment.id === deleteID)?.id}"?`}
                 actionLabel="DELETE"
                 negativeAction={true}
                 loading={isLoadingDelete}
                 action={handleDeleteConfirmed}
-            /> */}
+            />
         </>
     )
 }

@@ -515,7 +515,7 @@ export const exFactoryRouter = createTRPCRouter({
                         INNER JOIN SALES_CONTRACTS AS SC ON SC.ID = SCD.sales_contract_id
                         INNER JOIN lc_transfer_details AS LTD ON LTD.sales_contract_id = SCD.sales_contract_id
                     `
-                    : Prisma.sql``;
+                    : Prisma.empty;
 
             
                 const whereClause = input.exfactory_id
@@ -705,7 +705,7 @@ export const exFactoryRouter = createTRPCRouter({
                         INNER JOIN SALES_CONTRACTS AS SC ON SC.ID = SCD.sales_contract_id
                         INNER JOIN lc_transfer_details AS LTD ON LTD.sales_contract_id = SCD.sales_contract_id
                     `
-                    : Prisma.sql``;
+                    : Prisma.empty;
 
                 const whereClause = input.exfactory_id
                     ? Prisma.sql`
@@ -718,7 +718,7 @@ export const exFactoryRouter = createTRPCRouter({
                                 AND E.ID = ${input.exfactory_id}
                                 ${input.order_id 
                                     ? Prisma.sql`AND EO.ORDER_ID = ${input.order_id}` 
-                                    : Prisma.sql``}
+                                    : Prisma.empty}
                         )
                     `
                     : Prisma.sql`
@@ -726,7 +726,7 @@ export const exFactoryRouter = createTRPCRouter({
                         AND COALESCE(SEQ.po_close, false) = false
                         ${input.order_id 
                             ? Prisma.sql`AND BO.id = ${input.order_id}` 
-                            : Prisma.sql``}
+                            : Prisma.empty}
                     `;
 
                 return await ctx.db.$queryRaw<ExfactoryShipments[]>`

@@ -25,7 +25,10 @@ const NewCrossPaymentPage = () => {
         onSuccess: async () => {
             setError(null);
             toast.success("Cross Payment added successfully!");
-            // await utils.crossPayments.getCrossPaymentList.invalidate();
+            await Promise.all([
+                utils.crossPayments.getCrossPaymentList.invalidate(),
+                utils.crossPayments.searchCrossPayments.invalidate(),
+            ]);
         }
     });
 
@@ -36,16 +39,18 @@ const NewCrossPaymentPage = () => {
             const payload = {
                 term_id: safeNumber(crossPaymentData.term_id),
                 buyer_id: safeNumber(crossPaymentData.buyer_id),
-                cross_payment_date: crossPaymentData.cross_payment_date,
+                cross_payment_date: new Date(crossPaymentData.cross_payment_date),
                 remarks: crossPaymentData.remarks,
                 details: (crossPaymentData.details ?? []).map((detail) => ({
                     factory_invoice_id: detail.factory_invoice_id,
                     value: safeNumber(detail.value),
+                    factory_payment_no: detail.factory_payment_no,
+                    factory_payment_date: detail.factory_payment_date ? new Date(detail.factory_payment_date) : new Date(),
                 })),
             };
 
             const res = await addCrossPayment.mutateAsync(payload);
-            router.push(`/accounting/factory_payment/cross_payment/edit/${res.id}`);
+            // router.push(`/accounting/factory_payment/cross_payment/edit/${res.id}`);
         }
         catch (error) {
             const parsedError = parseTRPCError(error);

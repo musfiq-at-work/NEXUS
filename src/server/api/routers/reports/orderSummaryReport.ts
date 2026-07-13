@@ -92,7 +92,7 @@ export const orderSummaryReportRouter = createTRPCRouter({
                 const isSeasonSelected = seasonIds.length > 0 && !isSeasonAll;
 
                 const filters: Prisma.Sql[] = [];
-                let dateFilter: Prisma.Sql = Prisma.sql``;
+                let dateFilter: Prisma.Sql = Prisma.empty;
 
                 if (buyerIds.length > 0) {
                     filters.push(Prisma.sql`B.id IN (${Prisma.join(buyerIds)})`);

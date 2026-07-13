@@ -556,7 +556,7 @@ export const documentSubmissionRouter = createTRPCRouter({
 
                 const excludeCurrentInvoiceClause = input.document_submission_id 
                     ? Prisma.sql`WHERE DS.ID <> ${input.document_submission_id}` 
-                    : Prisma.sql``;
+                    : Prisma.empty;
 
                 const whereClause = isTT
                     ? Prisma.sql`RI.sales_contract_id = ${input.lc_sc_id}`

@@ -1,8 +1,8 @@
-import { GenericFormTableRow, Portal } from "~/components";
+import { GenericFormTableRow } from "~/components";
 import { type useCrossPaymentForm } from "../config/useCrossPaymentForm";
 import { formFields as shipmentTableFormFields } from "../factoryInvoiceConfig/tableFormFields";
 import { useWatch, type FieldErrors } from "react-hook-form";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { api } from "~/trpc/react";
 import type { CrossPaymentFormValues } from "../config/formSchema";
 import { useModulePermissions } from "~/hooks";
@@ -25,18 +25,12 @@ const FactoryInvoiceRows = (props: Props) => {
     const buyerId = useWatch({ control: methods.control, name: `buyer_id` });
     const termId = useWatch({ control: methods.control, name: `term_id` });
 
-    const [selectedShipmentIndex, setSelectedShipmentIndex] = useState(0);
-    const [openColorModal, setOpenColorModal] = useState(false);
-    
-    const handleAction = useCallback((shipmentIndex: number) => {
-        setOpenColorModal(true);
-        setSelectedShipmentIndex(shipmentIndex);
-    }, []);
-
     const { can_delete } = useModulePermissions();
 
+    const cross_payment_id = useWatch({ control: methods.control, name: `db_id` });
+
     const factoryInvoice = api.crossPayments.getFactoryInvoicesByBuyer.useQuery(
-        (!!buyerId && !!termId) ? { buyer_id: buyerId, term_id: termId } : skipToken
+        (!!buyerId && !!termId) ? { buyer_id: buyerId, term_id: termId, cross_payment_id: cross_payment_id } : skipToken
     )
 
     // filter out already selected factory invoices
@@ -69,8 +63,8 @@ const FactoryInvoiceRows = (props: Props) => {
                 methods.setValue(`details.${index}.factory_invoice_no`, selectedFactoryInvoice.factory_invoice_no);
                 methods.setValue(`details.${index}.factory_invoice_date`, formatDate(selectedFactoryInvoice.factory_invoice_date));
                 methods.setValue(`details.${index}.factory_name`, selectedFactoryInvoice.factory_name);
-                methods.setValue(`details.${index}.invoice_quantity`, selectedFactoryInvoice.invoice_quantity);
-                methods.setValue(`details.${index}.invoice_value`, selectedFactoryInvoice.invoice_value);
+                methods.setValue(`details.${index}.invoice_quantity`, selectedFactoryInvoice.invoice_quantity.toString());
+                methods.setValue(`details.${index}.invoice_value`, selectedFactoryInvoice.invoice_value.toString());
             }
         }
     }, [factoryInvoiceDetails.data, index, methods, factoryInvoiceId]);
@@ -87,7 +81,6 @@ const FactoryInvoiceRows = (props: Props) => {
             control={methods.control}
             index={index}
             canDelete={can_delete}
-            handleAction={handleAction}
         />
     );
 }

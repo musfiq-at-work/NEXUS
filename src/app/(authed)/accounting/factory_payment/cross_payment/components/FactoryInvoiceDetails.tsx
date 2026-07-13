@@ -1,14 +1,13 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useFieldArray, useWatch, type FieldErrors } from "react-hook-form";
+import { useFieldArray, type FieldErrors } from "react-hook-form";
 import type { CrossPaymentFormValues } from "../config/formSchema";
 import TableForm from "./FactoryInvoiceDetailsTableForm";
 import type { useCrossPaymentForm } from "../config/useCrossPaymentForm";
 import { tableFormColumns as shipmentTableFormColumns } from "../factoryInvoiceConfig/tableFormColumns";
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback } from "react";
 import { api } from "~/trpc/react";
 import { toast } from "sonner";
 import { parseTRPCError } from "~/utils/parseTRPCError";
-import { skipToken } from "@tanstack/react-query";
 import { formatDateForInput } from "~/utils/localDateString";
 
 type props = {
@@ -21,7 +20,7 @@ const FactoryInvoiceDetails = (props: props) => {
     const { methods, validationError, disabled = false } = props;
 
     const { 
-        fields: shipmentFields, append: addShipment, remove: removeShipment,
+        fields: factoryInvoice, append: addShipment, remove: removeShipment,
     } = useFieldArray<CrossPaymentFormValues>({
         control: methods.control,
         name: `details`,
@@ -35,41 +34,44 @@ const FactoryInvoiceDetails = (props: props) => {
             factory_payment_no: '',
             factory_invoice_date: '',
             factory_name: '',
-            invoice_quantity: 0,
-            invoice_value: 0,
+            invoice_quantity: '',
+            invoice_value: '',
+            value: 0,
             factory_payment_date: formatDateForInput(new Date()),
         });
     }, [addShipment]);
 
     const utils = api.useUtils();
 
-    const deleteShipmentMutation = api.buyerOrders.deleteShipment.useMutation({
+    const deleteShipmentMutation = api.crossPayments.deleteFactoryInvoiceFromCrossPayment.useMutation({
         onSuccess: async () => {
-            await utils.buyerOrders.getBuyerOrders.invalidate();
-            toast.success("Shipment deleted successfully!");
+            await Promise.all([
+                utils.crossPayments.getCrossPaymentById.invalidate(),
+                utils.crossPayments.getCrossPaymentList.invalidate(),
+                utils.crossPayments.searchCrossPayments.invalidate()
+            ]);
+            toast.success("Factory Invoice deleted successfully!");
         },
     });
 
     const removeShipmentRow = useCallback(async (index: number) => {
         try {
-            if(!!shipmentFields[index]?.db_id) {
-                await deleteShipmentMutation.mutateAsync({ shipment_id: shipmentFields[index].db_id });
+            if(!!factoryInvoice[index]?.db_id) {
+                await deleteShipmentMutation.mutateAsync({ db_id: factoryInvoice[index].db_id });
             }
 
             removeShipment(index);
         }
         catch (error) {
             const message = parseTRPCError(error);
-            toast.error(`Error deleting Shipment: ${message}`);
+            toast.error(`Error deleting Factory Invoice: ${message}`);
         }
-    }, [deleteShipmentMutation, removeShipment, shipmentFields]);
-
-    const buyerId = useWatch({ control: methods.control, name: `buyer_id` });
+    }, [deleteShipmentMutation, removeShipment, factoryInvoice]);
 
     return (
         <TableForm 
             name={`details`}
-            rows={shipmentFields}
+            rows={factoryInvoice}
             columns={shipmentTableFormColumns}
             register={methods.register}
             addRow={addShipmentRow}
