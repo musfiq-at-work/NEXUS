@@ -38,7 +38,7 @@ const TableForm = (props: Props) => {
         <>
             <div className="flex flex-row items-center gap-4">
                 <Heading as ='h3' className="mx-8">
-                    Factory Invoice Details
+                    Cross Payments
                 </Heading>
             </div>
 

@@ -59,7 +59,7 @@ const FactoryInvoiceRows = (props: Props) => {
 
     return (
         <GenericFormTableRow
-            fields={crossPaymentFormFields(isRegularized, can_update)}
+            fields={crossPaymentFormFields(isRegularized, !!can_update)}
             register={methods.register}
             disabled={disabled || !!isRegularized || !can_update}
             validationError={validationError?.details ?? {}}
