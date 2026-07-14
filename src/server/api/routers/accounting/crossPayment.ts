@@ -166,11 +166,33 @@ export const crossPaymentsRouter = createTRPCRouter({
                     });
                 }
 
+                const crossPaymentClause = !!input.cross_payment_id ?
+                    Prisma.sql`AND CPD.cross_payment_id <> ${input.cross_payment_id}` :
+                    Prisma.empty;
+
+                const unionClause = !!input.cross_payment_id ?
+                    Prisma.sql`
+                        UNION
+                        (
+                            SELECT DISTINCT
+                                FI.id,
+                                FI.invoice_no,
+                                FI.added_at
+                            FROM factory_invoice AS FI
+                            INNER JOIN cross_payment_details AS CPD
+                                ON CPD.factory_invoice_id = FI.id
+                            WHERE CPD.cross_payment_id = ${input.cross_payment_id ?? ""}
+                            AND FI.buyer_id = ${input.buyer_id}
+                            AND FI.term_id = ${input.term_id}
+                        )` 
+                    : Prisma.empty;
+
                 const factoryInvoices = await ctx.db.$queryRaw<{ id: string; invoice_no: string }[]>`
                     (
                         SELECT DISTINCT
                             FI.id,
-                            FI.invoice_no
+                            FI.invoice_no,
+                            FI.added_at
                         FROM factory_invoice AS FI
                         WHERE NOT EXISTS (
                             SELECT 1
@@ -186,33 +208,19 @@ export const crossPaymentsRouter = createTRPCRouter({
                             SELECT 1
                             FROM cross_payment_details AS CPD
                             WHERE CPD.factory_invoice_id = FI.id
-                            ${
-                                input.cross_payment_id
-                                    ? Prisma.sql`AND CPD.cross_payment_id <> ${input.cross_payment_id}`
-                                    : Prisma.empty
-                            }
+                            ${crossPaymentClause}
                         )
                         AND FI.buyer_id = ${input.buyer_id}
                         AND FI.term_id = ${input.term_id}
                     )
-                    UNION
-                    (
-                        SELECT DISTINCT
-                            FI.id,
-                            FI.invoice_no
-                        FROM factory_invoice AS FI
-                        INNER JOIN cross_payment_details AS CPD
-                            ON CPD.factory_invoice_id = FI.id
-                        WHERE CPD.cross_payment_id = ${input.cross_payment_id ?? ""}
-                        AND FI.buyer_id = ${input.buyer_id}
-                        AND FI.term_id = ${input.term_id}
-                    )
-                    ORDER BY invoice_no;
+                    ${unionClause}
+                    ORDER BY added_at DESC;
                 `;
             
                 return factoryInvoices;
             }
             catch (error) {
+                console.error('Error in getFactoryInvoicesByBuyer:', error);
                 handlePrismaError(error);
             }
         }),
@@ -504,6 +512,7 @@ export const crossPaymentsRouter = createTRPCRouter({
                                 },
                                 factory_payment_no: true,
                                 factory_payment_date: true,
+                                regularized: true,
                                 value: true,
                             },
                         }

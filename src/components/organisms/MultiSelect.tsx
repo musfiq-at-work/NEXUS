@@ -65,7 +65,7 @@ const MultiSelect: React.FC<Props> = ({ label, options, value = [], onChange, er
                             className="emboss flex items-center gap-2 rounded-lg px-3 py-1 text-sm text-black"
                         >
                             {item?.label}
-                            <button className="text-blue-600 hover:text-blue-900"
+                            <button className="text-primary hover:text-primary-dark"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     toggleValue(v);

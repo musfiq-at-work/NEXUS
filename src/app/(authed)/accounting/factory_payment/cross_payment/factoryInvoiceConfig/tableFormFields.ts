@@ -72,5 +72,12 @@ export const formFields = ({factoryInvoice, isEdit}: FormProps): Field<keyof Cro
             optional: isEdit,
             disabled: isEdit,
         },
+        {
+            name: "regularized",
+            label: "Regularized",
+            placeholder: "Enter regularized",
+            optional: true,
+            disabled: true,
+        }
     ]
 }

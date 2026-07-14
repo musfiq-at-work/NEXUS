@@ -26,7 +26,7 @@ const FactoryPaymentPage = () => {
 
     return (
         <Wrapper
-            heading="Factory Payments"
+            heading="Regular Factory Payments"
             subSectionLeft={
                 <SearchField
                     placeholder="Search Factory Payments..."

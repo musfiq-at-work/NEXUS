@@ -35,6 +35,7 @@ export const useCrossPaymentForm = (initialData?: CrossPaymentsType) => {
                     ? formatDateForInput(detail.factory_payment_date) 
                     : undefined,
                 value: detail.value ?? undefined,
+                regularized: detail.regularized ? 'REGULARIZED' : 'NOT REGULARIZED',
             })) ?? [],
         } : undefined;
     }, [initialData]);

@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import React from 'react';
 import { Controller, type Control, type FieldValues, type Path } from 'react-hook-form';
-import clsx from 'clsx';
 
 type TableHeader<T> = {
     key: keyof T;

@@ -69,13 +69,14 @@ const FactoryInvoiceRows = (props: Props) => {
         }
     }, [factoryInvoiceDetails.data, index, methods, factoryInvoiceId]);
 
+    const isRegularized = useWatch({ control: methods.control, name: `details.${index}.regularized` });
 
     return (
         <GenericFormTableRow
             fields={shipmentTableFormFields({factoryInvoice: filteredFactoryShipments, isEdit: isEdit})}
             register={methods.register}
             removeRow={removeRow}
-            disabled={disabled}
+            disabled={disabled || !!(isRegularized === 'REGULARIZED')}
             validationError={validationError?.details ?? {}}
             name={name}
             control={methods.control}

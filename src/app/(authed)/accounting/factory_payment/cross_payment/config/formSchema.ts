@@ -11,6 +11,7 @@ export const CrossPaymentDetails = z.object({
     invoice_value: z.string().optional(),
     value: z.number().min(1, { message: "Paid Amount must be greater than 0" }),
     factory_payment_date: z.string().optional(),
+    regularized: z.string().optional(),
 });
 
 export type CrossPaymentDetailsFormValues = z.infer<typeof CrossPaymentDetails>;
