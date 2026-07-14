@@ -158,6 +158,8 @@ model users {
   buyer_payment_term_history                                         buyer_payment_term_history[]
   buyers_history                                                     buyers_history[]
   color_history_color_history_action_byTousers                       color_history[]                                @relation("color_history_action_byTousers")
+  commercial_tna_templates_actions_history                           commercial_tna_templates_actions_history[]
+  commercial_tna_templates_history                                   commercial_tna_templates_history[]
   commission_distribution_details_history                            commission_distribution_details_history[]
   commission_distribution_history                                    commission_distribution_history[]
   commission_invoice_history                                         commission_invoice_history[]
@@ -385,17 +387,18 @@ model payment_terms {
 }
 
 model terms {
-  id                   Int                    @id @default(autoincrement())
-  name                 String                 @db.VarChar(5)
-  commission_invoice   commission_invoice[]
-  cross_payments       cross_payments[]
-  debit_note           debit_note[]
-  document_submissions document_submissions[]
-  exfactory            exfactory[]
-  factory_invoice      factory_invoice[]
-  payment_terms        payment_terms[]
-  proceed_realization  proceed_realization[]
-  rdl_invoice          rdl_invoice[]
+  id                       Int                        @id @default(autoincrement())
+  name                     String                     @db.VarChar(5)
+  commercial_tna_templates commercial_tna_templates[]
+  commission_invoice       commission_invoice[]
+  cross_payments           cross_payments[]
+  debit_note               debit_note[]
+  document_submissions     document_submissions[]
+  exfactory                exfactory[]
+  factory_invoice          factory_invoice[]
+  payment_terms            payment_terms[]
+  proceed_realization      proceed_realization[]
+  rdl_invoice              rdl_invoice[]
 }
 
 model banks {
@@ -938,21 +941,21 @@ model buyer_payment_term_history {
 }
 
 model buyers {
-  id                       Int                       @id @default(autoincrement())
+  id                       Int                        @id @default(autoincrement())
   old_pk                   Int?
-  buyer_name               String                    @unique(map: "unique_buyer_names") @db.VarChar(255)
-  short_name               String                    @db.VarChar(50)
-  prefix                   String                    @db.VarChar(50)
+  buyer_name               String                     @unique(map: "unique_buyer_names") @db.VarChar(255)
+  short_name               String                     @db.VarChar(50)
+  prefix                   String                     @db.VarChar(50)
   address                  String?
-  contact_person           String?                   @db.VarChar(50)
-  phone_no                 String?                   @db.VarChar(50)
-  email                    String?                   @db.VarChar(50)
+  contact_person           String?                    @db.VarChar(50)
+  phone_no                 String?                    @db.VarChar(50)
+  email                    String?                    @db.VarChar(50)
   old_country_id           Int?
   country_id               Int?
-  website                  String?                   @db.VarChar(50)
+  website                  String?                    @db.VarChar(50)
   old_overseas_office_id   Int?
   overseas_office_id       Int?
-  added_at                 DateTime?                 @default(now()) @db.Timestamp(6)
+  added_at                 DateTime?                  @default(now()) @db.Timestamp(6)
   buyer_additional_clause  buyer_additional_clause[]
   buyer_banks              buyer_banks[]
   buyer_brands             buyer_brands[]
@@ -961,8 +964,9 @@ model buyers {
   buyer_late_policies      buyer_late_policies[]
   buyer_orders             buyer_orders[]
   buyer_payment_term       buyer_payment_term[]
-  countries                countries?                @relation(fields: [country_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  overseas_offices         overseas_offices?         @relation(fields: [overseas_office_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  countries                countries?                 @relation(fields: [country_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  overseas_offices         overseas_offices?          @relation(fields: [overseas_office_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  commercial_tna_templates commercial_tna_templates[]
   commission_invoice       commission_invoice[]
   cross_payments           cross_payments[]
   cross_payments_metadata  cross_payments_metadata[]
@@ -2953,6 +2957,54 @@ model cross_payments_metadata {
   buyers   buyers? @relation(fields: [buyer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
 
   @@unique([year, buyer_id], map: "unique_buyer_year_cross_payment")
+}
+
+model commercial_tna_templates {
+  id                               String                             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  template_name                    String
+  buyer_id                         Int
+  added_at                         DateTime?                          @default(now()) @db.Timestamp(6)
+  term_id                          Int?
+  buyers                           buyers                             @relation(fields: [buyer_id], references: [id], onUpdate: NoAction)
+  terms                            terms?                             @relation(fields: [term_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  commercial_tna_templates_actions commercial_tna_templates_actions[]
+}
+
+model commercial_tna_templates_actions {
+  id                         String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  commercial_tna_template_id String                   @db.Uuid
+  alert_before               Int?                     @default(0)
+  days                       Int
+  tna_action_id              Int
+  serial                     Int?
+  added_at                   DateTime?                @default(now()) @db.Timestamp(6)
+  commercial_tna_templates   commercial_tna_templates @relation(fields: [commercial_tna_template_id], references: [id], onUpdate: NoAction, map: "commercial_tna_templates_action_commercial_tna_template_id_fkey")
+}
+
+model commercial_tna_templates_actions_history {
+  id                                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  commercial_tna_templates_actions_id String?   @db.Uuid
+  commercial_tna_template_id          String?   @db.Uuid
+  alert_before                        Int?
+  days                                Int?
+  tna_action_id                       Int?
+  serial                              Int?
+  action_type                         actions?
+  action_by                           String?   @db.Uuid
+  action_at                           DateTime? @default(now()) @db.Timestamp(6)
+  users                               users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model commercial_tna_templates_history {
+  id                          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  commercial_tna_templates_id String?   @db.Uuid
+  buyer_id                    Int?
+  action_type                 actions?
+  action_by                   String?   @db.Uuid
+  action_at                   DateTime? @default(now()) @db.Timestamp(6)
+  template_name               String?
+  term_id                     Int?
+  users                       users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 enum actions {
