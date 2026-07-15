@@ -107,7 +107,7 @@ const sideBarConfig: Record<number, {href: string;}> = {
     [m.EXPORT_SUMMARY_LC_WISE]: { href: "/reports/c/export_summary_lc_wise" },
     [m.EXPORT_SUMMARY_SC_WISE]: { href: "/reports/c/export_summary_sc_wise" },
     [m.LC_SC_CLOSING]: { href: "/reports/c/lc_sc_closing" },
-    [m.COMMERCIAL_ACTIVITY_REPORT]: { href: "/reports/c/commercial_activity_report" }
+    [m.COMMERCIAL_ACTIVITY_REPORT]: { href: "/reports/c/activity_report" }
 };
 
 export default sideBarConfig;
