@@ -5,6 +5,7 @@ import { formatDate } from "~/utils/localDateString";
 
 import type { inferRouterOutputs } from '@trpc/server';
 import type { salesReportRouter } from '~/server/api/routers/reports/salesReport'
+import { useDecodedUser } from "~/hooks";
 
 type SalesReportOutput = inferRouterOutputs<typeof salesReportRouter>;
 
@@ -87,13 +88,15 @@ const SalesReportPDF = ({ data, base, fromDate, toDate, selectedFields }: SalesR
 
 	const title = `SALES REPORT BASED ON ${base} DATE`;
 
+	const {user} = useDecodedUser();
+
     return (
 		<Document
-            title={`Factory Invoice - ${title}`}
+            title={title}
             author="RDL Nexus"
             subject="Factory Invoice PDF"
             keywords="Factory, Invoice, PDF, RDL Nexus, ERP"
-            creator="RDL Nexus"
+            creator={`${user?.first_name} ${user?.last_name}`}
             producer="RDL Nexus"
 			pageMode='useOutlines'
 			creationDate={new Date()}

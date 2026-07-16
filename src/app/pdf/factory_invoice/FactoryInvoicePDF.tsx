@@ -6,6 +6,7 @@ import { formatDate } from "~/utils/localDateString";
 import type { inferRouterOutputs } from '@trpc/server';
 import type { factoryInvoiceRouter } from '~/server/api/routers/commercial/factoryInvoice'; 
 import { currencyFormatter } from "~/utils/localNumberStrings";
+import { useDecodedUser } from "~/hooks";
 
 type InvoiceOutput = inferRouterOutputs<typeof factoryInvoiceRouter>;
 
@@ -28,13 +29,15 @@ const FactoryInvoicePDF = ({ data }: { data: GetPDFDataOutput }) => {
 	const lcTTNo = isLC ? data.header?.lc_no : data.header?.sales_contract_no;
 	const lcTTDate = isLC ? formatDate(data.header?.lc_open_date!) : formatDate(data.header?.sales_contract_date!);
 
+	const {user} = useDecodedUser();
+
     return (
 		<Document
             title={`Factory Invoice - ${data.header?.invoice_no}`}
             author="RDL Nexus"
             subject="Factory Invoice PDF"
             keywords="Factory, Invoice, PDF, RDL Nexus, ERP"
-            creator="RDL Nexus"
+            creator={`${user?.first_name} ${user?.last_name}`}
             producer="RDL Nexus"
 			pageMode='useOutlines'
 			creationDate={new Date()}

@@ -6,6 +6,7 @@ import { formatDate } from "~/utils/localDateString";
 import type { HeaderData } from "~/types/pdf";
 import type { inferRouterOutputs } from '@trpc/server';
 import type { commissionDistributionRouter } from "~/server/api";
+import { useDecodedUser } from "~/hooks";
 
 type RouterOutput = inferRouterOutputs<typeof commissionDistributionRouter>;
 
@@ -53,13 +54,15 @@ const CommissionDistributionPDF = ({ data }: { data: GetPDFDataOutput }) => {
 		{ label: "Total Others Commission", value: data.results.totalOthersCommissionString, width: 80 },
 	];
 
+	const {user} = useDecodedUser();
+
     return (
 		<Document
             title={`Commission Distribution - ${data.header[0]?.ref_no}`}
             author="RDL Nexus"
             subject="Commission Distribution PDF"
             keywords="Commission, Distribution, PDF, RDL Nexus, ERP"
-            creator="RDL Nexus"
+            creator={`${user?.first_name} ${user?.last_name}`}
             producer="RDL Nexus"
 			pageMode='useOutlines'
 			creationDate={new Date()}

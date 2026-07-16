@@ -6,6 +6,7 @@ import { formatDate } from "~/utils/localDateString";
 import type { HeaderData } from "~/types/pdf";
 import type { inferRouterOutputs } from '@trpc/server';
 import type { buyerOrdersRouter } from '~/server/api/routers/merchandising/buyerOrders'; 
+import { useDecodedUser } from "~/hooks";
 
 type RouterOutput = inferRouterOutputs<typeof buyerOrdersRouter>;
 
@@ -49,13 +50,15 @@ const BuyerOrderPDF = ({ data }: { data: GetPDFDataOutput }) => {
 		{ label: "Total FOB Value", value: data.results.totalValueString, width: 110 },
 	];
 
+	const {user} = useDecodedUser();
+
     return (
 		<Document
             title={`Buyer Order - ${data.header[0]?.ref_no}`}
             author="RDL Nexus"
             subject="Buyer Order PDF"
             keywords="Buyer, Order, PDF, RDL Nexus, ERP"
-            creator="RDL Nexus"
+            creator={`${user?.first_name} ${user?.last_name}`}
             producer="RDL Nexus"
 			pageMode='useOutlines'
 			creationDate={new Date()}

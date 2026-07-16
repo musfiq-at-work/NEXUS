@@ -95,7 +95,7 @@ const CommissionInvoicePDF = ({ data }: { data: GetPDFDataOutput }) => {
             author="RDL Nexus"
             subject="Commission Invoice PDF"
             keywords="Commission, Invoice, PDF, RDL Nexus, ERP"
-            creator="RDL Nexus"
+            creator={`${user?.first_name} ${user?.last_name}`}
             producer="RDL Nexus"
             pageMode="useOutlines"
             creationDate={new Date()}

@@ -6,6 +6,7 @@ import { formatDate } from "~/utils/localDateString";
 import { authorized } from '~/assets'
 import type { inferRouterOutputs } from '@trpc/server';
 import type { salesContractsRouter } from "~/server/api";
+import { useDecodedUser } from "~/hooks";
 
 type RouterOutput = inferRouterOutputs<typeof salesContractsRouter>;
 
@@ -102,13 +103,15 @@ const SalesContractPDF = ({ data }: { data: GetPDFDataOutput }) => {
     const flattenedRows = useFlattenedRows(data.orderData);
     const columnStyles = useColumnStyles(tableColumns);
 
+    const {user} = useDecodedUser();
+
     return (
         <Document
             title={data.pdfHeaderData?.sales_contract_no}
             author="RDL Nexus"
             subject="Sales Contract PDF"
             keywords="Sales, Contract, PDF, RDL Nexus, ERP"
-            creator="RDL Nexus"
+            creator={`${user?.first_name} ${user?.last_name}`}
             producer="RDL Nexus"
             pageMode='useOutlines'
 			creationDate={new Date()}

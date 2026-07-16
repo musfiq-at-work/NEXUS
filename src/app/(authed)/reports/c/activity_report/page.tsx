@@ -41,23 +41,23 @@ const OrderSummaryReportPage = () => {
 
 			console.log("Payload for Commercial Activity Report:", payload);
 
-            // const res = await getPdfDataMutation.mutateAsync(payload);
+            const res = await getPdfDataMutation.mutateAsync(payload);
 
-			// const blob = new Blob(
-			// 	[new Uint8Array(res)],
-			// 	{
-			// 		type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-			// 	}
-			// );
+			const blob = new Blob(
+				[new Uint8Array(res)],
+				{
+					type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+				}
+			);
 
-			// const url = URL.createObjectURL(blob);
+			const url = URL.createObjectURL(blob);
 
-			// const excel = document.createElement("a");
-			// excel.href = url;
-			// excel.download = `Post-Exfactory Commercial Activity Report-${currentTime}-${formatDate(new Date())}.xlsx`;
-			// excel.click();
+			const excel = document.createElement("a");
+			excel.href = url;
+			excel.download = `Post-Exfactory Commercial Activity Report-${currentTime}-${formatDate(new Date())}.xlsx`;
+			excel.click();
 
-			// URL.revokeObjectURL(url);
+			URL.revokeObjectURL(url);
         }
         catch (error) {
             const parsedError = parseTRPCError(error);

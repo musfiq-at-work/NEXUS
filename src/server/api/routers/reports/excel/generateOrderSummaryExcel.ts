@@ -60,6 +60,11 @@ export const generateOrderSummaryExcel = async (rows: OrderSummaryReportRow[], r
 
     workbook.creator = "Nexus ERP";
     workbook.created = new Date();
+    workbook.company = "Renaissance Designs Limited";
+    workbook.subject = "Order Summary Report";
+    workbook.title = "Order Summary Report";
+    workbook.category = "Merchandising Reports";
+    workbook.manager = reportMeta.generatedBy;
 
     const worksheet = workbook.addWorksheet("Order Summary", {
         views: [
@@ -192,7 +197,7 @@ export const generateOrderSummaryExcel = async (rows: OrderSummaryReportRow[], r
     worksheet.eachRow((row) => {
         row.alignment = {
             vertical: "middle",
-            wrapText: true,
+            wrapText: false,
         };
     });
 

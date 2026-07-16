@@ -211,9 +211,10 @@ export const activityReportRouter = createTRPCRouter({
                 const ci_and_realization_data = await ctx.db.$queryRaw<CiAndRealizationData[]>`
                     SELECT
                         B.buyer_name,
-                        STRING_AGG(DISTINCT TO_CHAR(E.exfactory_date, 'DD Mon YYYY'), ', ') AS exfactory_dates,
                         RI.invoice_no AS rdl_invoice,
                         TO_CHAR(RI.invoice_date, 'DD Mon YYYY') AS rdl_invoice_date,
+                        STRING_AGG(DISTINCT E.exfactory_no, ', ') AS exfactory_nos,
+                        STRING_AGG(DISTINCT TO_CHAR(E.exfactory_date, 'DD Mon YYYY'), ', ') AS exfactory_dates,
                         SUM(RISD.invoice_quantity) AS rdl_invoice_quantity,
                         SUM(RISD.invoice_quantity * SD.fob_rate / BO.currency_rate)::NUMERIC(18, 2) AS rdl_invoice_value,
                         COALESCE(DS.FDBC_NO, '-') AS FDBC_NO,
@@ -223,26 +224,25 @@ export const activityReportRouter = createTRPCRouter({
                         COALESCE(PRD.realized_amount::TEXT, '-') AS REALIZED_AMOUNT,
                         COALESCE(TO_CHAR(PR.realization_date, 'DD mon YYYY'), '-') AS REALIZED_DATE
                     FROM rdl_invoice RI
-                    INNER JOIN rdl_invoice_details RID ON RID.rdl_invoice_id = RI.id
-                    INNER JOIN rdl_invoice_shipment_details RISD ON RISD.rdl_invoice_details_id = RID.id
-                    INNER JOIN factory_invoice_details FID ON FID.id = RISD.factory_invoice_details_id
-                    INNER JOIN exfactory_shipments ES ON ES.id = FID.exfactory_shipment_id
-                    INNER JOIN shipment_details SD ON SD.id = ES.shipment_details_id
-                    INNER JOIN order_styles OS ON OS.id = SD.order_style_id
-                    INNER JOIN buyer_orders BO ON BO.id = OS.order_id
-                    INNER JOIN buyers B ON B.id = BO.buyer_id
-                    INNER JOIN exfactory_orders EO ON EO.id = ES.exfactory_orders_id
-                    INNER JOIN exfactory E ON E.id = EO.exfactory_id
-                    LEFT JOIN document_submissions_details AS DSD ON DSD.rdl_invoice_id = RI.id
-                    LEFT JOIN document_submissions AS DS ON DS.id = DSD.document_submissions_id
-                    LEFT JOIN commission_invoice AS CI ON CI.document_submission_id = DS.id OR CI.rdl_invoice_id = RI.id
-                    LEFT JOIN proceed_realization_details AS PRD ON PRD.rdl_invoice_id = RI.id
-                    LEFT JOIN proceed_realization AS PR ON PR.id = PRD.realization_id
+                        INNER JOIN rdl_invoice_details RID ON RID.rdl_invoice_id = RI.id
+                        INNER JOIN rdl_invoice_shipment_details RISD ON RISD.rdl_invoice_details_id = RID.id
+                        INNER JOIN factory_invoice_details FID ON FID.id = RISD.factory_invoice_details_id
+                        INNER JOIN exfactory_shipments ES ON ES.id = FID.exfactory_shipment_id
+                        INNER JOIN shipment_details SD ON SD.id = ES.shipment_details_id
+                        INNER JOIN order_styles OS ON OS.id = SD.order_style_id
+                        INNER JOIN buyer_orders BO ON BO.id = OS.order_id
+                        INNER JOIN buyers B ON B.id = BO.buyer_id
+                        INNER JOIN exfactory_orders EO ON EO.id = ES.exfactory_orders_id
+                        INNER JOIN exfactory E ON E.id = EO.exfactory_id
+                        LEFT JOIN document_submissions_details AS DSD ON DSD.rdl_invoice_id = RI.id
+                        LEFT JOIN document_submissions AS DS ON DS.id = DSD.document_submissions_id
+                        LEFT JOIN commission_invoice AS CI ON CI.document_submission_id = DS.id OR CI.rdl_invoice_id = RI.id
+                        LEFT JOIN proceed_realization_details AS PRD ON PRD.rdl_invoice_id = RI.id
+                        LEFT JOIN proceed_realization AS PR ON PR.id = PRD.realization_id
                     WHERE E.exfactory_date BETWEEN ${input.fromDate} AND ${input.toDate}
                         AND COALESCE(ES.delivery_quantity, 0) > 0
                         ${buyerSelectClause}
-                    GROUP BY RI.id, B.id, DS.ID, CI.ID, PR.ID, PRD.ID, B.id
-                    ORDER BY E.exfactory_date ASC, B.buyer_name ASC;
+                    GROUP BY RI.id, RI.invoice_no, RI.invoice_date, B.id, DS.ID, CI.ID, PR.ID, PRD.ID;
                 `;
 
                 const factoryInvoiceData = await ctx.db.$queryRaw<FactoryInvoiceData[]>`
@@ -273,7 +273,7 @@ export const activityReportRouter = createTRPCRouter({
                         END AS factory_invoice_value,
                         COALESCE(DS.FDBC_NO, '-') AS FDBC_NO,
                         COALESCE(FP.PAID_AMOUNT::TEXT, '-') AS FACTORY_PAYMENT,
-	                    COALESCE(FP.PAYMENT_DATE::TEXT, '-') AS FACTORY_PAYMENT_DATE
+                        COALESCE(FP.PAYMENT_DATE::TEXT, '-') AS FACTORY_PAYMENT_DATE
                     FROM factory_invoice AS FI
                         INNER JOIN factory_invoice_details FID ON FID.factory_invoice_id = FI.id
                         INNER JOIN exfactory_shipments ES ON ES.id = FID.exfactory_shipment_id
@@ -292,23 +292,16 @@ export const activityReportRouter = createTRPCRouter({
                         LEFT JOIN sales_contracts SC ON SC.id = SCD.sales_contract_id
                         LEFT JOIN factory_payments AS FP ON FP.factory_invoice_id = FI.id
                         LEFT JOIN document_submissions AS DS ON DS.id = FP.document_submission_id
-                    WHERE E.exfactory_date BETWEEN '2026-01-01' AND '2026-06-30'
+                    WHERE E.exfactory_date BETWEEN ${input.fromDate} AND ${input.toDate}
                         AND COALESCE(ES.delivery_quantity, 0) > 0
                         ${buyerSelectClause}
-                    GROUP BY FI.id, B.id, F.id, SC.id, DS.ID, FP.ID
-                    ORDER BY E.exfactory_date ASC, B.buyer_name ASC;
+                    GROUP BY FI.id, B.id, F.id, SC.id, DS.ID, FP.ID;
                 `;
 
                 const normalizedPoWiseData = po_wise_data.map(normalizePoWiseData);
                 const normalizedCiAndRealizationData = ci_and_realization_data.map(normalizeCiAndRealizationData);
                 const normalizedFactoryInvoiceData = factoryInvoiceData.map(normalizeFactoryInvoiceData);
 
-                const normalizedResults = {
-                    po_wise_data: normalizedPoWiseData,
-                    ci_and_realization_data: normalizedCiAndRealizationData,
-                    factory_invoice_data: normalizedFactoryInvoiceData
-                };
-                
                 const generatedBy = `${ctx.user.first_name ?? ""} ${ctx.user.last_name ?? ""}`.trim();
 
                 const buffer = await generateActivityReportExcel({
@@ -325,6 +318,7 @@ export const activityReportRouter = createTRPCRouter({
                 return Array.from(new Uint8Array(buffer));
             }
             catch (error) {
+                console.log("Error generating Commercial Activity Report:", error);
                 handlePrismaError(error);
             }
         })

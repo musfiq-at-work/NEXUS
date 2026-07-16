@@ -6,6 +6,7 @@ import { formatDate } from "~/utils/localDateString";
 import type { HeaderData } from "~/types/pdf";
 import type { inferRouterOutputs } from '@trpc/server';
 import type { factoryOrderRouter } from "~/server/api";
+import { useDecodedUser } from "~/hooks";
 
 type RouterOutput = inferRouterOutputs<typeof factoryOrderRouter>;
 
@@ -60,13 +61,15 @@ const FactoryOrderPDF = ({ data }: { data: GetPDFDataOutput }) => {
 		{ label: "empty", value: '', width: 78.7 },
 	];
 
+	const {user} = useDecodedUser();
+
     return (
 		<Document
             title={data.header[0]?.ref_no ?? 'factory_order'}
             author="RDL Nexus"
             subject="Factory Order PDF"
             keywords="Factory, Order, PDF, RDL Nexus, ERP"
-            creator="RDL Nexus"
+            creator={`${user?.first_name} ${user?.last_name}`}
             producer="RDL Nexus"
 			pageMode='useOutlines'
 			creationDate={new Date()}
