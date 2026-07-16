@@ -190,6 +190,28 @@ export const proceedRealizationRouter = createTRPCRouter({
                 }
 
                 await ctx.db.$transaction(async (tx) => {
+                    const deletedDetails = await tx.proceed_realization_details.findMany({
+                        where: {
+                            realization_id: input.id,
+                        },
+                    });
+
+                    await tx.proceed_realization_details_history.createMany({
+                        data: deletedDetails.map((detail) => ({
+                            realization_details_id: detail.id,
+                            realization_id: detail.realization_id,
+                            rdl_invoice_id: detail.rdl_invoice_id,
+                            action_type: actions.DELETE,
+                            action_by: ctx.user.id,
+                        })),
+                    });
+
+                    await tx.proceed_realization_details.deleteMany({
+                        where: {
+                            realization_id: input.id,
+                        },
+                    });
+
                     const deletedRealization = await tx.proceed_realization.delete({
                         where: {
                             id: input.id,
@@ -214,28 +236,6 @@ export const proceedRealizationRouter = createTRPCRouter({
                         }
                     });
 
-                    const deletedDetails = await tx.proceed_realization_details.findMany({
-                        where: {
-                            realization_id: input.id,
-                        },
-                    });
-
-                    await tx.proceed_realization_details_history.createMany({
-                        data: deletedDetails.map((detail) => ({
-                            realization_details_id: detail.id,
-                            realization_id: detail.realization_id,
-                            rdl_invoice_id: detail.rdl_invoice_id,
-                            action_type: actions.DELETE,
-                            action_by: ctx.user.id,
-                        })),
-                    });
-
-                    await tx.proceed_realization_details.deleteMany({
-                        where: {
-                            realization_id: input.id,
-                        },
-                    });
-
                     await tx.factory_payments_history.createMany({
                         data: factoryPayments.map((payment) => ({
                             factory_payment_id: payment.id,
@@ -246,7 +246,6 @@ export const proceedRealizationRouter = createTRPCRouter({
                             action_by: ctx.user.id,
                         })),
                     });
-
 
                     await tx.proceed_realization_history.create({
                         data: {

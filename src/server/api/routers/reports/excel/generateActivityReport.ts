@@ -11,57 +11,106 @@ const CI_AND_REALIZATION_TABLE_COLUMN_COUNT = 12;
 const FACTORY_PAYMENT_TABLE_COLUMN_COUNT = 11;
 
 const poWiseTableColumns = [
-    'buyer_name',
-    'factory_name',
-    'buyer_po',
-    'exfactory_nos',
-    'exfactory_dates',
-    'shipment_quantity',
-    'factory_invoice',
-    'factory_invoice_date',
-    'factory_invoice_quantity',
-    'factory_invoice_value',
-    'lc_no',
-    'sales_contract_no',
-    'rdl_invoice',
-    'rdl_invoice_date',
-    'rdl_invoice_quantity',
-    'rdl_invoice_value',
-    'fdbc_no',
-    'fdbc_date'
+    { key: 'buyer_name', width: 25 },
+    { key: 'factory_name', width: 25 },
+    { key: 'buyer_po', width: 25 },
+    { key: 'exfactory_nos', width: 25 },
+    { key: 'exfactory_dates', width: 25 },
+    { key: 'shipment_quantity', width: 25 },
+    { key: 'factory_invoice', width: 25 },
+    { key: 'factory_invoice_date', width: 25 },
+    { key: 'factory_invoice_quantity', width: 25 },
+    { key: 'factory_invoice_value', width: 25 },
+    { key: 'lc_no', width: 25 },
+    { key: 'sales_contract_no', width: 25 },
+    { key: 'rdl_invoice', width: 25 },
+    { key: 'rdl_invoice_date', width: 25 },
+    { key: 'rdl_invoice_quantity', width: 25 },
+    { key: 'rdl_invoice_value', width: 25 },
+    { key: 'fdbc_no', width: 25 },
+    { key: 'fdbc_date', width: 25 }
+]
+
+const poWiseTableHeader = [
+    'Buyer Name',
+    'Factory Name',
+    'Buyer PO',
+    'Exfactory Nos',
+    'Exfactory Dates',
+    'Shipment Quantity',
+    'Factory Invoice',
+    'Factory Invoice Date',
+    'Factory Invoice Quantity',
+    'Factory Invoice Value',
+    'LC No',
+    'Sales Contract No',
+    'RDL Invoice',
+    'RDL Invoice Date',
+    'RDL Invoice Quantity',
+    'RDL Invoice Value',
+    'FDBC No',
+    'FDBC Date'
 ]
 
 const ciAndRealizationTableColumns = [
-    'buyer_name',
-    'exfactory_dates',
-    'rdl_invoice',
-    'rdl_invoice_date',
-    'rdl_invoice_quantity',
-    'rdl_invoice_value',
-    'fdbc_no',
-    'document_submission_date',
-    'ci_no',
-    'ci_date',
-    'realized_amount',
-    'realized_date'
+    { key: 'buyer_name', width: 30 },
+    { key: 'exfactory_dates', width: 30 },
+    { key: 'rdl_invoice', width: 30 },
+    { key: 'rdl_invoice_date', width: 30 },
+    { key: 'rdl_invoice_quantity', width: 30 },
+    { key: 'rdl_invoice_value', width: 30 },
+    { key: 'fdbc_no', width: 30 },
+    { key: 'document_submission_date', width: 30 },
+    { key: 'ci_no', width: 30 },
+    { key: 'ci_date', width: 30 },
+    { key: 'realized_amount', width: 30 },
+    { key: 'realized_date', width: 30 },
+]
+
+const ciAndRealizationTableHeader = [
+    'Buyer Name',
+    'Exfactory Dates',
+    'RDL Invoice',
+    'RDL Invoice Date',
+    'RDL Invoice Quantity',
+    'RDL Invoice Value',
+    'FDBC No',
+    'Document Submission Date',
+    'CI No',
+    'CI Date',
+    'Realized Amount',
+    'Realized Date'
 ]
 
 const factoryPaymentTableColumns = [
-    'buyer_name',
-    'exfactory_dates',
-    'factory_name',
-    'lc_no',
-    'sales_contract_no',
-    'factory_invoice',
-    'factory_invoice_date',
-    'factory_invoice_quantity',
-    'factory_invoice_value',
-    'fdbc_no',
-    'factory_payment',
-    'factory_payment_date'
+    { key: 'buyer_name', width: 30 }, 
+    { key: 'exfactory_dates', width: 30 }, 
+    { key: 'factory_name', width: 30 }, 
+    { key: 'lc_no', width: 30 }, 
+    { key: 'sales_contract_no', width: 30 }, 
+    { key: 'factory_invoice', width: 30 }, 
+    { key: 'factory_invoice_date', width: 30 }, 
+    { key: 'factory_invoice_quantity', width: 30 }, 
+    { key: 'factory_invoice_value', width: 30 }, 
+    { key: 'fdbc_no', width: 30 }, 
+    { key: 'factory_payment', width: 30 }, 
+    { key: 'factory_payment_date', width: 30 }, 
 ]
 
-
+const factoryPaymentTableHeader = [
+    'Buyer Name',
+    'Exfactory Dates',
+    'Factory Name',
+    'LC No',
+    'Sales Contract No',
+    'Factory Invoice',
+    'Factory Invoice Date',
+    'Factory Invoice Quantity',
+    'Factory Invoice Value',
+    'FDBC No',
+    'Factory Payment',
+    'Factory Payment Date'
+]
 
 const currentTime = new Date().toLocaleTimeString('en-US', {
   hour: '2-digit',
@@ -83,18 +132,95 @@ interface ActivityReportProps {
 }
 
 export const generateActivityReportExcel = async (props: ActivityReportProps) => {
+    const { poWiseData, ciAndRealizationData, factoryInvoiceData, reportMeta } = props;
+
     const workbook = new ExcelJS.Workbook();
 
     workbook.creator = "Nexus ERP";
     workbook.created = new Date();
 
-    const worksheet = workbook.addWorksheet("Order Summary", {
+    const poWiseWorksheet = workbook.addWorksheet("Order Summary", {
         views: [
             {
                 state: "frozen",
                 ySplit: TABLE_HEADER_ROW,
             },
         ],
+    });
+
+    poWiseWorksheet.mergeCells(1, 1, 1, 6);
+    poWiseWorksheet.mergeCells(2, 1, 2, 2);
+    poWiseWorksheet.mergeCells(3, 1, 3, 2);
+    poWiseWorksheet.mergeCells(4, 1, 4, 2);
+
+    poWiseWorksheet.getCell("A1").value = `Post-Exfactory Commercial Activity Report`;
+    poWiseWorksheet.getCell("A2").value = `Date Range: ${formatDate(reportMeta.fromDate)} to ${formatDate(reportMeta.toDate)}`;
+    poWiseWorksheet.getCell("A3").value = `Generated by: ${reportMeta.generatedBy}`;
+    poWiseWorksheet.getCell("A4").value = `Generated on: ${formatDate(new Date())} at ${currentTime}`;
+
+    poWiseWorksheet.getRow(1).font = {
+        bold: true,
+        size: 20,
+        color: { argb: "FF1F1F1F" },
+    };
+
+    poWiseWorksheet.getRow(2).font = {
+        size: 11,
+        color: { argb: "FF4B4B4B" },
+    };
+
+    poWiseWorksheet.getRow(3).font = {
+        size: 11,
+        color: { argb: "FF4B4B4B" },
+    };
+
+    poWiseWorksheet.getRow(4).font = {
+        size: 11,
+        color: { argb: "FF4B4B4B" },
+    };
+
+    poWiseWorksheet.getRow(6).font = {
+        bold: true,
+        color: { argb: "FFFFFFFF" },
+    };
+
+    poWiseWorksheet.getRow(6).fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "1F4E78" },
+    };
+
+    poWiseWorksheet.getRow(TABLE_HEADER_ROW).values = [...poWiseTableHeader];
+
+    poWiseWorksheet.autoFilter = {
+        from: "A6",
+        to: "AC6",
+    };
+
+    poWiseWorksheet.getRow(1).height = 22;
+    poWiseWorksheet.getRow(2).height = 18;
+    poWiseWorksheet.getRow(3).height = 18;
+    poWiseWorksheet.getRow(6).height = 20;
+    
+    poWiseData.forEach((row) => poWiseWorksheet.addRow(row));
+
+    // Remove borders from the first 4 rows and all columns
+    for (let row = 1; row <= 5; row++) {
+        for (let col = 1; col <= PO_WISE_TABLE_COLUMN_COUNT; col++) {
+            const cell = poWiseWorksheet.getCell(row, col);
+            cell.fill = {
+                type: "pattern",
+                pattern: "solid",
+                fgColor: { argb: "FFFFFF" },
+            };
+        }
+    }
+
+    poWiseWorksheet.eachRow((row) => {
+        row.alignment = {
+            vertical: "middle",
+            wrapText: true,
+        };
     });
 
     return await workbook.xlsx.writeBuffer();
