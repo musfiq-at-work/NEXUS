@@ -13,6 +13,7 @@ import {
 	evPermissionRouter, rdlInvoiceRouter, documentSubmissionRouter, commissionInvoiceRouter,
 	proceedRealizationRouter, factoryPaymentRouter, salesReportRouter, exportReportRouter,
 	orderSummaryReportRouter, debitNotesRouter, crossPaymentsRouter, commercialTnaTemplatesRouter,
+	activityReportRouter,
 } from '.';
 
 // All routers added in /api/routers should be manually added here.
@@ -84,6 +85,7 @@ export const appRouter = createTRPCRouter({
 	salesReport: salesReportRouter,
 	exportReport: exportReportRouter,
 	orderSummaryReport: orderSummaryReportRouter,
+	activityReportRouter: activityReportRouter,
 });
 
 // export type definition of API

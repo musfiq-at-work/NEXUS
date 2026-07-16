@@ -4,10 +4,10 @@ import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { Prisma } from "@prisma/client";
-import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
-import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
+import { generateActivityReportExcel } from "./excel/generateActivityReport";
+import { safeNumber } from "~/utils/numbers";
 
-interface PoWiseData {
+export interface PoWiseData {
     buyer_name: string;
     factory_name: string;
     buyer_po: string;
@@ -16,32 +16,70 @@ interface PoWiseData {
     shipment_quantity: number;
     factory_invoice: string;
     factory_invoice_date: string;
-    factory_invoice_quantity: string;
-    factory_invoice_value: string;
+    factory_invoice_quantity: number;
+    factory_invoice_value: number;
     lc_no: string;
     sales_contract_no: string;
     rdl_invoice: string;
     rdl_invoice_date: string;
-    rdl_invoice_quantity: string;
-    rdl_invoice_value: string;
+    rdl_invoice_quantity: number;
+    rdl_invoice_value: number;
     fdbc_no: string;
     fdbc_date: string;
 }
 
-interface CiAndRealizationData {
+export interface CiAndRealizationData {
+    buyer_name: string;
+    exfactory_dates: string;
     rdl_invoice: string;
     rdl_invoice_date: string;
-    exfactory_nos: string;
-    exfactory_dates: string;
-    rdl_invoice_quantity: string;
-    rdl_invoice_value: string;
+    rdl_invoice_quantity: number;
+    rdl_invoice_value: number;
     fdbc_no: string;
     document_submission_date: string;
     ci_no: string;
     ci_date: string;
-    realized_amount: string;
+    realized_amount: number;
     realized_date: string;
 }
+
+export interface FactoryInvoiceData {
+    buyer_name: string;
+    exfactory_dates: string;
+    factory_name: string;
+    lc_no: string;
+    sales_contract_no: string;
+    factory_invoice: string;
+    factory_invoice_date: string;
+    factory_invoice_quantity: number;
+    factory_invoice_value: number;
+    FDBC_NO: string;
+    factory_payment: number;
+    FACTORY_PAYMENT_DATE: string;
+}
+
+const normalizePoWiseData = (row: PoWiseData): PoWiseData => ({
+    ...row,
+    shipment_quantity: safeNumber(row.shipment_quantity),
+    factory_invoice_quantity: safeNumber(row.factory_invoice_quantity),
+    factory_invoice_value: safeNumber(row.factory_invoice_value),
+    rdl_invoice_quantity: safeNumber(row.rdl_invoice_quantity),
+    rdl_invoice_value: safeNumber(row.rdl_invoice_value),
+});
+
+const normalizeCiAndRealizationData = (row: CiAndRealizationData): CiAndRealizationData => ({
+    ...row,
+    rdl_invoice_quantity: safeNumber(row.rdl_invoice_quantity),
+    rdl_invoice_value: safeNumber(row.rdl_invoice_value),
+    realized_amount: safeNumber(row.realized_amount),
+});
+
+const normalizeFactoryInvoiceData = (row: FactoryInvoiceData): FactoryInvoiceData => ({
+    ...row,
+    factory_invoice_quantity: safeNumber(row.factory_invoice_quantity),
+    factory_invoice_value: safeNumber(row.factory_invoice_value),
+    factory_payment: safeNumber(row.factory_payment),
+});
 
 export const activityReportRouter = createTRPCRouter({
     getCommercialActivityReport: protectedProcedure
@@ -49,10 +87,26 @@ export const activityReportRouter = createTRPCRouter({
             z.object({
                 fromDate: z.string(),
                 toDate: z.string(),
+                buyerIds: z.array(z.number()).optional(),
             })
         )
-        .query(async ({ ctx, input }) => {
+        .mutation(async ({ ctx, input }) => {
             try {
+                const can_view = ctx.permissions[m.COMMERCIAL_ACTIVITY_REPORT]?.can_view;
+                
+                if (!can_view) {
+                    throw new TRPCError({
+                        code: "FORBIDDEN",
+                        message: "You do not have permission to view commercial activity report.",
+                    });
+                }
+
+                const isBuyersSelected = input.buyerIds && input.buyerIds.length > 0;
+
+                const buyerSelectClause = isBuyersSelected 
+                    ? Prisma.sql`AND B.id IN (${Prisma.join(input.buyerIds!)})`
+                    : Prisma.empty;
+
                 const po_wise_data = await ctx.db.$queryRaw<PoWiseData[]>`
                     SELECT
                         B.buyer_name AS buyer_name,
@@ -131,6 +185,7 @@ export const activityReportRouter = createTRPCRouter({
                     ) DS_AGG ON DS_AGG.shipment_details_id = SD.id
                     WHERE E.exfactory_date BETWEEN ${input.fromDate} AND ${input.toDate}
                         AND COALESCE(ES.delivery_quantity, 0) > 0
+                        ${buyerSelectClause}
                     GROUP BY
                         E.ID,
                         SD.id,
@@ -156,12 +211,11 @@ export const activityReportRouter = createTRPCRouter({
                 const ci_and_realization_data = await ctx.db.$queryRaw<CiAndRealizationData[]>`
                     SELECT
                         B.buyer_name,
+                        STRING_AGG(DISTINCT TO_CHAR(E.exfactory_date, 'DD Mon YYYY'), ', ') AS exfactory_dates,
                         RI.invoice_no AS rdl_invoice,
                         TO_CHAR(RI.invoice_date, 'DD Mon YYYY') AS rdl_invoice_date,
-                        STRING_AGG(DISTINCT E.exfactory_no, ', ') AS exfactory_nos,
-                        STRING_AGG(DISTINCT TO_CHAR(E.exfactory_date, 'DD Mon YYYY'), ', ') AS exfactory_dates,
                         SUM(RISD.invoice_quantity) AS rdl_invoice_quantity,
-                        SUM(RISD.invoice_quantity * SD.fob_rate)::NUMERIC(18, 2) AS rdl_invoice_value,
+                        SUM(RISD.invoice_quantity * SD.fob_rate / BO.currency_rate)::NUMERIC(18, 2) AS rdl_invoice_value,
                         COALESCE(DS.FDBC_NO, '-') AS FDBC_NO,
                         COALESCE(DS.SUBMISSION_DATE::TEXT, '-') AS DOCUMENT_SUBMISSION_DATE,
                         COALESCE(CI.REF_NO, '-') AS CI_NO,
@@ -186,22 +240,89 @@ export const activityReportRouter = createTRPCRouter({
                     LEFT JOIN proceed_realization AS PR ON PR.id = PRD.realization_id
                     WHERE E.exfactory_date BETWEEN ${input.fromDate} AND ${input.toDate}
                         AND COALESCE(ES.delivery_quantity, 0) > 0
-                    GROUP BY
-                        RI.id,
-                        RI.invoice_no,
-                        RI.invoice_date,
-                        B.id,
-                        DS.ID,
-                        CI.ID,
-                        PR.ID,
-                        PRD.ID,
-                        B.buyer_name;
-                    `;
+                        ${buyerSelectClause}
+                    GROUP BY RI.id, B.id, DS.ID, CI.ID, PR.ID, PRD.ID, B.id
+                    ORDER BY E.exfactory_date ASC, B.buyer_name ASC;
+                `;
 
-                return {
-                    po_wise_data,
-                    ci_and_realization_data,
+                const factoryInvoiceData = await ctx.db.$queryRaw<FactoryInvoiceData[]>`
+                    SELECT
+                        B.buyer_name,
+                        STRING_AGG(DISTINCT TO_CHAR(E.exfactory_date, 'DD Mon YYYY'), ', ') AS exfactory_dates,
+                        F.name AS factory_name,
+                        COALESCE(STRING_AGG(DISTINCT LC.lc_no, ', '), '-') AS lc_no,
+                        COALESCE(SC.sales_contract_no, '-') AS sales_contract_no,
+                        FI.invoice_no AS factory_invoice,
+                        TO_CHAR(FI.invoice_date, 'DD Mon YYYY') AS factory_invoice_date,
+                        CASE
+                            WHEN FI.invoice_no IS NULL 
+                                THEN '-'
+                            ELSE SUM(ES.delivery_quantity)::TEXT
+                        END AS factory_invoice_quantity,
+                        CASE
+                            WHEN FI.invoice_no IS NULL
+                                THEN '-'
+                            ELSE SUM(
+                                ES.delivery_quantity *
+                                CASE
+                                    WHEN COALESCE(FSD.transfer_rate, 0) > 0
+                                        THEN FSD.transfer_rate
+                                    ELSE FSD.factory_rate
+                                END
+                            )::NUMERIC(18,2)::TEXT
+                        END AS factory_invoice_value,
+                        COALESCE(DS.FDBC_NO, '-') AS FDBC_NO,
+                        COALESCE(FP.PAID_AMOUNT::TEXT, '-') AS FACTORY_PAYMENT,
+	                    COALESCE(FP.PAYMENT_DATE::TEXT, '-') AS FACTORY_PAYMENT_DATE
+                    FROM factory_invoice AS FI
+                        INNER JOIN factory_invoice_details FID ON FID.factory_invoice_id = FI.id
+                        INNER JOIN exfactory_shipments ES ON ES.id = FID.exfactory_shipment_id
+                        INNER JOIN shipment_details SD ON SD.id = ES.shipment_details_id
+                        INNER JOIN factory_shipment_details FSD ON FSD.shipment_detail_id = SD.id
+                        INNER JOIN order_styles OS ON OS.id = SD.order_style_id
+                        INNER JOIN buyer_orders BO ON BO.id = OS.order_id
+                        INNER JOIN buyers B ON B.id = BO.buyer_id
+                        INNER JOIN exfactory_orders EO ON EO.id = ES.exfactory_orders_id
+                        INNER JOIN exfactory E ON E.id = EO.exfactory_id
+                        INNER JOIN factories F ON F.id = BO.factory_id
+                        LEFT JOIN lc_shipments LCS ON LCS.shipment_details_id = SD.id
+                        LEFT JOIN lc_orders LCO ON LCO.id = LCS.lc_order_id
+                        LEFT JOIN lc_master LC ON LC.id = LCO.lc_master_id
+                        LEFT JOIN sales_contract_details SCD ON SCD.order_id = BO.id
+                        LEFT JOIN sales_contracts SC ON SC.id = SCD.sales_contract_id
+                        LEFT JOIN factory_payments AS FP ON FP.factory_invoice_id = FI.id
+                        LEFT JOIN document_submissions AS DS ON DS.id = FP.document_submission_id
+                    WHERE E.exfactory_date BETWEEN '2026-01-01' AND '2026-06-30'
+                        AND COALESCE(ES.delivery_quantity, 0) > 0
+                        ${buyerSelectClause}
+                    GROUP BY FI.id, B.id, F.id, SC.id, DS.ID, FP.ID
+                    ORDER BY E.exfactory_date ASC, B.buyer_name ASC;
+                `;
+
+                const normalizedPoWiseData = po_wise_data.map(normalizePoWiseData);
+                const normalizedCiAndRealizationData = ci_and_realization_data.map(normalizeCiAndRealizationData);
+                const normalizedFactoryInvoiceData = factoryInvoiceData.map(normalizeFactoryInvoiceData);
+
+                const normalizedResults = {
+                    po_wise_data: normalizedPoWiseData,
+                    ci_and_realization_data: normalizedCiAndRealizationData,
+                    factory_invoice_data: normalizedFactoryInvoiceData
                 };
+                
+                const generatedBy = `${ctx.user.first_name ?? ""} ${ctx.user.last_name ?? ""}`.trim();
+
+                const buffer = await generateActivityReportExcel({
+                    poWiseData: normalizedPoWiseData,
+                    ciAndRealizationData: normalizedCiAndRealizationData,
+                    factoryInvoiceData: normalizedFactoryInvoiceData,
+                    reportMeta: {
+                        fromDate: input.fromDate,
+                        toDate: input.toDate,
+                        generatedBy: generatedBy || "Unknown User"
+                    }
+                });
+
+                return Array.from(new Uint8Array(buffer));
             }
             catch (error) {
                 handlePrismaError(error);
