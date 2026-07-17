@@ -99,15 +99,16 @@ const sideBarConfig: Record<number, {href: string;}> = {
     [m.REPORTS]: { href: "/reports" },
     
     // Merchandising Reports
-    [m.SALES_REPORT]: { href: "/reports/m/sales_report" },
-    [m.EXPORT_REPORT]: { href: "/reports/m/export_report" },
-    [m.ORDER_SUMMARY_REPORT]: { href: "/reports/m/order_summary_report" },
+    [m.SALES_REPORT]: { href: "/reports/mer_report/sales_report" },
+    [m.EXPORT_REPORT]: { href: "/reports/mer_report/export_report" },
+    [m.ORDER_SUMMARY_REPORT]: { href: "/reports/mer_report/order_summary_report" },
 
     // Commercial Reports
-    [m.EXPORT_SUMMARY_LC_WISE]: { href: "/reports/c/export_summary_lc_wise" },
-    [m.EXPORT_SUMMARY_SC_WISE]: { href: "/reports/c/export_summary_sc_wise" },
-    [m.LC_SC_CLOSING]: { href: "/reports/c/lc_sc_closing" },
-    [m.COMMERCIAL_ACTIVITY_REPORT]: { href: "/reports/c/activity_report" }
+    [m.EXPORT_SUMMARY_LC_WISE]: { href: "/reports/com_report/export_summary_lc_wise" },
+    [m.EXPORT_SUMMARY_SC_WISE]: { href: "/reports/com_report/export_summary_sc_wise" },
+    [m.LC_SC_CLOSING]: { href: "/reports/com_report/lc_sc_closing" },
+    [m.COMMERCIAL_ACTIVITY_REPORT]: { href: "/reports/com_report/activity_report" }
 };
 
 export default sideBarConfig;
+

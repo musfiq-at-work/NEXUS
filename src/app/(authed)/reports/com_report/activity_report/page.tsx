@@ -24,7 +24,7 @@ const OrderSummaryReportPage = () => {
 	
 	// TRPC utils    
 	const getPdfDataMutation = api.activityReportRouter.getCommercialActivityReport.useMutation({
-		onSuccess: async (data) => {
+		onSuccess: async () => {
             setError(null);
             toast.success("Order Summary Report generated successfully!");
         }
@@ -38,8 +38,6 @@ const OrderSummaryReportPage = () => {
 				toDate: orderSummaryReportData.to_date,
 				buyerIds: orderSummaryReportData.buyer_ids,
 			};
-
-			console.log("Payload for Commercial Activity Report:", payload);
 
             const res = await getPdfDataMutation.mutateAsync(payload);
 

@@ -6,7 +6,7 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { Prisma } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 import { safeNumber } from "~/utils/numbers";
-import { generateOrderSummaryExcel } from "./excel/generateOrderSummaryExcel";
+import { generateOrderSummaryExcel } from "../../../_utils/excel/order_summary_report_excel/generateOrderSummaryExcel";
 
 export interface OrderSummaryReportRow {
     ORDER_NO: string;

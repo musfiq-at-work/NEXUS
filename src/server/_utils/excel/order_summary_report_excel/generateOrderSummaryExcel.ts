@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
-import type { OrderSummaryReportRow } from "../orderSummaryReport";
+import type { OrderSummaryReportRow } from "../../../api/routers/reports/orderSummaryReport";
 import { formatDate } from "~/utils/localDateString";
-import { DOLLAR_SIGN_NUMBER_FORMAT, QUANTITY_NUMBER_FORMAT, TEXT_FORMAT } from "./config";
+import { DOLLAR_SIGN_NUMBER_FORMAT, QUANTITY_NUMBER_FORMAT, TEXT_FORMAT } from "../config";
 
 const TABLE_HEADER_ROW = 6;
 const TABLE_COLUMN_COUNT = 29;

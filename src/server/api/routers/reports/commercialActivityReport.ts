@@ -4,7 +4,7 @@ import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { Prisma } from "@prisma/client";
-import { generateActivityReportExcel } from "./excel/generateActivityReport";
+import { generateActivityReportExcel } from "../../../_utils/excel/commercial_activity_report_excel/generateActivityReport";
 import { safeNumber } from "~/utils/numbers";
 
 export interface PoWiseData {
