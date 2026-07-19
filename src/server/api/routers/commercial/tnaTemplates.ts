@@ -42,7 +42,7 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
                         data: {
                             template_name: input.template_name,
                             buyer_id: input.buyer_id,
-                            term_id: input.term_id,
+                            payment_term_id: input.term_id,
                         },
                     });
 
@@ -51,7 +51,7 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
                             commercial_tna_templates_id: newTemplate.id,
                             template_name: input.template_name,
                             buyer_id: input.buyer_id,
-                            term_id: input.term_id,
+                            payment_term_id: input.term_id,
                             action_type: actions.ADDED,
                             action_by: ctx.user.id,
                         },
@@ -107,11 +107,11 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
                         TT.ID,
                         TT.TEMPLATE_NAME,
                         B.BUYER_NAME,
-                        T.NAME AS TERM,
-                        COUNT(*) OVER() AS total_count
+                        CONCAT(T.NAME, ' ', PT.tenor, ' ', PT.term_description) AS TERM
                     FROM COMMERCIAL_TNA_TEMPLATES AS TT
                     INNER JOIN BUYERS AS B ON TT.BUYER_ID = B.ID
-                    INNER JOIN TERMS AS T ON TT.TERM_ID = T.ID
+                    INNER JOIN PAYMENT_TERMS AS PT ON TT.PAYMENT_TERM_ID = PT.ID
+                    INNER JOIN TERMS AS T ON T.ID = PT.term_id
                     ORDER BY TT.ADDED_AT DESC
                     LIMIT ${input.limit ?? 15}
                     OFFSET ${input.offset ?? 0};
@@ -154,10 +154,19 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
                                 buyer_name: true,
                             }                        
                         },
-                        terms: {
+                        buyer_payment_term: {
                             select: {
                                 id: true,
-                                name: true,
+                                payment_terms: {
+                                    select: { 
+                                        id: true,
+                                        term_description: true,
+                                        tenor: true,
+                                        terms: {
+                                            select: { id: true, name: true }
+                                        }
+                                    }
+                                }
                             }
                         },
                         commercial_tna_templates_actions: {
@@ -180,8 +189,8 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
                     template_name: templateObj.template_name,
                     buyer_id: templateObj.buyers?.id,
                     buyer_name: templateObj.buyers?.buyer_name,
-                    term_id: templateObj.terms?.id,
-                    term: templateObj.terms?.name,
+                    term_id: templateObj.buyer_payment_term?.id,
+                    term: `${templateObj?.buyer_payment_term?.payment_terms?.terms?.name} - ${templateObj?.buyer_payment_term?.payment_terms?.tenor} ${templateObj?.buyer_payment_term?.payment_terms?.term_description}`,
                     actions: templateObj.commercial_tna_templates_actions.map(action => ({
                         id: action.id,
                         tna_action_id: action.tna_action_id,
@@ -344,7 +353,7 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
                             commercial_tna_templates_id: deletedTemplate.id,
                             template_name: deletedTemplate.template_name,
                             buyer_id: deletedTemplate.buyer_id,
-                            term_id: deletedTemplate.term_id,
+                            payment_term_id: deletedTemplate.payment_term_id,
                             action_type: actions.DELETE,
                             action_by: ctx.user.id,
                         },

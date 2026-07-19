@@ -5,10 +5,12 @@ import { skipToken } from "@tanstack/react-query";
 
 export type Field<T extends keyof FormValues> = BaseField<T>;
 
-
-export const formFields = (): Field<keyof FormValues>[] => {
+export const formFields = ({buyer_id}: {buyer_id: string}): Field<keyof FormValues>[] => {
     const buyers = api.buyers.getAllBuyersByTeam.useQuery();
-    const terms = api.terms.getAllTerms.useQuery().data ?? [];
+
+    const terms = api.buyers.getBuyerPaymentTerms.useQuery(
+        !!buyer_id ? parseInt(buyer_id) : skipToken
+    ).data ?? [];
 
     return [
         {
@@ -32,8 +34,8 @@ export const formFields = (): Field<keyof FormValues>[] => {
             label: "Term",
             type: "select",
             options: terms.map(term => ({ 
-                value: term.id.toString(), 
-                label: term.name 
+                value: term.id!.toString(), 
+                label: term.term_description 
             })) ?? [],
             placeholder: "Select Term",
         }

@@ -1,8 +1,8 @@
 import ExcelJS from "exceljs";
 import type { CiAndRealizationData, FactoryInvoiceData, PoWiseData } from "../../../api/routers/reports/commercialActivityReport";
 import { generatePoWiseDataWorkSheet } from "./worksheets/poWiseDataWorkSheet";
-import { generateCiAndRealizationWorkSheet } from "./worksheets/cIandRealizationWorkSheet";
 import { generateFactoryPaymentWorkSheet } from "./worksheets/factoryPaymentWorkSheet";
+import { generateCiAndRealizationWorkSheet } from "./worksheets/CIandRealizationWorkSheet";
 
 export interface ActivityReportMeta {
     fromDate: string;
@@ -23,13 +23,13 @@ export const generateActivityReportExcel = async (props: ActivityReportProps) =>
     const workbook = new ExcelJS.Workbook();
 
     // Set file metadata
-    workbook.creator = "Nexus ERP";
+    workbook.creator = reportMeta.generatedBy; 
     workbook.created = new Date();
     workbook.company = "Renaissance Designs Limited";
     workbook.subject = "Post-Exfactory Commercial Activity Report";
     workbook.title = "Post-Exfactory Commercial Activity Report";
     workbook.category = "Commercial Reports";
-    workbook.manager = reportMeta.generatedBy;
+    workbook.manager = "Nexus ERP";
 
     generatePoWiseDataWorkSheet({workbook, poWiseData, reportMeta});
 

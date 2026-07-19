@@ -58,13 +58,13 @@ const toSentenceCase = (str: string) => {
 export const generateOrderSummaryExcel = async (rows: OrderSummaryReportRow[], reportMeta: ReportMeta) => {
     const workbook = new ExcelJS.Workbook();
 
-    workbook.creator = "Nexus ERP";
+    workbook.creator = reportMeta.generatedBy;
     workbook.created = new Date();
     workbook.company = "Renaissance Designs Limited";
     workbook.subject = "Order Summary Report";
     workbook.title = "Order Summary Report";
     workbook.category = "Merchandising Reports";
-    workbook.manager = reportMeta.generatedBy;
+    workbook.manager = "Nexus ERP";
 
     const worksheet = workbook.addWorksheet("Order Summary", {
         views: [

@@ -1859,5 +1859,6 @@ export const buyerRouter = createTRPCRouter({
             } catch (error) {
                 handlePrismaError(error);
             }
-    })
+    }),
+
 });

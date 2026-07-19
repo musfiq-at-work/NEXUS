@@ -387,18 +387,17 @@ model payment_terms {
 }
 
 model terms {
-  id                       Int                        @id @default(autoincrement())
-  name                     String                     @db.VarChar(5)
-  commercial_tna_templates commercial_tna_templates[]
-  commission_invoice       commission_invoice[]
-  cross_payments           cross_payments[]
-  debit_note               debit_note[]
-  document_submissions     document_submissions[]
-  exfactory                exfactory[]
-  factory_invoice          factory_invoice[]
-  payment_terms            payment_terms[]
-  proceed_realization      proceed_realization[]
-  rdl_invoice              rdl_invoice[]
+  id                   Int                    @id @default(autoincrement())
+  name                 String                 @db.VarChar(5)
+  commission_invoice   commission_invoice[]
+  cross_payments       cross_payments[]
+  debit_note           debit_note[]
+  document_submissions document_submissions[]
+  exfactory            exfactory[]
+  factory_invoice      factory_invoice[]
+  payment_terms        payment_terms[]
+  proceed_realization  proceed_realization[]
+  rdl_invoice          rdl_invoice[]
 }
 
 model banks {
@@ -916,14 +915,15 @@ model buyer_late_policies_history {
 }
 
 model buyer_payment_term {
-  id                  Int            @id @default(autoincrement())
-  payment_term_id     Int?
-  old_payment_term_id Int?
-  buyer_id            Int?
-  old_buyers_id       Int?
-  added_at            DateTime?      @default(now()) @db.Timestamp(6)
-  buyers              buyers?        @relation(fields: [buyer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  payment_terms       payment_terms? @relation(fields: [payment_term_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                       Int                        @id @default(autoincrement())
+  payment_term_id          Int?
+  old_payment_term_id      Int?
+  buyer_id                 Int?
+  old_buyers_id            Int?
+  added_at                 DateTime?                  @default(now()) @db.Timestamp(6)
+  buyers                   buyers?                    @relation(fields: [buyer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  payment_terms            payment_terms?             @relation(fields: [payment_term_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  commercial_tna_templates commercial_tna_templates[]
 
   @@unique([buyer_id, payment_term_id])
 }
@@ -2964,9 +2964,9 @@ model commercial_tna_templates {
   template_name                    String
   buyer_id                         Int
   added_at                         DateTime?                          @default(now()) @db.Timestamp(6)
-  term_id                          Int
+  payment_term_id                  Int
   buyers                           buyers                             @relation(fields: [buyer_id], references: [id], onUpdate: NoAction)
-  terms                            terms                              @relation(fields: [term_id], references: [id], onUpdate: NoAction)
+  buyer_payment_term               buyer_payment_term                 @relation(fields: [payment_term_id], references: [id], onUpdate: NoAction)
   commercial_tna_templates_actions commercial_tna_templates_actions[]
 }
 
@@ -3003,7 +3003,7 @@ model commercial_tna_templates_history {
   action_by                   String?   @db.Uuid
   action_at                   DateTime? @default(now()) @db.Timestamp(6)
   template_name               String?
-  term_id                     Int?
+  payment_term_id             Int?
   users                       users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 

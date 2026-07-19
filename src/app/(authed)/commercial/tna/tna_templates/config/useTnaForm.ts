@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { formSchema } from "./formSchema";
@@ -56,11 +56,12 @@ export const useTnaForm = (tnaData?: GetTNATemplateByIdTypes) => {
         if (firstError) setFocus(firstError as keyof FormValues);
     }, [validationError, setFocus]);
 
+    const buyer_id = useWatch({ control, name: 'buyer_id' });
 
     return { 
         methods, 
         handleSubmit, 
-        formFields: formFields(), 
+        formFields: formFields({buyer_id: buyer_id}), 
         validationError, 
         control 
     };
