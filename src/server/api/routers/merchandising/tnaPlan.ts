@@ -324,7 +324,7 @@ export const tnaPlanRouter = createTRPCRouter({
             }
         }),
 
-     createTNAPlan: protectedProcedure
+    createTNAPlan: protectedProcedure
         .input(
             z.object({
                 template_id: z.string(),

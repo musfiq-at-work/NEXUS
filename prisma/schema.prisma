@@ -2313,6 +2313,7 @@ model factory_invoice {
   shipment_mode                        shipment_modes?
   port_of_loading                      Int?
   freight_term_id                      Int?
+  commercial_tna_planning              commercial_tna_planning[]
   cross_payment_details                cross_payment_details[]
   document_submission_factory_invoices document_submission_factory_invoices[]
   buyers                               buyers?                                @relation(fields: [buyer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -2965,20 +2966,22 @@ model commercial_tna_templates {
   buyer_id                         Int
   added_at                         DateTime?                          @default(now()) @db.Timestamp(6)
   payment_term_id                  Int
+  commercial_tna_planning          commercial_tna_planning[]
   buyers                           buyers                             @relation(fields: [buyer_id], references: [id], onUpdate: NoAction)
   buyer_payment_term               buyer_payment_term                 @relation(fields: [payment_term_id], references: [id], onUpdate: NoAction)
   commercial_tna_templates_actions commercial_tna_templates_actions[]
 }
 
 model commercial_tna_templates_actions {
-  id                         String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  commercial_tna_template_id String                   @db.Uuid
-  alert_before               Int?                     @default(0)
-  days                       Int
-  tna_action_id              Int
-  serial                     Int?
-  added_at                   DateTime?                @default(now()) @db.Timestamp(6)
-  commercial_tna_templates   commercial_tna_templates @relation(fields: [commercial_tna_template_id], references: [id], onUpdate: NoAction, map: "commercial_tna_templates_action_commercial_tna_template_id_fkey")
+  id                              String                            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  commercial_tna_template_id      String                            @db.Uuid
+  alert_before                    Int?                              @default(0)
+  days                            Int
+  tna_action_id                   Int
+  serial                          Int?
+  added_at                        DateTime?                         @default(now()) @db.Timestamp(6)
+  commercial_tna_planning_details commercial_tna_planning_details[]
+  commercial_tna_templates        commercial_tna_templates          @relation(fields: [commercial_tna_template_id], references: [id], onUpdate: NoAction, map: "commercial_tna_templates_action_commercial_tna_template_id_fkey")
 }
 
 model commercial_tna_templates_actions_history {
@@ -3005,6 +3008,24 @@ model commercial_tna_templates_history {
   template_name               String?
   payment_term_id             Int?
   users                       users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model commercial_tna_planning {
+  id                       String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  factory_invoice_id       String                   @db.Uuid
+  commer_tna_template_id   String                   @db.Uuid
+  added_at                 DateTime?                @default(now()) @db.Timestamp(6)
+  commercial_tna_templates commercial_tna_templates @relation(fields: [commer_tna_template_id], references: [id], onUpdate: NoAction)
+  factory_invoice          factory_invoice          @relation(fields: [factory_invoice_id], references: [id], onUpdate: NoAction)
+}
+
+model commercial_tna_planning_details {
+  id                                  String                           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  commercial_tna_templates_actions_id String                           @db.Uuid
+  plan_date                           DateTime?                        @db.Date
+  actual_date                         DateTime?                        @db.Date
+  added_at                            DateTime?                        @default(now()) @db.Timestamp(6)
+  commercial_tna_templates_actions    commercial_tna_templates_actions @relation(fields: [commercial_tna_templates_actions_id], references: [id], onUpdate: NoAction, map: "commercial_tna_planning_detai_commercial_tna_templates_act_fkey")
 }
 
 enum actions {

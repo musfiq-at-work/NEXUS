@@ -4,8 +4,8 @@ import { Wrapper } from "~/components"
 
 const TnaInvoiceClubbingPage = () => {
     return (
-        <Wrapper heading="TNA Invoice Clubbing">
-            TNA Invoice Clubbing Content
+        <Wrapper heading="Commercial TNA Planning">
+            Commercial TNA Planning
         </Wrapper>
     )
 }

@@ -486,4 +486,27 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
             }
         }),
 
+    getBuyerPaymentTerms: protectedProcedure
+        .input(z.object({
+            buyer_id: z.number(),
+        }))
+        .query(async ({ ctx, input }) => {
+            const paymentTerms = await ctx.db.$queryRaw<{ id: number; term_description: string }[]>`
+                SELECT
+                    PT.ID,
+                    CONCAT(T.NAME, ' ', PT.tenor, ' ', PT.term_description) AS term_description
+                FROM buyer_payment_term AS BPT
+                    INNER JOIN PAYMENT_TERMS AS PT ON BPT.payment_term_id = PT.id
+                    INNER JOIN TERMS AS T ON T.id = PT.term_id
+                WHERE BPT.buyer_id = ${input.buyer_id}
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM commercial_tna_templates AS CTP
+                    WHERE CTP.PAYMENT_TERM_ID = PT.ID AND CTP.BUYER_ID = BPT.buyer_id
+                );
+            `;
+
+            return paymentTerms;
+        }),
+
 })

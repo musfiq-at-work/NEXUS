@@ -8,8 +8,8 @@ export type Field<T extends keyof FormValues> = BaseField<T>;
 export const formFields = ({buyer_id}: {buyer_id: string}): Field<keyof FormValues>[] => {
     const buyers = api.buyers.getAllBuyersByTeam.useQuery();
 
-    const terms = api.buyers.getBuyerPaymentTerms.useQuery(
-        !!buyer_id ? parseInt(buyer_id) : skipToken
+    const terms = api.commercialTnaTemplates.getBuyerPaymentTerms.useQuery(
+        !!buyer_id ? {buyer_id: parseInt(buyer_id)} : skipToken
     ).data ?? [];
 
     return [

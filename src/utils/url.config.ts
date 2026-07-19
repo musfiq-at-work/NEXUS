@@ -81,7 +81,7 @@ const sideBarConfig: Record<number, {href: string;}> = {
     [m.FACTORY_INVOICE]: { href: "/commercial/factory_invoice" },
     [m.COMMERCIAL_TNA]: { href: "/commercial/tna" },
     [m.TNA_TEMPLATES_COMMERCIAL]: { href: "/commercial/tna/tna_templates" },
-    [m.TNA_INVOICE_CLUBBING]: { href: "/commercial/tna/tna_invoice_clubbing" },
+    [m.TNA_PLANNING_COMMERCIAL]: { href: "/commercial/tna/tna_planning" },
     [m.RDL_INVOICE]: { href: "/commercial/rdl_invoice" },
     [m.DOCUMENT_SUBMISSION]: { href: "/commercial/document_submission" },
 
