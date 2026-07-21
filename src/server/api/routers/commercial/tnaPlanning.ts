@@ -4,7 +4,7 @@ import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma } from "@prisma/client";
-import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID, ETD_DATE_DB_ID } from "~/utils/config";
+import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 
 interface CommercialTNAPlanning {
     invoice_no: string;
@@ -164,6 +164,120 @@ export const commercialTnaPlanRouter = createTRPCRouter({
                 return { tnaPlans, total };
             }
             catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    getTnaPlanById: protectedProcedure
+        .input(z.object({
+            id: z.string(),
+        }))
+        .query(async ({ ctx, input }) => {
+            try {
+                const can_view = ctx.permissions[m.TNA_PLANNING_COMMERCIAL]?.can_view;
+
+                if(!can_view) {
+                    throw new TRPCError({ 
+                        code: "FORBIDDEN", 
+                        message: "You do not have permission to view RDL Invoices." 
+                    });
+                }
+
+                const tnaPlansObj = await ctx.db.commercial_tna_planning.findUnique({
+                    where: {
+                        id: input.id
+                    },
+                    select: {
+                        id: true,
+                        factory_invoice: {
+                            select: {
+                                invoice_no: true
+                            }
+                        },
+                        commercial_tna_templates: {
+                            select: {
+                                template_name: true,
+                            }
+                        },
+                        commercial_tna_planning_details: {
+                            select: {
+                                id: true,
+                                actual_date: true,
+                                plan_date: true,
+                                commercial_tna_templates_actions: {
+                                    select: {
+                                        tna_actions: {
+                                            select: {
+                                                name: true
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                    }
+                })
+
+                const tnaPlans = tnaPlansObj ? {
+                    id: tnaPlansObj.id,
+                    factory_invoice: tnaPlansObj.factory_invoice.invoice_no,
+                    tna_template: tnaPlansObj.commercial_tna_templates.template_name,
+                    details: tnaPlansObj.commercial_tna_planning_details.map(d => ({
+                        id: d.id,
+                        plan_date: d.plan_date,
+                        actual_date: d.actual_date,
+                        action: d.commercial_tna_templates_actions.tna_actions.name
+                    }))
+                } : null;
+
+                return tnaPlans;
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    updateTnaPlan: protectedProcedure
+        .input(z.object({
+            id: z.string(),
+            details: z.array(z.object({
+                id: z.string(),
+                actual_date: z.date()
+            }))
+        }))
+        .mutation(async ({ctx, input}) => {
+            try {
+                const can_add = ctx.permissions[m.TNA_PLANNING_COMMERCIAL]?.can_update;
+
+                if(!can_add){
+                    throw new TRPCError({
+                        code: 'FORBIDDEN',
+                        message: "You don't have permission to update commercial TNA plans"
+                    })
+                }
+
+                return ctx.db.$transaction(async (tx) => {
+                    await Promise.all(
+                        input.details.map(async (items) => {
+                            await tx.commercial_tna_planning_details.update({
+                                where: { id: items.id },
+                                data: {
+                                    actual_date: items.actual_date
+                                }
+                            });
+
+                            await tx.commercial_tna_planning_details_history.create({
+                                data: {
+                                    commercial_tna_planning_details_id: input.id,
+                                    commercial_tna_planning_id: items.id,
+                                    actual_date: items.actual_date
+                                }
+                            })
+                        })
+                    )
+                })
+            }
+            catch (error){
                 handlePrismaError(error);
             }
         })

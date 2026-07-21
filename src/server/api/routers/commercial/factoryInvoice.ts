@@ -454,6 +454,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
                         })
                     );
 
+                    // TNA Template generation
                     const tna_template_id = await tx.$queryRaw<{ id: string | null }[]>`
                         SELECT
                             CTP.ID
@@ -713,7 +714,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
                                 )
                             )
                             ${scLcWhereClause}
-                        GROUP BY EFSD.ID, BO.ID, OS.ID, SD.ID, D.ID, FSD.ID;
+                        GROUP BY EFSD.ID, BO.ID, OS.ID, SD.ID, D.ID, FSD.ID, ES.ID;
                     `;
 
                     return shipments;

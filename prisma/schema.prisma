@@ -158,6 +158,7 @@ model users {
   buyer_payment_term_history                                         buyer_payment_term_history[]
   buyers_history                                                     buyers_history[]
   color_history_color_history_action_byTousers                       color_history[]                                @relation("color_history_action_byTousers")
+  commercial_tna_planning_details_history                            commercial_tna_planning_details_history[]
   commercial_tna_templates_actions_history                           commercial_tna_templates_actions_history[]
   commercial_tna_templates_history                                   commercial_tna_templates_history[]
   commission_distribution_details_history                            commission_distribution_details_history[]
@@ -721,15 +722,16 @@ model freight_term {
 }
 
 model tna_actions {
-  id               Int                @id @default(autoincrement())
-  name             String             @db.VarChar(50)
-  department_id    Int
-  lead_time        Int
-  alert_before     Int?
-  old_pk           Int?
-  added_at         DateTime?          @default(now()) @db.Timestamp(6)
-  departments      departments        @relation(fields: [department_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  tna_base_actions tna_base_actions[]
+  id                               Int                                @id @default(autoincrement())
+  name                             String                             @db.VarChar(50)
+  department_id                    Int
+  lead_time                        Int
+  alert_before                     Int?
+  old_pk                           Int?
+  added_at                         DateTime?                          @default(now()) @db.Timestamp(6)
+  commercial_tna_templates_actions commercial_tna_templates_actions[]
+  departments                      departments                        @relation(fields: [department_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tna_base_actions                 tna_base_actions[]
 
   @@unique([name, department_id], map: "unique_tna_actions")
 }
@@ -2985,6 +2987,7 @@ model commercial_tna_templates_actions {
   added_at                        DateTime?                         @default(now()) @db.Timestamp(6)
   commercial_tna_planning_details commercial_tna_planning_details[]
   commercial_tna_templates        commercial_tna_templates          @relation(fields: [commercial_tna_template_id], references: [id], onUpdate: NoAction, map: "commercial_tna_templates_action_commercial_tna_template_id_fkey")
+  tna_actions                     tna_actions                       @relation(fields: [tna_action_id], references: [id], onUpdate: NoAction)
 }
 
 model commercial_tna_templates_actions_history {
@@ -3034,6 +3037,19 @@ model commercial_tna_planning_details {
   commercial_tna_templates_actions    commercial_tna_templates_actions @relation(fields: [commercial_tna_templates_actions_id], references: [id], onUpdate: NoAction, map: "commercial_tna_planning_detai_commercial_tna_templates_act_fkey")
   commercial_tna_planning             commercial_tna_planning?         @relation(fields: [commercial_tna_planning_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   commercial_tna_templates            commercial_tna_templates?        @relation(fields: [commercial_tna_template_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+}
+
+model commercial_tna_planning_details_history {
+  id                                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  commercial_tna_planning_details_id String?   @db.Uuid
+  commercial_tna_template_actions_id String?   @db.Uuid
+  plan_date                          DateTime? @db.Date
+  actual_date                        DateTime? @db.Date
+  commercial_tna_planning_id         String?   @db.Uuid
+  action_type                        actions?
+  action_by                          String?   @db.Uuid
+  action_at                          DateTime? @default(now()) @db.Timestamp(6)
+  users                              users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 enum actions {
