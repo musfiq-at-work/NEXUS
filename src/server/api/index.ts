@@ -53,6 +53,7 @@ export { factoryInvoiceRouter } from "./routers/commercial/factoryInvoice";
 export { rdlInvoiceRouter } from "./routers/commercial/rdlInvoice";
 export { documentSubmissionRouter } from "./routers/commercial/documentSubmission";
 export { commercialTnaTemplatesRouter } from "./routers/commercial/tnaTemplates";
+export { commercialTnaPlanRouter } from "./routers/commercial/tnaPlanning";
 
 // Accounting routers
 export { commissionInvoiceRouter } from "./routers/accounting/commissionInvoice";

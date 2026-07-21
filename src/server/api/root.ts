@@ -13,7 +13,7 @@ import {
 	evPermissionRouter, rdlInvoiceRouter, documentSubmissionRouter, commissionInvoiceRouter,
 	proceedRealizationRouter, factoryPaymentRouter, salesReportRouter, exportReportRouter,
 	orderSummaryReportRouter, debitNotesRouter, crossPaymentsRouter, commercialTnaTemplatesRouter,
-	activityReportRouter,
+	activityReportRouter, commercialTnaPlanRouter,
 } from '.';
 
 // All routers added in /api/routers should be manually added here.
@@ -73,6 +73,7 @@ export const appRouter = createTRPCRouter({
 	rdlInvoice: rdlInvoiceRouter,
 	documentSubmission: documentSubmissionRouter,
 	commercialTnaTemplates: commercialTnaTemplatesRouter,
+	commercialTnaPlan: commercialTnaPlanRouter,
 
 	// accounting routers
 	commissionInvoice: commissionInvoiceRouter,

@@ -291,7 +291,21 @@ export const factoryInvoiceRouter = createTRPCRouter({
                             term_id: deleted.term_id,
                             invoice_date: deleted.invoice_date,
                         }
-                    })
+                    });
+
+                    const tnaPlan = await tx.commercial_tna_planning.findUnique({    
+                        where: { factory_invoice_id: input.id },
+                    });
+
+                    if (tnaPlan) {
+                        await tx.commercial_tna_planning_details.deleteMany({
+                            where: { commercial_tna_planning_id: tnaPlan.id },
+                        });
+
+                        await tx.commercial_tna_planning.delete({
+                            where: { id: tnaPlan.id },
+                        })
+                    }
                 }, {timeout: 30000})
             }
             catch (error) {
@@ -439,6 +453,68 @@ export const factoryInvoiceRouter = createTRPCRouter({
                             });
                         })
                     );
+
+                    const tna_template_id = await tx.$queryRaw<{ id: string | null }[]>`
+                        SELECT
+                            CTP.ID
+                        FROM commercial_tna_templates AS CTP 
+                        WHERE CTP.payment_term_id = ( 
+                            SELECT
+                                MIN(SD.payment_term_id)
+                            FROM FACTORY_INVOICE AS FI
+                                INNER JOIN factory_invoice_details AS FID ON FID.factory_invoice_id = FI.id
+                                INNER JOIN exfactory_shipments AS ES ON ES.id = FID.exfactory_shipment_id
+                                INNER JOIN shipment_details AS SD ON SD.id = ES.shipment_details_id
+                            WHERE FI.id = ${createdInvoice.id}
+                        )
+                        AND CTP.BUYER_ID = ${input.buyer_id};
+                    `;
+
+                    if(tna_template_id.length === 0 || !tna_template_id[0]?.id) {
+                        throw new TRPCError({
+                            code: 'NOT_FOUND',
+                            message: 'No TNA template found for the payment term and buyer of the factory invoice.'
+                        });
+                    }
+
+                    const new_tna_plan = await tx.commercial_tna_planning.create({
+                        data: {
+                            commercial_tna_template_id: tna_template_id[0].id,
+                            factory_invoice_id: createdInvoice.id,
+                        }
+                    })
+
+                    if (tna_template_id.length > 0 && tna_template_id[0]?.id) {
+                        await tx.$executeRaw`
+                            WITH min_exfactory AS (
+                                SELECT
+                                    CTP.id AS commercial_tna_planning_id,
+                                    MIN(E.exfactory_date) AS min_exfactory_date
+                                FROM commercial_tna_planning AS CTP
+                                INNER JOIN factory_invoice AS FI ON FI.id = CTP.factory_invoice_id
+                                INNER JOIN factory_invoice_details AS FID ON FID.factory_invoice_id = FI.id
+                                INNER JOIN exfactory_shipments AS ES ON ES.id = FID.exfactory_shipment_id
+                                INNER JOIN exfactory_orders AS EO ON EO.id = ES.exfactory_orders_id
+                                INNER JOIN exfactory AS E ON E.id = EO.exfactory_id
+                                WHERE CTP.id = ${new_tna_plan.id}
+                                GROUP BY CTP.id
+                            )
+                            INSERT INTO commercial_tna_planning_details (
+                                commercial_tna_planning_id,
+                                commercial_tna_templates_actions_id,
+                                plan_date
+                            )
+                            SELECT
+                                CTP.id,
+                                CTTA.id,
+                                ME.min_exfactory_date + CTTA.days AS plan_date
+                            FROM commercial_tna_planning AS CTP
+                            INNER JOIN min_exfactory AS ME ON ME.commercial_tna_planning_id = CTP.id
+                            INNER JOIN commercial_tna_templates AS CTT ON CTT.id = CTP.commercial_tna_template_id
+                            INNER JOIN commercial_tna_templates_actions AS CTTA ON CTTA.commercial_tna_template_id = CTT.id;
+                        `;
+                    }
+
                     return createdInvoice;
                 }, {timeout: 30000});
             }
@@ -590,7 +666,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
                             BO.ref_no AS ORDER_NO,
                             OS.STYLE AS STYLE,
                             SD.BUYER_PO AS PO,
-                            FSD.EXFACTORY_DATE AS EXFACTORY_DATE,
+                            ES.exfactory_date AS EXFACTORY_DATE,
                             D.NAME AS DESTINATION,
                             SUM(SID.QUANTITY) AS ORDER_QUANTITY,
                             EFSD.DELIVERY_QUANTITY,
@@ -667,7 +743,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
                         BO.ref_no AS ORDER_NO,
                         OS.STYLE AS STYLE,
                         SD.BUYER_PO AS PO,
-                        FSD.EXFACTORY_DATE AS EXFACTORY_DATE,
+                        ES.exfactory_date AS EXFACTORY_DATE,
                         D.NAME AS DESTINATION,
                         SUM(SID.QUANTITY) AS ORDER_QUANTITY,
                         EFSD.DELIVERY_QUANTITY AS DELIVERY_QUANTITY,
@@ -682,6 +758,8 @@ export const factoryInvoiceRouter = createTRPCRouter({
                             ELSE COALESCE(FSD.FACTORY_RATE, 0) * EFSD.DELIVERY_QUANTITY
                         END AS FACTORY_VALUE
                     FROM exfactory_shipments AS EFSD
+                        INNER JOIN exfactory_orders AS EO ON EO.id = EFSD.exfactory_orders_id
+                        INNER JOIN exfactory AS ES ON ES.id = EO.exfactory_id
                         INNER JOIN shipment_details AS SD ON SD.ID = EFSD.shipment_details_id
                         INNER JOIN SHIPMENT_ITEM_DETAILS AS SID ON SID.shipment_detail_id = SD.id
                         INNER JOIN order_styles AS OS ON OS.ID = SD.order_style_id
@@ -689,7 +767,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
                         INNER JOIN FACTORY_SHIPMENT_DETAILS AS FSD ON FSD.shipment_detail_id = SD.id
                         INNER JOIN DESTINATIONS AS D ON D.id = SD.destination_id
                     WHERE EFSD.ID = ${input.exfactory_shipment_id}
-                    GROUP BY BO.ID, OS.ID, SD.ID, D.ID, FSD.ID, EFSD.ID;
+                    GROUP BY BO.ID, OS.ID, SD.ID, D.ID, FSD.ID, EFSD.ID, ES.id;
                 `;
 
                 return details[0];
