@@ -14,7 +14,7 @@ import type { GetRdlInvoiceByIdTypes } from "~/types/commercialAPITypes";
 
 // type RDLInvoiceShipments = NonNullable<RDLInvoiceDetails>['rdl_invoice_shipment_details'][number];
 
-export const useRDLInvoiceForm = (initialData?: any) => {
+export const useTnaPlansForm = (initialData?: any) => {
     const transformedInitialData = useMemo(() => {
         return initialData ? {
             db_id: initialData.id,

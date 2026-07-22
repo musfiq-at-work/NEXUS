@@ -36,6 +36,7 @@ export const commercialTnaPlanRouter = createTRPCRouter({
                 const result = await ctx.db.$queryRaw<CommercialTNAPlanning[]>`
                     WITH COMMERCIAL_TNA AS (
                         SELECT
+                            CTP.id,
                             FI.INVOICE_NO,
                             B.BUYER_NAME,
                             F.NAME AS FACTORY_NAME,
@@ -67,7 +68,7 @@ export const commercialTnaPlanRouter = createTRPCRouter({
                                     AND TM.USER_ID = ${ctx.user.id}
                             )
                         )
-                        GROUP BY FI.ID, B.ID, F.ID, CTT.ID
+                        GROUP BY FI.ID, B.ID, F.ID, CTT.ID, CTP.id
                         ORDER BY ADDED_AT
                     )
                     SELECT 
@@ -109,6 +110,7 @@ export const commercialTnaPlanRouter = createTRPCRouter({
                 const result = await ctx.db.$queryRaw<CommercialTNAPlanning[]>`
                     WITH COMMERCIAL_TNA AS (
                         SELECT
+                            CTP.id,
                             FI.INVOICE_NO,
                             B.BUYER_NAME,
                             F.NAME AS FACTORY_NAME,
@@ -146,7 +148,7 @@ export const commercialTnaPlanRouter = createTRPCRouter({
                             OR F.NAME ILIKE '%' || ${input.query} || '%'
                             OR CTT.TEMPLATE_NAME ILIKE '%' || ${input.query} || '%'
                         )
-                        GROUP BY FI.ID, B.ID, F.ID, CTT.ID
+                        GROUP BY FI.ID, B.ID, F.ID, CTT.ID, CTP.id
                         ORDER BY ADDED_AT
                     )
                     SELECT 
