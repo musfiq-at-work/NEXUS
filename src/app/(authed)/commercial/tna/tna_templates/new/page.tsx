@@ -24,7 +24,10 @@ const NewTNATemplatePage = () => {
         onSuccess: async () => {
             setError(null);
             toast.success("TNA Template added successfully!");
-            await utils.commercialTnaTemplates.getTnaTemplates.invalidate();
+            await Promise.all([
+                utils.commercialTnaTemplates.getTnaTemplates.invalidate(),
+                utils.tnaActions.getAllTnaActions.invalidate({ department_id: 2 })
+            ])
         },
     });
 

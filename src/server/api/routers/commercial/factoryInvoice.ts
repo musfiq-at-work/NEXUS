@@ -4,7 +4,7 @@ import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma } from "@prisma/client";
-import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
+import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID, FACTORY_INVOICE } from "~/utils/config";
 import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
 
 interface FactoryInvoiceListItem {
@@ -252,6 +252,20 @@ export const factoryInvoiceRouter = createTRPCRouter({
                 }
 
                 return await ctx.db.$transaction(async (tx) => {
+                    const tnaPlan = await tx.commercial_tna_planning.findUnique({    
+                        where: { factory_invoice_id: input.id },
+                    });
+
+                    if (tnaPlan) {
+                        await tx.commercial_tna_planning_details.deleteMany({
+                            where: { commercial_tna_planning_id: tnaPlan.id },
+                        });
+
+                        await tx.commercial_tna_planning.delete({
+                            where: { id: tnaPlan.id },
+                        })
+                    }
+
                     // Check if the invoice exists
                     const details = await tx.factory_invoice_details.findMany({
                         where: { factory_invoice_id: input.id },
@@ -292,20 +306,6 @@ export const factoryInvoiceRouter = createTRPCRouter({
                             invoice_date: deleted.invoice_date,
                         }
                     });
-
-                    const tnaPlan = await tx.commercial_tna_planning.findUnique({    
-                        where: { factory_invoice_id: input.id },
-                    });
-
-                    if (tnaPlan) {
-                        await tx.commercial_tna_planning_details.deleteMany({
-                            where: { commercial_tna_planning_id: tnaPlan.id },
-                        });
-
-                        await tx.commercial_tna_planning.delete({
-                            where: { id: tnaPlan.id },
-                        })
-                    }
                 }, {timeout: 30000})
             }
             catch (error) {
@@ -515,6 +515,22 @@ export const factoryInvoiceRouter = createTRPCRouter({
                             INNER JOIN commercial_tna_templates_actions AS CTTA ON CTTA.commercial_tna_template_id = CTT.id;
                         `;
                     }
+
+                    // Update factory invoice date in TNA
+                    await tx.$executeRaw`
+                        UPDATE commercial_tna_planning_details AS CTPD
+                        SET actual_date = FI.invoice_date
+                        FROM commercial_tna_planning AS CTP,
+                            factory_invoice AS FI,
+                            commercial_tna_templates_actions AS CTTA,
+                            tna_actions AS TA
+                        WHERE CTP.id = CTPD.commercial_tna_planning_id
+                        AND FI.id = CTP.factory_invoice_id
+                        AND CTTA.id = CTPD.commercial_tna_templates_actions_id
+                        AND TA.id = CTTA.tna_action_id
+                        AND TA.id = ${FACTORY_INVOICE}
+                        AND FI.id = ${createdInvoice.id};
+                    `;
 
                     return createdInvoice;
                 }, {timeout: 30000});

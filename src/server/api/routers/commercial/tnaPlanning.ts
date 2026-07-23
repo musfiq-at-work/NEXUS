@@ -75,7 +75,7 @@ export const commercialTnaPlanRouter = createTRPCRouter({
                         *,
                         COUNT(*) OVER() AS TOTAL_COUNT
                     FROM COMMERCIAL_TNA
-                    ORDER BY ADDED_AT
+                    ORDER BY ADDED_AT DESC
                     LIMIT ${input.limit}
                     OFFSET ${input.offset};
                 `;
@@ -155,7 +155,7 @@ export const commercialTnaPlanRouter = createTRPCRouter({
                         *,
                         COUNT(*) OVER() AS TOTAL_COUNT
                     FROM COMMERCIAL_TNA
-                    ORDER BY ADDED_AT
+                    ORDER BY ADDED_AT DESC
                     LIMIT ${input.limit}
                     OFFSET ${input.offset};
                 `;

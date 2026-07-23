@@ -4,7 +4,7 @@ import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma } from "@prisma/client";
-import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
+import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID, DOC_SUBMIT_TO_CUSTOMER } from "~/utils/config";
 
 interface DocumentSubmissions {
     id: string;
@@ -415,6 +415,27 @@ export const documentSubmissionRouter = createTRPCRouter({
                             }
                         ));
                     }
+
+                    await tx.$executeRaw`
+                        UPDATE commercial_tna_planning_details AS CTPD
+                        SET actual_date = FI.invoice_date
+                        FROM commercial_tna_planning AS CTP,
+                            factory_invoice AS FI,
+                            rdl_invoice_details AS RID,
+                            commercial_tna_templates_actions AS CTTA,
+                            tna_actions AS TA,
+                            document_submissions_details AS DSD,
+                            document_submissions AS DS
+                        WHERE CTP.id = CTPD.commercial_tna_planning_id
+                        AND FI.id = CTP.factory_invoice_id
+                        AND CTTA.id = CTPD.commercial_tna_templates_actions_id
+                        AND TA.id = CTTA.tna_action_id
+                        AND RID.factory_invoice_id = FI.id
+                        AND DSD.rdl_invoice_id = RID.rdl_invoice_id
+                        AND DSD.document_submissions_id = DS.id
+                        AND TA.id = ${DOC_SUBMIT_TO_CUSTOMER}
+                        AND DS.id = ${newDocumentSubmission.id};
+                    `;
 
                     return newDocumentSubmission.id;
                 }, {timeout: 30000})
