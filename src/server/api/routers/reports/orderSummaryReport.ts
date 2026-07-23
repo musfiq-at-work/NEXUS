@@ -261,7 +261,6 @@ export const orderSummaryReportRouter = createTRPCRouter({
                 return Array.from(new Uint8Array(buffer));
             }
             catch (error) {
-                console.log("Error generating Order Summary Report:", error);
                 handlePrismaError(error);
             }
         })

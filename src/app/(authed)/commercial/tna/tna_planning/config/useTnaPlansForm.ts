@@ -4,26 +4,21 @@ import { useEffect, useMemo } from "react";
 import { tnaPlanningSchema } from "./formSchema";
 import type { TNAPlanningFormValues } from "./formSchema";
 import { useFormFields } from "./useFormFields";
-import { formatDateForInput } from "~/utils/localDateString";
-import { api } from "~/trpc/react";
-import { skipToken } from "@tanstack/react-query";
-import { safeNumber } from "~/utils/numbers";
-import type { GetRdlInvoiceByIdTypes } from "~/types/commercialAPITypes";
+import { formatDate, formatDateForInput } from "~/utils/localDateString";
+import type { GetTNAPlanByIdTypes } from "~/types/commercialAPITypes";
 
-// type RDLInvoiceDetails = NonNullable<GetRdlInvoiceByIdTypes>['rdl_invoice_details'][number];
+type TNAActionsDetails = NonNullable<GetTNAPlanByIdTypes>['details'][number];
 
-// type RDLInvoiceShipments = NonNullable<RDLInvoiceDetails>['rdl_invoice_shipment_details'][number];
-
-export const useTnaPlansForm = (initialData?: any) => {
+export const useTnaPlansForm = (initialData?: GetTNAPlanByIdTypes) => {
     const transformedInitialData = useMemo(() => {
         return initialData ? {
             db_id: initialData.id,
             factory_invoice: initialData.factory_invoice ?? undefined,
             tna_template: initialData.tna_template ?? undefined,
-            details: initialData.rdl_invoice_details?.map((detail: any) => ({
+            details: initialData.details?.map((detail: TNAActionsDetails) => ({
                 db_id: detail.id,
-                tna_action: detail.factory_id?.toString() ?? undefined,
-                plan_date: detail?.factory_invoice?.id ?? undefined,
+                tna_action: detail.action ?? undefined,
+                plan_date: detail?.plan_date ? formatDate(detail.plan_date) : undefined,
                 actual_date: detail?.actual_date ? formatDateForInput(detail?.actual_date) : undefined,
             })) ?? [],
         } : undefined;

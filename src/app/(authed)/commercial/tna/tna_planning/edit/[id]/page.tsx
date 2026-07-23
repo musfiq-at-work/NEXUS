@@ -13,6 +13,7 @@ import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 import { useWatch } from "react-hook-form";
 import { skipToken } from "@tanstack/react-query";
 import type { ParamsProp } from "~/types/params";
+import ActionDetails from "../../components/actionDetails";
 
 const EditTNAPlans = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
@@ -51,7 +52,7 @@ const EditTNAPlans = ({ params }: ParamsProp) => {
             if (!tnaPlans.db_id) throw new Error('Missing TNA plan id');
 
             const details = (tnaPlans.details ?? [])
-                .filter((d) => d.db_id !== undefined && d.actual_date !== undefined)
+                .filter((d) => d.db_id !== undefined && d.actual_date !== '')
                 .map((d) => ({
                     id: d.db_id as string,
                     actual_date: new Date(d.actual_date as string),
@@ -62,6 +63,8 @@ const EditTNAPlans = ({ params }: ParamsProp) => {
                 details,
             };
 
+            if(payload.details.length === 0) return;
+            
             await updateTnaPlans.mutateAsync(payload);
         } catch (error) {
             const message = parseTRPCError(error);
@@ -85,11 +88,11 @@ const EditTNAPlans = ({ params }: ParamsProp) => {
                 disabled={!can_update}
             />
 
-            {/* <FactoryInvoiceDetails 
+            <ActionDetails 
                 methods={methods}
                 validationError={validationError ?? {}}
                 disabled={isLoading}
-            /> */}
+            />
 
             <div className="w-full flex flex-row justify-end">
                 <Button type="button" 

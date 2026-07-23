@@ -202,6 +202,16 @@ export const commercialTnaPlanRouter = createTRPCRouter({
                             }
                         },
                         commercial_tna_planning_details: {
+                            orderBy: [
+                                {
+                                    commercial_tna_templates_actions: {
+                                        serial: "asc",
+                                    },
+                                },
+                                {
+                                    plan_date: "asc",
+                                },
+                            ],
                             select: {
                                 id: true,
                                 actual_date: true,

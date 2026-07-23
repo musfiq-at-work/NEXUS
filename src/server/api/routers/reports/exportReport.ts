@@ -329,7 +329,6 @@ export const exportReportRouter = createTRPCRouter({
                 return {exportReportData, totals: results};
             }
             catch (error) {
-                console.log("Error in getExportReport:", error);
                 handlePrismaError(error);
             }
         })

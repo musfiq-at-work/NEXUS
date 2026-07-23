@@ -1,22 +1,26 @@
 import type { BaseField } from "~/types/form";
 import type { TNAPlanningDetailsFormValues } from "../config/formSchema";
+import { COMMERCIAL_DEPARTMENT_ID } from "~/utils/config";
 
 export type Field<T extends keyof TNAPlanningDetailsFormValues> = BaseField<T>;
 
-export const formFields = (
-    action: string, user_department: number | undefined, isAdmin: boolean
-): Field<keyof TNAPlanningDetailsFormValues>[] => {
-    const rules: Record<string, number> = {
-        "PP MEETING DATE": 4,
-        "HANDOVER DATE": 2,
-        "ETD DATE": 2,
-    };
+interface Props {
+    action: string, 
+    userDepartment: number | undefined, 
+    isAdmin: boolean
+}
 
-    const MERCHANDISING_DEPARTMENT = 1;
+const rules: Record<string, number> = {
+    "ETD Date": COMMERCIAL_DEPARTMENT_ID,
+    "GOODS HANDOVER DATE TO FORWARDER": COMMERCIAL_DEPARTMENT_ID,
+    "BOOKING DATE": COMMERCIAL_DEPARTMENT_ID
+};
 
-    const allowActualDateEdit = rules[action]
-        ? user_department === rules[action]
-        : user_department === MERCHANDISING_DEPARTMENT;
+export const formFields = (props: Props): Field<keyof TNAPlanningDetailsFormValues>[] => {
+    const {action, userDepartment, isAdmin} = props;
+
+    const allowActualDateEdit = userDepartment === rules[action] || isAdmin;
+    const editableField = Object.keys(rules).includes(action);
 
     return [
         {
@@ -37,7 +41,7 @@ export const formFields = (
             name: "actual_date",
             label: "Actual Date",
             type: "date",
-            disabled: !(allowActualDateEdit || isAdmin),
+            disabled: !(allowActualDateEdit && editableField),
             optional: true,
         },
     ];

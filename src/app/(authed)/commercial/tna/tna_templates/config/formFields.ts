@@ -1,16 +1,23 @@
 import { api } from "~/trpc/react";
 import type { FormValues } from "./formSchema";
 import type { BaseField } from "~/types/form";
-import { skipToken } from "@tanstack/react-query";
 
 export type Field<T extends keyof FormValues> = BaseField<T>;
 
-export const formFields = ({buyer_id}: {buyer_id: string}): Field<keyof FormValues>[] => {
-    const buyers = api.buyers.getAllBuyersByTeam.useQuery();
+interface TnaTerms {
+    id: number; 
+    term_description: string
+}
 
-    const terms = api.commercialTnaTemplates.getBuyerPaymentTerms.useQuery(
-        !!buyer_id ? {buyer_id: parseInt(buyer_id)} : skipToken
-    ).data ?? [];
+interface Props {
+    isEdit?: boolean
+    tnaTerms: TnaTerms[]
+}
+
+export const formFields = (props: Props): Field<keyof FormValues>[] => {
+    const { tnaTerms, isEdit } = props;
+
+    const buyers = api.buyers.getAllBuyersByTeam.useQuery();
 
     return [
         {
@@ -28,16 +35,18 @@ export const formFields = ({buyer_id}: {buyer_id: string}): Field<keyof FormValu
                 label: buyer.buyer_name 
             })) ?? [],
             placeholder: "Select Buyer",
+            disabled: isEdit
         },
         {
             name: "term_id",
             label: "Term",
             type: "select",
-            options: terms.map(term => ({ 
+            options: tnaTerms.map(term => ({ 
                 value: term.id!.toString(), 
                 label: term.term_description 
             })) ?? [],
             placeholder: "Select Term",
+            disabled: isEdit
         }
     ];
 };

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
 import type { MyTokenPayload } from "~/types/token";
 import { safeNumber } from "~/utils/numbers";
+import { ADMIN_DEPARTMENT_ID } from "~/utils/config";
 
 // Hook to decode JWT token stored in localStorage and return user info
 export function useDecodedUser() {
@@ -38,7 +39,7 @@ export function useDecodedUser() {
   }, []);
 
   useEffect(() => {
-    const isAdmin = safeNumber(user?.department_id) === 5 && safeNumber(user?.level_id) === 5; 
+    const isAdmin = safeNumber(user?.department_id) === ADMIN_DEPARTMENT_ID && safeNumber(user?.level_id) === 5; 
     setIsAdmin(isAdmin);
   }, [user]);
 

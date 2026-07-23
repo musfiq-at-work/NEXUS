@@ -385,8 +385,6 @@ export const debitNotesRouter = createTRPCRouter({
         }))
         .mutation(async ({ ctx, input }) => {
             try {
-                console.log("Adding Debit Note with input:", input);
-
                 const can_add = ctx.permissions[m.DEBIT_NOTE]?.can_add;
 
                 if(!can_add) {
@@ -530,8 +528,6 @@ export const debitNotesRouter = createTRPCRouter({
         }))
         .query(async ({ ctx, input }) => {
             try {
-                console.log("Fetching shipment details for debit note with input:", input);
-
                 const terms = await ctx.db.terms.findUnique({
                     where: { id: input.term_id },
                     select: { name: true },

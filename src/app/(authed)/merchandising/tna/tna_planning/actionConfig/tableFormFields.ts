@@ -1,20 +1,19 @@
 import type { BaseField } from "~/types/form";
 import type { TnaActionFormValues } from "../config/formSchema";
+import { COMMERCIAL_DEPARTMENT_ID, MERCHANDISING_DEPARTMENT_ID, QUALITY_DEPARTMENT_ID } from "~/utils/config";
 
 export type Field<T extends keyof TnaActionFormValues> = BaseField<T>;
 
 export const formFields = (action: string, user_department: number | undefined, isAdmin: boolean): Field<keyof TnaActionFormValues>[] => {
     const rules: Record<string, number> = {
-        "PP MEETING DATE": 4,
-        "HANDOVER DATE": 2,
-        "ETD DATE": 2,
+        "PP MEETING DATE": QUALITY_DEPARTMENT_ID,
+        "HANDOVER DATE": COMMERCIAL_DEPARTMENT_ID,
+        "ETD DATE": COMMERCIAL_DEPARTMENT_ID,
     };
-
-    const MERCHANDISING_DEPARTMENT = 1;
 
     const allowActualDateEdit = rules[action]
         ? user_department === rules[action]
-        : user_department === MERCHANDISING_DEPARTMENT;
+        : user_department === MERCHANDISING_DEPARTMENT_ID;
 
     return [
         {

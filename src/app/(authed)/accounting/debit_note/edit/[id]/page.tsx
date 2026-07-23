@@ -58,7 +58,6 @@ const EditDebitNotePage = ({ params }: ParamsProp) => {
                 })).filter((detail) => detail.db_id === undefined),
             };
 
-            console.log("Submitting update for debit note with payload:", payload);
             await updateDebitNote.mutateAsync(payload);
             toast.success("Debit Note updated successfully!");
         }

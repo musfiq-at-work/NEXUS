@@ -3,7 +3,6 @@ import type { TNAPlanningFormValues } from "../config/formSchema";
 import { useFieldArray, type FieldErrors } from "react-hook-form";
 import type { useTnaPlansForm } from "../config/useTnaPlansForm";
 import { tableFormColumns } from "../actionConfig/tableFormColumns";
-import { formFields } from "../actionConfig/tableFormFields";
 import React from "react";
 
 type Props = {
@@ -21,6 +20,7 @@ const ActionDetails = (props: Props) => {
         control: methods.control,
         name: "details",
     });
+
 
     return (
         <TableForm 

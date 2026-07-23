@@ -32,10 +32,6 @@ const NewDebitNotePage = () => {
         }
     });
 
-    useEffect(() => {
-        console.log("Validation Errors:", validationError);
-    }, [validationError]);
-
     const onSubmitAll =  handleSubmit(async (debitNoteData) => {
         try {
             setIsLoading(true);

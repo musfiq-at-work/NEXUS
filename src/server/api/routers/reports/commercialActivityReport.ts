@@ -318,7 +318,6 @@ export const activityReportRouter = createTRPCRouter({
                 return Array.from(new Uint8Array(buffer));
             }
             catch (error) {
-                console.log("Error generating Commercial Activity Report:", error);
                 handlePrismaError(error);
             }
         })

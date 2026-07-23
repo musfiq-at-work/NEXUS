@@ -45,8 +45,6 @@ export const crossPaymentsRouter = createTRPCRouter({
             try {
                 const can_add = ctx.permissions[m.CROSS_PAYMENT]?.can_add;
 
-                console.log('input', input);
-
                 if (!can_add) {
                     throw new TRPCError({
                         code: "FORBIDDEN",
@@ -144,7 +142,6 @@ export const crossPaymentsRouter = createTRPCRouter({
                 })
             }
             catch (error) {
-                console.log('Error in addCrossPayment:', error);
                 handlePrismaError(error);
             }
         }),

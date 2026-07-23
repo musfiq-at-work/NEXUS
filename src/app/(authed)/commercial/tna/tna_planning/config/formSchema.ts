@@ -12,8 +12,8 @@ export type TNAPlanningDetailsFormValues = z.infer<typeof TNAPlanningDetails>;
 // Define the form fields schema using Zod
 export const tnaPlanningSchema = z.object({
     db_id: z.string().optional(),
-    factory_invoice: z.number().optional(),
-    tna_template: z.number().optional(),
+    factory_invoice: z.string().optional(),
+    tna_template: z.string().optional(),
     details: z.array(TNAPlanningDetails).optional(),
 });
 

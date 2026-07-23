@@ -1,7 +1,7 @@
 import type { inferRouterOutputs } from '@trpc/server';
 import type { 
     lcTransferRouter, factoryInvoiceRouter, rdlInvoiceRouter, documentSubmissionRouter,
-    commercialTnaTemplatesRouter
+    commercialTnaTemplatesRouter, commercialTnaPlanRouter
 } from "~/server/api";
 
 // LC Transfer types
@@ -31,3 +31,8 @@ export type GetDocumentSubmissionByIdTypes = DocumentSubmissionRouterOutput['get
 type TnaTemplateRouterOutput = inferRouterOutputs<typeof commercialTnaTemplatesRouter>;
 
 export type GetTNATemplateByIdTypes = TnaTemplateRouterOutput['getTnaTemplateById'];
+
+// TNA Planning Types
+type TnaPlanningRouterOutput = inferRouterOutputs<typeof commercialTnaPlanRouter>;
+
+export type GetTNAPlanByIdTypes = TnaPlanningRouterOutput['getTnaPlanById'];

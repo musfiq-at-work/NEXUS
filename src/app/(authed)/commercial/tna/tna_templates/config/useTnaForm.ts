@@ -5,6 +5,8 @@ import { formSchema } from "./formSchema";
 import type { FormValues } from "./formSchema";
 import { formFields } from "./formFields";
 import type { GetTNATemplateByIdTypes } from "~/types/commercialAPITypes";
+import { api } from "~/trpc/react";
+import { skipToken } from "@tanstack/react-query";
 
 type TNAActions = NonNullable<GetTNATemplateByIdTypes>['actions'][number];
 
@@ -58,10 +60,28 @@ export const useTnaForm = (tnaData?: GetTNATemplateByIdTypes) => {
 
     const buyer_id = useWatch({ control, name: 'buyer_id' });
 
+    const terms = api.commercialTnaTemplates.getBuyerPaymentTerms.useQuery(
+        !!buyer_id ? {buyer_id: parseInt(buyer_id)} : skipToken
+    ).data ?? [];
+
+    let tnaTerms: { id: number; term_description: string }[];
+
+    const isEdit = !!tnaData
+
+    if(isEdit) {
+        const id = tnaData?.term_id;
+        const term = tnaData?.term;
+
+        tnaTerms = id && term ? [{ id: id, term_description: term }] : [];
+    }
+    else {
+        tnaTerms = terms;
+    }
+
     return { 
         methods, 
         handleSubmit, 
-        formFields: formFields({buyer_id: buyer_id}), 
+        formFields: formFields({tnaTerms, isEdit}), 
         validationError, 
         control 
     };
