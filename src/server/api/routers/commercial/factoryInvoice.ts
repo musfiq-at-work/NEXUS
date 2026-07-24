@@ -4,7 +4,7 @@ import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma } from "@prisma/client";
-import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID, FACTORY_INVOICE } from "~/utils/config";
+import { ACTUAL_EXFACTORY_DATE, ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID, FACTORY_INVOICE } from "~/utils/config";
 import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
 
 interface FactoryInvoiceListItem {
@@ -519,17 +519,41 @@ export const factoryInvoiceRouter = createTRPCRouter({
                     // Update factory invoice date in TNA
                     await tx.$executeRaw`
                         UPDATE commercial_tna_planning_details AS CTPD
-                        SET actual_date = FI.invoice_date
+                            SET actual_date = FI.invoice_date
                         FROM commercial_tna_planning AS CTP,
                             factory_invoice AS FI,
                             commercial_tna_templates_actions AS CTTA,
                             tna_actions AS TA
                         WHERE CTP.id = CTPD.commercial_tna_planning_id
-                        AND FI.id = CTP.factory_invoice_id
-                        AND CTTA.id = CTPD.commercial_tna_templates_actions_id
-                        AND TA.id = CTTA.tna_action_id
-                        AND TA.id = ${FACTORY_INVOICE}
-                        AND FI.id = ${createdInvoice.id};
+                            AND FI.id = CTP.factory_invoice_id
+                            AND CTTA.id = CTPD.commercial_tna_templates_actions_id
+                            AND TA.id = CTTA.tna_action_id
+                            AND TA.id = ${FACTORY_INVOICE}
+                            AND FI.id = ${createdInvoice.id};
+                    `;
+
+                    await tx.$executeRaw`
+                        UPDATE commercial_tna_planning_details AS ctpd
+                            SET actual_date = ex.min_exfactory_date
+                        FROM commercial_tna_planning AS ctp
+                            JOIN factory_invoice AS fi ON fi.id = ctp.factory_invoice_id
+                            JOIN (
+                                SELECT
+                                    fid.factory_invoice_id,
+                                    MIN(e.exfactory_date) AS min_exfactory_date
+                                FROM factory_invoice_details AS fid
+                                JOIN exfactory_shipments AS es ON es.id = fid.exfactory_shipment_id
+                                JOIN exfactory_orders AS eo ON eo.id = es.exfactory_orders_id
+                                JOIN exfactory AS e ON e.id = eo.exfactory_id
+                                GROUP BY fid.factory_invoice_id
+                            ) AS ex ON ex.factory_invoice_id = fi.id,
+                            commercial_tna_templates_actions AS ctta,
+                            tna_actions AS ta
+                        WHERE ctp.id = ctpd.commercial_tna_planning_id
+                            AND ctta.id = ctpd.commercial_tna_templates_actions_id
+                            AND ta.id = ctta.tna_action_id
+                            AND ta.id = ${ACTUAL_EXFACTORY_DATE}
+                            AND fi.id = ${createdInvoice.id};
                     `;
 
                     return createdInvoice;

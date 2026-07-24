@@ -5,6 +5,7 @@ export const FACTORY_INVOICE = 42;
 export const ACTUAL_EXFACTORY_DATE = 6;
 export const DOC_SUBMIT_TO_CUSTOMER = 44;
 export const PROCEED_DATE = 20;
+export const FACTORY_PAYMENT = 11;
 
 // level ids
 export const ADMIN_LEVEL_ID = 5;

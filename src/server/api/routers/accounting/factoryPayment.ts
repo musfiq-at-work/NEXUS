@@ -4,7 +4,7 @@ import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions } from "@prisma/client";
-import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
+import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID, FACTORY_PAYMENT } from "~/utils/config";
 import { currencyFormatter } from "~/utils/localNumberStrings";
 
 interface FactoryPayments {
@@ -447,6 +447,23 @@ export const factoryPaymentRouter = createTRPCRouter({
                                     factory_payment_no: factoryInvoice.factory_payment_no ?? null,
                                 },
                             });
+
+                            await tx.$executeRaw`
+                                UPDATE commercial_tna_planning_details AS CTPD
+                                    SET actual_date = FP.payment_date
+                                FROM commercial_tna_planning AS CTP,
+                                    factory_invoice AS FI,
+                                    commercial_tna_templates_actions AS CTTA,
+                                    tna_actions AS TA,
+                                    factory_payments AS FP
+                                WHERE CTP.id = CTPD.commercial_tna_planning_id
+                                    AND FI.id = CTP.factory_invoice_id
+                                    AND CTTA.id = CTPD.commercial_tna_templates_actions_id
+                                    AND TA.id = CTTA.tna_action_id
+                                    AND FP.factory_invoice_id = FI.id
+                                    AND TA.id = ${FACTORY_PAYMENT}
+                                    AND FP.id = ${factoryInvoice.db_id};
+                            `;
                         } else {
                             await tx.factory_payments.create({
                                 data: {
@@ -460,6 +477,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                             });
                         }
                     }
+                
                 });
             }
             catch (error) {
@@ -538,7 +556,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                         });
                     }
 
-                    await tx.factory_payments.create({
+                    const newPayment = await tx.factory_payments.create({
                         data: {
                             document_submission_id: input.document_submission_id,
                             factory_invoice_id: crossPaymentDetail.factory_invoice_id,
@@ -556,6 +574,23 @@ export const factoryPaymentRouter = createTRPCRouter({
                             regularized: true,
                         },
                     });
+
+                    await tx.$executeRaw`
+                        UPDATE commercial_tna_planning_details AS CTPD
+                            SET actual_date = FP.payment_date
+                        FROM commercial_tna_planning AS CTP,
+                            factory_invoice AS FI,
+                            commercial_tna_templates_actions AS CTTA,
+                            tna_actions AS TA,
+                            factory_payments AS FP
+                        WHERE CTP.id = CTPD.commercial_tna_planning_id
+                            AND FI.id = CTP.factory_invoice_id
+                            AND CTTA.id = CTPD.commercial_tna_templates_actions_id
+                            AND TA.id = CTTA.tna_action_id
+                            AND FP.factory_invoice_id = FI.id
+                            AND TA.id = ${FACTORY_PAYMENT}
+                            AND FP.id = ${newPayment.id};
+                    `;
                 })
             }
             catch (error) {
