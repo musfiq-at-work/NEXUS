@@ -9,7 +9,7 @@ type HeadingProps = {
 
 export const Heading = ({ className, as = 'h1', children, ...props }: HeadingProps) => {
     const variantClasses = {
-        h1: "text-[3.5rem] py-1 font-semibold text-primary-dark",
+        h1: "text-[3rem] py-1 font-semibold text-primary-dark",
         h2: "text-2xl pb-4 pt-2 font-semibold",
         h3: "text-xl py-2 font-medium",
         h4: "text-lg py-2 font-medium",

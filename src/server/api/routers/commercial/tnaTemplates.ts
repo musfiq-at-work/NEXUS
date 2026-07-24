@@ -102,28 +102,33 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
             }
 
             try {
-                const rows = await ctx.db.$queryRaw<(TNATemplateReturnType & { total_count: bigint })[]>`
-                    SELECT
-                        TT.ID,
-                        TT.TEMPLATE_NAME,
-                        B.BUYER_NAME,
-                        CONCAT(T.NAME, ' ', PT.tenor, ' ', PT.term_description) AS TERM
-                    FROM COMMERCIAL_TNA_TEMPLATES AS TT
-                    INNER JOIN BUYERS AS B ON TT.BUYER_ID = B.ID
-                    INNER JOIN PAYMENT_TERMS AS PT ON TT.PAYMENT_TERM_ID = PT.ID
-                    INNER JOIN TERMS AS T ON T.ID = PT.term_id
-                    ORDER BY TT.ADDED_AT DESC
+                const result = await ctx.db.$queryRaw<(TNATemplateReturnType & { total_count: bigint })[]>`
+                    WITH COMMERCIAL_TNA_TEMPLATES AS (
+                        SELECT
+                            TT.ID,
+                            TT.TEMPLATE_NAME,
+                            B.BUYER_NAME,
+                            CONCAT(T.NAME, ' ', PT.tenor, ' ', PT.term_description) AS TERM
+                        FROM COMMERCIAL_TNA_TEMPLATES AS TT
+                        INNER JOIN BUYERS AS B ON TT.BUYER_ID = B.ID
+                        INNER JOIN PAYMENT_TERMS AS PT ON TT.PAYMENT_TERM_ID = PT.ID
+                        INNER JOIN TERMS AS T ON T.ID = PT.term_id
+                        ORDER BY TT.ADDED_AT DESC
+                    )
+                    SELECT *,
+                        COUNT(*) OVER() AS TOTAL_COUNT
+                    FROM COMMERCIAL_TNA_TEMPLATES
                     LIMIT ${input.limit ?? 15}
                     OFFSET ${input.offset ?? 0};
                 `;
 
-                const totalCount = rows.length > 0 && rows[0] ? Number(rows[0].total_count) : 0;
 
-                const templates = rows.map(({ total_count: _, ...row }) => row);
+                const total = result.length > 0 ? Number(result[0]?.total_count) : 0;
+                const templates = result.map(({ total_count: _, ...invoice }) => invoice);
 
                 return {
                     templates,
-                    count: totalCount,
+                    count: total,
                 };
             } catch (error) {
                 handlePrismaError(error);
@@ -385,18 +390,25 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
 
             try {
                 const rows = await ctx.db.$queryRaw<(TNATemplateReturnType & { total_count: bigint })[]>`
-                    SELECT
-                        TT.ID,
-                        TT.TEMPLATE_NAME,
-                        B.BUYER_NAME
-                        COUNT(*) OVER() AS total_count
-                    FROM COMMERCIAL_TNA_TEMPLATES AS TT
-                    INNER JOIN BUYERS AS B ON TT.BUYER_ID = B.ID
-                    AND (
-                        B.BUYER_NAME ILIKE ${`%${input.query}%`}
-                        OR TT.TEMPLATE_NAME ILIKE ${`%${input.query}%`}
+                    WITH COMMERCIAL_TNA_TEMPLATES AS (
+                        SELECT
+                            TT.ID,
+                            TT.TEMPLATE_NAME,
+                            B.BUYER_NAME,
+                            CONCAT(T.NAME, ' ', PT.tenor, ' ', PT.term_description) AS TERM
+                        FROM COMMERCIAL_TNA_TEMPLATES AS TT
+                        INNER JOIN BUYERS AS B ON TT.BUYER_ID = B.ID
+                        INNER JOIN PAYMENT_TERMS AS PT ON TT.PAYMENT_TERM_ID = PT.ID
+                        INNER JOIN TERMS AS T ON T.ID = PT.term_id
+                        WHERE (
+                            B.BUYER_NAME ILIKE ${`%${input.query}%`}
+                            OR TT.TEMPLATE_NAME ILIKE ${`%${input.query}%`}
+                        )
+                        ORDER BY TT.ADDED_AT DESC
                     )
-                    ORDER BY TT.ADDED_AT DESC
+                    SELECT *,
+                        COUNT(*) OVER() AS TOTAL_COUNT
+                    FROM COMMERCIAL_TNA_TEMPLATES
                     LIMIT ${input.limit ?? 15}
                     OFFSET ${input.offset ?? 0};
                 `;
