@@ -47,6 +47,7 @@ const sideBarConfig: Record<number, {href: string;}> = {
     [m.TNA_BASE_ACTION]: { href: "/library/tna_base_action" },
     [m.SC_CONTACT_PERSON]: { href: "/library/sc_contact_person" },
     [m.SHIPMENT_TOLERANCE]: { href: "/library/shipment_tolerance" },
+    [m.LIBRARY_COMMISSION_DISTRIBUTION]: {href: "/library/commission_percentage" },
 
     // Merchandising Module
     [m.MERCHANDISING]: { href: "/merchandising" },
