@@ -1,10 +1,10 @@
 import { api } from "~/trpc/react";
-import type { OrderSummaryReportFormValues } from "./formSchema";
+import type { ActivityReportFormValues } from "./formSchema";
 import type { BaseField } from "~/types/form";
 
-export type Field<T extends keyof OrderSummaryReportFormValues> = BaseField<T>;
+export type Field<T extends keyof ActivityReportFormValues> = BaseField<T>;
 
-export const useFormFields = (): Field<keyof OrderSummaryReportFormValues>[] => {
+export const useFormFields = (): Field<keyof ActivityReportFormValues>[] => {
     const buyers = api.buyers.getAllBuyersByTeam.useQuery().data ?? [];
 
     return [

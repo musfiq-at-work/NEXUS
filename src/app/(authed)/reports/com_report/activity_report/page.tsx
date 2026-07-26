@@ -2,7 +2,7 @@
 
 import { Button, Form, Loader, Wrapper } from "~/components";
 import React, { useState } from "react";
-import { useOrderSummaryReport } from "./config/useOrderSummaryReport";
+import { useActivityReport } from "./config/useActivityReport";
 import { api } from "~/trpc/react";
 import { toast } from "sonner";
 import { parseTRPCError } from "~/utils/parseTRPCError";
@@ -20,7 +20,7 @@ const OrderSummaryReportPage = () => {
 	const [error, setError] = useState<string | null>(null);
 
 	// Form setup
-	const { methods, handleSubmit, formFields, validationError, control } = useOrderSummaryReport();
+	const { methods, handleSubmit, formFields, validationError, control } = useActivityReport();
 	
 	// TRPC utils    
 	const getPdfDataMutation = api.activityReportRouter.getCommercialActivityReport.useMutation({

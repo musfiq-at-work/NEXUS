@@ -67,3 +67,4 @@ export { salesReportRouter } from "./routers/reports/salesReport";
 export { exportReportRouter } from "./routers/reports/exportReport";
 export { orderSummaryReportRouter } from "./routers/reports/orderSummaryReport";
 export { activityReportRouter } from "./routers/reports/commercialActivityReport";
+export { exportSummaryLcWiseRouter } from "./routers/reports/exportSummaryLcWise";
