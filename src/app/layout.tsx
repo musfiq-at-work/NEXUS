@@ -4,6 +4,7 @@ import { type Metadata } from "next";
 import { Poppins, Rajdhani, Lato } from "next/font/google";
 import { TRPCReactProvider } from "~/trpc/react";
 import { Toaster } from 'sonner';
+import { headers } from "next/headers";
 
 export const metadata: Metadata = {
   title: "RDL Nexus",
@@ -29,20 +30,23 @@ const lato = Lato({
   weight: ["400", "700"],
 })
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <html lang="en" className={`${poppins.variable} ${rajdhani.variable} ${lato.variable}`}>
-      <body>
-        <div>
-          <TRPCReactProvider>
-            {children}
-            <div id='portal-root' /> {/* Global portal root */}
-            <Toaster position="top-right" />
-          </TRPCReactProvider>
-        </div>
-      </body>
-    </html>
-  );
+export default async function RootLayout({children}: Readonly<{ children: React.ReactNode }>) {
+  	const nonce = (await headers()).get("x-nonce") ?? undefined;
+
+	return (
+		<html lang="en" className={`${poppins.variable} ${rajdhani.variable} ${lato.variable}`}>
+			<head>
+				<meta property="csp-nonce" content={nonce} />
+			</head>
+			<body>
+				<div>
+					<TRPCReactProvider>
+						{children}
+						<div id='portal-root' /> {/* Global portal root */}
+						<Toaster position="top-right" />
+					</TRPCReactProvider>
+				</div>
+			</body>
+		</html>
+	);
 }

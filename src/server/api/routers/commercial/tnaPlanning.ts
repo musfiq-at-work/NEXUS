@@ -4,7 +4,7 @@ import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma } from "@prisma/client";
-import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
+import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID, ETD_DATE_COMMERCIAL, ETD_DATE_DB_ID, HANDOVER_DATE_DB_ID, HANDOVER_TO_FORWARDER } from "~/utils/config";
 
 interface CommercialTNAPlanning {
     invoice_no: string;
@@ -149,7 +149,7 @@ export const commercialTnaPlanRouter = createTRPCRouter({
                             OR CTT.TEMPLATE_NAME ILIKE '%' || ${input.query} || '%'
                         )
                         GROUP BY FI.ID, B.ID, F.ID, CTT.ID, CTP.id
-                        ORDER BY ADDED_AT
+                        ORDER BY ADDED_AT DESC
                     )
                     SELECT 
                         *,
@@ -286,7 +286,51 @@ export const commercialTnaPlanRouter = createTRPCRouter({
                                 }
                             })
                         })
-                    )
+                    );
+
+                    await tx.$executeRaw`
+                        UPDATE tna_plan_details AS TPD
+                            SET actual_date = CTPD.actual_date
+                        FROM commercial_tna_planning_details AS CTPD,
+                            commercial_tna_planning AS CTP,
+                            commercial_tna_templates_actions AS CTTA,
+                            factory_invoice AS FI,
+                            factory_invoice_details AS FID, 
+                            exfactory_shipments AS ES,
+                            tna_template_actions AS TTA
+                        WHERE CTP.id = CTPD.commercial_tna_planning_id
+                            AND FI.id = CTP.factory_invoice_id
+                            AND CTTA.id = CTPD.commercial_tna_templates_actions_id
+                            AND FID.factory_invoice_id = FI.id
+                            AND ES.id = FID.exfactory_shipment_id
+                            AND TPD.shipment_id = ES.shipment_details_id
+                            AND TTA.id = TPD.tna_template_action_id
+                            AND TTA.tna_action_id = ${ETD_DATE_DB_ID}
+                            AND CTTA.tna_action_id = ${ETD_DATE_COMMERCIAL}
+                            AND CTP.id = ${input.id};
+                    `;
+                    
+                    await tx.$executeRaw`
+                        UPDATE tna_plan_details AS TPD
+                            SET actual_date = CTPD.actual_date
+                        FROM commercial_tna_planning_details AS CTPD,
+                            commercial_tna_planning AS CTP,
+                            commercial_tna_templates_actions AS CTTA,
+                            factory_invoice AS FI,
+                            factory_invoice_details AS FID, 
+                            exfactory_shipments AS ES,
+                            tna_template_actions AS TTA
+                        WHERE CTP.id = CTPD.commercial_tna_planning_id
+                            AND FI.id = CTP.factory_invoice_id
+                            AND CTTA.id = CTPD.commercial_tna_templates_actions_id
+                            AND FID.factory_invoice_id = FI.id
+                            AND ES.id = FID.exfactory_shipment_id
+                            AND TPD.shipment_id = ES.shipment_details_id
+                            AND TTA.id = TPD.tna_template_action_id
+                            AND TTA.tna_action_id = ${HANDOVER_DATE_DB_ID}
+                            AND CTTA.tna_action_id = ${HANDOVER_TO_FORWARDER}
+                            AND CTP.id = ${input.id};
+                    `;
                 })
             }
             catch (error){

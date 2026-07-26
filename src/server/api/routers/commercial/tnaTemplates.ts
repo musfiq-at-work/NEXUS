@@ -486,9 +486,7 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
                     SELECT
                         TT.ID, TT.TEMPLATE_NAME
                     FROM COMMERCIAL_TNA_TEMPLATES AS TT
-                        INNER JOIN BUYER_ORDERS AS BO 
-                            ON BO.BUYER_ID = TT.BUYER_ID
-                            AND BO.TEAM_ID = TT.TEAM_ID
+                        INNER JOIN BUYER_ORDERS AS BO ON BO.BUYER_ID = TT.BUYER_ID AND BO.TEAM_ID = TT.TEAM_ID
                     WHERE BO.ID = ${input.order_id};
                 `;
 
@@ -520,5 +518,4 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
 
             return paymentTerms;
         }),
-
 })
