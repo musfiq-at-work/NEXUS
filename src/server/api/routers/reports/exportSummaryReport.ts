@@ -128,7 +128,7 @@ export const exportSummaryReportRouter = createTRPCRouter({
                             COALESCE(SUM(ED.TOTAL_SHIPPED_QUANTITY)::NUMERIC(18, 2)::TEXT, '-') AS TOTAL_SHIPPED_QUANTITY,
                             COALESCE((SUM(ED.TOTAL_SHIPPED_QUANTITY) - SUM(OD.QUANTITY))::TEXT, '-') AS BALANCE_QUANTITY,
                             COALESCE(SUM(ED.EXPORT_VALUE)::TEXT, '-') AS TOTAL_SHIP_VALUE,
-                            COALESCE((SUM(OD.RDL_VALUE) - SUM(ED.EXPORT_VALUE))::NUMERIC(18, 2)::TEXT, '-') AS BALANCE_VALUE,
+                            COALESCE((SUM(ED.EXPORT_VALUE) - SUM(OD.RDL_VALUE))::NUMERIC(18, 2)::TEXT, '-') AS BALANCE_VALUE,
                             COALESCE(PV.PROCEED_AMOUNT::NUMERIC(18, 2)::TEXT, '-') AS PROCEED_AMOUNT,
                             COALESCE(FF.FDD_VALUE::NUMERIC(18, 2)::TEXT, '-') AS FACTORY_FDD_VALUE
                         FROM lc_master AS LC
@@ -145,7 +145,92 @@ export const exportSummaryReportRouter = createTRPCRouter({
                     `;
                 }
                 else {
-                    report = []
+                    const dateFilter = (!!input.fromDate && !!input.toDate) 
+                        ? Prisma.sql`HAVING MAX(OD.LAST_SHIP_DATE + 15) BETWEEN ${input.fromDate} and ${input.toDate}`
+                        : Prisma.empty;
+
+                    report = await ctx.db.$queryRaw<ExportSummary[]>`
+                        WITH ORDER_DETAILS AS (
+                            SELECT
+                                BO.id AS ORDER_ID,
+                                SUM(SID.QUANTITY) AS QUANTITY,
+                                SUM(SID.QUANTITY) * SD.FOB_RATE / BO.currency_rate AS RDL_VALUE,
+                                MAX(FSD.exfactory_date) AS LAST_SHIP_DATE
+                            FROM shipment_details AS SD 
+                                INNER JOIN shipment_item_details AS SID ON SID.shipment_detail_id = SD.id	
+                                INNER JOIN order_styles AS OS ON OS.id = SD.order_style_id
+                                INNER JOIN buyer_orders AS BO ON BO.id = OS.order_id
+                                INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = SD.id
+                            GROUP BY BO.ID, SD.ID
+                        ),
+                        EXFACTORY_DETAILS AS (
+                            SELECT 
+                                BO.id AS ORDER_ID,
+                                SUM(ES.delivery_quantity) AS TOTAL_SHIPPED_QUANTITY,
+                                SUM(ES.delivery_quantity) * SD.FOB_RATE / BO.currency_rate AS EXPORT_VALUE,
+                                MAX(E.EXFACTORY_DATE) AS LAST_SHIPMENT_DATE
+                            FROM exfactory_shipments AS ES 
+                                INNER JOIN shipment_details AS SD ON SD.id = ES.shipment_details_id
+                                INNER JOIN order_styles AS OS ON OS.id = SD.order_style_id
+                                INNER JOIN buyer_orders AS BO ON BO.id = OS.order_id
+                                INNER JOIN exfactory_orders AS EO ON EO.id = ES.exfactory_orders_id
+                                INNER JOIN exfactory AS E ON EO.exfactory_id = E.id
+                            GROUP BY BO.ID, SD.ID
+                        ),
+                        FACTORY_FDD AS (
+                            SELECT 
+                                FI.sales_contract_id AS SC_ID,
+                                SUM(FP.PAID_AMOUNT) AS FDD_VALUE
+                            FROM factory_payments AS FP 
+                                INNER JOIN factory_invoice AS FI ON FI.id = FP.factory_invoice_id
+                            GROUP BY FI.sales_contract_id 
+                        ),
+                        PROCEED_VALUE AS (
+                            SELECT
+                                DS.sales_contract_id AS SC_ID,
+                                SUM(PRD.REALIZED_AMOUNT / C.currency_rate) AS PROCEED_AMOUNT
+                            FROM document_submissions AS DS 
+                                INNER JOIN proceed_realization AS PR ON PR.document_submission_id = DS.id
+                                INNER JOIN proceed_realization_details AS PRD ON PRD.realization_id = PR.id
+                                INNER JOIN (
+                                    SELECT
+                                        RID.rdl_invoice_id,
+                                        AVG(BO.currency_rate) AS currency_rate
+                                    FROM rdl_invoice_details AS RID
+                                        INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
+                                        INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
+                                        INNER JOIN order_styles AS OS ON OS.id = SD.order_style_id
+                                        INNER JOIN buyer_orders AS BO ON BO.id = OS.order_id
+                                    GROUP BY RID.rdl_invoice_id
+                                ) C ON C.rdl_invoice_id = PRD.rdl_invoice_id
+                            GROUP BY DS.sales_contract_id
+                        )
+                        SELECT 
+                            B.buyer_name AS BUYER_NAME,
+                            SC.SALES_CONTRACT_NO AS LC_SC_NO,
+                            SUM(OD.RDL_VALUE) AS TOTAL_ORDER_VALUE,
+                            TO_CHAR(MAX(OD.LAST_SHIP_DATE), 'DD Mon YYYY') AS LATEST_SHIPMENT_DATE,
+                            COALESCE(TO_CHAR(MAX(ED.LAST_SHIPMENT_DATE), 'DD Mon YYYY'), '-') AS LATEST_EXFACTORY_DATE,
+                            TO_CHAR(MAX(OD.LAST_SHIP_DATE + 15), 'DD Mon YYYY') AS EXPIRE_DATE,
+                            SUM(OD.QUANTITY) AS TOTAL_ORDER_QUANTITY,
+                            COALESCE(SUM(ED.TOTAL_SHIPPED_QUANTITY)::NUMERIC(18, 2)::TEXT, '-') AS TOTAL_SHIPPED_QUANTITY,
+                            COALESCE((SUM(ED.TOTAL_SHIPPED_QUANTITY) - SUM(OD.QUANTITY))::TEXT, '-') AS BALANCE_QUANTITY,
+                            COALESCE(SUM(ED.EXPORT_VALUE)::TEXT, '-') AS TOTAL_SHIP_VALUE,
+                            COALESCE((SUM(ED.EXPORT_VALUE) - SUM(OD.RDL_VALUE))::NUMERIC(18, 2)::TEXT, '-') AS BALANCE_VALUE,
+                            COALESCE(PV.PROCEED_AMOUNT::NUMERIC(18, 2)::TEXT, '-') AS PROCEED_AMOUNT,
+                            COALESCE(FF.FDD_VALUE::NUMERIC(18, 2)::TEXT, '-') AS FACTORY_FDD_VALUE
+                        FROM sales_contracts AS SC
+                            INNER JOIN sales_contract_details AS SCD ON SCD.sales_contract_id = SC.id
+                            INNER JOIN buyer_orders AS BO ON BO.id = SCD.order_id
+                            INNER JOIN buyers AS B ON B.id = SC.buyer_id
+                            INNER JOIN ORDER_DETAILS AS OD ON OD.ORDER_ID = SCD.order_id
+                            LEFT JOIN EXFACTORY_DETAILS AS ED ON ED.ORDER_ID = SCD.order_id
+                            LEFT JOIN FACTORY_FDD AS FF ON FF.SC_ID = SC.ID
+                            LEFT JOIN PROCEED_VALUE AS PV ON PV.SC_ID = SC.ID
+                            ${(input.buyerIds ?? []).length > 0 ? Prisma.sql`WHERE` : Prisma.empty} ${buyerFilter}
+                        GROUP BY B.ID, SC.ID, PV.PROCEED_AMOUNT, FF.FDD_VALUE
+                        ${dateFilter};
+                    `;
                 }
 
                 const table = report.map(row => ({
