@@ -19,8 +19,8 @@ export const useFormFields = ({LCs}: {LCs: LCs[]}): Field<keyof ExportSummaryRep
             placeholder: "Select type",
             type: "select",
             options: [
-                { label: 'LC Wise Summary', value: 'LC' }, 
-                { label: 'SC Wise Summary', value: 'SC' }
+                { label: 'LC Summary', value: 'LC' }, 
+                { label: 'Sales Contract Summary', value: 'SC' }
             ],
             optional: true,
         },
