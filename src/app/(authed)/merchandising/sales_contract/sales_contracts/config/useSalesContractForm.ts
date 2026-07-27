@@ -47,10 +47,10 @@ export const useSalesContractForm = (salesContractData?: GetSalesContractByIdTyp
             negotiation_bank_id: undefined,
             partial_shipment: true,
             destination_id: undefined,
-            freight_terms_id: undefined,
+            freight_terms_id: '1',
             consignee_ids: [],
             company_id: undefined,
-            contact_person_id: undefined,
+            contact_person_id: '1',
             details: [],
         },
     });

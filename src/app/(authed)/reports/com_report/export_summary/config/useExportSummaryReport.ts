@@ -24,7 +24,7 @@ export const useExportSummaryReport = () => {
     const buyerIds = useWatch({ control, name: "buyer_ids" });
     const base = useWatch({ control, name: "base" });
 
-    const { data: LCs } = api.exportSummaryLcWise.getLCs.useQuery(
+    const { data: LCs } = api.exportSummaryReport.getLCs.useQuery(
         (buyerIds ?? []).length > 0 ? {buyerIds: buyerIds, base: base} : skipToken
     )
 

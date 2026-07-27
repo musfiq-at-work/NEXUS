@@ -85,6 +85,7 @@ export const styles = StyleSheet.create({
         fontSize: "7px",
         height: "auto",
         borderRightWidth: 0.75,
+        fontFamily: 'Roboto',
         borderRightColor: tableBorderColor,
         display: "flex",
         flexDirection: "row",
