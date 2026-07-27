@@ -46,7 +46,7 @@ export const useFormFields = ({LCs}: {LCs: LCs[]}): Field<keyof ExportSummaryRep
         },
         {
             name: 'lcIds',
-            label: "Select LCs",
+            label: "Select LC/SCs",
             placeholder: "Select LC, or leave blank for all",
             type: "multiselect",
             options: LCs.map((lc) => ({ label: lc.sc_lc_no, value: lc.id })),

@@ -154,28 +154,29 @@ export const exportSummaryReportRouter = createTRPCRouter({
                             SELECT
                                 BO.id AS ORDER_ID,
                                 SUM(SID.QUANTITY) AS QUANTITY,
-                                SUM(SID.QUANTITY) * SD.FOB_RATE / BO.currency_rate AS RDL_VALUE,
+                                SUM(SID.QUANTITY * FSD.FACTORY_RATE) / BO.currency_rate AS RDL_VALUE,
                                 MAX(FSD.exfactory_date) AS LAST_SHIP_DATE
                             FROM shipment_details AS SD 
                                 INNER JOIN shipment_item_details AS SID ON SID.shipment_detail_id = SD.id	
                                 INNER JOIN order_styles AS OS ON OS.id = SD.order_style_id
                                 INNER JOIN buyer_orders AS BO ON BO.id = OS.order_id
                                 INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = SD.id
-                            GROUP BY BO.ID, SD.ID
+                            GROUP BY BO.ID
                         ),
                         EXFACTORY_DETAILS AS (
                             SELECT 
                                 BO.id AS ORDER_ID,
                                 SUM(ES.delivery_quantity) AS TOTAL_SHIPPED_QUANTITY,
-                                SUM(ES.delivery_quantity) * SD.FOB_RATE / BO.currency_rate AS EXPORT_VALUE,
+                                SUM(ES.delivery_quantity * FSD.FACTORY_RATE) / BO.currency_rate AS EXPORT_VALUE,
                                 MAX(E.EXFACTORY_DATE) AS LAST_SHIPMENT_DATE
-                            FROM exfactory_shipments AS ES 
-                                INNER JOIN shipment_details AS SD ON SD.id = ES.shipment_details_id
-                                INNER JOIN order_styles AS OS ON OS.id = SD.order_style_id
-                                INNER JOIN buyer_orders AS BO ON BO.id = OS.order_id
+                            FROM buyer_orders AS BO
+                                INNER JOIN order_styles AS OS ON BO.id = OS.order_id
+                                INNER JOIN shipment_details AS SD ON SD.order_style_id = OS.id
+                                INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = SD.id
+                                INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = SD.id
                                 INNER JOIN exfactory_orders AS EO ON EO.id = ES.exfactory_orders_id
                                 INNER JOIN exfactory AS E ON EO.exfactory_id = E.id
-                            GROUP BY BO.ID, SD.ID
+                            GROUP BY BO.ID
                         ),
                         FACTORY_FDD AS (
                             SELECT 
