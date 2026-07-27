@@ -12,6 +12,7 @@ interface ExportSummary {
     buyer_name: string;
     lc_sc_no: string;
     total_order_value: string;
+    total_rdl_export_value?: string;
     latest_shipment_date: string;
     latest_exfactory_date: string;
     expire_date: string;
@@ -141,7 +142,8 @@ export const exportSummaryReportRouter = createTRPCRouter({
                             LEFT JOIN PROCEED_VALUE AS PV ON PV.lc_id = LC.ID
                         WHERE ${dateFilter} 
                             ${and} ${buyerFilter}
-                        GROUP BY B.ID, LC.ID, PV.PROCEED_AMOUNT, FF.FDD_VALUE;
+                        GROUP BY B.ID, LC.ID, PV.PROCEED_AMOUNT, FF.FDD_VALUE
+                        ORDER BY LC.ADDED_AT DESC;
                     `;
                 }
                 else {
@@ -154,6 +156,7 @@ export const exportSummaryReportRouter = createTRPCRouter({
                             SELECT
                                 BO.id AS ORDER_ID,
                                 SUM(SID.QUANTITY) AS QUANTITY,
+                                SUM(SID.QUANTITY * SD.FOB_RATE) / BO.currency_rate AS RDL_EXPORT_VALUE,
                                 SUM(SID.QUANTITY * FSD.FACTORY_RATE) / BO.currency_rate AS RDL_VALUE,
                                 MAX(FSD.exfactory_date) AS LAST_SHIP_DATE
                             FROM shipment_details AS SD 
@@ -210,6 +213,7 @@ export const exportSummaryReportRouter = createTRPCRouter({
                             B.buyer_name AS BUYER_NAME,
                             SC.SALES_CONTRACT_NO AS LC_SC_NO,
                             SUM(OD.RDL_VALUE) AS TOTAL_ORDER_VALUE,
+                            SUM(OD.RDL_EXPORT_VALUE) AS TOTAL_RDL_EXPORT_VALUE,
                             TO_CHAR(MAX(OD.LAST_SHIP_DATE), 'DD Mon YYYY') AS LATEST_SHIPMENT_DATE,
                             COALESCE(TO_CHAR(MAX(ED.LAST_SHIPMENT_DATE), 'DD Mon YYYY'), '-') AS LATEST_EXFACTORY_DATE,
                             TO_CHAR(MAX(OD.LAST_SHIP_DATE + 15), 'DD Mon YYYY') AS EXPIRE_DATE,
@@ -230,7 +234,8 @@ export const exportSummaryReportRouter = createTRPCRouter({
                             LEFT JOIN PROCEED_VALUE AS PV ON PV.SC_ID = SC.ID
                             ${(input.buyerIds ?? []).length > 0 ? Prisma.sql`WHERE` : Prisma.empty} ${buyerFilter}
                         GROUP BY B.ID, SC.ID, PV.PROCEED_AMOUNT, FF.FDD_VALUE
-                        ${dateFilter};
+                        ${dateFilter}
+                        ORDER BY SC.ADDED_AT DESC;
                     `;
                 }
 
@@ -246,6 +251,7 @@ export const exportSummaryReportRouter = createTRPCRouter({
                     balance_quantity: quantityFormatter(safeNumber(row.balance_quantity)),
                     total_ship_value: currencyFormatter(safeNumber(row.total_ship_value), '$'),
                     balance_value: currencyFormatter(safeNumber(row.balance_value), '$'),
+                    total_rdl_export_value: currencyFormatter(safeNumber(row.total_rdl_export_value), '$'),
                     proceed_amount: currencyFormatter(safeNumber(row.proceed_amount), '$'),
                     factory_fdd_value: currencyFormatter(safeNumber(row.factory_fdd_value), '$'),
                 }))
@@ -256,6 +262,7 @@ export const exportSummaryReportRouter = createTRPCRouter({
                 const balance_quantity = report.reduce((sum, item) => sum + safeNumber(item.balance_quantity), 0);
                 const total_ship_value = report.reduce((sum, item) => sum + safeNumber(item.total_ship_value), 0);
                 const balance_value = report.reduce((sum, item) => sum + safeNumber(item.balance_value), 0);
+                const total_rdl_export_value = report.reduce((sum, item) => sum + safeNumber(item.total_rdl_export_value), 0);
                 const proceed_amount = report.reduce((sum, item) => sum + safeNumber(item.proceed_amount), 0);
                 const factory_fdd_value = report.reduce((sum, item) => sum + safeNumber(item.factory_fdd_value), 0);
 
@@ -266,6 +273,7 @@ export const exportSummaryReportRouter = createTRPCRouter({
                     balance_quantity: quantityFormatter(balance_quantity),
                     total_ship_value: currencyFormatter(total_ship_value, '$'),
                     balance_value: currencyFormatter(balance_value, '$'),
+                    total_rdl_export_value: currencyFormatter(total_rdl_export_value, '$'),
                     proceed_amount: currencyFormatter(proceed_amount, '$'),
                     factory_fdd_value: currencyFormatter(factory_fdd_value, '$')
                 }

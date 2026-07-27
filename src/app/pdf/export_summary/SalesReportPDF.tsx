@@ -16,34 +16,36 @@ registerPdfFonts();
 interface SalesReportPDFProps {
 	data: GetPDFDataOutput;
 	base?: string;
-	fromDate: string;
-	toDate: string;
 }
 
-const SalesReportPDF = ({ data, base, fromDate, toDate }: SalesReportPDFProps) => {
+const SalesReportPDF = ({ data, base }: SalesReportPDFProps) => {
 	const title = `${base === 'LC' ? 'L/C' : 'SALES CONTRACT'} EXPORT SUMMARY`;
 
 	const {user} = useDecodedUser();
 
 	const tableColumns = [
 		{ key: 'buyer_name', label: 'Buyer Name', width: 80},
-		{ key: 'lc_sc_no', label: `${base === 'LC' ? 'Master LC No' : 'SALES CONTRACT'}`, width: 100 },
-		{ key: 'total_order_value', label: 'Total Master LC Value', width: 90 },
+		{ key: 'lc_sc_no', label: `${base === 'LC' ? 'Master LC No' : 'Sales Contract'}`, width: 80 },
+		{ key: 'total_order_value', label: `${base === 'LC' ? 'Total Master LC Value' : 'Total Sales Contract Value'}`, width: 80 },
 		{ key: 'latest_shipment_date', label: 'Last Ship Date', width: 80 },
 		{ key: 'latest_exfactory_date', label: 'Last Ex-factory Date', width: 80 },
 		{ key: 'expire_date', label: 'Expire Date', width: 80 },
 		{ key: 'total_order_quantity', label: 'Total Order Quantity', width: 80 },
 		{ key: 'total_shipped_quantity', label: 'Total Shipped Quantity', width: 80 },
 		{ key: 'balance_quantity', label: 'Balance Quantity', width: 80 },
-		{ key: 'total_ship_value', label: 'Ship Value', width: 90 },
+		{ key: 'total_ship_value', label: `${base === 'LC' ? 'Ship Value' : 'Factory Ship Value'}`, width: 90 },
 		{ key: 'balance_value', label: 'Balance Shipment Value', width: 80 },
 		{ key: 'proceed_amount', label: 'Proceed Amount', width: 80 },
 		{ key: 'factory_fdd_value', label: 'Factory FDD Value', width: 80 },
 	];
 
+	if(base === 'SC') { 
+		tableColumns.splice(11, 0, { key: 'total_rdl_export_value', label: 'RDL Export Value', width: 80 })
+	}
+
 	const results = [
-		{ label: "Total", value: 'Total', width: 180 },
-		{ label: "Total Order Value", value: data.totals.total_order_value, width: 90 },
+		{ label: "Total", value: 'Total', width: 160 },
+		{ label: "Total Order Value", value: data.totals.total_order_value, width: 80 },
 		{ label: "empty", value: '', width: 240 },
 		{ label: "total_order_quantity", value: data.totals.total_order_quantity, width: 80 },
 		{ label: "total_shipped_quantity", value: data.totals.total_shipped_quantity, width: 80 },
@@ -54,7 +56,9 @@ const SalesReportPDF = ({ data, base, fromDate, toDate }: SalesReportPDFProps) =
 		{ label: "factory_fdd_value", value: data.totals.factory_fdd_value, width: 80 },
 	];
 
-	const colWidth = { width: `${1000 / tableColumns.length}` };
+	if(base === 'SC') { 
+		results.splice(8, 0, { label: 'total_rdl_export_value', value: data.totals.total_rdl_export_value, width: 80 })
+	}
 
     return (
 		<Document

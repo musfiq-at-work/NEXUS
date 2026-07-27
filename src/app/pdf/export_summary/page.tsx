@@ -42,8 +42,6 @@ const PDF = () => {
             <SalesReportPDF 
                 data={data} 
                 base={base}
-                fromDate={fromDate}
-                toDate={toDate}
             />
         </PDFViewer>
     );
