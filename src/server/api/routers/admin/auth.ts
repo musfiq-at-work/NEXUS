@@ -28,108 +28,106 @@ export function getBrowserInfo(headers: Headers): string {
 
 export const authRouter = createTRPCRouter({
   // User authentication
-  login: publicProcedure
-    .input(z.object({
-        user_id: z.string(),
-        password: z.string(),
-      }),
+  	login: publicProcedure
+		.input(z.object({
+			user_id: z.string(),
+			password: z.string(),
+		}),
     ).mutation(async ({ ctx, input }) => {
-      const user = await ctx.db.users.findUnique({
-        select: {
-          id: true,
-          first_name: true,
-          last_name: true,
-          user_id: true,
-          email: true,
-          password: true,
-          hashed_password: true,
-          created_at: true,
-          phone_no: true,
-          is_active: true,
-          departments: {
-            select: {
-              id: true,
-              name: true
-            }
-          },
-          levels: {
-            select: {
-              id: true,
-              name: true
-            }
-          },
-        },
-        where: { 
-          user_id: input.user_id,
-          is_active: true
-        },
-      });
+		const user = await ctx.db.users.findUnique({
+			select: {
+				id: true,
+				first_name: true,
+				last_name: true,
+				user_id: true,
+				email: true,
+				password: true,
+				hashed_password: true,
+				created_at: true,
+				phone_no: true,
+				is_active: true,
+				departments: {
+					select: {
+						id: true,
+						name: true
+					}
+				},
+				levels: {
+					select: {
+						id: true,
+						name: true
+					}
+				},
+			},
+			where: { 
+				user_id: input.user_id,
+				is_active: true
+			},
+		});
 
-      // Validate user existence
-      if (!user) throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "User Not Found",
-      });
+		// Validate user existence
+		if (!user) throw new TRPCError({
+			code: "NOT_FOUND",
+			message: "User Not Found",
+		});
+		
+		if(user.is_active === false) {
+			throw new TRPCError({
+				code: "FORBIDDEN",
+				message: "User account is inactive",
+			});
+		}
 
-      
-      if(user.is_active === false) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "User account is inactive",
-        });
-      }
+		const isValid = await bcrypt.compare(input.password, user.hashed_password);
+		if (!isValid) throw new TRPCError({
+			code: "UNAUTHORIZED",
+			message: "Invalid password",
+		});
 
-      const isValid = await bcrypt.compare(input.password, user.hashed_password);
-      if (!isValid) throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message: "Invalid password",
-      });
+		// Generate JWT token
+		const token = signJwt({ 
+			id: user.id, 
+			user_id: user.user_id, 
+			first_name: user.first_name,
+			last_name: user.last_name,
+			department_id: user.departments.id,
+			department_name: user.departments.name,
+			level_id: user.levels?.id,
+			level_name: user.levels?.name,
+		});
 
-      // Generate JWT token
-      const token = signJwt({ 
-        id: user.id, 
-        user_id: user.user_id, 
-        first_name: user.first_name,
-        last_name: user.last_name,
-        department_id: user.departments.id,
-        department_name: user.departments.name,
-        level_id: user.levels?.id,
-        level_name: user.levels?.name,
-      });
+		// Store session in DB
+		await ctx.db.user_sessions.create({
+			data: {
+				user_id: user.id,
+				session_token: token,
+				ip: getClientIp(ctx.headers)?.replace(/^::ffff:/, ""),
+				browser: getBrowserInfo(ctx.headers),
+			},
+		});
 
-      // Store session in DB
-      await ctx.db.user_sessions.create({
-        data: {
-          user_id: user.id,
-          session_token: token,
-          ip: getClientIp(ctx.headers)?.replace(/^::ffff:/, ""),
-          browser: getBrowserInfo(ctx.headers),
-        },
-      });
+		// Set HttpOnly cookie
+		(await cookies()).set({
+			name: "access-token",
+			value: token,
+			httpOnly: true,      
+			path: "/",         
+			secure: process.env.NODE_ENV === "production",
+			sameSite: "lax", 
+			expires: new Date(Date.now() + 3600000 * 18) // 18 hours from now
+		});
 
-      // Set HttpOnly cookie
-      (await cookies()).set({
-        name: "access-token",
-        value: token,
-        httpOnly: true,      
-        path: "/",         
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax", 
-        expires: new Date(Date.now() + 3600000 * 18) // 18 hours from now
-      });
-
-      return { token, user };
+		return { token, user };
     }),
 
-  // Logout user and clear session cookie
-  logout: protectedProcedure.mutation(async () => {
-      try {
-        const cookiesStore = await cookies();
-        cookiesStore.delete("access-token"); 
-        return { success: true };
-      } catch (error) {
-        handlePrismaError(error);
-      }
+	// Logout user and clear session cookie
+	logout: protectedProcedure.mutation(async () => {
+		try {
+			const cookiesStore = await cookies();
+			cookiesStore.delete("access-token"); 
+			return { success: true };
+		} catch (error) {
+			handlePrismaError(error);
+		}
     }),
-
 });

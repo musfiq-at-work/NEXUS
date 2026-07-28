@@ -164,6 +164,7 @@ model users {
   commission_distribution_details_history                            commission_distribution_details_history[]
   commission_distribution_history                                    commission_distribution_history[]
   commission_invoice_history                                         commission_invoice_history[]
+  commission_percentage_history                                      commission_percentage_history[]
   companies_history_companies_history_action_byTousers               companies_history[]                            @relation("companies_history_action_byTousers")
   company_banks_history                                              company_banks_history[]
   countries_history_countries_history_action_byTousers               countries_history[]                            @relation("countries_history_action_byTousers")
@@ -970,6 +971,7 @@ model buyers {
   overseas_offices         overseas_offices?          @relation(fields: [overseas_office_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   commercial_tna_templates commercial_tna_templates[]
   commission_invoice       commission_invoice[]
+  commission_percentage    commission_percentage[]
   cross_payments           cross_payments[]
   cross_payments_metadata  cross_payments_metadata[]
   debit_note               debit_note[]
@@ -3050,6 +3052,27 @@ model commercial_tna_planning_details_history {
   action_by                          String?   @db.Uuid
   action_at                          DateTime? @default(now()) @db.Timestamp(6)
   users                              users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model commission_percentage {
+  id                  Int       @id @default(autoincrement())
+  buyer_id            Int?
+  other_percentage    Float?
+  overseas_percentage Float?
+  added_at            DateTime? @default(now()) @db.Timestamp(6)
+  buyers              buyers?   @relation(fields: [buyer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+}
+
+model commission_percentage_history {
+  id                    Int       @id(map: "commission_percentage_historty_pkey") @default(autoincrement())
+  commission_percentage Int?
+  buyer_id              Int?
+  other_percentage      Float?
+  overseas_percentage   Float?
+  action_type           actions?
+  action_by             String?   @db.Uuid
+  action_at             DateTime? @default(now()) @db.Timestamp(6)
+  users                 users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "commission_percentage_historty_action_by_fkey")
 }
 
 enum actions {

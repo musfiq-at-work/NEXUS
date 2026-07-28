@@ -1,14 +1,11 @@
 import { Document, Page, Text, View } from "@react-pdf/renderer";
-import { registerPdfFonts, styles, tableBorderColor } from "../components/pdfConfig";
+import { registerPdfFonts, styles } from "../components/pdfConfig";
 import { PrintByAndDate, RenaissanceLogo, ReportTitle, Table, TableSummary } from "../components";
-import { formatDate } from "~/utils/localDateString";
-
+import { useDecodedUser } from "~/hooks";
 import type { inferRouterOutputs } from '@trpc/server';
 import type { exportSummaryReportRouter } from '~/server/api/routers/reports/exportSummaryReport'
-import { useDecodedUser } from "~/hooks";
 
 type ExportSummaryReportOutput = inferRouterOutputs<typeof exportSummaryReportRouter>;
-
 type GetPDFDataOutput = ExportSummaryReportOutput['getExportSummary'];
 
 registerPdfFonts();

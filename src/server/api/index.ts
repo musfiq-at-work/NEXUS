@@ -34,6 +34,7 @@ export { handoverDatesRouter } from "./routers/library/handoverDates";
 export { tnaBaseActionRouter } from "./routers/library/tnaBaseAction";
 export { scContactPersonRouter } from "./routers/library/scContactPerson";
 export { toleranceLevelRouter } from "./routers/library/toleranceLevel";
+export { commissionPercentageRouter } from "./routers/library/commissionPercentage";
 
 // Merchandising routers
 export { buyerOrdersRouter } from "./routers/merchandising/buyerOrders";
