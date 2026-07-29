@@ -35,6 +35,7 @@ export { tnaBaseActionRouter } from "./routers/library/tnaBaseAction";
 export { scContactPersonRouter } from "./routers/library/scContactPerson";
 export { toleranceLevelRouter } from "./routers/library/toleranceLevel";
 export { commissionPercentageRouter } from "./routers/library/commissionPercentage";
+export { earlySettlementPercentageRoute } from "./routers/library/earlySettlementPercentage";
 
 // Merchandising routers
 export { buyerOrdersRouter } from "./routers/merchandising/buyerOrders";

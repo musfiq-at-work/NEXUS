@@ -49,11 +49,22 @@ const PermissionsTable = (props: PermissionsProps) => {
                                                     checked={updates[row.id]?.[col.key] ?? Boolean(row[col.key as keyof typeof row])}
                                                     onClick={(e) => handleClick(e, row.id, col.key)}
                                                     id={row.id}
+                                                    disabled={ // Disable checkboxes for Reports module except for 'View' permission
+                                                        row?.parent_module_name === 'Reports' && (
+                                                            col.key === 'can_add'
+                                                            || col.key === 'can_update'
+                                                            || col.key === 'can_delete'
+                                                        )
+                                                    }
                                                 />
                                             ) : (
                                                 (() => {
                                                     const value = row[col.key as keyof typeof row];
-                                                    return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ? String(value) : (value ? JSON.stringify(value) : "-");
+                                                    return typeof value === 'string' 
+                                                        || typeof value === 'number' 
+                                                        || typeof value === 'boolean' 
+                                                            ? String(value) 
+                                                            : (value ? JSON.stringify(value) : "-");
                                                 })()
                                             )}
                                         </TableCell>
@@ -71,7 +82,6 @@ const PermissionsTable = (props: PermissionsProps) => {
                     </div>
                 </>
             )}
-            
         </div>
     )
 }

@@ -178,6 +178,7 @@ model users {
   document_submission_factory_invoices_history                       document_submission_factory_invoices_history[]
   document_submissions_details_history                               document_submissions_details_history[]
   document_submissions_history                                       document_submissions_history[]
+  early_settlement_percentage_history                                early_settlement_percentage_history[]
   ev_permission_history                                              ev_permission_history[]
   ev_permissions                                                     ev_permissions[]
   exfactory_history                                                  exfactory_history[]
@@ -944,52 +945,53 @@ model buyer_payment_term_history {
 }
 
 model buyers {
-  id                       Int                        @id @default(autoincrement())
-  old_pk                   Int?
-  buyer_name               String                     @unique(map: "unique_buyer_names") @db.VarChar(255)
-  short_name               String                     @db.VarChar(50)
-  prefix                   String                     @db.VarChar(50)
-  address                  String?
-  contact_person           String?                    @db.VarChar(50)
-  phone_no                 String?                    @db.VarChar(50)
-  email                    String?                    @db.VarChar(50)
-  old_country_id           Int?
-  country_id               Int?
-  website                  String?                    @db.VarChar(50)
-  old_overseas_office_id   Int?
-  overseas_office_id       Int?
-  added_at                 DateTime?                  @default(now()) @db.Timestamp(6)
-  buyer_additional_clause  buyer_additional_clause[]
-  buyer_banks              buyer_banks[]
-  buyer_brands             buyer_brands[]
-  buyer_consignee          buyer_consignee[]
-  buyer_destinations       buyer_destinations[]
-  buyer_late_policies      buyer_late_policies[]
-  buyer_orders             buyer_orders[]
-  buyer_payment_term       buyer_payment_term[]
-  countries                countries?                 @relation(fields: [country_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  overseas_offices         overseas_offices?          @relation(fields: [overseas_office_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  commercial_tna_templates commercial_tna_templates[]
-  commission_invoice       commission_invoice[]
-  commission_percentage    commission_percentage[]
-  cross_payments           cross_payments[]
-  cross_payments_metadata  cross_payments_metadata[]
-  debit_note               debit_note[]
-  debit_note_metadata      debit_note_metadata[]
-  document_submissions     document_submissions[]
-  ev_permissions           ev_permissions[]
-  exfactory                exfactory[]
-  factory_invoice          factory_invoice[]
-  handover_dates           handover_dates?
-  lc_master                lc_master[]
-  proceed_realization      proceed_realization[]
-  rdl_invoice              rdl_invoice[]
-  sales_contracts          sales_contracts[]
-  seasons                  seasons[]
-  shipment_tolerance_level shipment_tolerance_level?
-  teams                    teams[]
-  tna_base_actions         tna_base_actions?
-  tna_templates            tna_templates[]
+  id                          Int                           @id @default(autoincrement())
+  old_pk                      Int?
+  buyer_name                  String                        @unique(map: "unique_buyer_names") @db.VarChar(255)
+  short_name                  String                        @db.VarChar(50)
+  prefix                      String                        @db.VarChar(50)
+  address                     String?
+  contact_person              String?                       @db.VarChar(50)
+  phone_no                    String?                       @db.VarChar(50)
+  email                       String?                       @db.VarChar(50)
+  old_country_id              Int?
+  country_id                  Int?
+  website                     String?                       @db.VarChar(50)
+  old_overseas_office_id      Int?
+  overseas_office_id          Int?
+  added_at                    DateTime?                     @default(now()) @db.Timestamp(6)
+  buyer_additional_clause     buyer_additional_clause[]
+  buyer_banks                 buyer_banks[]
+  buyer_brands                buyer_brands[]
+  buyer_consignee             buyer_consignee[]
+  buyer_destinations          buyer_destinations[]
+  buyer_late_policies         buyer_late_policies[]
+  buyer_orders                buyer_orders[]
+  buyer_payment_term          buyer_payment_term[]
+  countries                   countries?                    @relation(fields: [country_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  overseas_offices            overseas_offices?             @relation(fields: [overseas_office_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  commercial_tna_templates    commercial_tna_templates[]
+  commission_invoice          commission_invoice[]
+  commission_percentage       commission_percentage[]
+  cross_payments              cross_payments[]
+  cross_payments_metadata     cross_payments_metadata[]
+  debit_note                  debit_note[]
+  debit_note_metadata         debit_note_metadata[]
+  document_submissions        document_submissions[]
+  early_settlement_percentage early_settlement_percentage[]
+  ev_permissions              ev_permissions[]
+  exfactory                   exfactory[]
+  factory_invoice             factory_invoice[]
+  handover_dates              handover_dates?
+  lc_master                   lc_master[]
+  proceed_realization         proceed_realization[]
+  rdl_invoice                 rdl_invoice[]
+  sales_contracts             sales_contracts[]
+  seasons                     seasons[]
+  shipment_tolerance_level    shipment_tolerance_level?
+  teams                       teams[]
+  tna_base_actions            tna_base_actions?
+  tna_templates               tna_templates[]
 }
 
 model buyers_history {
@@ -3073,6 +3075,25 @@ model commission_percentage_history {
   action_by             String?   @db.Uuid
   action_at             DateTime? @default(now()) @db.Timestamp(6)
   users                 users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "commission_percentage_historty_action_by_fkey")
+}
+
+model early_settlement_percentage {
+  id       String    @id(map: "early_settelment_percentage_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  buyer_id Int
+  charge   Float
+  added_at DateTime? @default(now()) @db.Timestamp(6)
+  buyers   buyers    @relation(fields: [buyer_id], references: [id], onUpdate: NoAction, map: "early_settelment_percentage_buyer_id_fkey")
+}
+
+model early_settlement_percentage_history {
+  id                             String    @id(map: "early_settelment_percentage_history_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  early_settlement_percentage_id String?   @db.Uuid
+  buyer_id                       Int?
+  charge                         Float?
+  added_at                       DateTime? @default(now()) @db.Timestamp(6)
+  action_by                      String?   @db.Uuid
+  action_at                      DateTime? @default(now()) @db.Timestamp(6)
+  users                          users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "early_settelment_percentage_history_action_by_fkey")
 }
 
 enum actions {

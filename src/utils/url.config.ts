@@ -48,6 +48,7 @@ const sideBarConfig: Record<number, {href: string;}> = {
     [m.SC_CONTACT_PERSON]: { href: "/library/sc_contact_person" },
     [m.SHIPMENT_TOLERANCE]: { href: "/library/shipment_tolerance" },
     [m.LIBRARY_COMMISSION_DISTRIBUTION]: {href: "/library/commission_percentage" },
+    [m.EARLY_SETTLEMENT_PERCENTAGE]: {href: "/library/early_settlement_percentage" },
 
     // Merchandising Module
     [m.MERCHANDISING]: { href: "/merchandising" },

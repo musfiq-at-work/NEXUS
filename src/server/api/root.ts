@@ -14,6 +14,7 @@ import {
 	proceedRealizationRouter, factoryPaymentRouter, salesReportRouter, exportReportRouter,
 	orderSummaryReportRouter, debitNotesRouter, crossPaymentsRouter, commercialTnaTemplatesRouter,
 	activityReportRouter, commercialTnaPlanRouter, exportSummaryReportRouter, commissionPercentageRouter,
+	earlySettlementPercentageRoute,
 } from '.';
 
 // All routers added in /api/routers should be manually added here.
@@ -55,6 +56,7 @@ export const appRouter = createTRPCRouter({
 	scContactPerson: scContactPersonRouter,
 	toleranceLevel: toleranceLevelRouter,
 	commissionPercentage: commissionPercentageRouter,
+	earlySettlementPercentage: earlySettlementPercentageRoute,
 
 	// merchandising routers
 	buyerOrders: buyerOrdersRouter,

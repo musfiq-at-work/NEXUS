@@ -4,7 +4,7 @@ import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma } from "@prisma/client";
-import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID, DOC_SUBMIT_TO_CUSTOMER } from "~/utils/config";
+import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID, DOC_SUBMIT_TO_BANK, DOC_SUBMIT_TO_CUSTOMER } from "~/utils/config";
 
 interface DocumentSubmissions {
     id: string;
@@ -433,7 +433,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                             AND RID.factory_invoice_id = FI.id
                             AND DSD.rdl_invoice_id = RID.rdl_invoice_id
                             AND DSD.document_submissions_id = DS.id
-                            AND TA.id = ${DOC_SUBMIT_TO_CUSTOMER}
+                            AND TA.id IN (${DOC_SUBMIT_TO_CUSTOMER}, ${DOC_SUBMIT_TO_BANK})
                             AND DS.id = ${newDocumentSubmission.id};
                     `;
 
