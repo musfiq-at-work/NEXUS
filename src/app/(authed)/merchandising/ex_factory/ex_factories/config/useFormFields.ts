@@ -60,7 +60,6 @@ export const useFormFields = (Props: FormProps): Field<keyof ExFactoryFormValues
             label: 'Ex Factory Date',
             placeholder: 'Select ex factory date',
             type: 'date',
-            disabled: isEdit,
             optional: isEdit,
             minDate: isAdmin ? undefined : 2
         },

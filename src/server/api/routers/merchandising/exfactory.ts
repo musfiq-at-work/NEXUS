@@ -881,6 +881,7 @@ export const exFactoryRouter = createTRPCRouter({
         .input(
             z.object({
                 db_id: z.string().min(1),
+                exfactory_date: z.date(),
                 remarks: z.string().optional(),
                 orders: z.array(
                     z.object({
@@ -936,6 +937,7 @@ export const exFactoryRouter = createTRPCRouter({
                             id: input.db_id,
                         },
                         data: {
+                            exfactory_date: input.exfactory_date,
                             remarks: input.remarks,
                         },
                     });
@@ -943,7 +945,7 @@ export const exFactoryRouter = createTRPCRouter({
                     await tx.exfactory_history.create({
                         data: {
                             exfactory_id: exfactory.id,
-                            exfactory_date: exfactory.exfactory_date,
+                            exfactory_date: input.exfactory_date,
                             exfactory_no: exfactory.exfactory_no,
                             buyer_id: exfactory.buyer_id,
                             factory_id: exfactory.factory_id,
@@ -1422,6 +1424,35 @@ export const exFactoryRouter = createTRPCRouter({
             }
         }),
 
+    checkFactoryInvoice: protectedProcedure
+        .input(z.object({
+            id: z.string().min(1),
+        }))
+        .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.EX_FACTORIES]?.can_view;
 
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view ex-factory records." 
+                });
+            }
+
+            const exists = await ctx.db.$queryRaw<{exists: boolean}[]>`
+                SELECT 
+                    COUNT(ES.ID) > 0 AS exists
+                FROM exfactory AS E
+                    INNER JOIN exfactory_orders AS EO ON EO.exfactory_id = E.id
+                    INNER JOIN exfactory_shipments AS ES ON ES.exfactory_orders_id = EO.id
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM factory_invoice_details AS FID
+                    WHERE FID.EXFACTORY_SHIPMENT_ID = ES.ID
+                )
+                AND E.ID = ${input.id};
+            `;
+
+            return exists[0];
+        })
 });
 

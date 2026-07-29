@@ -1,13 +1,12 @@
 'use client';
 
 import { Button, Form, Wrapper } from "~/components";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { api } from "~/trpc/react";
 import { toast } from 'sonner';
 import { parseTRPCError } from "~/utils/parseTRPCError";
 import { useModulePermissions } from "~/hooks";
 import { useFactoryPaymentForm } from "../../config/useFactoryPaymentForm";
-// import RdlInvoiceDetails from "../../components/rdlInvoiceDetails";
 import { safeNumber } from "~/utils/numbers";
 import type { ParamsProp } from "~/types/params";
 import TableForm from "~/components/organisms/table/TableForm";
@@ -54,7 +53,7 @@ const EditFactoryPaymentPage = ({ params }: ParamsProp) => {
 
             const payload = {
                 db_id: id,
-                factoryInvoices: factoryPaymentData.details?.filter(invoice => safeNumber(invoice.paid_amount) > 0)?.map((invoice) => ({
+                factoryInvoices: factoryPaymentData.details?.map((invoice) => ({
                     db_id: invoice.db_id,
                     factory_invoice_id: invoice.factory_invoice_id,
                     paid_amount: safeNumber(invoice.paid_amount ?? 0),
@@ -86,7 +85,6 @@ const EditFactoryPaymentPage = ({ params }: ParamsProp) => {
     const { 
         methods: crossPaymentMethod, 
         validationError: crossPaymentValidationError,
-        control: crossPaymentControl
     } = useCrossPaymentForm(
         crossPayments ?? undefined
     );

@@ -57,6 +57,7 @@ const EditExFactoryPage = ({ params }: ParamsProp) => {
 
             const payload = {
                 db_id: dbId,
+                exfactory_date: new Date(exFactoryData.exfactory.exfactory_date),
                 remarks: exFactoryData.exfactory.remarks,
                 orders: (exFactoryData.exfactory.orders ?? []).map((order) => ({
                     db_id: order.db_id,
@@ -138,6 +139,8 @@ const EditExFactoryPage = ({ params }: ParamsProp) => {
         }
     }, [validationError]);
 
+    const { data: factoryInvoiceExists } = api.exFactory.checkFactoryInvoice.useQuery({ id: id })
+
     return (
         <Wrapper heading='Update Ex Factory'>
             <Form 
@@ -165,6 +168,12 @@ const EditExFactoryPage = ({ params }: ParamsProp) => {
                 active={isAuthorized} 
                 type="secondary" 
             />
+
+            <MessageBox
+                message="Factory invoice exists for the shipments of this ex-factory."
+                active={!!factoryInvoiceExists?.exists}
+                type="info"
+            />
             
             <div className="w-full flex flex-row justify-end">
                 <Button type="button" 
@@ -184,7 +193,7 @@ const EditExFactoryPage = ({ params }: ParamsProp) => {
                             onClick={() => onSetAuthorization(false)}
                             label="Unauthorize Ex-Factory"
                             className="text-lg tracking-wide mt-6 max-w-80"
-                            disabled={!canAuthorize}
+                            disabled={!canAuthorize }
                         />
                     </div>
                 ) : (

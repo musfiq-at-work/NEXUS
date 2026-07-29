@@ -424,6 +424,8 @@ export const factoryPaymentRouter = createTRPCRouter({
                     });
                 }
 
+                console.log('Factory Payment', input);
+
                 await ctx.db.$transaction(async (tx) => {
                     for (const factoryInvoice of input.factoryInvoices ?? []) {
                         if (factoryInvoice.db_id) {
