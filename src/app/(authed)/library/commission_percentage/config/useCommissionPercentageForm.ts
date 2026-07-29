@@ -5,6 +5,7 @@ import { formSchema } from "./formSchema";
 import type { FormValues } from "./formSchema";
 import { formFields } from "./formFields";
 import type { GetCommissionPercentageByIdTypes } from "~/types/libraryAPITypes";
+import { api } from "~/trpc/react";
 
 export const useCommissionPercentageForm = (commissionPercentages?: GetCommissionPercentageByIdTypes) => {
     // Form setup
@@ -13,6 +14,7 @@ export const useCommissionPercentageForm = (commissionPercentages?: GetCommissio
         defaultValues: {
             db_id: commissionPercentages?.id ?? undefined,
             buyer_id: commissionPercentages?.buyer_id ? commissionPercentages.buyer_id : -1,
+            buyer_name: commissionPercentages?.buyer_name,
             other_percentage: commissionPercentages?.other_percentage ?? 0,
             overseas_percentage: commissionPercentages?.overseas_percentage ?? 0,
         },
@@ -20,7 +22,7 @@ export const useCommissionPercentageForm = (commissionPercentages?: GetCommissio
 
     const { handleSubmit, formState: { errors: validationError }, setFocus, control, reset } = methods;
 
-    // Effect to reset form when handoverData changes
+    // Effect to reset form when percentage changes
     useEffect(() => {
         if (commissionPercentages) {
             methods.reset({
@@ -40,5 +42,19 @@ export const useCommissionPercentageForm = (commissionPercentages?: GetCommissio
 
     const isEdit = !!commissionPercentages;
 
-    return { methods, handleSubmit, formFields: formFields(isEdit), validationError, control, reset };
+    const buyers = api.commissionPercentage.getBuyerForCommissionPercentage.useQuery().data ?? [];
+
+    let availableBuyer: {id: number, buyer_name: string}[] = [];
+
+    if (isEdit) {
+        availableBuyer = [{ 
+            id: commissionPercentages?.buyer_id ?? -1, 
+            buyer_name: commissionPercentages?.buyer_name ?? "" 
+        }];
+    }
+    else {
+        availableBuyer = buyers;
+    }
+
+    return { methods, handleSubmit, formFields: formFields({isEdit, buyers: availableBuyer}), validationError, control, reset };
 }

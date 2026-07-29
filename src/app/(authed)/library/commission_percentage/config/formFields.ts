@@ -1,11 +1,17 @@
 import { api } from "~/trpc/react";
 import type { FormValues } from "./formSchema";
 import type { BaseField } from "~/types/form";
+import { boolean } from "zod";
 
 export type Field<T extends keyof FormValues> = BaseField<T>;
 
-export const formFields = (isEdit: boolean): Field<keyof FormValues>[] => {
-    const buyers = api.commissionPercentage.getBuyerForCommissionPercentage.useQuery().data ?? [];
+interface Props {
+    isEdit: boolean,
+    buyers: {id: number, buyer_name: string}[]
+}
+
+export const formFields = (props: Props): Field<keyof FormValues>[] => {
+    const { isEdit, buyers } = props;
 
     return [
         {

@@ -216,6 +216,7 @@ export const commissionPercentageRouter = createTRPCRouter({
                         buyers: {
                             select: {
                                 id: true,
+                                buyer_name: true
                             }
                         },
                         overseas_percentage: true,
@@ -226,6 +227,7 @@ export const commissionPercentageRouter = createTRPCRouter({
                 const commissions = commissionsObj ? {
                     id: commissionsObj.id,
                     buyer_id: commissionsObj.buyers?.id,
+                    buyer_name: commissionsObj.buyers?.buyer_name,
                     overseas_percentage: commissionsObj.overseas_percentage,
                     other_percentage: commissionsObj.other_percentage
                 } : null;
@@ -249,7 +251,7 @@ export const commissionPercentageRouter = createTRPCRouter({
             if(!can_update){
                 throw new TRPCError({
                     code: "FORBIDDEN",
-                    message: "You don't permission to update commissions"
+                    message: "You don't permission to update commission percentages"
                 })
             }
 

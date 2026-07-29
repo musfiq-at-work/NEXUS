@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Form, Info, MessageBox, Wrapper } from "~/components";
+import { Button, Form, MessageBox, Wrapper } from "~/components";
 import React, { useEffect, useState } from "react";
 import { useCommissionDistributionForm } from "../../config/useCommissionDistributionForm";
 import { api } from "~/trpc/react";
