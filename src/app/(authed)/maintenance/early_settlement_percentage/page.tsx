@@ -31,7 +31,7 @@ const DestinationsPage = () => {
         { enabled: debouncedSearch.length > 0 }
     );
 
-    const editURL = '/maintenance/destinations/edit/';
+    const editURL = '/maintenance/early_settlement_percentage/edit/';
 
     const deleteMutation = api.earlySettlementPercentage.deleteEarlySettlement.useMutation({
         onSuccess: async () => {

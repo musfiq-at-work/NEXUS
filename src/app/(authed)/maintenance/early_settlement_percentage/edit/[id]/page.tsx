@@ -9,19 +9,19 @@ import { parseTRPCError } from "~/utils/parseTRPCError";
 import { useModulePermissions } from "~/hooks";
 import type { ParamsProp } from "~/types/params";
 
-const EditCommissionPercentagePage = ({params}: ParamsProp) => {
+const EditEarlySettlementPercentagePage = ({params}: ParamsProp) => {
     const { id } = React.use(params);
     const [error, setError] = useState<string | null>(null);
 
     const [isLoadingSubmit, setIsLoadingSubmit] = useState(false);
 
-    const { data: commissionDistributionData, isLoading } = api.commissionPercentage.getCommissionById.useQuery(
-        { id: Number(id) }
+    const { data: earlySettlementData, isLoading } = api.earlySettlementPercentage.getEarlySettlementPercentageById.useQuery(
+        { id: id }
     );
 
     // Form setup
     const { methods, handleSubmit, formFields, validationError, control } = useEarlySettlementPercentageForm(
-        commissionDistributionData ?? undefined
+        earlySettlementData ?? undefined
     );
 
     // TRPC utils
@@ -29,13 +29,13 @@ const EditCommissionPercentagePage = ({params}: ParamsProp) => {
 
     const { can_update } = useModulePermissions();
 
-    const updateCommissionDistribution = api.commissionPercentage.updateCommissions.useMutation({
+    const updateCommissionDistribution = api.earlySettlementPercentage.updateEarlySettlementPercentage.useMutation({
         onSuccess: async () => {
             setError(null);
-            toast.success("Commission Percentages updated successfully!");
+            toast.success("Early Settlement Percentages updated successfully!");
             await Promise.all([
-                utils.commissionPercentage.getCommissions.invalidate(),
-                utils.commissionPercentage.getCommissionById.invalidate({ id: Number(id) })
+                utils.earlySettlementPercentage.getEarlySettlementPercentage.invalidate(),
+                utils.earlySettlementPercentage.getEarlySettlementPercentageById.invalidate({ id: id })
             ])
         },
     });
@@ -51,15 +51,14 @@ const EditCommissionPercentagePage = ({params}: ParamsProp) => {
 
             const payload = {
                 db_id: commissionDistributionData.db_id,
-                other_percentage: commissionDistributionData.other_percentage,
-                overseas_percentage: commissionDistributionData.overseas_percentage
+                charge: commissionDistributionData.charge,
             }
 
             await updateCommissionDistribution.mutateAsync(payload);
          }
         catch (error) {
             const message = parseTRPCError(error);
-            toast.error(`Error updating Commission Percentages: ${message}`);
+            toast.error(`Error updating Early Settlement Percentages: ${message}`);
             setError(message);
         }
         finally {
@@ -69,11 +68,11 @@ const EditCommissionPercentagePage = ({params}: ParamsProp) => {
 
     return (
         <Wrapper
-            heading="Update Commission Percentages"
+            heading="Update Early Settlement Percentages"
         >
             <Form
                 fields={formFields} 
-                buttonLabel="Update Commission Percentages"
+                buttonLabel="Update Early Settlement"
                 register={methods.register}
                 isLoading={isLoading || isLoadingSubmit}
                 validationError={validationError ?? {}}
@@ -85,7 +84,7 @@ const EditCommissionPercentagePage = ({params}: ParamsProp) => {
             <div className="w-full flex flex-row justify-end">
                 <Button type="button" 
                     onClick={() => onSubmitAll()}
-                    label={"Update Commission Percentages"} 
+                    label={"Update Early Settlement"} 
                     className="text-lg tracking-wide mt-6 max-w-80 m-8"
                     disabled={isLoading || isLoadingSubmit || !can_update}
                 />
@@ -94,4 +93,4 @@ const EditCommissionPercentagePage = ({params}: ParamsProp) => {
     );
 }
 
-export default EditCommissionPercentagePage;
+export default EditEarlySettlementPercentagePage;
