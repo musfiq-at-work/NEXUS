@@ -1,5 +1,5 @@
 import { 
-    dashboardIcon, sackDollarIcon, reportIcon, shirtIcon, bookIcon, accountsIcon, adminIcon, qualityIcon, complianceIcon,
+    dashboardIcon, sackDollarIcon, reportIcon, shirtIcon, bookIcon, accountsIcon, adminIcon, qualityIcon, complianceIcon, settingIcon
 } from "~/assets";
 
 import type { StaticImageData } from "next/image";
@@ -16,6 +16,7 @@ export const icons: Record<string, StaticImageData> = {
     [m.COMPLIANCE]: complianceIcon,
     [m.ADMIN]: adminIcon,
     [m.REPORTS]: reportIcon,
+    [m.MAINTENANCE]: settingIcon
 };
 
 // Database ID to URL mapping
@@ -43,12 +44,14 @@ const sideBarConfig: Record<number, {href: string;}> = {
     [m.FOB_TYPES]: { href: "/library/fob_types" },
     [m.PAYMENT_TERMS]: { href: "/library/payment_terms" },
     [m.FREIGHT_TERMS]: { href: "/library/freight_terms" },
-    [m.HANDOVER_DATES]: { href: "/library/handover_dates" },
-    [m.TNA_BASE_ACTION]: { href: "/library/tna_base_action" },
     [m.SC_CONTACT_PERSON]: { href: "/library/sc_contact_person" },
-    [m.SHIPMENT_TOLERANCE]: { href: "/library/shipment_tolerance" },
-    [m.LIBRARY_COMMISSION_DISTRIBUTION]: {href: "/library/commission_percentage" },
-    [m.EARLY_SETTLEMENT_PERCENTAGE]: {href: "/library/early_settlement_percentage" },
+    
+    // Maintenance
+    [m.TNA_BASE_ACTION]: { href: "/maintenance/tna_base_action" },
+    [m.SHIPMENT_TOLERANCE]: { href: "/maintenance/shipment_tolerance" },
+    [m.LIBRARY_COMMISSION_DISTRIBUTION]: {href: "/maintenance/commission_percentage" },
+    [m.HANDOVER_DATES]: { href: "/maintenance/handover_dates" },
+    [m.EARLY_SETTLEMENT_PERCENTAGE]: {href: "/maintenance/early_settlement_percentage" },
 
     // Merchandising Module
     [m.MERCHANDISING]: { href: "/merchandising" },

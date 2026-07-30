@@ -3093,6 +3093,7 @@ model early_settlement_percentage_history {
   added_at                       DateTime? @default(now()) @db.Timestamp(6)
   action_by                      String?   @db.Uuid
   action_at                      DateTime? @default(now()) @db.Timestamp(6)
+  action_type                    actions?
   users                          users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "early_settelment_percentage_history_action_by_fkey")
 }
 

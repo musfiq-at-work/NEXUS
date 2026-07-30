@@ -6,58 +6,59 @@ import { api } from "~/trpc/react";
 import { toast } from "sonner";
 import { tableHeaders } from "./config/columns";
 import { useSearchablePagination, useModulePermissions, useDeleteConfirmation } from "~/hooks";
+import { safeNumber } from "~/utils/numbers";
 
-const BuyerWiseTNAActions = () => {
+const BuyerCommissions = () => {
     const router = useRouter();
     const utils = api.useUtils();
-    
+
     const { page, limit, debouncedSearch, handleSearchChange, nextPage, prevPage } = useSearchablePagination();
-    
+
     const { can_add, can_update, can_delete } = useModulePermissions();
 
     // Fetch paginated data
-    const {data: tnaBaseActions, isLoading} = api.tnaBaseAction.getAllTnaBaseActions.useQuery({
+    const {data: distributions, isLoading} = api.commissionPercentage.getCommissions.useQuery({ 
         limit,
         offset: page * limit,
     });
-
-    const tnaBaseActionsList = tnaBaseActions?.tnaBaseActions ?? [];
-    const total = tnaBaseActions?.total ?? 0;
-
+    
     // Search query (enabled only when there's a search term)
-    const searchQuery = api.tnaBaseAction.searchTnaBaseActions.useQuery(
-        { query: debouncedSearch, limit, offset: page * limit },
+    const searchQuery = api.commissionPercentage.searchCommissions.useQuery(
+        { query: debouncedSearch },
         { enabled: debouncedSearch.length > 0 }
     );
     
-    const editURL = '/library/tna_base_action/edit/';
+    const distributionsList = distributions?.distributions ?? [];
+    const total = distributions?.total ?? 0;
 
-    const deleteMutation = api.tnaBaseAction.deleteTnaBaseAction.useMutation({
+    const editURL = '/maintenance/commission_percentage/edit/';
+
+    const deleteMutation = api.commissionPercentage.deleteCommission.useMutation({
         onSuccess: async () => {
-            toast.success("TNA Base Action deleted successfully!");
+            toast.success("Commission Distribution deleted successfully!");
             await Promise.all([
-                utils.tnaBaseAction.getAllTnaBaseActions.invalidate(),
-                utils.tnaBaseAction.searchTnaBaseActions.invalidate(),
+                utils.commissionPercentage.getCommissions.invalidate(),
+                utils.commissionPercentage.searchCommissions.invalidate()
             ]);
         },
     });
-    
+
     const { 
         deleteID, isLoadingDelete, deleteClicked, setDeleteClicked, handleDeleteClicked, handleDeleteConfirmed 
     } = useDeleteConfirmation({
         mutation: deleteMutation,
-        successMessage: 'Base TNA Action deleted successfully',
-        payloadBuilder: id => ({ id }),
+        successMessage: 'Commission Distribution deleted successfully',
+        payloadBuilder: id => ({ id: safeNumber(id) }),
     });
 
     return (
         <>
             <Wrapper
-                heading="Base TNA Actions"
+                heading="Commission Percentages"
                 subSectionLeft={
                     <SearchField
-                        placeholder="Search Base TNA Actions..."
-                        infoText="Buyer name and TNA Action name"
+                        placeholder="Search Commission Distributions"
+                        infoText="Buyer Name."
                         handleSearchChange={handleSearchChange}
                     />
                 }
@@ -66,9 +67,9 @@ const BuyerWiseTNAActions = () => {
                         <div className="w-70">
                             <Button
                                 variant="secondary"
-                                label="Add New TNA Action"
+                                label="Add Commission Percentage"
                                 leftIcon={plusIcon}
-                                onClick={() => router.push('/library/tna_base_action/new')}
+                                onClick={() => router.push('/maintenance/commission_percentage/new')}
                             />
                         </div>
                     ) : null
@@ -76,14 +77,14 @@ const BuyerWiseTNAActions = () => {
             >
                 <div className="w-full">
                     <Table
-                        data={searchQuery.data?.tnaBaseActions && !!debouncedSearch 
-                            ? searchQuery.data.tnaBaseActions : tnaBaseActionsList
+                        data={searchQuery.data?.distributions && !!debouncedSearch 
+                            ? searchQuery.data.distributions : distributionsList
                         }
                         isLoading={isLoading || searchQuery.isLoading}
                         columns={tableHeaders}
                         nextPage={nextPage}
                         prevPage={prevPage}
-                        total={searchQuery.data?.tnaBaseActions && searchQuery.data.tnaBaseActions.length > 0 
+                        total={searchQuery.data?.distributions && searchQuery.data.distributions.length > 0 
                             ? searchQuery.data.total ?? 0 : total
                         }
                         deleteFunction={handleDeleteClicked}
@@ -99,17 +100,17 @@ const BuyerWiseTNAActions = () => {
                 open={deleteClicked}
                 onClose={() => setDeleteClicked(false)}
                 heading="Confirm Deletion"
-                description={`Are you sure you want to delete Base TNA Action for buyer"${(
-                    searchQuery.data?.tnaBaseActions && !!debouncedSearch 
-                        ? searchQuery.data.tnaBaseActions : tnaBaseActionsList
-                ).find(action => action.id === deleteID)?.buyer_name}"?`}
+                description={`Are you sure you want to delete "${(
+                    searchQuery.data?.distributions && !!debouncedSearch 
+                        ? searchQuery.data.distributions : distributionsList
+                ).find(distributions => distributions.id === safeNumber(deleteID))?.buyer_name}"?`}
                 actionLabel="DELETE"
                 negativeAction={true}
                 loading={isLoadingDelete}
                 action={handleDeleteConfirmed}
             />
         </>
-    );
+    )
 }
 
-export default BuyerWiseTNAActions;
+export default BuyerCommissions;

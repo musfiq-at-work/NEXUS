@@ -6,9 +6,8 @@ import { api } from "~/trpc/react";
 import { toast } from "sonner";
 import { tableHeaders } from "./config/columns";
 import { useSearchablePagination, useModulePermissions, useDeleteConfirmation } from "~/hooks";
-import { safeNumber } from "~/utils/numbers";
 
-const ShipmentTolerancePage = () => {
+const BuyerWiseTNAActions = () => {
     const router = useRouter();
     const utils = api.useUtils();
     
@@ -17,48 +16,48 @@ const ShipmentTolerancePage = () => {
     const { can_add, can_update, can_delete } = useModulePermissions();
 
     // Fetch paginated data
-    const {data: toleranceLevels, isLoading} = api.toleranceLevel.getTolerance.useQuery({
+    const {data: tnaBaseActions, isLoading} = api.tnaBaseAction.getAllTnaBaseActions.useQuery({
         limit,
         offset: page * limit,
     });
 
-    const toleranceLevelList = toleranceLevels?.toleranceLevels ?? [];
-    const total = toleranceLevels?.total ?? 0;
+    const tnaBaseActionsList = tnaBaseActions?.tnaBaseActions ?? [];
+    const total = tnaBaseActions?.total ?? 0;
 
     // Search query (enabled only when there's a search term)
-    const searchQuery = api.toleranceLevel.searchTolerance.useQuery(
+    const searchQuery = api.tnaBaseAction.searchTnaBaseActions.useQuery(
         { query: debouncedSearch, limit, offset: page * limit },
         { enabled: debouncedSearch.length > 0 }
     );
+    
+    const editURL = '/maintenance/tna_base_action/edit/';
 
-    const editURL = '/library/shipment_tolerance/edit/';
-
-    const deleteMutation = api.toleranceLevel.deleteTolerance.useMutation({
+    const deleteMutation = api.tnaBaseAction.deleteTnaBaseAction.useMutation({
         onSuccess: async () => {
-            toast.success("Tolerance level deleted successfully!");
+            toast.success("TNA Base Action deleted successfully!");
             await Promise.all([
-                utils.toleranceLevel.getTolerance.invalidate(),
-                utils.toleranceLevel.searchTolerance.invalidate(),
+                utils.tnaBaseAction.getAllTnaBaseActions.invalidate(),
+                utils.tnaBaseAction.searchTnaBaseActions.invalidate(),
             ]);
         },
     });
-
+    
     const { 
         deleteID, isLoadingDelete, deleteClicked, setDeleteClicked, handleDeleteClicked, handleDeleteConfirmed 
     } = useDeleteConfirmation({
         mutation: deleteMutation,
-        successMessage: 'Shipment tolerance deleted successfully',
-        payloadBuilder: id => ({ id: safeNumber(id) }),
+        successMessage: 'Base TNA Action deleted successfully',
+        payloadBuilder: id => ({ id }),
     });
-    
+
     return (
         <>
             <Wrapper
-                heading="Shipment Tolerance"
+                heading="Base TNA Actions"
                 subSectionLeft={
                     <SearchField
-                        placeholder="Search Shipment Tolerance..."
-                        infoText="Shipment Tolerance."
+                        placeholder="Search Base TNA Actions..."
+                        infoText="Buyer name and TNA Action name"
                         handleSearchChange={handleSearchChange}
                     />
                 }
@@ -67,9 +66,9 @@ const ShipmentTolerancePage = () => {
                         <div className="w-70">
                             <Button
                                 variant="secondary"
-                                label="Add New Shipment Tolerance"
+                                label="Add New TNA Action"
                                 leftIcon={plusIcon}
-                                onClick={() => router.push('/library/shipment_tolerance/new')}
+                                onClick={() => router.push('/maintenance/tna_base_action/new')}
                             />
                         </div>
                     ) : null
@@ -77,14 +76,14 @@ const ShipmentTolerancePage = () => {
             >
                 <div className="w-full">
                     <Table
-                        data={searchQuery.data?.toleranceLevels && !!debouncedSearch 
-                            ? searchQuery.data.toleranceLevels : toleranceLevelList
+                        data={searchQuery.data?.tnaBaseActions && !!debouncedSearch 
+                            ? searchQuery.data.tnaBaseActions : tnaBaseActionsList
                         }
                         isLoading={isLoading || searchQuery.isLoading}
                         columns={tableHeaders}
                         nextPage={nextPage}
                         prevPage={prevPage}
-                        total={searchQuery.data?.toleranceLevels && searchQuery.data.toleranceLevels.length > 0 
+                        total={searchQuery.data?.tnaBaseActions && searchQuery.data.tnaBaseActions.length > 0 
                             ? searchQuery.data.total ?? 0 : total
                         }
                         deleteFunction={handleDeleteClicked}
@@ -100,10 +99,10 @@ const ShipmentTolerancePage = () => {
                 open={deleteClicked}
                 onClose={() => setDeleteClicked(false)}
                 heading="Confirm Deletion"
-                description={`Are you sure you want to delete "${(
-                    searchQuery.data?.toleranceLevels && !!debouncedSearch 
-                        ? searchQuery.data.toleranceLevels : toleranceLevelList
-                ).find(toleranceLevel => toleranceLevel.id === safeNumber(deleteID))?.buyer_name}"?`}
+                description={`Are you sure you want to delete Base TNA Action for buyer"${(
+                    searchQuery.data?.tnaBaseActions && !!debouncedSearch 
+                        ? searchQuery.data.tnaBaseActions : tnaBaseActionsList
+                ).find(action => action.id === deleteID)?.buyer_name}"?`}
                 actionLabel="DELETE"
                 negativeAction={true}
                 loading={isLoadingDelete}
@@ -111,6 +110,6 @@ const ShipmentTolerancePage = () => {
             />
         </>
     );
-};
-    
-export default ShipmentTolerancePage;
+}
+
+export default BuyerWiseTNAActions;

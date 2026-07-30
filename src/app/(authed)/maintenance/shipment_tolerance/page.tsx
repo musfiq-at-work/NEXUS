@@ -8,37 +8,37 @@ import { tableHeaders } from "./config/columns";
 import { useSearchablePagination, useModulePermissions, useDeleteConfirmation } from "~/hooks";
 import { safeNumber } from "~/utils/numbers";
 
-const BuyerCommissions = () => {
+const ShipmentTolerancePage = () => {
     const router = useRouter();
     const utils = api.useUtils();
-
+    
     const { page, limit, debouncedSearch, handleSearchChange, nextPage, prevPage } = useSearchablePagination();
-
+    
     const { can_add, can_update, can_delete } = useModulePermissions();
 
     // Fetch paginated data
-    const {data: distributions, isLoading} = api.commissionPercentage.getCommissions.useQuery({ 
+    const {data: toleranceLevels, isLoading} = api.toleranceLevel.getTolerance.useQuery({
         limit,
         offset: page * limit,
     });
-    
+
+    const toleranceLevelList = toleranceLevels?.toleranceLevels ?? [];
+    const total = toleranceLevels?.total ?? 0;
+
     // Search query (enabled only when there's a search term)
-    const searchQuery = api.commissionPercentage.searchCommissions.useQuery(
-        { query: debouncedSearch },
+    const searchQuery = api.toleranceLevel.searchTolerance.useQuery(
+        { query: debouncedSearch, limit, offset: page * limit },
         { enabled: debouncedSearch.length > 0 }
     );
-    
-    const distributionsList = distributions?.distributions ?? [];
-    const total = distributions?.total ?? 0;
 
-    const editURL = '/library/commission_percentage/edit/';
+    const editURL = '/maintenance/shipment_tolerance/edit/';
 
-    const deleteMutation = api.commissionPercentage.deleteCommission.useMutation({
+    const deleteMutation = api.toleranceLevel.deleteTolerance.useMutation({
         onSuccess: async () => {
-            toast.success("Commission Distribution deleted successfully!");
+            toast.success("Tolerance level deleted successfully!");
             await Promise.all([
-                utils.commissionPercentage.getCommissions.invalidate(),
-                utils.commissionPercentage.searchCommissions.invalidate()
+                utils.toleranceLevel.getTolerance.invalidate(),
+                utils.toleranceLevel.searchTolerance.invalidate(),
             ]);
         },
     });
@@ -47,18 +47,18 @@ const BuyerCommissions = () => {
         deleteID, isLoadingDelete, deleteClicked, setDeleteClicked, handleDeleteClicked, handleDeleteConfirmed 
     } = useDeleteConfirmation({
         mutation: deleteMutation,
-        successMessage: 'Commission Distribution deleted successfully',
+        successMessage: 'Shipment tolerance deleted successfully',
         payloadBuilder: id => ({ id: safeNumber(id) }),
     });
-
+    
     return (
         <>
             <Wrapper
-                heading="Commission Percentages"
+                heading="Shipment Tolerance"
                 subSectionLeft={
                     <SearchField
-                        placeholder="Search Commission Distributions"
-                        infoText="Buyer Name."
+                        placeholder="Search Shipment Tolerance..."
+                        infoText="Shipment Tolerance."
                         handleSearchChange={handleSearchChange}
                     />
                 }
@@ -67,9 +67,9 @@ const BuyerCommissions = () => {
                         <div className="w-70">
                             <Button
                                 variant="secondary"
-                                label="Add Commission Percentage"
+                                label="Add New Shipment Tolerance"
                                 leftIcon={plusIcon}
-                                onClick={() => router.push('/library/commission_percentage/new')}
+                                onClick={() => router.push('/maintenance/shipment_tolerance/new')}
                             />
                         </div>
                     ) : null
@@ -77,14 +77,14 @@ const BuyerCommissions = () => {
             >
                 <div className="w-full">
                     <Table
-                        data={searchQuery.data?.distributions && !!debouncedSearch 
-                            ? searchQuery.data.distributions : distributionsList
+                        data={searchQuery.data?.toleranceLevels && !!debouncedSearch 
+                            ? searchQuery.data.toleranceLevels : toleranceLevelList
                         }
                         isLoading={isLoading || searchQuery.isLoading}
                         columns={tableHeaders}
                         nextPage={nextPage}
                         prevPage={prevPage}
-                        total={searchQuery.data?.distributions && searchQuery.data.distributions.length > 0 
+                        total={searchQuery.data?.toleranceLevels && searchQuery.data.toleranceLevels.length > 0 
                             ? searchQuery.data.total ?? 0 : total
                         }
                         deleteFunction={handleDeleteClicked}
@@ -101,16 +101,16 @@ const BuyerCommissions = () => {
                 onClose={() => setDeleteClicked(false)}
                 heading="Confirm Deletion"
                 description={`Are you sure you want to delete "${(
-                    searchQuery.data?.distributions && !!debouncedSearch 
-                        ? searchQuery.data.distributions : distributionsList
-                ).find(distributions => distributions.id === safeNumber(deleteID))?.buyer_name}"?`}
+                    searchQuery.data?.toleranceLevels && !!debouncedSearch 
+                        ? searchQuery.data.toleranceLevels : toleranceLevelList
+                ).find(toleranceLevel => toleranceLevel.id === safeNumber(deleteID))?.buyer_name}"?`}
                 actionLabel="DELETE"
                 negativeAction={true}
                 loading={isLoadingDelete}
                 action={handleDeleteConfirmed}
             />
         </>
-    )
-}
-
-export default BuyerCommissions;
+    );
+};
+    
+export default ShipmentTolerancePage;

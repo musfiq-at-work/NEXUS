@@ -30,12 +30,14 @@ export { tnaActionsRouter } from "./routers/library/tnaActions";
 export { factoryRouter } from "./routers/library/factory";
 export { buyerRouter } from "./routers/library/buyer";
 export { seasonsRouter } from "./routers/library/seasons";
-export { handoverDatesRouter } from "./routers/library/handoverDates";
-export { tnaBaseActionRouter } from "./routers/library/tnaBaseAction";
 export { scContactPersonRouter } from "./routers/library/scContactPerson";
-export { toleranceLevelRouter } from "./routers/library/toleranceLevel";
-export { commissionPercentageRouter } from "./routers/library/commissionPercentage";
-export { earlySettlementPercentageRoute } from "./routers/library/earlySettlementPercentage";
+
+// Maintenance routers
+export { handoverDatesRouter } from "./routers/maintenance/handoverDates";
+export { tnaBaseActionRouter } from "./routers/maintenance/tnaBaseAction";
+export { toleranceLevelRouter } from "./routers/maintenance/toleranceLevel";
+export { commissionPercentageRouter } from "./routers/maintenance/commissionPercentage";
+export { earlySettlementPercentageRoute } from "./routers/maintenance/earlySettlementPercentage";
 
 // Merchandising routers
 export { buyerOrdersRouter } from "./routers/merchandising/buyerOrders";
