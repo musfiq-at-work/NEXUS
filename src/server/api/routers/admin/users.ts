@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
+import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { actions } from "@prisma/client";
 
 export const userRouter = createTRPCRouter({
@@ -178,7 +178,8 @@ export const userRouter = createTRPCRouter({
 			});
         }
         catch (error) {
-            handlePrismaError(error);
+            await logError(error, ctx, input);
+    		handlePrismaError(error);
         }
     }),
 
@@ -258,7 +259,8 @@ export const userRouter = createTRPCRouter({
 			});
         }
         catch (error) {
-            handlePrismaError(error);
+            await logError(error, ctx, input);
+    handlePrismaError(error);
         }
     }),
 

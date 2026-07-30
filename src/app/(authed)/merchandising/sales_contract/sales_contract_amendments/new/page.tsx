@@ -48,9 +48,13 @@ const NewSalesContractAmendmentPage = () => {
                 })),
             };
 
-            const newAmendment = await addSalesContractAmendment.mutateAsync(payload);
+            const res = await addSalesContractAmendment.mutateAsync(payload);
 
-            router.push(`/merchandising/sales_contract/sales_contract_amendments/edit/${newAmendment.amendment.id}`);
+            if (!res?.amendment.id) {
+                throw new Error("missing response id.");
+            }
+
+            router.push(`/merchandising/sales_contract/sales_contract_amendments/edit/${res.amendment.id}`);
         } catch (error) {
             const message = parseTRPCError(error);
             toast.error(`Failed to add Sales Contract Amendment: ${message}`);

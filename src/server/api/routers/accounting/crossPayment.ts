@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import z from "zod";
-import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
+import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma } from "@prisma/client";
@@ -142,7 +142,8 @@ export const crossPaymentsRouter = createTRPCRouter({
                 })
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -217,7 +218,7 @@ export const crossPaymentsRouter = createTRPCRouter({
                 return factoryInvoices;
             }
             catch (error) {
-                console.error('Error in getFactoryInvoicesByBuyer:', error);
+                await logError(error, ctx, input);
                 handlePrismaError(error);
             }
         }),
@@ -271,7 +272,8 @@ export const crossPaymentsRouter = createTRPCRouter({
                 return factoryInvoiceDetails;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -336,7 +338,8 @@ export const crossPaymentsRouter = createTRPCRouter({
                 return { total, crossPayments };
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -412,7 +415,8 @@ export const crossPaymentsRouter = createTRPCRouter({
             }
             catch (error) {
                 console.error('Error in searchCrossPayments:', error);
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -470,7 +474,8 @@ export const crossPaymentsRouter = createTRPCRouter({
                 })
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -526,7 +531,8 @@ export const crossPaymentsRouter = createTRPCRouter({
                 return crossPayment;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -629,7 +635,8 @@ export const crossPaymentsRouter = createTRPCRouter({
                 })
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -679,7 +686,8 @@ export const crossPaymentsRouter = createTRPCRouter({
                 })
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -730,7 +738,8 @@ export const crossPaymentsRouter = createTRPCRouter({
                 return crossPayment;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 })

@@ -50,6 +50,11 @@ const NewFactoryOrderPage = () => {
             };
 
             const res = await addFactoryOrder.mutateAsync(payload);
+
+            if (!res?.id) {
+                throw new Error("missing response id.");
+            }
+            
             router.push(`/merchandising/factory_orders/edit/${res.id}`);
         }
         catch (error) {

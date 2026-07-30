@@ -56,6 +56,9 @@ const NewFactoryInvoicePage = () => {
             };
 
             const res = await addFactoryInvoice.mutateAsync(payload);
+            if (!res?.id) {
+                throw new Error("No factory invoice ID returned");
+            }
             router.push(`/commercial/factory_invoice/edit/${res.id}`);
         }
         catch (error) {

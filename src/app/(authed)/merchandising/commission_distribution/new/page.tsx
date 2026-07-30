@@ -39,6 +39,11 @@ const NewCommissionDistributionPage = () => {
             }
 
             const res = await addCommissionDistribution.mutateAsync(payload);
+
+            if (!res?.id) {
+                throw new Error("missing response id.");
+            }
+            
             router.push(`/merchandising/commission_distribution/edit/${res.id}`);
          }
         catch (error) {

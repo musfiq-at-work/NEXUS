@@ -127,7 +127,7 @@ export const authRouter = createTRPCRouter({
 			cookiesStore.delete("access-token"); 
 			return { success: true };
 		} catch (error) {
-			handlePrismaError(error);
+    		handlePrismaError(error);
 		}
     }),
 });

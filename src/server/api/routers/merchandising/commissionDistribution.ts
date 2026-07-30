@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import z from "zod";
-import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
+import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions } from "@prisma/client";
@@ -121,7 +121,8 @@ export const commissionDistributionRouter = createTRPCRouter({
                 return { distributions, total: total };
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -200,7 +201,8 @@ export const commissionDistributionRouter = createTRPCRouter({
                 return { distributions, total: total };
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -273,6 +275,7 @@ export const commissionDistributionRouter = createTRPCRouter({
                 }, {timeout: 30000})
             }
             catch (error) {
+                await logError(error, ctx, input);
                 handlePrismaError(error);
             }
         }),
@@ -408,7 +411,8 @@ export const commissionDistributionRouter = createTRPCRouter({
                 }, {timeout: 30000});
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -528,7 +532,8 @@ export const commissionDistributionRouter = createTRPCRouter({
                 return distribution;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -625,7 +630,8 @@ export const commissionDistributionRouter = createTRPCRouter({
                     };
                 }, {timeout: 30000});
             } catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -664,7 +670,8 @@ export const commissionDistributionRouter = createTRPCRouter({
                 return {authorization: authorizationState, permission: authorizationPermission[0]};
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -740,7 +747,8 @@ export const commissionDistributionRouter = createTRPCRouter({
                 return updatedDistribution;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -886,7 +894,8 @@ export const commissionDistributionRouter = createTRPCRouter({
                 }
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
         
@@ -916,7 +925,8 @@ export const commissionDistributionRouter = createTRPCRouter({
                 return isFactoryOrderUnauthorized[0]?.approval_status ?? false;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -947,7 +957,8 @@ export const commissionDistributionRouter = createTRPCRouter({
                 return isSalesContractApproved[0]?.approved ?? false;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 

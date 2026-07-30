@@ -1,5 +1,5 @@
 import z from "zod";
-import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
+import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { m } from "~/utils/moduleMap";
 import { TRPCError } from "@trpc/server";
@@ -47,7 +47,8 @@ export const fobTypesRouter = createTRPCRouter({
                 };
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
 
         }),
@@ -104,7 +105,8 @@ export const fobTypesRouter = createTRPCRouter({
                 };
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }
     ),
@@ -144,6 +146,7 @@ export const fobTypesRouter = createTRPCRouter({
                 });
             }
             catch (error) {
+                await logError(error, ctx, input);
                 handlePrismaError(error);
             }
         }),
@@ -184,7 +187,8 @@ export const fobTypesRouter = createTRPCRouter({
                 });
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -228,7 +232,8 @@ export const fobTypesRouter = createTRPCRouter({
                 });
             }   
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -260,7 +265,8 @@ export const fobTypesRouter = createTRPCRouter({
                 });
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 });

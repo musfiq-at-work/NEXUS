@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import z from "zod";
-import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
+import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions } from "@prisma/client";
@@ -153,7 +153,8 @@ export const commissionInvoiceRouter = createTRPCRouter({
                 return { commissionInvoices, total };
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -241,7 +242,8 @@ export const commissionInvoiceRouter = createTRPCRouter({
                 return { commissionInvoices, total };
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -286,7 +288,8 @@ export const commissionInvoiceRouter = createTRPCRouter({
                 }, {timeout: 30000});
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -357,7 +360,8 @@ export const commissionInvoiceRouter = createTRPCRouter({
                 return invoice;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -428,7 +432,8 @@ export const commissionInvoiceRouter = createTRPCRouter({
 
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -499,7 +504,8 @@ export const commissionInvoiceRouter = createTRPCRouter({
 
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -559,6 +565,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
                 return companyBankList;
             }
             catch (error) {
+                await logError(error, ctx, input);
                 handlePrismaError(error);
             }
         }),
@@ -661,7 +668,8 @@ export const commissionInvoiceRouter = createTRPCRouter({
                 }, {timeout: 30000});
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -709,7 +717,8 @@ export const commissionInvoiceRouter = createTRPCRouter({
                     return updatedInvoice;
                 })
             } catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1260,7 +1269,8 @@ export const commissionInvoiceRouter = createTRPCRouter({
             }
             catch (error) {
                 console.error('Error fetching commission invoice details:', error);
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 });

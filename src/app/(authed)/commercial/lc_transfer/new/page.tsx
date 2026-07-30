@@ -64,6 +64,10 @@ const NewLcTransferPage = () => {
 
             const res = await addLcTransfer.mutateAsync(payload);
 
+            if (!res?.id) {
+                throw new Error("LC Transfer creation failed: missing response id.");
+            }
+
             router.push(`/commercial/lc_transfer/edit/${res.id}`);
 
         } catch (error) {

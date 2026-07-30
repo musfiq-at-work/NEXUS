@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import z from "zod";
-import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
+import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma, shipment_modes } from "@prisma/client";
@@ -120,6 +120,7 @@ export const exFactoryRouter = createTRPCRouter({
                 return { exFactories, total };
             }
             catch (error) {
+                await logError(error, ctx, input);
                 handlePrismaError(error);
             }
         }),
@@ -210,7 +211,8 @@ export const exFactoryRouter = createTRPCRouter({
                 return { exFactories, total };
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -318,7 +320,8 @@ export const exFactoryRouter = createTRPCRouter({
                 }, {timeout: 30000});
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -470,7 +473,8 @@ export const exFactoryRouter = createTRPCRouter({
                     };
                 }, {timeout: 30000});
             } catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -583,7 +587,8 @@ export const exFactoryRouter = createTRPCRouter({
                 return orders;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -657,7 +662,8 @@ export const exFactoryRouter = createTRPCRouter({
                 }, {timeout: 30000});
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -803,7 +809,8 @@ export const exFactoryRouter = createTRPCRouter({
                 `;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -873,7 +880,8 @@ export const exFactoryRouter = createTRPCRouter({
                 return exFactory;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1013,7 +1021,8 @@ export const exFactoryRouter = createTRPCRouter({
                     };
                 }, {timeout: 30000});
             } catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1053,7 +1062,8 @@ export const exFactoryRouter = createTRPCRouter({
                 return {authorization: authorizationState, permission: authorizationPermission[0]};
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1116,7 +1126,8 @@ export const exFactoryRouter = createTRPCRouter({
                 return updatedExFactory;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1174,7 +1185,8 @@ export const exFactoryRouter = createTRPCRouter({
                 }, {timeout: 30000})
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1279,7 +1291,8 @@ export const exFactoryRouter = createTRPCRouter({
                 return {results, count: Number(count[0]?.count ?? 0)};
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1392,7 +1405,8 @@ export const exFactoryRouter = createTRPCRouter({
                 return {results, count: Number(count[0]?.count ?? 0)};
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1420,7 +1434,8 @@ export const exFactoryRouter = createTRPCRouter({
                 return { exists: !!exists?.id };
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 

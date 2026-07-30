@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import z from "zod";
-import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
+import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions } from "@prisma/client";
@@ -82,7 +82,8 @@ export const tnaTemplatesRouter = createTRPCRouter({
                     return newTemplate;
                 }, {timeout: 30000})
             } catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -141,6 +142,7 @@ export const tnaTemplatesRouter = createTRPCRouter({
                     count: totalCount,
                 };
             } catch (error) {
+                await logError(error, ctx, input);
                 handlePrismaError(error);
             }
         }),
@@ -228,7 +230,8 @@ export const tnaTemplatesRouter = createTRPCRouter({
 
                 return template;
             } catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -347,7 +350,8 @@ export const tnaTemplatesRouter = createTRPCRouter({
                 }, {timeout: 30000})
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -408,7 +412,8 @@ export const tnaTemplatesRouter = createTRPCRouter({
                 }, {timeout: 30000})
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
     
@@ -474,7 +479,8 @@ export const tnaTemplatesRouter = createTRPCRouter({
                 };
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -504,7 +510,8 @@ export const tnaTemplatesRouter = createTRPCRouter({
 
                 return baseAction;
             } catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -544,7 +551,8 @@ export const tnaTemplatesRouter = createTRPCRouter({
                     return deletedAction;
                 }, {timeout: 30000})
             } catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -575,7 +583,8 @@ export const tnaTemplatesRouter = createTRPCRouter({
 
                 return templates;
             } catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 });

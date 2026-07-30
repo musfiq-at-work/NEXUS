@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import z from "zod";
-import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
+import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions } from "@prisma/client";
@@ -132,7 +132,8 @@ export const factoryOrderRouter = createTRPCRouter({
                 };
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -228,7 +229,8 @@ export const factoryOrderRouter = createTRPCRouter({
                 };
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),            
 
@@ -459,6 +461,7 @@ export const factoryOrderRouter = createTRPCRouter({
                 return buyerOrderDetails;
             }
             catch (error) {
+                await logError(error, ctx, input);
                 handlePrismaError(error);
             }
         }),
@@ -570,7 +573,8 @@ export const factoryOrderRouter = createTRPCRouter({
                     };
                 }, {timeout: 30000});
             } catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -686,7 +690,8 @@ export const factoryOrderRouter = createTRPCRouter({
 
                 return factoryOrderDetails;
             } catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -856,7 +861,8 @@ export const factoryOrderRouter = createTRPCRouter({
                 return updatedFactoryOrder;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -911,7 +917,8 @@ export const factoryOrderRouter = createTRPCRouter({
                 return {authorizations: authorizations[0], authorizationPermission: authorizationPermission[0]};
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1012,7 +1019,8 @@ export const factoryOrderRouter = createTRPCRouter({
                 return approvedFactoryOrder;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
     }),
 
@@ -1102,7 +1110,8 @@ export const factoryOrderRouter = createTRPCRouter({
                 return deletedFactoryOrder;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
     }),
 
@@ -1249,7 +1258,8 @@ export const factoryOrderRouter = createTRPCRouter({
 
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1278,7 +1288,8 @@ export const factoryOrderRouter = createTRPCRouter({
                 return isCommissionDistributionAuthorized[0]?.approval_status ?? false;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 });

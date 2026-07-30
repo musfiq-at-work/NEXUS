@@ -45,8 +45,13 @@ const NewTNATemplatePage = () => {
                 })),
             };
             
-            const newTnaTemplate = await addTNATemplate.mutateAsync(payload);
-            router.push(`/merchandising/tna/tna_templates/edit/${newTnaTemplate.id}`);
+            const res = await addTNATemplate.mutateAsync(payload);
+
+            if (!res?.id) {
+                throw new Error("missing response id.");
+            }
+
+            router.push(`/merchandising/tna/tna_templates/edit/${res.id}`);
         } catch (error) {
             const message = parseTRPCError(error);
             toast.error(`Failed to add TNA Template: ${message}`);

@@ -39,8 +39,13 @@ const NewTNAPlanPage = () => {
                 plan_date: new Date(tnaPlanData.plan_date),
             };
 
-            const addedPlan = await addTNAPlan.mutateAsync(payload); 
-            router.push(`/merchandising/tna/tna_planning/edit/${addedPlan.id}`);
+            const res = await addTNAPlan.mutateAsync(payload); 
+
+            if (!res?.id) {
+                throw new Error("missing response id.");
+            }
+
+            router.push(`/merchandising/tna/tna_planning/edit/${res.id}`);
         } catch (error) {
             const message = parseTRPCError(error);
             toast.error(`Failed to add TNA Plan: ${message}`);

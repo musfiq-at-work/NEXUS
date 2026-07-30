@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import z from "zod";
-import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
+import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, order_status, shipment_modes } from "@prisma/client";
@@ -318,7 +318,8 @@ export const buyerOrdersRouter = createTRPCRouter({
                     total,
                 };
             } catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -504,7 +505,8 @@ export const buyerOrdersRouter = createTRPCRouter({
                     return deletedBuyerOrder;
                 }, {timeout: 60000});
             } catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -830,7 +832,8 @@ export const buyerOrdersRouter = createTRPCRouter({
                 }, {timeout: 30000});
             } 
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -958,6 +961,7 @@ export const buyerOrdersRouter = createTRPCRouter({
 
                 return buyerOrder;
             } catch (error) {
+                await logError(error, ctx, input);
                 handlePrismaError(error);
             }
         }),
@@ -1276,7 +1280,8 @@ export const buyerOrdersRouter = createTRPCRouter({
                     };
                 }, {timeout: 60000});
             } catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1361,7 +1366,8 @@ export const buyerOrdersRouter = createTRPCRouter({
                     return existingColor;
                 }, {timeout: 30000});
             } catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1466,7 +1472,8 @@ export const buyerOrdersRouter = createTRPCRouter({
 
                 return {header, po_details, results: { totalQuantityString, totalValueString }};
             } catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 });

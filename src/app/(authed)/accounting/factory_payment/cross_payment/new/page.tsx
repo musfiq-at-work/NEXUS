@@ -50,7 +50,12 @@ const NewCrossPaymentPage = () => {
             };
 
             const res = await addCrossPayment.mutateAsync(payload);
-            // router.push(`/accounting/factory_payment/cross_payment/edit/${res.id}`);
+            
+            if (!res?.id) {
+                throw new Error("missing response id.");
+            }
+
+            router.push(`/accounting/factory_payment/cross_payment/edit/${res.id}`);
         }
         catch (error) {
             const parsedError = parseTRPCError(error);

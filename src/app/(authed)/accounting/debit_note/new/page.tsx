@@ -51,8 +51,13 @@ const NewDebitNotePage = () => {
                 })),
             };
 
-            await addDebitNote.mutateAsync(payload);
-            router.push('/accounting/debit_note');
+            const res = await addDebitNote.mutateAsync(payload);
+
+            if (!res?.id) {
+                throw new Error("missing response id.");
+            }
+
+            router.push(`/accounting/debit_note/edit/${res.id}`);
         }
         catch (error) {
             const parsedError = parseTRPCError(error);

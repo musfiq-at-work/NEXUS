@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import z from "zod";
-import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
+import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma } from "@prisma/client";
@@ -134,7 +134,8 @@ export const factoryInvoiceRouter = createTRPCRouter({
                 return { factoryInvoices, total };
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -231,7 +232,8 @@ export const factoryInvoiceRouter = createTRPCRouter({
                 return { factoryInvoices, total };
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -309,7 +311,8 @@ export const factoryInvoiceRouter = createTRPCRouter({
                 }, {timeout: 30000})
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -560,6 +563,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
                 }, {timeout: 30000});
             }
             catch (error) {
+                await logError(error, ctx, input);
                 handlePrismaError(error);
             }
         }),
@@ -652,7 +656,8 @@ export const factoryInvoiceRouter = createTRPCRouter({
                 return scLcList;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -761,7 +766,8 @@ export const factoryInvoiceRouter = createTRPCRouter({
                 }, {timeout: 30000})                
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -814,7 +820,8 @@ export const factoryInvoiceRouter = createTRPCRouter({
                 return details[0];
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -913,7 +920,8 @@ export const factoryInvoiceRouter = createTRPCRouter({
                 return invoice;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -987,7 +995,8 @@ export const factoryInvoiceRouter = createTRPCRouter({
                 }, {timeout: 30000});
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1024,7 +1033,8 @@ export const factoryInvoiceRouter = createTRPCRouter({
                 }, {timeout: 30000});
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1250,7 +1260,8 @@ export const factoryInvoiceRouter = createTRPCRouter({
                 return {header: factoryInvoiceHeader, table: tableWithFormattedValues, discountedValue: discountedValueStr };
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1267,7 +1278,8 @@ export const factoryInvoiceRouter = createTRPCRouter({
                 return { exists: count > 0 };
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 })

@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import z from "zod";
-import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
+import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions } from "@prisma/client";
@@ -117,7 +117,8 @@ export const lcMasterRouter = createTRPCRouter({
                 return { lc, total };
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -223,6 +224,7 @@ export const lcMasterRouter = createTRPCRouter({
                 return { lc, total };
             }
             catch (error) {
+                await logError(error, ctx, input);
                 handlePrismaError(error);
             }
         }),
@@ -329,7 +331,8 @@ export const lcMasterRouter = createTRPCRouter({
 
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -436,7 +439,8 @@ export const lcMasterRouter = createTRPCRouter({
                     return newLC.id;
                 }, {timeout: 30000});
             } catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -662,7 +666,8 @@ export const lcMasterRouter = createTRPCRouter({
                     };
                 }, {timeout: 30000});
             } catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -720,7 +725,8 @@ export const lcMasterRouter = createTRPCRouter({
                 return orders;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -828,7 +834,8 @@ export const lcMasterRouter = createTRPCRouter({
                 `;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -948,7 +955,8 @@ export const lcMasterRouter = createTRPCRouter({
                 return lcData;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1024,7 +1032,8 @@ export const lcMasterRouter = createTRPCRouter({
                 }, {timeout: 30000});
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1089,7 +1098,8 @@ export const lcMasterRouter = createTRPCRouter({
                 }, {timeout: 30000});
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1129,7 +1139,8 @@ export const lcMasterRouter = createTRPCRouter({
                 return {authorization: authorizationState, permission: authorizationPermission[0]};
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1204,7 +1215,8 @@ export const lcMasterRouter = createTRPCRouter({
                 }, {timeout: 30000})
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1232,7 +1244,8 @@ export const lcMasterRouter = createTRPCRouter({
                 return hasExfactory?.id ? true : false;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 })

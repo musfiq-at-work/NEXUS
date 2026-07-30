@@ -48,8 +48,13 @@ const NewLCAmendmentPage = () => {
                 })),
             };
 
-            const newLC = await addLCAmendment.mutateAsync(payload);
-            router.push(`/merchandising/lc/lc_amendments/edit/${newLC.amendment_id}`);
+            const res = await addLCAmendment.mutateAsync(payload);
+
+            if (!res?.amendment_id) {
+                throw new Error("missing response id.");
+            }
+
+            router.push(`/merchandising/lc/lc_amendments/edit/${res.amendment_id}`);
         } catch (error) {
             const message = parseTRPCError(error);
             toast.error(`Failed to add LC Amendment: ${message}`);

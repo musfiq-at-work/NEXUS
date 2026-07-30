@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import z from "zod";
-import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
+import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma } from "@prisma/client";
@@ -129,6 +129,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                 return { rdlInvoices, total };
             }
             catch (error) {
+                await logError(error, ctx, input);
                 handlePrismaError(error);
             }
         }),
@@ -211,7 +212,8 @@ export const rdlInvoiceRouter = createTRPCRouter({
                 return { rdlInvoices, total };
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -299,7 +301,8 @@ export const rdlInvoiceRouter = createTRPCRouter({
                 }, {timeout: 30000})
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -382,7 +385,8 @@ export const rdlInvoiceRouter = createTRPCRouter({
                 return result;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -480,7 +484,8 @@ export const rdlInvoiceRouter = createTRPCRouter({
                 return scLcList;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -620,7 +625,8 @@ export const rdlInvoiceRouter = createTRPCRouter({
                 }, {timeout: 30000});
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -742,7 +748,8 @@ export const rdlInvoiceRouter = createTRPCRouter({
                 return factoryInvoice;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -801,7 +808,8 @@ export const rdlInvoiceRouter = createTRPCRouter({
                 }, {timeout: 30000});
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -872,7 +880,8 @@ export const rdlInvoiceRouter = createTRPCRouter({
                 return shipmentDetails;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1038,7 +1047,8 @@ export const rdlInvoiceRouter = createTRPCRouter({
                 }, {timeout: 30000});
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1077,7 +1087,8 @@ export const rdlInvoiceRouter = createTRPCRouter({
                 return {authorization: authorizationState, permission: authorizationPermission[0]};
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1137,7 +1148,8 @@ export const rdlInvoiceRouter = createTRPCRouter({
                 return updatedInvoice;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1436,7 +1448,8 @@ export const rdlInvoiceRouter = createTRPCRouter({
                 };
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1453,7 +1466,8 @@ export const rdlInvoiceRouter = createTRPCRouter({
                 return { exists: count > 0 };
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 });

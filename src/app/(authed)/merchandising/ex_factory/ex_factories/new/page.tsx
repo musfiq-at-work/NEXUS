@@ -61,6 +61,11 @@ const NewExFactoryPage = () => {
             };
 
             const res = await addExFactory.mutateAsync(payload);
+            
+            if (!res?.id) {
+                throw new Error("missing response id.");
+            }
+            
             router.push(`/merchandising/ex_factory/ex_factories/edit/${res.id}`);
         }
         catch (error) {

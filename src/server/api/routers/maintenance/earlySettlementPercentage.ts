@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import z from "zod";
-import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
+import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions } from "@prisma/client";
@@ -54,10 +54,10 @@ export const earlySettlementPercentageRoute = createTRPCRouter({
                 return { charges, total: total };
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
-
 
     searchEarlySettlementPercentages: protectedProcedure
         .input(
@@ -103,7 +103,8 @@ export const earlySettlementPercentageRoute = createTRPCRouter({
                 return { charges, total: total };
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -141,14 +142,15 @@ export const earlySettlementPercentageRoute = createTRPCRouter({
                 })
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
     addEarlySettlementPercentage: protectedProcedure
         .input(z.object({
-                buyer_id: z.number(),
-                charge: z.number(),
+            buyer_id: z.number(),
+            charge: z.number(),
         }))
         .mutation(async ({ctx, input}) => {
             const can_add = ctx.permissions[m.EARLY_SETTLEMENT_PERCENTAGE]?.can_add;
@@ -183,6 +185,7 @@ export const earlySettlementPercentageRoute = createTRPCRouter({
                 })
             }
             catch (error) {
+                await logError(error, ctx, input);
                 handlePrismaError(error);
             }
         }),
@@ -216,7 +219,6 @@ export const earlySettlementPercentageRoute = createTRPCRouter({
                     }
                 });
 
-
                 const charges = earlySettlementPercentageObj ? {
                     id: earlySettlementPercentageObj.id,
                     buyer_id: earlySettlementPercentageObj.buyers.id,
@@ -227,7 +229,8 @@ export const earlySettlementPercentageRoute = createTRPCRouter({
                 return charges; 
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -267,7 +270,8 @@ export const earlySettlementPercentageRoute = createTRPCRouter({
                 })
             }
             catch (error) {
-                handlePrismaError(error)
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 

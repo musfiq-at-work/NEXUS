@@ -44,8 +44,8 @@ const NewCommissionInvoicePage = () => {
                 company_bank_id: safeNumber(commissionInvoiceData.company_bank_id),
             };
 
-            await addCommissionInvoice.mutateAsync(payload);
-            router.push('/accounting/commission_invoice');
+            const id = await addCommissionInvoice.mutateAsync(payload);
+            router.push(`/accounting/commission_invoice/edit/${id}`);
         } catch (error) {
             const message = parseTRPCError(error);
             setError(message);

@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import z from "zod";
-import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
+import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
@@ -114,7 +114,8 @@ export const handoverDatesRouter = createTRPCRouter({
                     return newHandoverDate;
                 });
             } catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
 
         }),
@@ -153,6 +154,7 @@ export const handoverDatesRouter = createTRPCRouter({
                     return updatedHandoverDate;
                 });
             } catch (error) {
+                await logError(error, ctx, input);
                 handlePrismaError(error);
             }
 
@@ -189,7 +191,8 @@ export const handoverDatesRouter = createTRPCRouter({
                 });
 
             } catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 

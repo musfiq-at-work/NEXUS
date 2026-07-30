@@ -59,6 +59,11 @@ const NewRDLInvoicePage = () => {
             };
 
             const res = await addRDLInvoice.mutateAsync(payload);
+
+            if (!res?.id) {
+                throw new Error("missing response id.");
+            }
+
             router.push(`/commercial/rdl_invoice/edit/${res.id}`);
         }   
         catch (error) {

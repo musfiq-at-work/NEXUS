@@ -3097,6 +3097,22 @@ model early_settlement_percentage_history {
   users                          users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "early_settelment_percentage_history_action_by_fkey")
 }
 
+model error_logs {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at     DateTime @default(now()) @db.Timestamp(6)
+  request_id     String   @db.Uuid
+  procedure_name String
+  request_method String   @db.VarChar(10)
+  query_params   Json?
+  ip_address     String?  @db.Inet
+  user_agent     String?
+  referer        String?
+  input_data     Json?
+  error_name     String   @db.VarChar(255)
+  error_code     String?  @db.VarChar(100)
+  user_id        String?  @db.Uuid
+}
+
 enum actions {
   UPDATE
   DELETE

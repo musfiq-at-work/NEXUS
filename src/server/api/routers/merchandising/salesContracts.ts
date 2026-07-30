@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import z from "zod";
-import { handlePrismaError } from "~/server/_utils/handleTRPCErrors";
+import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions } from "@prisma/client";
@@ -168,6 +168,7 @@ export const salesContractsRouter = createTRPCRouter({
                 return { salesContracts, total };
             }
             catch (error) {
+                await logError(error, ctx, input);
                 handlePrismaError(error);
             }
         }),
@@ -281,6 +282,7 @@ export const salesContractsRouter = createTRPCRouter({
                 return { salesContracts, total };
             }
             catch (error) {
+                await logError(error, ctx, input);
                 handlePrismaError(error);
             }
         }),
@@ -393,7 +395,8 @@ export const salesContractsRouter = createTRPCRouter({
                 }, {timeout: 30000});
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }   
         }),
 
@@ -556,7 +559,8 @@ export const salesContractsRouter = createTRPCRouter({
                     };
                 }, {timeout: 30000});
             } catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
         
@@ -611,7 +615,8 @@ export const salesContractsRouter = createTRPCRouter({
                 return orders;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),   
         
@@ -724,7 +729,8 @@ export const salesContractsRouter = createTRPCRouter({
                 return salesContract;
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1000,7 +1006,8 @@ export const salesContractsRouter = createTRPCRouter({
                 }, {timeout: 30000});
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1076,7 +1083,8 @@ export const salesContractsRouter = createTRPCRouter({
                 }, {timeout: 30000});
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1126,7 +1134,8 @@ export const salesContractsRouter = createTRPCRouter({
                 return {authorization: authorizationState, permission: authorizationPermission[0]};
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1216,7 +1225,8 @@ export const salesContractsRouter = createTRPCRouter({
                 }, {timeout: 30000})
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1556,7 +1566,8 @@ export const salesContractsRouter = createTRPCRouter({
                 }
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1590,7 +1601,8 @@ export const salesContractsRouter = createTRPCRouter({
                 return distributions[0];
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 
@@ -1978,7 +1990,8 @@ export const salesContractsRouter = createTRPCRouter({
                 return { pdfHeader, hasAmendment: !!hasAmendment, amendData, nonAmendData };
             }
             catch (error) {
-                handlePrismaError(error);
+                await logError(error, ctx, input);
+    handlePrismaError(error);
             }
         }),
 });

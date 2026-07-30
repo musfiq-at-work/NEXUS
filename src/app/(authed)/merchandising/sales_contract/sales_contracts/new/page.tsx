@@ -52,8 +52,13 @@ const NewSalesContractPage = () => {
                 })) ?? [],
             };
 
-            const newSC = await addSalesContract.mutateAsync(payload);
-            router.push(`/merchandising/sales_contract/sales_contracts/edit/${newSC.sales_contract.id}`);
+            const res = await addSalesContract.mutateAsync(payload);
+
+            if (!res?.sales_contract.id) {
+                throw new Error("missing response id.");
+            }
+
+            router.push(`/merchandising/sales_contract/sales_contracts/edit/${res.sales_contract.id}`);
         } catch (error) {
             const message = parseTRPCError(error);
             toast.error(`Failed to add Sales Contract: ${message}`);
