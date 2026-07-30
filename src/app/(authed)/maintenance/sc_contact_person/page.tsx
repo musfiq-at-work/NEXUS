@@ -31,7 +31,7 @@ const ScContactPersonPage = () => {
         { enabled: debouncedSearch.length > 0 }
     );
 
-    const editURL = '/library/sc_contact_person/edit/';
+    const editURL = '/maintenance/sc_contact_person/edit/';
 
     const deleteMutation = api.scContactPerson.deleteContactPerson.useMutation({
         onSuccess: async () => {
@@ -66,10 +66,10 @@ const ScContactPersonPage = () => {
                     can_add ? ( 
                         <div className="w-70">
                             <Button
-                                variant="primary"
+                                variant="secondary"
                                 label='Add Contact Person'
                                 leftIcon={plusIcon}
-                                onClick={() => router.push('/library/sc_contact_person/new')}
+                                onClick={() => router.push('/maintenance/sc_contact_person/new')}
                             />
                         </div>
                     ) : null

@@ -1,5 +1,6 @@
 import { 
-    dashboardIcon, sackDollarIcon, reportIcon, shirtIcon, bookIcon, accountsIcon, adminIcon, qualityIcon, complianceIcon, settingIcon
+    dashboardIcon, sackDollarIcon, reportIcon, shirtIcon, bookIcon, accountsIcon, 
+    adminIcon, qualityIcon, complianceIcon, settingIcon
 } from "~/assets";
 
 import type { StaticImageData } from "next/image";
@@ -44,7 +45,6 @@ const sideBarConfig: Record<number, {href: string;}> = {
     [m.FOB_TYPES]: { href: "/library/fob_types" },
     [m.PAYMENT_TERMS]: { href: "/library/payment_terms" },
     [m.FREIGHT_TERMS]: { href: "/library/freight_terms" },
-    [m.SC_CONTACT_PERSON]: { href: "/library/sc_contact_person" },
     
     // Maintenance
     [m.TNA_BASE_ACTION]: { href: "/maintenance/tna_base_action" },
@@ -52,6 +52,7 @@ const sideBarConfig: Record<number, {href: string;}> = {
     [m.LIBRARY_COMMISSION_DISTRIBUTION]: {href: "/maintenance/commission_percentage" },
     [m.HANDOVER_DATES]: { href: "/maintenance/handover_dates" },
     [m.EARLY_SETTLEMENT_PERCENTAGE]: {href: "/maintenance/early_settlement_percentage" },
+    [m.SC_CONTACT_PERSON]: { href: "/maintenance/sc_contact_person" },
 
     // Merchandising Module
     [m.MERCHANDISING]: { href: "/merchandising" },
@@ -102,17 +103,12 @@ const sideBarConfig: Record<number, {href: string;}> = {
 
     // Reports Module
     [m.REPORTS]: { href: "/reports" },
-    
-    // Merchandising Reports
     [m.SALES_REPORT]: { href: "/reports/mer_report/sales_report" },
     [m.EXPORT_REPORT]: { href: "/reports/mer_report/export_report" },
     [m.ORDER_SUMMARY_REPORT]: { href: "/reports/mer_report/order_summary_report" },
-
-    // Commercial Reports
     [m.EXPORT_SUMMARY]: { href: "/reports/com_report/export_summary" },
     [m.LC_SC_CLOSING]: { href: "/reports/com_report/lc_sc_closing" },
     [m.COMMERCIAL_ACTIVITY_REPORT]: { href: "/reports/com_report/activity_report" }
 };
 
 export default sideBarConfig;
-

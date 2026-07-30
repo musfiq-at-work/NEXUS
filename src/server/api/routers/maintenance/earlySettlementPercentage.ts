@@ -185,5 +185,102 @@ export const earlySettlementPercentageRoute = createTRPCRouter({
             catch (error) {
                 handlePrismaError(error);
             }
+        }),
+
+    getEarlySettlementPercentageById: protectedProcedure
+        .input(z.object({
+            id: z.string()
+        }))
+        .query(async ({ctx, input}) => {
+            const can_view = ctx.permissions[m.LIBRARY_COMMISSION_DISTRIBUTION]?.can_view;
+
+            if(!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view Commission Distribution Percentages." 
+                });
+            }
+
+            try {
+                const earlySettlementPercentageObj = await ctx.db.early_settlement_percentage.findUnique({
+                    where: {id: input.id},
+                    select: {
+                        id: true,
+                        buyers: {
+                            select: {
+                                id: true,
+                                buyer_name: true,
+                            }
+                        },
+                        charge: true,
+                    }
+                });
+
+
+                const charges = earlySettlementPercentageObj ? {
+                    id: earlySettlementPercentageObj.id,
+                    buyer_id: earlySettlementPercentageObj.buyers.id,
+                    buyer_name: earlySettlementPercentageObj.buyers.buyer_name,
+                    charge: earlySettlementPercentageObj.charge
+                } : null;
+
+                return charges; 
+            }
+            catch (error) {
+                handlePrismaError(error);
+            }
+        }),
+
+    updateEarlySettlementPercentage: protectedProcedure
+        .input(z.object({
+            db_id: z.string(),
+            charge: z.number().optional(),
+        }))
+        .mutation(async ({ctx, input}) => {
+            const can_view = ctx.permissions[m.LIBRARY_COMMISSION_DISTRIBUTION]?.can_update;
+
+            if(!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to update Commission Distribution Percentages." 
+                });
+            }
+            
+            try {
+                return await ctx.db.$transaction(async (tx) => {
+                    const updatedEarlySettlementCharge = await tx.early_settlement_percentage.update({
+                        where: {id: input.db_id},
+                        data: {
+                            charge: input.charge
+                        }
+                    });
+
+                    await tx.early_settlement_percentage_history.create({
+                        data: {
+                            early_settlement_percentage_id: input.db_id,
+                            buyer_id: updatedEarlySettlementCharge.buyer_id,
+                            charge: input.charge,
+                            action_by: ctx.user.id,
+                            action_type: actions.UPDATE
+                        }
+                    })
+                })
+            }
+            catch (error) {
+                handlePrismaError(error)
+            }
+        }),
+
+    getBuyersForEarlySettlementPercentage: protectedProcedure
+        .query(async ({ctx}) => {
+            return await ctx.db.$queryRaw<{id: number, buyer_name: string}[]>`
+                SELECT
+                    ID,
+                    BUYER_NAME
+                FROM BUYERS AS B 
+                WHERE B.ID NOT IN (
+                    SELECT BUYER_ID FROM early_settlement_percentage
+                );
+            `;
         })
 })

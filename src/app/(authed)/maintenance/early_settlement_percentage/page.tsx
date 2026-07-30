@@ -4,7 +4,7 @@ import { plusIcon } from "~/assets";
 import { Button, SearchField, Table, Wrapper, Popup } from "~/components";
 import { api } from "~/trpc/react";
 import { toast } from "sonner";
-// import { tableHeaders } from "./config/columns";
+import { tableHeaders } from "./config/columns";
 import { useSearchablePagination, useModulePermissions, useDeleteConfirmation } from "~/hooks";
 import { safeNumber } from "~/utils/numbers";
 
@@ -16,50 +16,50 @@ const DestinationsPage = () => {
 
     const { can_add, can_update, can_delete } = useModulePermissions();
 
-    // // Fetch paginated data
-    // const {data: destinations, isLoading} = api.destinations.getDestinations.useQuery({
-    //     limit,
-    //     offset: page * limit,
-    // });
+    // Fetch paginated data
+    const {data: earlySettlement, isLoading} = api.earlySettlementPercentage.getEarlySettlementPercentage.useQuery({
+        limit,
+        offset: page * limit,
+    });
 
-    // const destinationsList = destinations?.destinations ?? [];
-    // const total = destinations?.total ?? 0;
+    const earlySettlementList = earlySettlement?.charges ?? [];
+    const total = earlySettlement?.total ?? 0;
 
-    // // Search query (enabled only when there's a search term)
-    // const searchQuery = api.destinations.searchDestinations.useQuery(
-    //     { query: debouncedSearch, limit, offset: page * limit },
-    //     { enabled: debouncedSearch.length > 0 }
-    // );
+    // Search query (enabled only when there's a search term)
+    const searchQuery = api.earlySettlementPercentage.searchEarlySettlementPercentages.useQuery(
+        { query: debouncedSearch, limit, offset: page * limit },
+        { enabled: debouncedSearch.length > 0 }
+    );
 
-    // const editURL = '/library/destinations/edit/';
+    const editURL = '/maintenance/destinations/edit/';
 
-    // const deleteMutation = api.destinations.deleteDestination.useMutation({
-    //     onSuccess: async () => {
-    //         toast.success("Destination deleted successfully!");
-    //         await Promise.all([
-    //             utils.destinations.getDestinations.invalidate(),
-    //             utils.destinations.searchDestinations.invalidate()
-    //         ]);
-    //     },
-    // });
+    const deleteMutation = api.earlySettlementPercentage.deleteEarlySettlement.useMutation({
+        onSuccess: async () => {
+            toast.success("Destination deleted successfully!");
+            await Promise.all([
+                utils.earlySettlementPercentage.getEarlySettlementPercentage.invalidate(),
+                utils.earlySettlementPercentage.searchEarlySettlementPercentages.invalidate()
+            ]);
+        },
+    });
 
-    // const { 
-    //     deleteID, isLoadingDelete, deleteClicked, setDeleteClicked, handleDeleteClicked, handleDeleteConfirmed 
-    // } = useDeleteConfirmation({
-    //     mutation: deleteMutation,
-    //     successMessage: 'Destination deleted successfully',
-    //     payloadBuilder: id => ({ id: safeNumber(id) }),
-    // });
+    const { 
+        deleteID, isLoadingDelete, deleteClicked, setDeleteClicked, handleDeleteClicked, handleDeleteConfirmed 
+    } = useDeleteConfirmation({
+        mutation: deleteMutation,
+        successMessage: 'Destination deleted successfully',
+        payloadBuilder: id => ({ id: id }),
+    });
 
     return (
         <>
             <Wrapper
-                heading="Early Settlement"
+                heading="Early Settlement Charge"
                 subSectionLeft={
                     <SearchField
                         placeholder="Search Early Settlement..."
                         infoText="Buyer Name"
-                        handleSearchChange={() => {}} //handleSearchChange}
+                        handleSearchChange={handleSearchChange}
                     />
                 }
                 subSectionRight={
@@ -68,24 +68,23 @@ const DestinationsPage = () => {
                             <Button
                                 variant="secondary"
                                 leftIcon={plusIcon}
-                                onClick={() => router.push('/library/destinations/new')}
+                                onClick={() => router.push('/maintenance/early_settlement_percentage/new')}
                                 label="Add Early Settlement"
                             />
                         </div>
                     ) : null
                 }
             >
-                <p>Early Settlement</p>
-                {/* <div className="w-full">
+                <div className="w-full">
                     <Table
-                        data={searchQuery.data?.destinations && !!debouncedSearch 
-                            ? searchQuery.data.destinations : destinationsList
+                        data={searchQuery.data?.charges && !!debouncedSearch 
+                            ? searchQuery.data.charges : earlySettlementList
                         }
                         isLoading={isLoading || searchQuery.isLoading}
                         columns={tableHeaders}
                         nextPage={nextPage}
                         prevPage={prevPage}
-                        total={searchQuery.data?.destinations && searchQuery.data.destinations.length > 0 
+                        total={searchQuery.data?.charges && searchQuery.data.charges.length > 0 
                             ? searchQuery.data.total ?? 0 : total
                         }
                         deleteFunction={handleDeleteClicked}
@@ -95,21 +94,21 @@ const DestinationsPage = () => {
                         allowDelete={can_delete}
                         allowEdit={can_update}
                     />
-                </div> */}
+                </div>
             </Wrapper>
-            {/* <Popup
+            <Popup
                 open={deleteClicked}
                 onClose={() => setDeleteClicked(false)}
                 heading="Confirm Deletion"
                 description={`Are you sure you want to delete "${(
-                    searchQuery.data?.destinations && !!debouncedSearch 
-                        ? searchQuery.data.destinations : destinationsList
-                ).find(destination => destination.id === safeNumber(deleteID))?.name}"?`}
+                    searchQuery.data?.charges && !!debouncedSearch 
+                        ? searchQuery.data.charges : earlySettlementList
+                ).find(earlySettlements => earlySettlements.id === safeNumber(deleteID))?.buyer_name}"?`}
                 actionLabel="DELETE"
                 negativeAction={true}
                 loading={isLoadingDelete}
                 action={handleDeleteConfirmed}
-            /> */}
+            />
         </>
     );
 }

@@ -4,7 +4,7 @@ import type {
     destinationsRouter, banksRouter, companiesRouter, paymentTermsRouter, productTypeRouter,
     fabricsRouter, colorsRouter, fobTypesRouter, freightTermsRouter, courierRouter, tnaActionsRouter,
     buyerRouter ,seasonsRouter, handoverDatesRouter,tnaBaseActionRouter, factoryRouter, productsRouter,
-    toleranceLevelRouter, commissionPercentageRouter
+    toleranceLevelRouter, commissionPercentageRouter, earlySettlementPercentageRoute
 } from "~/server/api";
 
 // Bank types
@@ -127,3 +127,8 @@ export type GetToleranceLevelByIdTypes = ToleranceLevelRouterOutput['getToleranc
 type CommissionPercentageRouterOutput = inferRouterOutputs<typeof commissionPercentageRouter>;
 
 export type GetCommissionPercentageByIdTypes = CommissionPercentageRouterOutput['getCommissionById'];
+
+// Early Settlement type
+type EarlySettlementPercentageRouterOutput = inferRouterOutputs<typeof earlySettlementPercentageRoute>;
+
+export type GetEarlySettlementPercentageByIdTypes = EarlySettlementPercentageRouterOutput['getEarlySettlementPercentageById'];

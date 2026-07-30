@@ -21,7 +21,8 @@ const NewCommissionPercentagePage = () => {
             toast.success("Commission Percentage added successfully!");
             await Promise.all([
                 utils.commissionPercentage.getCommissions.invalidate(),
-                utils.commissionPercentage.searchCommissions.invalidate()
+                utils.commissionPercentage.searchCommissions.invalidate(),
+                utils.commissionPercentage.getBuyerForCommissionPercentage.invalidate()
             ])
             setError(null);
             reset();
