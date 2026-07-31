@@ -41,7 +41,7 @@ export const errorLogsRouter = createTRPCRouter({
             const result = await ctx.db.$queryRaw<ErrorLogs[]>`
                 WITH ERRORS AS (
                     SELECT 
-                        CONCAT(U.first_name, U.last_name) AS FULL_NAME,
+                        CONCAT(U.first_name, ' ', U.last_name, ' - ', U.user_id) AS FULL_NAME,
                         U.USER_ID,
                         EL.REQUEST_ID,
                         EL.CREATED_AT,

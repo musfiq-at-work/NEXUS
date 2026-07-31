@@ -1,6 +1,8 @@
 import type { JsonValue } from "@prisma/client/runtime/client";
 import React from "react";
 import { formatDateTime } from "~/utils/localDateString";
+import { InfoRow } from "./InfoRow";
+import { Section } from "./Section";
 
 interface ErrorLog {
     full_name: string;
@@ -29,6 +31,10 @@ const errorCodes: Record<string, string> = {
     'P2025': 'NOT_FOUND',
     'P1010': 'FORBIDDEN'
 }
+
+
+
+
 
 export default function ErrorCard({ error }: ErrorCardProps) {
     return (
@@ -65,80 +71,40 @@ export default function ErrorCard({ error }: ErrorCardProps) {
                     <span className="text-sm text-rose-700">
                         REQUEST ID: {error.request_id}
                     </span>
-                    <span className="text-sm text-rose-700">
+                    <span className="text-sm text-rose-700 uppercase">
                         REQUEST TIME: {formatDateTime(new Date(error.created_at))}
                     </span>
                 </div>
             </div>
 
+            {/* Explanation */}
+            <Section title="Error Message">
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2">
+                    <p className="text-sm text-amber-800">
+                        {error.error_message?.trim()}
+                    </p>
+                </div>
+            </Section>
+
             {/* Details */}
-            <div className="grid gap-6 p-6 md:grid-cols-2">
-                <InfoRow label="User" value={error.full_name} />
-                <InfoRow label="User ID" value={error.user_id} />
+            <div className="grid gap-6 p-6 md:grid-cols-2 border-b border-gray-200">
                 <InfoRow label="Procedure" value={error.procedure_name} code />
                 <InfoRow label="Referer" value={error.referer} code />
+                <InfoRow label="User" value={error.full_name} />
+                <InfoRow label="User ID" value={error.user_id} />
                 <InfoRow label="IP Address" value={error.ip_address} />
                 <InfoRow label="User Agent" value={error.user_agent} />
             </div>
 
             {/* Input Data */}
-            <Section title="Input Data">
+            <Section title="user Input">
                 <pre className="overflow-x-auto rounded-lg bg-gray-900 p-4 text-sm text-green-400">
                     {JSON.stringify(error.input_data, null, 2)}
                 </pre>
             </Section>
-
-            {/* Explanation */}
-            <Section title="Error Message">
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-                    <p className="text-sm text-amber-700">
-                        {error.error_message?.trim()}
-                    </p>
-                </div>
-            </Section>
         </div>
     );
 }
 
-type InfoRowProps = {
-    label: string;
-    value: React.ReactNode;
-    code?: boolean;
-};
 
-function InfoRow({ label, value, code }: InfoRowProps) {
-    return (
-        <div>
-            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                {label}
-            </p>
 
-            {code ? (
-                <code className="block break-all rounded bg-gray-100 px-3 py-2 text-sm text-gray-800">
-                    {value}
-                </code>
-            ) : (
-                <div className="break-all text-sm text-gray-800">
-                    {value}
-                </div>
-            )}
-        </div>
-    );
-}
-
-type SectionProps = {
-    title: string;
-    children: React.ReactNode;
-};
-
-function Section({ title, children }: SectionProps) {
-    return (
-        <div className="border-t border-gray-200 p-6">
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-600">
-                {title}
-            </h3>
-
-            {children}
-        </div>
-    );
-}
