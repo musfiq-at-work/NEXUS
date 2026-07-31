@@ -18,6 +18,7 @@ interface ErrorLogs {
     error_name: string;
     error_code: string | null;
     total_count: bigint;
+    error_message: string | null;
 }
 
 export const errorLogsRouter = createTRPCRouter({
@@ -52,7 +53,8 @@ export const errorLogsRouter = createTRPCRouter({
                         EL.INPUT_DATA,
                         EL.ERROR_NAME,
                         EL.ERROR_CODE,
-                        EL.USER_ID
+                        EL.USER_ID,
+                        EL.error_message
                     FROM ERROR_LOGS AS EL
                     INNER JOIN USERS AS U ON U.ID = EL.USER_ID
                     ORDER BY EL.CREATED_AT DESC

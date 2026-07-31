@@ -15,6 +15,7 @@ interface ErrorLog {
     input_data: JsonValue;
     error_name: string;
     error_code: string | null;
+    error_message: string | null;
 }
 
 type ErrorCardProps = {
@@ -23,9 +24,10 @@ type ErrorCardProps = {
 
 const errorCodes: Record<string, string> = {
     'P2000': 'BAD_REQUEST',
-    'P2002': 'DUPLICATE EXISTS',
-    'P2003': 'REFERENCED ELSEWHERE / NOT EXISTS',
+    'P2002': 'UNIQUE CONSTRAINT FAILED',
+    'P2003': 'FOREIGN KEY CONSTRAINT FAILED',
     'P2025': 'NOT_FOUND',
+    'P1010': 'FORBIDDEN'
 }
 
 export default function ErrorCard({ error }: ErrorCardProps) {
@@ -59,19 +61,24 @@ export default function ErrorCard({ error }: ErrorCardProps) {
                     </div>
                 </div>
 
-                <span className="text-sm text-gray-500">
-                    {formatDateTime(new Date(error.created_at))}
-                </span>
+                <div className="flex flex-col gap-2 text-left p-2">
+                    <span className="text-sm text-rose-700">
+                        REQUEST ID: {error.request_id}
+                    </span>
+                    <span className="text-sm text-rose-700">
+                        REQUEST TIME: {formatDateTime(new Date(error.created_at))}
+                    </span>
+                </div>
             </div>
 
             {/* Details */}
             <div className="grid gap-6 p-6 md:grid-cols-2">
                 <InfoRow label="User" value={error.full_name} />
                 <InfoRow label="User ID" value={error.user_id} />
-                <InfoRow label="Request ID" value={error.request_id} />
-                <InfoRow label="IP Address" value={error.ip_address} />
                 <InfoRow label="Procedure" value={error.procedure_name} code />
-                <InfoRow label="Referer" value={error.referer} />
+                <InfoRow label="Referer" value={error.referer} code />
+                <InfoRow label="IP Address" value={error.ip_address} />
+                <InfoRow label="User Agent" value={error.user_agent} />
             </div>
 
             {/* Input Data */}
@@ -81,10 +88,12 @@ export default function ErrorCard({ error }: ErrorCardProps) {
                 </pre>
             </Section>
 
-            {/* User Agent */}
-            <Section title="User Agent">
-                <div className="rounded-lg bg-gray-100 p-4 text-sm break-all text-gray-700">
-                    {error.user_agent}
+            {/* Explanation */}
+            <Section title="Error Message">
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                    <p className="text-sm text-amber-700">
+                        {error.error_message?.trim()}
+                    </p>
                 </div>
             </Section>
         </div>

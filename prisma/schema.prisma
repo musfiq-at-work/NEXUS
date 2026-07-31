@@ -3111,6 +3111,7 @@ model error_logs {
   error_name     String   @db.VarChar(255)
   error_code     String?  @db.VarChar(100)
   user_id        String?  @db.Uuid
+  error_message  String?
 }
 
 enum actions {

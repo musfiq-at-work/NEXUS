@@ -14,6 +14,7 @@ interface ErrorList {
     input_data: JsonValue;
     error_name: string;
     error_code: string | null;
+    error_message: string | null;
 }
 
 const ErrorLogs = ({errorList}: {errorList: ErrorList[]}) => {
