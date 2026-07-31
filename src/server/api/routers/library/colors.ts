@@ -6,53 +6,52 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions } from "@prisma/client";
 
 export const colorsRouter = createTRPCRouter({
-  getAll: protectedProcedure.query(async ({ ctx }) => {
-    const colors = await ctx.db.colors.findMany({
-        select: {
-            id: true,
-            name: true,
-        },
-        orderBy: { name: "asc" },
-    })
-    return colors;
-  }),
-
-  getColors: protectedProcedure
-    .input(
-      z.object({
-        limit: z.number().min(1).default(15),
-        offset: z.number().min(0).default(0),
-    })
-    ).query(async ({ ctx, input }) => {
-        const can_view = ctx.permissions[m.COLORS]?.can_view;
-
-        if (!can_view) {
-            throw new TRPCError({ 
-                code: "FORBIDDEN",
-                message: "You do not have permission to view colors." 
-            });
-        }
-
+    getAll: protectedProcedure.query(async ({ ctx }) => {
         const colors = await ctx.db.colors.findMany({
             select: {
                 id: true,
                 name: true,
             },
-            orderBy: { added_at: "desc" },
-            take: input.limit,
-            skip: input.offset,
-        });
+            orderBy: { name: "asc" },
+        })
+        return colors;
+    }),
 
-        const total = await ctx.db.colors.count();
+    getColors: protectedProcedure
+        .input(
+            z.object({
+                limit: z.number().min(1).default(15),
+                offset: z.number().min(0).default(0),
+            })
+        ).query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.COLORS]?.can_view;
 
-        return { colors, total };
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view colors." 
+                });
+            }
+
+            const colors = await ctx.db.colors.findMany({
+                select: {
+                    id: true,
+                    name: true,
+                },
+                orderBy: { added_at: "desc" },
+                take: input.limit,
+                skip: input.offset,
+            });
+
+            const total = await ctx.db.colors.count();
+
+            return { colors, total };
     }),
 
     getColorById: protectedProcedure
-        .input(
-            z.object({
-                id: z.number(),
-            })
+        .input(z.object({
+            id: z.number(),
+        })
         ).query(async ({ ctx, input }) => {
             const can_view = ctx.permissions[m.COLORS]?.can_view;
 
@@ -78,10 +77,9 @@ export const colorsRouter = createTRPCRouter({
     }),
 
     addColors: protectedProcedure
-    .input(
-      z.object({
-        name: z.string().min(1),
-    })
+        .input(z.object({
+            name: z.string().min(1),
+        })
     ).mutation(async ({ ctx, input }) => {
         const can_add = ctx.permissions[m.COLORS]?.can_add;
 
@@ -114,13 +112,12 @@ export const colorsRouter = createTRPCRouter({
         }
         catch (error) {
             await logError(error, ctx, input);
-                        handlePrismaError(error);
+            handlePrismaError(error);
         }
     }),
 
     deleteColors: protectedProcedure
-        .input(
-        z.object({
+        .input(z.object({
             id: z.number(),
         })
     ).mutation(async ({ ctx, input }) => {

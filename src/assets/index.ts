@@ -31,6 +31,7 @@ export { default as tagIcon } from './icons/tag.png';
 export { default as commissionIcon } from './icons/commission.png';
 export { default as excelIcon } from './icons/excel.png';
 export { default as settingIcon } from './icons/settings.png';
+export { default as codeIcon } from './icons/code.png';
 
 // images
 export { default as unauthorizedImage } from "./img/denied.jpg";

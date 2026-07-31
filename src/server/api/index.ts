@@ -72,3 +72,6 @@ export { exportReportRouter } from "./routers/reports/exportReport";
 export { orderSummaryReportRouter } from "./routers/reports/orderSummaryReport";
 export { activityReportRouter } from "./routers/reports/commercialActivityReport";
 export { exportSummaryReportRouter } from "./routers/reports/exportSummaryReport";
+
+// Developer router
+export { errorLogsRouter } from "./routers/developer/error_logs";

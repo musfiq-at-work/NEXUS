@@ -1,6 +1,6 @@
 import { 
     dashboardIcon, sackDollarIcon, reportIcon, shirtIcon, bookIcon, accountsIcon, 
-    adminIcon, qualityIcon, complianceIcon, settingIcon
+    adminIcon, qualityIcon, complianceIcon, settingIcon, codeIcon
 } from "~/assets";
 
 import type { StaticImageData } from "next/image";
@@ -17,7 +17,8 @@ export const icons: Record<string, StaticImageData> = {
     [m.COMPLIANCE]: complianceIcon,
     [m.ADMIN]: adminIcon,
     [m.REPORTS]: reportIcon,
-    [m.MAINTENANCE]: settingIcon
+    [m.MAINTENANCE]: settingIcon,
+    [m.DEVELOPER]: codeIcon
 };
 
 // Database ID to URL mapping
@@ -108,7 +109,10 @@ const sideBarConfig: Record<number, {href: string;}> = {
     [m.ORDER_SUMMARY_REPORT]: { href: "/reports/mer_report/order_summary_report" },
     [m.EXPORT_SUMMARY]: { href: "/reports/com_report/export_summary" },
     [m.LC_SC_CLOSING]: { href: "/reports/com_report/lc_sc_closing" },
-    [m.COMMERCIAL_ACTIVITY_REPORT]: { href: "/reports/com_report/activity_report" }
+    [m.COMMERCIAL_ACTIVITY_REPORT]: { href: "/reports/com_report/activity_report" },
+
+    // DEV
+    [m.ERROR_LOGS]: { href: "/developer/error_logs" },
 };
 
 export default sideBarConfig;

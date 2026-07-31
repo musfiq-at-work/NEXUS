@@ -1,3 +1,4 @@
+import { DEV } from "~/utils/config";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 
 export const modulesRouter = createTRPCRouter({
@@ -24,6 +25,20 @@ export const modulesRouter = createTRPCRouter({
             SELECT id, name, parent_module_id FROM modules WHERE id = 1 -- always add dashboard
             ORDER BY id;
         `;
+
+        if(ctx?.user?.id === DEV){
+            modulesWithParents.push({
+                id: 86,
+                name: 'Developer',
+                parent_module_id: null
+            });
+
+            modulesWithParents.push({
+                id: 87, 
+                name: 'Error Logs', 
+                parent_module_id: 86
+            })
+        }
 
         return Array.isArray(modulesWithParents) ? modulesWithParents : [];
     }),

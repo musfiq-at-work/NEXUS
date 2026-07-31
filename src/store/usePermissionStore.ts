@@ -26,15 +26,16 @@ interface MyStore {
 // Create the Zustand store
 export const usePermissionStore = create<MyStore>((set) => ({
     permission: {},
-    addPermission: (obj) =>
-      set((state) => ({
+
+    addPermission: (obj) => set((state) => ({
         permission: { ...state.permission, [obj.module_id]: obj },
-      })),
-    removePermission: (id) =>
-      set((state) => {
+    })),
+
+    removePermission: (id) => set((state) => {
         const newPermission = { ...state.permission };
         delete newPermission[id];
         return { permission: newPermission };
-      }),
+    }),
+	
     clearPermissions: () => set({ permission: {} }),
 }));

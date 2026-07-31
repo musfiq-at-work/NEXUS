@@ -1,9 +1,22 @@
 import { TRPCError } from "@trpc/server";
 import type { Prisma } from "@prisma/client";
+import { UAParser } from "ua-parser-js";
 
 // Type guard
 function isPrismaError(error: unknown): error is Prisma.PrismaClientKnownRequestError {
     return typeof error === "object" && error !== null && "code" in error;
+}
+
+function parseUserAgent(ua: any): string {
+    const parser = new UAParser(ua);
+    const result = parser.getResult();
+
+    const browserName = result.browser.name ?? "Unknown";
+    const browserVer = result.browser.version ?? "Unknown";
+    const osName = result.os.name ?? "Unknown";
+    const osVer = result.os.version ?? "Unknown";
+
+    return `${browserName} ${browserVer} on ${osName} ${osVer}`;
 }
 
 // Log errors only. Never throw from here.
@@ -16,7 +29,7 @@ export async function logError(error: unknown, ctx: any, input?: unknown): Promi
                 request_method: ctx.request.method,
                 query_params: ctx.request.query,
                 ip_address: ctx.request.ip,
-                user_agent: ctx.request.userAgent,
+                user_agent: parseUserAgent(ctx.request.userAgent),
                 referer: ctx.request.referer,
                 input_data: input,
                 error_name: error instanceof Error ? error.name : "UnknownError",

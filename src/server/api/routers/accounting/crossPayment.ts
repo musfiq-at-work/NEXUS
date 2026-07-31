@@ -192,7 +192,7 @@ export const crossPaymentsRouter = createTRPCRouter({
                             FI.invoice_no,
                             FI.added_at
                         FROM factory_invoice AS FI
-                        WHERE NOT EXISTS (
+                        WHERE NOT EXISTS ( -- BOOKMARK CROSS PAY
                             SELECT 1
                             FROM document_submission_factory_invoices AS DSFI
                             WHERE DSFI.factory_invoice_id = FI.id

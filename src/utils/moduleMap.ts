@@ -78,7 +78,9 @@ enum moduleMap {
     LC_SC_CLOSING = 83,
     COMMERCIAL_ACTIVITY_REPORT = 84,
     EARLY_SETTLEMENT_PERCENTAGE = 82,
-    MAINTENANCE = 85
+    MAINTENANCE = 85,
+    DEVELOPER = 86,
+    ERROR_LOGS = 87
 }
 
 export { moduleMap as m };

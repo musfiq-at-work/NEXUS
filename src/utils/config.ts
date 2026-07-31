@@ -21,5 +21,9 @@ export const QUALITY_DEPARTMENT_ID = 4;
 export const ADMIN_DEPARTMENT_ID = 5;
 export const COMPLIANCE_DEPARTMENT_ID = 6;
 
+export const DEV = '20a3ff7b-1abe-4010-9d44-0428a28ce450';
+export const DEVELOPER_ID = 86;
+export const ERROR_LOGS = 87;
+
 // urls
 export const baseUrl = process.env.NODE_ENV === 'production' ? "http://rdlerp.rgbd.local:60005" : "http://localhost:4000";

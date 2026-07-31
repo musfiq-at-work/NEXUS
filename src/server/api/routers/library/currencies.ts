@@ -161,7 +161,7 @@ export const currenciesRouter = createTRPCRouter({
         }
         catch (error) {
             await logError(error, ctx, input);
-                        handlePrismaError(error);
+            handlePrismaError(error);
         }
     }),
 

@@ -5,6 +5,22 @@ import jwt from "jsonwebtoken";
 
 import { db } from "~/server/db";
 
+interface TRPCContextOptions {
+    headers: Headers;
+    request?: {
+        id: string;
+        method: string;
+        path: string;
+        url: string;
+        query: Record<string, string>;
+        ip: string | null;
+        userAgent: string | null;
+        referer: string | null;
+        origin: string | null;
+        startTime: number;
+	}
+}
+
 const JWT_SECRET = process.env.JWT_SECRET!;
 
 // Extract the Bearer token from headers
@@ -33,21 +49,7 @@ const getUserFromPayload = async (payload: { user_id: string } | null) => {
 };
 
 // Main context creator
-export const createTRPCContext = async (opts: { 
-    headers: Headers;
-    request?: {
-        id: string;
-        method: string;
-        path: string;
-        url: string;
-        query: Record<string, string>;
-        ip: string | null;
-        userAgent: string | null;
-        referer: string | null;
-        origin: string | null;
-        startTime: number;
-	}; 
-}) => {
+export const createTRPCContext = async (opts: TRPCContextOptions) => {
 	const token = getBearerToken(opts.headers);
 	const payload = token ? verifyToken(token) : null;
 	const user = await getUserFromPayload(payload);
