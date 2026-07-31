@@ -319,7 +319,7 @@ export const buyerOrdersRouter = createTRPCRouter({
                 };
             } catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -506,7 +506,7 @@ export const buyerOrdersRouter = createTRPCRouter({
                 }, {timeout: 60000});
             } catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -833,7 +833,7 @@ export const buyerOrdersRouter = createTRPCRouter({
             } 
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -1281,7 +1281,7 @@ export const buyerOrdersRouter = createTRPCRouter({
                 }, {timeout: 60000});
             } catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -1367,7 +1367,7 @@ export const buyerOrdersRouter = createTRPCRouter({
                 }, {timeout: 30000});
             } catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -1473,7 +1473,7 @@ export const buyerOrdersRouter = createTRPCRouter({
                 return {header, po_details, results: { totalQuantityString, totalValueString }};
             } catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 });

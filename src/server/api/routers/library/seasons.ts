@@ -135,7 +135,7 @@ export const seasonsRouter = createTRPCRouter({
                 }
                 catch (error) {
                     await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
                 }
             }),
 
@@ -185,7 +185,7 @@ export const seasonsRouter = createTRPCRouter({
                 }
                 catch (error) {
                     await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
                 }
             }),
 
@@ -234,7 +234,7 @@ export const seasonsRouter = createTRPCRouter({
                 }
                 catch (error) {
                     await logError(error, ctx, input);
-                    handlePrismaError(error);
+                                handlePrismaError(error);
                 }
             }),
 

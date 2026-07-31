@@ -118,7 +118,7 @@ export const countriesRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -193,7 +193,7 @@ export const countriesRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 

@@ -83,7 +83,7 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
                 }, {timeout: 30000})
             } catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -133,7 +133,7 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
                 };
             } catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -210,7 +210,7 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
                 return template;
             } catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -373,7 +373,7 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -429,7 +429,7 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -470,7 +470,7 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
                 }, {timeout: 30000})
             } catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -500,7 +500,7 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
                 return templates;
             } catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 

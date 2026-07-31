@@ -143,7 +143,7 @@ export const evPermissionRouter = createTRPCRouter({
                 return deletedPermission;
             } catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -185,7 +185,7 @@ export const evPermissionRouter = createTRPCRouter({
 
             } catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
     }),
 

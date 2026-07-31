@@ -135,7 +135,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -233,7 +233,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -312,7 +312,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -657,7 +657,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -767,7 +767,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -821,7 +821,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -921,7 +921,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -996,7 +996,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -1034,7 +1034,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -1261,7 +1261,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -1279,7 +1279,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 })

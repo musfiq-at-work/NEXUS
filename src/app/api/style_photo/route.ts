@@ -136,6 +136,7 @@ export async function DELETE(req: Request) {
             success: true,
             message: "Photo deleted successfully.",
         });
+        
     } catch (err) {
         return Response.json(
             {

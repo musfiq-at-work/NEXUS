@@ -102,7 +102,7 @@ export const lcAmendmentRouter = createTRPCRouter({
                 return { lc, total };
 			} catch (error) {
 				await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
 			}
 		}),
 
@@ -209,7 +209,7 @@ export const lcAmendmentRouter = createTRPCRouter({
 			}
 			catch (error) {
 				await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
 			}
 		}),
 
@@ -415,7 +415,7 @@ export const lcAmendmentRouter = createTRPCRouter({
 				return lc;
 			} catch (error) {
 				await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
 			}
 		}),
 
@@ -673,7 +673,7 @@ export const lcAmendmentRouter = createTRPCRouter({
 				}, {timeout: 30000});
 			} catch (error) {
 				await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
 			}
 		}),
 
@@ -779,7 +779,7 @@ export const lcAmendmentRouter = createTRPCRouter({
 				return lcDetails;
 			} catch (error) {
 				await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
 			}
 		}),
 
@@ -869,7 +869,7 @@ export const lcAmendmentRouter = createTRPCRouter({
 				return lcAmendment;
 			} catch (error) {
 				await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
 			}
 		}),
 
@@ -1312,7 +1312,7 @@ export const lcAmendmentRouter = createTRPCRouter({
 			}
 			catch (error) {
 				await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
 			}
 		}),
 });

@@ -83,7 +83,7 @@ export const tnaTemplatesRouter = createTRPCRouter({
                 }, {timeout: 30000})
             } catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -231,7 +231,7 @@ export const tnaTemplatesRouter = createTRPCRouter({
                 return template;
             } catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -351,7 +351,7 @@ export const tnaTemplatesRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -413,7 +413,7 @@ export const tnaTemplatesRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
     
@@ -480,7 +480,7 @@ export const tnaTemplatesRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -511,7 +511,7 @@ export const tnaTemplatesRouter = createTRPCRouter({
                 return baseAction;
             } catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -552,7 +552,7 @@ export const tnaTemplatesRouter = createTRPCRouter({
                 }, {timeout: 30000})
             } catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -584,7 +584,7 @@ export const tnaTemplatesRouter = createTRPCRouter({
                 return templates;
             } catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 });

@@ -133,7 +133,7 @@ export const factoryOrderRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -230,7 +230,7 @@ export const factoryOrderRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),            
 
@@ -286,7 +286,7 @@ export const factoryOrderRouter = createTRPCRouter({
                 return buyerOrders;
             }
             catch (error) {
-                handlePrismaError(error);
+                            handlePrismaError(error);
             }
         }),
 
@@ -574,7 +574,7 @@ export const factoryOrderRouter = createTRPCRouter({
                 }, {timeout: 30000});
             } catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -691,7 +691,7 @@ export const factoryOrderRouter = createTRPCRouter({
                 return factoryOrderDetails;
             } catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -862,7 +862,7 @@ export const factoryOrderRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -918,7 +918,7 @@ export const factoryOrderRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -1020,7 +1020,7 @@ export const factoryOrderRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
     }),
 
@@ -1111,7 +1111,7 @@ export const factoryOrderRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
     }),
 
@@ -1259,7 +1259,7 @@ export const factoryOrderRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -1289,7 +1289,7 @@ export const factoryOrderRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 });

@@ -116,7 +116,7 @@ export const lcTransferRouter = createTRPCRouter({
                 return { lcTransfers, total };
             } catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -255,7 +255,7 @@ export const lcTransferRouter = createTRPCRouter({
                 }, {timeout: 30000});
             } catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -342,7 +342,7 @@ export const lcTransferRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -400,7 +400,7 @@ export const lcTransferRouter = createTRPCRouter({
                 return lcList;
             }
             catch (error) {
-                handlePrismaError(error);
+                            handlePrismaError(error);
             }
         }),
 
@@ -454,7 +454,7 @@ export const lcTransferRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -523,7 +523,7 @@ export const lcTransferRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -580,7 +580,7 @@ export const lcTransferRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -626,7 +626,7 @@ export const lcTransferRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -753,7 +753,7 @@ export const lcTransferRouter = createTRPCRouter({
             }
             catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -824,7 +824,7 @@ export const lcTransferRouter = createTRPCRouter({
                 return lcTransfer;
             } catch (error) {
                 await logError(error, ctx, input);
-    handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 

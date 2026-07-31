@@ -13,9 +13,11 @@ export const createQueryClient = () => {
 		queryCache: new QueryCache({
 			onError: handleError,
 		}),
+
 		mutationCache: new MutationCache({
 			onError: handleError,
 		}),
+		
 		defaultOptions: {
 			queries: {
 				staleTime: 300 * 1000, // 5 minutes
@@ -27,7 +29,7 @@ export const createQueryClient = () => {
 						return false; // Fail fast on forbidden errors
 					}
 
-					return failureCount < 3;
+					return failureCount < 5;
 				},
 			},
 			mutations: {
