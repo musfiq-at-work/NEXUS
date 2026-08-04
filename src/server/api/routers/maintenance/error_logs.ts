@@ -1,8 +1,9 @@
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { DEV } from "~/utils/config";
+// import { DEV } from "~/utils/config";
 import type { Prisma } from "@prisma/client";
 import z from "zod";
+import { m } from "~/utils/moduleMap";
 
 interface ErrorLogs {
     full_name: string;
@@ -29,7 +30,8 @@ export const errorLogsRouter = createTRPCRouter({
             offset: z.number().min(0).optional(),
         }))    
         .query(async ({ctx, input}) => {
-            const can_view = ctx?.user?.id === DEV;
+            const can_view = ctx.permissions[m.ERROR_LOGS]?.can_view;
+            // const can_view = ctx?.user?.id === DEV;
 
             if(!can_view) {
                 throw new TRPCError({ 

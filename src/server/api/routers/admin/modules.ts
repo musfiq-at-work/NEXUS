@@ -1,4 +1,4 @@
-import { DEV } from "~/utils/config";
+// import { DEV, DEVELOPER_ID, ERROR_LOGS } from "~/utils/config";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 
 export const modulesRouter = createTRPCRouter({
@@ -26,19 +26,19 @@ export const modulesRouter = createTRPCRouter({
             ORDER BY id;
         `;
 
-        if(ctx?.user?.id === DEV){
-            modulesWithParents.push({
-                id: 86,
-                name: 'Developer',
-                parent_module_id: null
-            });
+        // if(ctx?.user?.id === DEV){
+        //     modulesWithParents.push({
+        //         id: DEVELOPER_ID,
+        //         name: 'Developer',
+        //         parent_module_id: null
+        //     });
 
-            modulesWithParents.push({
-                id: 87, 
-                name: 'Error Logs', 
-                parent_module_id: 86
-            })
-        }
+        //     modulesWithParents.push({
+        //         id: ERROR_LOGS, 
+        //         name: 'Error Logs', 
+        //         parent_module_id: DEVELOPER_ID
+        //     })
+        // }
 
         return Array.isArray(modulesWithParents) ? modulesWithParents : [];
     }),

@@ -5,7 +5,7 @@ import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
-import { currencyFormatter } from "~/utils/localNumberStrings";
+import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
 
 interface LCListItem {
     id: string;
@@ -23,6 +23,23 @@ interface ShipmentDetails {
     buyer_po: string; 
     invoice_no: string; 
     dn_value: number 
+}
+
+interface DebitNoteHeader {
+    debit_note_ref: string;
+    debit_note_date: Date;
+    factory_name: string;
+    factory_address: string;
+}
+
+interface DebitNoteTableData {
+    buyer_po: string;
+    quantity: number;
+    factory_rate: number;
+    transfer_rate: number;
+    margin: number;
+    excess_value: number;
+    symbol: string;
 }
 
 export const debitNotesRouter = createTRPCRouter({
@@ -860,6 +877,67 @@ export const debitNotesRouter = createTRPCRouter({
                 await logError(error, ctx, input);
                 handlePrismaError(error);
             }
-        })
+        }),
 
+    getPDFData: protectedProcedure
+        .input(z.object({
+            debit_note_id: z.string(),
+        }))
+        .query(async ({ ctx, input }) => {
+            try {
+                const can_view = ctx.permissions[m.DEBIT_NOTE]?.can_view;
+
+                if(!can_view) {
+                    throw new TRPCError({
+                        code: 'FORBIDDEN',
+                        message: 'You do not have permission to view Debit Note'
+                    })
+                }
+
+                const headerData = await ctx.db.$queryRaw<DebitNoteHeader[]>`
+                    SELECT 
+                        DN.debit_note_ref,
+                        DN.debit_note_date,
+                        F.NAME AS factory_name,
+                        F.factory_address
+                    FROM debit_note AS DN
+                        INNER JOIN factories AS F ON F.id = DN.factory_id
+                    WHERE DN.ID = ${input.debit_note_id};
+                `;
+
+                const table = await ctx.db.$queryRaw<DebitNoteTableData[]>`
+                    SELECT 
+                        SD.buyer_po,
+                        SUM(ES.delivery_quantity) AS QUANTITY,
+                        FSD.factory_rate,
+                        FSD.transfer_rate,
+                        (FSD.transfer_rate - FSD.factory_rate)::NUMERIC(18, 2) AS MARGIN,
+                        (SUM(ES.delivery_quantity) * (FSD.transfer_rate - FSD.factory_rate))::NUMERIC(18, 2) AS EXCESS_VALUE,
+                        C.SYMBOL
+                    FROM DEBIT_NOTE_DETAILS AS DND
+                        INNER JOIN factory_shipment_details AS FSD ON FSD.id = DND.factory_shipment_id
+                        INNER JOIN shipment_details AS SD ON SD.id = FSD.shipment_detail_id
+                        INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = SD.id
+                        INNER JOIN factory_orders AS FO ON FO.id = FSD.factory_order_id
+                        INNER JOIN CURRENCIES AS C ON C.id = FO.currency_id
+                    WHERE DND.debit_note_header_id = ${input.debit_note_id}
+                    GROUP BY SD.ID, FSD.ID, C.ID;
+                `;
+
+                const formattedTable = table.map(item => ({
+                    buyer_po: item.buyer_po,
+                    quantity: quantityFormatter(item.quantity),
+                    factory_rate: currencyFormatter(item.factory_rate, item.symbol),
+                    transfer_rate: currencyFormatter(item.transfer_rate, item.symbol),
+                    margin: currencyFormatter(item.margin, item.symbol),
+                    excess_value: currencyFormatter(item.excess_value, item.symbol),
+                }));
+
+                return { headerData, formattedTable };
+            }
+            catch(error) {
+                await logError(error, ctx, input);
+                handlePrismaError(error);
+            }
+        }),
 })

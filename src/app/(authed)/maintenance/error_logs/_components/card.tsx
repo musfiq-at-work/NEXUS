@@ -32,10 +32,6 @@ const errorCodes: Record<string, string> = {
     'P1010': 'FORBIDDEN'
 }
 
-
-
-
-
 export default function ErrorCard({ error }: ErrorCardProps) {
     return (
         <div className="overflow-hidden rounded-xl border border-red-200 bg-white shadow mb-4 m-2">

@@ -33,11 +33,9 @@ export async function logError(error: unknown, ctx: any, input?: unknown): Promi
                 referer: ctx.request.referer,
                 input_data: input,
                 error_name: error instanceof Error ? error.name : "UnknownError",
-                error_code: typeof error === "object" 
-                    && error !== null 
-                    && "code" in error
-                        ? String((error as { code: unknown }).code)
-                        : null,
+                error_code: typeof error === "object" && error !== null && "code" in error
+                    ? String((error as { code: unknown }).code)
+                    : null,
                 error_message: error instanceof Error ? error.message : String(error),
                 user_id: ctx.user.id,
             },

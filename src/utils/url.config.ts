@@ -17,8 +17,8 @@ export const icons: Record<string, StaticImageData> = {
     [m.COMPLIANCE]: complianceIcon,
     [m.ADMIN]: adminIcon,
     [m.REPORTS]: reportIcon,
-    [m.MAINTENANCE]: settingIcon,
-    [m.DEVELOPER]: codeIcon
+    [m.SYSTEM]: settingIcon,
+    [m.MAINTENANCE]: codeIcon
 };
 
 // Database ID to URL mapping
@@ -47,13 +47,13 @@ const sideBarConfig: Record<number, {href: string;}> = {
     [m.PAYMENT_TERMS]: { href: "/library/payment_terms" },
     [m.FREIGHT_TERMS]: { href: "/library/freight_terms" },
     
-    // Maintenance
-    [m.TNA_BASE_ACTION]: { href: "/maintenance/tna_base_action" },
-    [m.SHIPMENT_TOLERANCE]: { href: "/maintenance/shipment_tolerance" },
-    [m.LIBRARY_COMMISSION_DISTRIBUTION]: {href: "/maintenance/commission_percentage" },
-    [m.HANDOVER_DATES]: { href: "/maintenance/handover_dates" },
-    [m.EARLY_SETTLEMENT_PERCENTAGE]: {href: "/maintenance/early_settlement_percentage" },
-    [m.SC_CONTACT_PERSON]: { href: "/maintenance/sc_contact_person" },
+    // System
+    [m.TNA_BASE_ACTION]: { href: "/system/tna_base_action" },
+    [m.SHIPMENT_TOLERANCE]: { href: "/system/shipment_tolerance" },
+    [m.LIBRARY_COMMISSION_DISTRIBUTION]: {href: "/system/commission_percentage" },
+    [m.HANDOVER_DATES]: { href: "/system/handover_dates" },
+    [m.EARLY_SETTLEMENT_PERCENTAGE]: {href: "/system/early_settlement_percentage" },
+    [m.SC_CONTACT_PERSON]: { href: "/system/sc_contact_person" },
 
     // Merchandising Module
     [m.MERCHANDISING]: { href: "/merchandising" },
@@ -112,7 +112,7 @@ const sideBarConfig: Record<number, {href: string;}> = {
     [m.COMMERCIAL_ACTIVITY_REPORT]: { href: "/reports/com_report/activity_report" },
 
     // DEV
-    [m.ERROR_LOGS]: { href: "/developer/error_logs" },
+    [m.ERROR_LOGS]: { href: "/maintenance/error_logs" },
 };
 
 export default sideBarConfig;

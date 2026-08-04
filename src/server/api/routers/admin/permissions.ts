@@ -3,7 +3,7 @@ import { z } from "zod";
 import { m } from "~/utils/moduleMap";
 import { TRPCError } from "@trpc/server";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
-import { DEVELOPER_ID, ERROR_LOGS } from "~/utils/config";
+// import { DEVELOPER_ID, ERROR_LOGS } from "~/utils/config";
 
 
 export const permissionRouter = createTRPCRouter({
@@ -172,8 +172,8 @@ export const permissionRouter = createTRPCRouter({
 
         const modules = Array.from(
 			new Map(modulesObject.flatMap(m => {
-				const items = [{ id: m.id, name: m.name, parent_module_id: m.parent_module_id }]
-					.filter(item => item.id !== DEVELOPER_ID && item.id !== ERROR_LOGS);
+				const items = [{ id: m.id, name: m.name, parent_module_id: m.parent_module_id }];
+					// .filter(item => item.id !== DEVELOPER_ID && item.id !== ERROR_LOGS);
 
 					if (m.modules) {
 						items.push(m.modules);

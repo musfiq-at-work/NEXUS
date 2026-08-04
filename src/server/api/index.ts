@@ -31,13 +31,13 @@ export { factoryRouter } from "./routers/library/factory";
 export { buyerRouter } from "./routers/library/buyer";
 export { seasonsRouter } from "./routers/library/seasons";
 
-// Maintenance routers
-export { handoverDatesRouter } from "./routers/maintenance/handoverDates";
-export { tnaBaseActionRouter } from "./routers/maintenance/tnaBaseAction";
-export { toleranceLevelRouter } from "./routers/maintenance/toleranceLevel";
-export { commissionPercentageRouter } from "./routers/maintenance/commissionPercentage";
-export { earlySettlementPercentageRoute } from "./routers/maintenance/earlySettlementPercentage";
-export { scContactPersonRouter } from "./routers/maintenance/scContactPerson";
+// System routers
+export { handoverDatesRouter } from "./routers/system/handoverDates";
+export { tnaBaseActionRouter } from "./routers/system/tnaBaseAction";
+export { toleranceLevelRouter } from "./routers/system/toleranceLevel";
+export { commissionPercentageRouter } from "./routers/system/commissionPercentage";
+export { earlySettlementPercentageRoute } from "./routers/system/earlySettlementPercentage";
+export { scContactPersonRouter } from "./routers/system/scContactPerson";
 
 // Merchandising routers
 export { buyerOrdersRouter } from "./routers/merchandising/buyerOrders";
@@ -73,5 +73,5 @@ export { orderSummaryReportRouter } from "./routers/reports/orderSummaryReport";
 export { activityReportRouter } from "./routers/reports/commercialActivityReport";
 export { exportSummaryReportRouter } from "./routers/reports/exportSummaryReport";
 
-// Developer router
-export { errorLogsRouter } from "./routers/developer/error_logs";
+// Maintenance router
+export { errorLogsRouter } from "./routers/maintenance/error_logs";
