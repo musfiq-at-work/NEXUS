@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Form, MessageBox, Wrapper } from "~/components";
+import { Button, Form, Wrapper } from "~/components";
 import React, { useCallback, useState } from "react";
 import { useDebitNoteForm } from "../../config/useDebitNoteForm";
 import { api } from "~/trpc/react";
@@ -10,6 +10,7 @@ import { useModulePermissions } from "~/hooks";
 import DebitNoteShipmentDetails from "../../components/DebitNoteShipmentDetails";
 import { safeNumber } from "~/utils/numbers";
 import type { ParamsProp } from "~/types/params";
+import { printingWhiteIcon } from "~/assets";
 
 const EditDebitNotePage = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
@@ -26,7 +27,7 @@ const EditDebitNotePage = ({ params }: ParamsProp) => {
 
     const utils = api.useUtils();
 
-    const { can_update } = useModulePermissions();
+    const { can_view, can_update } = useModulePermissions();
 
     const updateDebitNote = api.debitNotes.updateDebitNote.useMutation({
         onSuccess: async () => {
@@ -72,7 +73,20 @@ const EditDebitNotePage = ({ params }: ParamsProp) => {
     }), [updateDebitNote, id]);
 
     return (
-        <Wrapper heading='Update Debit Note' >
+        <Wrapper heading='Update Debit Note' 
+            subSectionRight={
+                can_view ? (
+                    <div className="w-50 mb-3">
+                        <Button
+                            variant="secondary"
+                            label="Print (PDF)"
+                            leftIcon={printingWhiteIcon}
+                            onClick={() => window.open(`/pdf/debit_note/${id}`, "_blank")}
+                        />
+                    </div>
+                ) : null
+            } 
+        >
             <Form 
                 fields={formFields} 
                 buttonLabel="Add New Debit Note" 

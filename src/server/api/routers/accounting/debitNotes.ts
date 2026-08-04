@@ -30,6 +30,9 @@ interface DebitNoteHeader {
     debit_note_date: Date;
     factory_name: string;
     factory_address: string;
+    processing_charge: number;
+    conversion_rate: number;
+    additional_adjustment: number;
 }
 
 interface DebitNoteTableData {
@@ -899,7 +902,10 @@ export const debitNotesRouter = createTRPCRouter({
                         DN.debit_note_ref,
                         DN.debit_note_date,
                         F.NAME AS factory_name,
-                        F.factory_address
+                        F.factory_address,
+                        DN.processing_charge,
+                        DN.conversion_rate,
+                        dn.additional_adjustment
                     FROM debit_note AS DN
                         INNER JOIN factories AS F ON F.id = DN.factory_id
                     WHERE DN.ID = ${input.debit_note_id};
@@ -933,7 +939,36 @@ export const debitNotesRouter = createTRPCRouter({
                     excess_value: currencyFormatter(item.excess_value, item.symbol),
                 }));
 
-                return { headerData, formattedTable };
+                const totalQuantity = table.reduce((total, item) => total = item.quantity + total, 0);
+                const totalValue = table.reduce((total, item) => total = total + item.excess_value, 0);
+
+                const paymentAdjustmentValue = totalValue * (headerData[0]?.additional_adjustment ?? 0) / 100;
+                const processingChargeValue = totalValue * (headerData[0]?.processing_charge ?? 0) / 100;
+                const initialTotal = totalValue - paymentAdjustmentValue - processingChargeValue;
+                const inBDT = initialTotal * (headerData[0]?.conversion_rate ?? 1);
+
+                const totals = {
+                    totalQuantity: quantityFormatter(totalQuantity),
+                    totalValue: currencyFormatter(totalValue, table[0]?.symbol || table[0]?.symbol || '$'),
+                    paymentAdjustmentValue: currencyFormatter(paymentAdjustmentValue, table[0]?.symbol || table[0]?.symbol || '$'),
+                    processingChargeValue: currencyFormatter(processingChargeValue, table[0]?.symbol || table[0]?.symbol || '$'),
+                    initialTotal: currencyFormatter(initialTotal, table[0]?.symbol || table[0]?.symbol || '$'),
+                    inBDT: currencyFormatter(inBDT, '৳'),
+                }
+
+                const factoryInvoices = await ctx.db.$queryRaw<{ factory_invoices: string }[]>`
+                    SELECT DISTINCT 
+                        FI.invoice_no AS FACTORY_INVOICES
+                    FROM DEBIT_NOTE_DETAILS AS DND
+                        INNER JOIN factory_shipment_details AS FSD ON FSD.id = DND.factory_shipment_id
+                        INNER JOIN shipment_details AS SD ON SD.id = FSD.shipment_detail_id
+                        INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = SD.id
+                        INNER JOIN factory_invoice_details AS FID ON FID.exfactory_shipment_id = ES.id
+                        INNER JOIN factory_invoice AS FI ON FI.id = FID.factory_invoice_id
+                    WHERE DND.debit_note_header_id = ${input.debit_note_id};
+                `;
+
+                return { headerData, formattedTable, totals, factoryInvoices };
             }
             catch(error) {
                 await logError(error, ctx, input);
@@ -941,3 +976,4 @@ export const debitNotesRouter = createTRPCRouter({
             }
         }),
 })
+

@@ -24,6 +24,7 @@ const DebitNotePage = () => {
     const debitNoteList = debitNotes?.debitNotes ?? [];
     const total = debitNotes?.total ?? 0;
     const editURL = '/accounting/debit_note/edit/';
+    const pdfURL = '/pdf/debit_note/';
 
     const searchQuery = api.debitNotes.searchDebitNotes.useQuery(
         { query: debouncedSearch, limit, offset: page * limit },
@@ -90,6 +91,8 @@ const DebitNotePage = () => {
                         allowDelete={can_delete}
                         allowEdit={can_update}
                         view={!can_update}
+                        allowPrint={true}
+                        printURL={pdfURL}
                     />
                 </div>
             </Wrapper>

@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { parseTRPCError } from "~/utils/parseTRPCError";
 import { useModulePermissions } from "~/hooks";
 import type { ParamsProp } from "~/types/params";
+import { printingWhiteIcon } from "~/assets";
 
 const EditCommissionInvoicePage = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
@@ -24,7 +25,7 @@ const EditCommissionInvoicePage = ({ params }: ParamsProp) => {
 
     const utils = api.useUtils();
 
-    const { can_update } = useModulePermissions();
+    const { can_view, can_update } = useModulePermissions();
 
     const updateCommissionInvoice = api.commissionInvoice.updateCommissionInvoice.useMutation({
         onSuccess: async () => {
@@ -60,7 +61,20 @@ const EditCommissionInvoicePage = ({ params }: ParamsProp) => {
     }), [handleSubmit, updateCommissionInvoice, id]);
 
     return (
-        <Wrapper heading='Update Commission Invoice' >
+        <Wrapper heading='Update Commission Invoice' 
+            subSectionRight={
+                can_view ? (
+                    <div className="w-50 mb-3">
+                        <Button
+                            variant="secondary"
+                            label="Print (PDF)"
+                            leftIcon={printingWhiteIcon}
+                            onClick={() => window.open(`/pdf/commission_invoice/${id}`, "_blank")}
+                        />
+                    </div>
+                ) : null
+            } 
+        >
             <Form 
                 fields={formFields} 
                 buttonLabel="Update Commission Invoice" 
