@@ -7,6 +7,7 @@ import type { HeaderData } from "~/types/pdf";
 import type { inferRouterOutputs } from '@trpc/server';
 import type { debitNotesRouter } from "~/server/api";
 import { useDecodedUser } from "~/hooks";
+import { amountToWords } from "~/utils/localNumberStrings";
 
 type RouterOutput = inferRouterOutputs<typeof debitNotesRouter>;
 
@@ -87,7 +88,6 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 								flexDirection: 'row', 
 								borderLeftWidth: 0.75,
 								borderLeftColor: tableBorderColor,
-								
 							}} wrap={false}>
 								{tableColumns.map((column, colIndex) => (
 									<View wrap={true}
@@ -120,7 +120,7 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 							width: 860,
 							borderRight: `0.75px solid ${tableBorderColor}`,
 							padding: "4px",
-							fontSize: 6, 
+							fontSize: 7, 
 							textAlign: 'right', 
 							fontWeight: 'semibold'
 						}}
@@ -132,12 +132,187 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 							width: 140,
 							borderRight: `0.75px solid ${tableBorderColor}`,
 							padding: "4px",
-							fontSize: 6, 
+							fontSize: 7, 
 							textAlign: 'center', 
-							fontWeight: 'semibold'
 						}}
 					>
 						<Text>{data.totals.lessValue}</Text>
+					</View>
+				</View>
+
+				<View style={styles.tableContainer}>
+					<View style={{
+						flexDirection: 'row', 
+						borderLeftWidth: 0.75, 
+						borderLeftColor: tableBorderColor
+					}} wrap={false}>
+						<View wrap={true}
+							style={{ 
+								width: 300, 
+								fontSize: 9, 
+								paddingHorizontal: 15, 
+								borderRightWidth: 0.75, 
+								borderRightColor: tableBorderColor 
+							}} 
+						>
+							<View>
+								<Text style={{ fontWeight: 'bold' }}>Invoice No:{'\n'}</Text>
+								<View>
+									{data.factoryInvoices.map((invoice, index) => (
+										<Text key={index}>
+											{invoice.factory_invoices}
+											{index !== data.factoryInvoices.length - 1 ? ',\n' : ''}
+										</Text>
+									))}
+									<View style={{flexDirection: 'row', gap: 5, marginTop: 15}}>
+										<Text style={{fontWeight: 'bold' }}>LC:</Text>
+										<Text>{data.headerData[0]?.lc_no}</Text>
+									</View>
+									<View style={{flexDirection: 'row'}}>
+										<Text style={{fontWeight: 'bold' }}>Date: </Text>
+										<Text>{data.headerData[0]?.lc_open_date ? formatDate(data.headerData[0].lc_open_date) : ''}</Text>
+									</View>
+								</View>
+							</View>
+						</View>
+
+						<View style={[styles.cell, { width: 140 }]}>
+							<Text style={{ fontWeight: 'bold', fontFamily: 'poppins' }}>{data.totals.totalQuantity}</Text>
+						</View>
+
+						<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
+						<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
+						<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
+
+						<View style={[styles.cell, { width: 140 }]}>
+							<Text style={{ fontWeight: 'bold', fontFamily: 'poppins' }}>{data.totals.totalValue}</Text>
+						</View>
+					</View>
+				</View>
+
+				<View style={styles.tableContainer}>
+					<View style={{
+						flexDirection: 'row', 
+						borderLeftWidth: 0.75, 
+						borderLeftColor: tableBorderColor,
+					}} wrap={false}>
+						<View wrap={true}
+							style={{ 
+								width: 300, 
+								fontSize: 9, 
+								paddingHorizontal: 15, 
+								borderRightWidth: 0.75, 
+								borderRightColor: tableBorderColor,
+								paddingTop: 15
+							}} 
+						>
+							<Text>
+								LESS {' '}
+								<Text style={{ fontWeight: 'bold' }}>{data.headerData[0]?.additional_adjustment}% {' '}</Text> 
+								EARLIER PAYMENT {'\n'}ADJUSTMENT (ON OUR EXCESS VALUE USD {' '}
+								<Text style={{ fontWeight: 'bold' }}>{data.totals.totalValue}</Text>)
+							</Text>
+						</View>
+
+						<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
+						<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
+						<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
+						<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
+
+						<View style={[styles.cell, { width: 140, paddingTop: 15 }]}>
+							<Text style={{ fontWeight: 'bold', fontFamily: 'poppins' }}>{data.totals.paymentAdjustmentValue}</Text>
+						</View>
+					</View>
+				</View>
+
+				<View style={styles.tableContainer}>
+					<View style={{
+						borderBottomWidth: 0.75, 
+						borderBottomColor: tableBorderColor, 
+						flexDirection: 'row', 
+						borderLeftWidth: 0.75, 
+						borderLeftColor: tableBorderColor,
+					}} wrap={false}>
+						<View wrap={true}
+							style={{ 
+								width: 300, 
+								fontSize: 9, 
+								paddingHorizontal: 15, 
+								borderRightWidth: 0.75, 
+								borderRightColor: tableBorderColor,
+								paddingTop: 10,
+							}} 
+						>
+							<Text>
+								LESS {' '}
+								<Text style={{ fontWeight: 'bold' }}>{data.headerData[0]?.processing_charge}% {' '}</Text> 
+								Processing Charge
+							</Text>
+						</View>
+
+						<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
+						<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
+						<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
+						<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
+
+						<View style={[styles.cell, { width: 140 }]}>
+							<Text style={{ fontWeight: 'bold', fontFamily: 'poppins', paddingTop: 10 }}>{data.totals.processingChargeValue}</Text>
+						</View>
+					</View>
+				</View>
+				
+				<View wrap={false}
+					style={{
+						borderBottomWidth: 0.75, 
+						borderBottomColor: tableBorderColor, 
+						flexDirection: 'row', 
+						borderLeftWidth: 0.75, 
+						borderLeftColor: tableBorderColor,
+					}} 
+				>
+					<View style={{ width: 300, flexDirection: 'row', borderRight: `0.75px solid ${tableBorderColor}` , paddingHorizontal: 5, paddingVertical: 5}}>
+						<Text style={{ fontWeight: 'bold', fontSize: 10 }}>GRAND TOTAL US DOLLAR</Text> 
+					</View>
+					<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
+					<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
+					<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
+					<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
+					<View style={[styles.cell, { width: 140 }]}>
+						<Text style={{ fontWeight: 'bold', fontFamily: 'poppins' }}>{data.totals.grandTotal}</Text>
+					</View>
+				</View>
+
+				<View wrap={false}
+					style={{
+						borderBottomWidth: 0.75, 
+						borderBottomColor: tableBorderColor, 
+						flexDirection: 'row', 
+						borderLeftWidth: 0.75, 
+						borderLeftColor: tableBorderColor,
+					}} 
+				>
+					<View style={{ width: 1000, flexDirection: 'row', borderRight: `0.75px solid ${tableBorderColor}` , paddingHorizontal: 5, paddingVertical: 5}}>
+						<Text style={{ fontWeight: 'bold', fontFamily: 'poppins', fontSize: 10 }}> USD IN WORD: </Text>
+						<Text style={{ fontFamily: 'poppins', fontSize: 10 }}> {data.totals.inWord} </Text>
+					</View>
+				</View>
+
+				<View wrap={false}
+					style={{
+						borderBottomWidth: 0.75, 
+						borderBottomColor: tableBorderColor, 
+						flexDirection: 'row', 
+						borderLeftWidth: 0.75, 
+						borderLeftColor: tableBorderColor,
+					}} 
+				>
+					<View style={{ width: 860, flexDirection: 'row', borderRight: `0.75px solid ${tableBorderColor}` , paddingHorizontal: 5, paddingVertical: 5}}>
+						<Text style={{ fontWeight: 'bold', fontFamily: 'poppins', fontSize: 10 }}> TAKA IN WORD: {' '}</Text>
+						<Text style={{ fontFamily: 'poppins', fontSize: 10, width: 400 }}> {data.totals.inWordBDT} </Text>
+					</View>
+
+					<View style={[styles.cell, { width: 140 }]}>
+						<Text style={{ fontWeight: 'bold', fontFamily: 'poppins' }}>{data.totals.inBDT}</Text>
 					</View>
 				</View>
 

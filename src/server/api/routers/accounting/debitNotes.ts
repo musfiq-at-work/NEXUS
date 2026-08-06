@@ -5,7 +5,7 @@ import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
-import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
+import { amountToWords, currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
 import { safeNumber } from "~/utils/numbers";
 
 interface LCListItem {
@@ -35,6 +35,8 @@ interface DebitNoteHeader {
     conversion_rate: number;
     additional_adjustment: number;
     less: number;
+    lc_no: string;
+    lc_open_date: Date;
 }
 
 interface DebitNoteTableData {
@@ -905,12 +907,15 @@ export const debitNotesRouter = createTRPCRouter({
                         DN.debit_note_date,
                         F.NAME AS factory_name,
                         F.factory_address,
-                        DN.processing_charge,
+                        COALESCE(DN.processing_charge, 0) AS processing_charge,
                         DN.conversion_rate,
-                        dn.additional_adjustment,
-                        COALESCE(DN.less, 0) AS less
+                        COALESCE(DN.additional_adjustment, 0) AS additional_adjustment,
+                        COALESCE(DN.less, 0) AS less,
+                        LC.lc_no,
+                        LC.lc_open_date
                     FROM debit_note AS DN
                         INNER JOIN factories AS F ON F.id = DN.factory_id
+                        LEFT JOIN lc_master AS LC ON LC.id = DN.lc_id
                     WHERE DN.ID = ${input.debit_note_id};
                 `;
 
@@ -948,7 +953,8 @@ export const debitNotesRouter = createTRPCRouter({
                 const paymentAdjustmentValue = totalValue * (headerData[0]?.additional_adjustment ?? 0) / 100;
                 const processingChargeValue = totalValue * (headerData[0]?.processing_charge ?? 0) / 100;
                 const lessValue = totalValue * (headerData[0]?.less ?? 0) / 100;
-                const initialTotal = totalValue - paymentAdjustmentValue - processingChargeValue - lessValue;
+                const initialTotal = totalValue - lessValue;
+                const grandTotal = totalValue - paymentAdjustmentValue - processingChargeValue - lessValue;
                 const inBDT = initialTotal * (headerData[0]?.conversion_rate ?? 1);
 
                 const totals = {
@@ -958,7 +964,10 @@ export const debitNotesRouter = createTRPCRouter({
                     paymentAdjustmentValue: currencyFormatter(paymentAdjustmentValue, table[0]?.symbol || table[0]?.symbol || '$'),
                     processingChargeValue: currencyFormatter(processingChargeValue, table[0]?.symbol || table[0]?.symbol || '$'),
                     initialTotal: currencyFormatter(initialTotal, table[0]?.symbol || table[0]?.symbol || '$'),
-                    inBDT: currencyFormatter(inBDT, '৳'),
+                    grandTotal: currencyFormatter(grandTotal, table[0]?.symbol || table[0]?.symbol || '$'),
+                    inWord: amountToWords(grandTotal),
+                    inBDT: currencyFormatter(inBDT, 'BDT'),
+                    inWordBDT: amountToWords(inBDT),
                 }
 
                 const factoryInvoices = await ctx.db.$queryRaw<{ factory_invoices: string }[]>`
