@@ -29,9 +29,7 @@ const PDF = () => {
         } : skipToken
     );
 
-    if (isLoading) {
-        return <Loader />;
-    }
+    if (isLoading) return <Loader />;
 
     if (!data) {
         return null;

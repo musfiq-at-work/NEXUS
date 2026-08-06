@@ -6,6 +6,7 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
+import { safeNumber } from "~/utils/numbers";
 
 interface LCListItem {
     id: string;
@@ -33,6 +34,7 @@ interface DebitNoteHeader {
     processing_charge: number;
     conversion_rate: number;
     additional_adjustment: number;
+    less: number;
 }
 
 interface DebitNoteTableData {
@@ -905,7 +907,8 @@ export const debitNotesRouter = createTRPCRouter({
                         F.factory_address,
                         DN.processing_charge,
                         DN.conversion_rate,
-                        dn.additional_adjustment
+                        dn.additional_adjustment,
+                        COALESCE(DN.less, 0) AS less
                     FROM debit_note AS DN
                         INNER JOIN factories AS F ON F.id = DN.factory_id
                     WHERE DN.ID = ${input.debit_note_id};
@@ -939,17 +942,19 @@ export const debitNotesRouter = createTRPCRouter({
                     excess_value: currencyFormatter(item.excess_value, item.symbol),
                 }));
 
-                const totalQuantity = table.reduce((total, item) => total = item.quantity + total, 0);
-                const totalValue = table.reduce((total, item) => total = total + item.excess_value, 0);
+                const totalQuantity = table.reduce((total, item) => total = safeNumber(item.quantity) + total, 0);
+                const totalValue = table.reduce((total, item) => total = total + safeNumber(item.excess_value), 0);
 
                 const paymentAdjustmentValue = totalValue * (headerData[0]?.additional_adjustment ?? 0) / 100;
                 const processingChargeValue = totalValue * (headerData[0]?.processing_charge ?? 0) / 100;
-                const initialTotal = totalValue - paymentAdjustmentValue - processingChargeValue;
+                const lessValue = totalValue * (headerData[0]?.less ?? 0) / 100;
+                const initialTotal = totalValue - paymentAdjustmentValue - processingChargeValue - lessValue;
                 const inBDT = initialTotal * (headerData[0]?.conversion_rate ?? 1);
 
                 const totals = {
                     totalQuantity: quantityFormatter(totalQuantity),
                     totalValue: currencyFormatter(totalValue, table[0]?.symbol || table[0]?.symbol || '$'),
+                    lessValue: currencyFormatter(lessValue, table[0]?.symbol || table[0]?.symbol || '$'),
                     paymentAdjustmentValue: currencyFormatter(paymentAdjustmentValue, table[0]?.symbol || table[0]?.symbol || '$'),
                     processingChargeValue: currencyFormatter(processingChargeValue, table[0]?.symbol || table[0]?.symbol || '$'),
                     initialTotal: currencyFormatter(initialTotal, table[0]?.symbol || table[0]?.symbol || '$'),
@@ -971,6 +976,7 @@ export const debitNotesRouter = createTRPCRouter({
                 return { headerData, formattedTable, totals, factoryInvoices };
             }
             catch(error) {
+                console.error("Error fetching PDF data for debit note:", error);
                 await logError(error, ctx, input);
                 handlePrismaError(error);
             }

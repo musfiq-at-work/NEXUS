@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { tableHeaders } from "./config/columns";
 import { useSearchablePagination, useModulePermissions, useDeleteConfirmation } from "~/hooks";
 
-
 const DebitNotePage = () => {
     const router = useRouter();
     const utils = api.useUtils();
@@ -37,6 +36,7 @@ const DebitNotePage = () => {
                 utils.debitNotes.getAllDebitNotes.invalidate(),
                 utils.debitNotes.searchDebitNotes.invalidate(),
             ]);
+            toast.success('Debit Note deleted successfully');
         }
     });
 

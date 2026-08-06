@@ -56,9 +56,7 @@ const PDF = () => {
         commission_value: commissionValue,
     };
 
-    if (isLoading) {
-        return <Loader />;
-    }
+    if (isLoading) return <Loader />;
     
     return (
         <PDFViewer style={{ minHeight: "100vh", minWidth: "100vw" }} showToolbar={true}>

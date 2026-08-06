@@ -6,6 +6,7 @@ import SalesContractPDF from "../SalesContractPDF";
 import { api } from "~/trpc/react";
 import { skipToken } from "@tanstack/react-query";
 import type { ParamsProp } from "~/types/params";
+import { Loader } from "~/components";
 
 const PDF = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
@@ -14,9 +15,7 @@ const PDF = ({ params }: ParamsProp) => {
         !!id ? { id: id } : skipToken
     );
 
-    if (isLoading || !data) {
-        return <div className="text-center p-16">Loading...</div>;
-    }
+    if (!data) return <Loader />;
 
     return (
         <PDFViewer style={{ minHeight: "100vh", minWidth: "100vw" }} showToolbar={true}>
