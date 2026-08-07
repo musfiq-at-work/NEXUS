@@ -28,6 +28,7 @@ export const registerPdfFonts = () => {
         family: "Roboto",
         fonts: [
             { src: "/fonts/Roboto.ttf", fontWeight: 400 },
+            { src: "/fonts/Roboto-Bold.ttf", fontWeight: 700 },
         ],
     });
 };
@@ -82,7 +83,7 @@ export const styles = StyleSheet.create({
     },
     cell: {
         padding: "3px",
-        fontSize: "7px",
+        fontSize: "8px",
         height: "auto",
         borderRightWidth: 0.75,
         fontFamily: 'Roboto',

@@ -7,6 +7,7 @@ import { actions, Prisma } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 import { amountToWords, currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
 import { safeNumber } from "~/utils/numbers";
+import { amountToWordsBDT, currencyFormatterBDT } from "~/utils/localNumberStringBDT";
 
 interface LCListItem {
     id: string;
@@ -966,8 +967,8 @@ export const debitNotesRouter = createTRPCRouter({
                     initialTotal: currencyFormatter(initialTotal, table[0]?.symbol || table[0]?.symbol || '$'),
                     grandTotal: currencyFormatter(grandTotal, table[0]?.symbol || table[0]?.symbol || '$'),
                     inWord: amountToWords(grandTotal),
-                    inBDT: currencyFormatter(inBDT, 'BDT'),
-                    inWordBDT: amountToWords(inBDT),
+                    inBDT: currencyFormatterBDT(inBDT, 'BDT'),
+                    inWordBDT: amountToWordsBDT(inBDT),
                 }
 
                 const factoryInvoices = await ctx.db.$queryRaw<{ factory_invoices: string }[]>`

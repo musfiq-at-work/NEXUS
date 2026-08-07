@@ -1,21 +1,23 @@
 import { Document, Page, Text, View } from "@react-pdf/renderer";
 import { registerPdfFonts, styles, tableBorderColor } from "../components/pdfConfig";
-import { PrintByAndDate, RenaissanceLogo, ReportTitle, HeaderPart, Table, TableSummary, Signature } from "../components";
+import { PrintByAndDate, RenaissanceLogo, ReportTitle, Signature } from "../components";
 import { formatDate } from "~/utils/localDateString";
+import { useDecodedUser } from "~/hooks";
 
-import type { HeaderData } from "~/types/pdf";
 import type { inferRouterOutputs } from '@trpc/server';
 import type { debitNotesRouter } from "~/server/api";
-import { useDecodedUser } from "~/hooks";
-import { amountToWords } from "~/utils/localNumberStrings";
 
 type RouterOutput = inferRouterOutputs<typeof debitNotesRouter>;
-
 type GetPDFDataOutput = RouterOutput['getPDFData'];
-
 type DebitNoteTableRow = GetPDFDataOutput['formattedTable'][number];
 
 registerPdfFonts();
+
+const BlankRow = () => (
+	<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}>
+		<Text>&nbsp;</Text>
+	</View>
+)
 
 const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 	const tableColumns: { key: keyof DebitNoteTableRow; label: string; width: number }[] = [
@@ -25,11 +27,6 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 		{ key: 'transfer_rate', label: 'F. Agreed Unit Price (USD)', width: 140 },
 		{ key: 'margin', label: 'Margin Per Unit', width: 140 },
 		{ key: 'excess_value', label: 'Total Excess', width: 140 },
-	];
-
-	const results = [
-		{ label: "Discount", value: 'Discount', width: 858 },
-		{ label: "Total Quantity", value: data.totals.lessValue, width: 142 },
 	];
 
 	const {user} = useDecodedUser();
@@ -52,8 +49,8 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 				<PrintByAndDate />
 				<ReportTitle title="DEBIT NOTE" />
 
-				<Text style={{fontWeight: 'bold', fontSize: 9, letterSpacing: 0.3}}>To</Text>
-				<View style={{...styles.doubleColumnContainer, marginBottom: 15}}>
+				<Text style={{fontWeight: 'bold', fontSize: 9, letterSpacing: 0.3, fontFamily: 'Roboto'}}>To</Text>
+				<View style={{...styles.doubleColumnContainer, marginBottom: 15, fontFamily: 'Roboto'}}>
 					<View style={{fontSize: 9, letterSpacing: 0.3}}>
 						<Text style={{fontWeight: 'bold'}}>{data.headerData[0]?.factory_name}</Text>
 						<Text>{data.headerData[0]?.factory_address}</Text>
@@ -84,11 +81,14 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 					{/* Body Rows */}
 					<View style={{borderBottomWidth: 0.75, borderBottomColor: tableBorderColor}}>
 						{data.formattedTable.map((row, rowIndex) => (
-							<View key={rowIndex} style={{
-								flexDirection: 'row', 
-								borderLeftWidth: 0.75,
-								borderLeftColor: tableBorderColor,
-							}} wrap={false}>
+							<View key={rowIndex} 
+								wrap={false}
+								style={{
+									flexDirection: 'row', 
+									borderLeftWidth: 0.75,
+									borderLeftColor: tableBorderColor,
+								}} 
+							>
 								{tableColumns.map((column, colIndex) => (
 									<View wrap={true}
 										key={`${rowIndex}-${colIndex}`} 
@@ -155,8 +155,8 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 								borderRightColor: tableBorderColor 
 							}} 
 						>
-							<View>
-								<Text style={{ fontWeight: 'bold' }}>Invoice No:{'\n'}</Text>
+							<View style={{ paddingTop: 3 }}>
+								<Text style={{ fontWeight: 'bold', fontFamily: 'Roboto' }}>Invoice No:{'\n'}</Text>
 								<View>
 									{data.factoryInvoices.map((invoice, index) => (
 										<Text key={index}>
@@ -180,9 +180,9 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 							<Text style={{ fontWeight: 'bold', fontFamily: 'poppins' }}>{data.totals.totalQuantity}</Text>
 						</View>
 
-						<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
-						<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
-						<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
+						<BlankRow />
+						<BlankRow />
+						<BlankRow />
 
 						<View style={[styles.cell, { width: 140 }]}>
 							<Text style={{ fontWeight: 'bold', fontFamily: 'poppins' }}>{data.totals.totalValue}</Text>
@@ -214,10 +214,10 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 							</Text>
 						</View>
 
-						<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
-						<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
-						<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
-						<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
+						<BlankRow />
+						<BlankRow />
+						<BlankRow />
+						<BlankRow />
 
 						<View style={[styles.cell, { width: 140, paddingTop: 15 }]}>
 							<Text style={{ fontWeight: 'bold', fontFamily: 'poppins' }}>{data.totals.paymentAdjustmentValue}</Text>
@@ -250,13 +250,19 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 							</Text>
 						</View>
 
-						<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
-						<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
-						<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
-						<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
+						<BlankRow />
+						<BlankRow />
+						<BlankRow />
+						<BlankRow />
 
 						<View style={[styles.cell, { width: 140 }]}>
-							<Text style={{ fontWeight: 'bold', fontFamily: 'poppins', paddingTop: 10 }}>{data.totals.processingChargeValue}</Text>
+							<Text style={{ 
+								fontWeight: 'bold', 
+								fontFamily: 'poppins', 
+								paddingTop: 10 }}
+							>
+								{data.totals.processingChargeValue}
+							</Text>
 						</View>
 					</View>
 				</View>
@@ -270,13 +276,21 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 						borderLeftColor: tableBorderColor,
 					}} 
 				>
-					<View style={{ width: 300, flexDirection: 'row', borderRight: `0.75px solid ${tableBorderColor}` , paddingHorizontal: 5, paddingVertical: 5}}>
-						<Text style={{ fontWeight: 'bold', fontSize: 10 }}>GRAND TOTAL US DOLLAR</Text> 
+					<View style={{ 
+						width: 300, 
+						flexDirection: 'row', 
+						borderRight: `0.75px solid ${tableBorderColor}`, 
+						paddingHorizontal: 5, 
+						paddingVertical: 5
+					}}>
+						<Text style={{ fontWeight: 'bold', fontSize: 9 }}>GRAND TOTAL US DOLLAR</Text> 
 					</View>
-					<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
-					<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
-					<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
-					<View style={{ width: 140, borderRight: `0.75px solid ${tableBorderColor}` }}><Text>&nbsp;</Text></View>
+
+					<BlankRow />
+					<BlankRow />
+					<BlankRow />
+					<BlankRow />
+
 					<View style={[styles.cell, { width: 140 }]}>
 						<Text style={{ fontWeight: 'bold', fontFamily: 'poppins' }}>{data.totals.grandTotal}</Text>
 					</View>
@@ -291,9 +305,15 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 						borderLeftColor: tableBorderColor,
 					}} 
 				>
-					<View style={{ width: 1000, flexDirection: 'row', borderRight: `0.75px solid ${tableBorderColor}` , paddingHorizontal: 5, paddingVertical: 5}}>
-						<Text style={{ fontWeight: 'bold', fontFamily: 'poppins', fontSize: 10 }}> USD IN WORD: </Text>
-						<Text style={{ fontFamily: 'poppins', fontSize: 10 }}> {data.totals.inWord} </Text>
+					<View style={{ 
+						width: 1000, 
+						flexDirection: 'row', 
+						borderRight: `0.75px solid ${tableBorderColor}`, 
+						paddingHorizontal: 5, 
+						paddingVertical: 5
+					}}>
+						<Text style={{ fontWeight: 'bold', fontFamily: 'poppins', fontSize: 9 }}> USD IN WORD: </Text>
+						<Text style={{ fontFamily: 'poppins', fontSize: 9 }}> {data.totals.inWord} </Text>
 					</View>
 				</View>
 
@@ -306,14 +326,65 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 						borderLeftColor: tableBorderColor,
 					}} 
 				>
-					<View style={{ width: 860, flexDirection: 'row', borderRight: `0.75px solid ${tableBorderColor}` , paddingHorizontal: 5, paddingVertical: 5}}>
-						<Text style={{ fontWeight: 'bold', fontFamily: 'poppins', fontSize: 10 }}> TAKA IN WORD: {' '}</Text>
-						<Text style={{ fontFamily: 'poppins', fontSize: 10, width: 400 }}> {data.totals.inWordBDT} </Text>
+					<View style={{ 
+						width: 860, 
+						flexDirection: 'row', 
+						borderRight: `0.75px solid ${tableBorderColor}`, 
+						paddingHorizontal: 5, 
+						paddingVertical: 5
+					}}>
+						<Text style={{ fontWeight: 'bold', fontFamily: 'poppins', fontSize: 9 }}> TAKA IN WORD: {' '}</Text>
+						<Text style={{ fontFamily: 'poppins', fontSize: 9, width: 380 }}> {data.totals.inWordBDT} </Text>
 					</View>
 
 					<View style={[styles.cell, { width: 140 }]}>
 						<Text style={{ fontWeight: 'bold', fontFamily: 'poppins' }}>{data.totals.inBDT}</Text>
 					</View>
+				</View>
+
+				<View wrap={false}
+					style={{
+						borderBottomWidth: 0.75, 
+						borderBottomColor: tableBorderColor, 
+						flexDirection: 'row', 
+						borderLeftWidth: 0.75, 
+						borderLeftColor: tableBorderColor,
+					}} 
+				>
+					<View style={{ 
+						width: 300, 
+						flexDirection: 'row', 
+						borderRight: `0.75px solid ${tableBorderColor}`, 
+						paddingHorizontal: 5, 
+						paddingVertical: 5
+					}}>
+						<Text style={{ fontWeight: 'bold', fontSize: 9 }}>CURRENCY RATE</Text> 
+					</View>
+
+					<View style={{ 
+						width: 210, 
+						flexDirection: 'row', 
+						borderRight: `0.75px solid ${tableBorderColor}`, 
+						paddingHorizontal: 5, 
+						paddingVertical: 5,
+						justifyContent: 'center'
+					}}>
+						<Text style={{ fontWeight: 'bold', fontSize: 9 }}>USD</Text> 
+					</View>
+
+					<View style={{ 
+						width: 210, 
+						flexDirection: 'row', 
+						borderRight: `0.75px solid ${tableBorderColor}`, 
+						paddingHorizontal: 5, 
+						paddingVertical: 5,
+						justifyContent: 'center'
+					}}>
+						<Text style={{ fontWeight: 'bold', fontSize: 9 }}>{data.headerData[0]?.conversion_rate}</Text> 
+					</View>
+
+					<BlankRow />
+					<BlankRow />
 				</View>
 
 				<Signature signatures={[
