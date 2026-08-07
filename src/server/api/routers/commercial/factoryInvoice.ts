@@ -74,32 +74,26 @@ export const factoryInvoiceRouter = createTRPCRouter({
                             B.BUYER_NAME AS BUYER_NAME,
                             FI.INVOICE_NO,
                             FI.INVOICE_DATE,
-                            SUM(SHIPMENT.SHIPMENT_VALUE) AS VALUE,
+                            SUM(
+                                CASE 
+                                    WHEN FSD.TRANSFER_RATE <> 0
+                                        THEN ES.delivery_quantity * FSD.TRANSFER_RATE
+                                    ELSE ES.delivery_quantity * FSD.FACTORY_RATE
+                                END
+                            ) AS VALUE,
                             C.SYMBOL,
                             FI.ADDED_AT
                         FROM FACTORY_INVOICE AS FI
-                            INNER JOIN factory_invoice_details AS FID ON FI.id = FID.factory_invoice_id
-                            INNER JOIN EXFACTORY_SHIPMENTS AS ES ON ES.ID = FID.exfactory_shipment_id
-                            INNER JOIN SHIPMENT_DETAILS AS SD ON SD.ID = ES.shipment_details_id
-                            INNER JOIN (
-                                SELECT 
-                                    SID.shipment_detail_id AS SHIPMENT_ID,
-                                    CASE 
-                                        WHEN FSD.TRANSFER_RATE <> 0
-                                            THEN SUM(SID.QUANTITY) * FSD.TRANSFER_RATE
-                                        ELSE SUM(SID.QUANTITY) * FSD.FACTORY_RATE
-                                    END AS SHIPMENT_VALUE
-                                FROM SHIPMENT_ITEM_DETAILS AS SID
-                                    INNER JOIN FACTORY_SHIPMENT_DETAILS AS FSD 
-                                        ON FSD.shipment_detail_id = SID.shipment_detail_id
-                                GROUP BY SID.shipment_detail_id, FSD.ID
-                            ) SHIPMENT ON SD.ID = SHIPMENT.SHIPMENT_ID
-                            INNER JOIN FACTORIES AS F ON F.id = FI.factory_id
-                            INNER JOIN ORDER_STYLES AS OS ON OS.id = SD.order_style_id
-                            INNER JOIN BUYER_ORDERS AS BO ON BO.ID = OS.order_id
-                    		INNER JOIN FACTORY_ORDERS AS FO ON FO.order_id = BO.id
-		                    INNER JOIN CURRENCIES AS C ON C.id = FO.currency_id
-                            INNER JOIN BUYERS AS B ON B.id = BO.buyer_id
+                        INNER JOIN factory_invoice_details AS FID ON FI.id = FID.factory_invoice_id
+                        INNER JOIN EXFACTORY_SHIPMENTS AS ES ON ES.ID = FID.exfactory_shipment_id
+                        INNER JOIN SHIPMENT_DETAILS AS SD ON SD.ID = ES.shipment_details_id
+                        INNER JOIN FACTORY_SHIPMENT_DETAILS AS FSD ON FSD.shipment_detail_id = SD.id
+                        INNER JOIN FACTORIES AS F ON F.id = FI.factory_id
+                        INNER JOIN ORDER_STYLES AS OS ON OS.id = SD.order_style_id
+                        INNER JOIN BUYER_ORDERS AS BO ON BO.ID = OS.order_id
+                        INNER JOIN FACTORY_ORDERS AS FO ON FO.order_id = BO.id
+                        INNER JOIN CURRENCIES AS C ON C.id = FO.currency_id
+                        INNER JOIN BUYERS AS B ON B.id = BO.buyer_id
                         WHERE (
                             EXISTS ( -- Admin
                                 SELECT 1
@@ -164,32 +158,26 @@ export const factoryInvoiceRouter = createTRPCRouter({
                             B.BUYER_NAME AS BUYER_NAME,
                             FI.INVOICE_NO,
                             FI.INVOICE_DATE,
-                            SUM(SHIPMENT.SHIPMENT_VALUE) AS VALUE,
-                            C.SYMBOL AS SYMBOL,
+                            SUM(
+                                CASE 
+                                    WHEN FSD.TRANSFER_RATE <> 0
+                                        THEN ES.delivery_quantity * FSD.TRANSFER_RATE
+                                    ELSE ES.delivery_quantity * FSD.FACTORY_RATE
+                                END
+                            ) AS VALUE,
+                            C.SYMBOL,
                             FI.ADDED_AT
                         FROM FACTORY_INVOICE AS FI
-                            INNER JOIN factory_invoice_details AS FID ON FI.id = FID.factory_invoice_id
-                            INNER JOIN EXFACTORY_SHIPMENTS AS ES ON ES.ID = FID.exfactory_shipment_id
-                            INNER JOIN SHIPMENT_DETAILS AS SD ON SD.ID = ES.shipment_details_id
-                            INNER JOIN (
-                                SELECT 
-                                    SID.shipment_detail_id AS SHIPMENT_ID,
-                                    CASE 
-                                        WHEN FSD.TRANSFER_RATE <> 0
-                                            THEN SUM(SID.QUANTITY) * FSD.TRANSFER_RATE
-                                        ELSE SUM(SID.QUANTITY) * FSD.FACTORY_RATE
-                                    END AS SHIPMENT_VALUE
-                                FROM SHIPMENT_ITEM_DETAILS AS SID
-                                    INNER JOIN FACTORY_SHIPMENT_DETAILS AS FSD 
-                                        ON FSD.shipment_detail_id = SID.shipment_detail_id
-                                GROUP BY SID.shipment_detail_id, FSD.ID
-                            ) SHIPMENT ON SD.ID = SHIPMENT.SHIPMENT_ID
-                            INNER JOIN FACTORIES AS F ON F.id = FI.factory_id
-                            INNER JOIN ORDER_STYLES AS OS ON OS.id = SD.order_style_id
-                            INNER JOIN BUYER_ORDERS AS BO ON BO.ID = OS.order_id
-                            INNER JOIN FACTORY_ORDERS AS FO ON FO.order_id = BO.id
-		                    INNER JOIN CURRENCIES AS C ON C.id = FO.currency_id
-                            INNER JOIN BUYERS AS B ON B.id = BO.buyer_id
+                        INNER JOIN factory_invoice_details AS FID ON FI.id = FID.factory_invoice_id
+                        INNER JOIN EXFACTORY_SHIPMENTS AS ES ON ES.ID = FID.exfactory_shipment_id
+                        INNER JOIN SHIPMENT_DETAILS AS SD ON SD.ID = ES.shipment_details_id
+                        INNER JOIN FACTORY_SHIPMENT_DETAILS AS FSD ON FSD.shipment_detail_id = SD.id
+                        INNER JOIN FACTORIES AS F ON F.id = FI.factory_id
+                        INNER JOIN ORDER_STYLES AS OS ON OS.id = SD.order_style_id
+                        INNER JOIN BUYER_ORDERS AS BO ON BO.ID = OS.order_id
+                        INNER JOIN FACTORY_ORDERS AS FO ON FO.order_id = BO.id
+                        INNER JOIN CURRENCIES AS C ON C.id = FO.currency_id
+                        INNER JOIN BUYERS AS B ON B.id = BO.buyer_id
                         WHERE (
                             EXISTS (
                                 SELECT 1
