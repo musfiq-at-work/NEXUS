@@ -6,8 +6,9 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions } from "@prisma/client";
 import { amountToWords, currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
-import { formatColorQty, type SalesContractPDFHeaderData } from "./salesContracts";
+import { formatColorQty } from "./salesContracts";
 import { formatDate } from "~/utils/localDateString";
+import type { SalesContractPDFHeaderData } from "./_types/salesContract";
 
 type SalesContract = {
     id: string;

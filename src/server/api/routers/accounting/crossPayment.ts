@@ -5,27 +5,7 @@ import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
-
-interface CrossPaymentDetails {
-    db_id: string;
-    factory_name: string;
-    factory_invoice_id: string;
-    factory_invoice_no: string;
-    factory_invoice_date: string;
-    invoice_quantity: number;
-    invoice_value: number;
-}
-
-interface CrossPaymentList {
-    id: string;
-    cross_payment_ref: string;
-    cross_payment_date: Date;
-    buyer_name: string;
-    term_name: string;
-    paid_amount: number;
-    added_at: Date;
-    total_count: number;
-}
+import type { CrossPaymentDetails, CrossPaymentList } from './_types/crossPayment';
 
 export const crossPaymentsRouter = createTRPCRouter({
     addCrossPayment: protectedProcedure

@@ -1,8 +1,8 @@
-import type { PoWiseData } from "~/server/api/routers/reports/commercialActivityReport";
 import ExcelJS from "exceljs";
 import { DOLLAR_SIGN_NUMBER_FORMAT, QUANTITY_NUMBER_FORMAT, TABLE_HEADER_ROW, TEXT_FORMAT } from "../../config";
 import { currentTime, formatDate } from "~/utils/localDateString";
 import type { ActivityReportMeta } from "../generateActivityReport";
+import type { PoWiseData } from "~/server/api/routers/reports/_types/commercialActivityReport";
 
 const PO_WISE_TABLE_COLUMN_COUNT = 18;
 

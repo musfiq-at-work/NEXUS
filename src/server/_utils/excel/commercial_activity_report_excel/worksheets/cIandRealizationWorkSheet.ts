@@ -1,8 +1,8 @@
 import ExcelJS from "exceljs";
-import type { CiAndRealizationData } from "~/server/api/routers/reports/commercialActivityReport";
 import type { ActivityReportMeta } from "../generateActivityReport";
 import { DOLLAR_SIGN_NUMBER_FORMAT, QUANTITY_NUMBER_FORMAT, TABLE_HEADER_ROW, TEXT_FORMAT } from "../../config";
 import { currentTime, formatDate } from "~/utils/localDateString";
+import type { CiAndRealizationData } from "~/server/api/routers/reports/_types/commercialActivityReport";
 
 const CI_AND_REALIZATION_TABLE_COLUMN_COUNT = 12;
 

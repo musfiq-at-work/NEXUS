@@ -7,38 +7,8 @@ import { Prisma } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 import { safeNumber } from "~/utils/numbers";
 import { generateOrderSummaryExcel } from "../../../_utils/excel/order_summary_report_excel/generateOrderSummaryExcel";
+import type { OrderSummaryReportRow } from "./_types/orderSummaryReport";
 
-export interface OrderSummaryReportRow {
-    ORDER_NO: string;
-    FACTORY_NAME: string;
-    BUYER_NAME: string;
-    BRAND: string;
-    DEPARTMENT: string;
-    SIZE: string;
-    SEASON_NAME: string;
-    STYLE: string;
-    PRODUCT_TYPE: string;
-    PRODUCT: string;
-    COLORS: string;
-    FABRIC: string;
-    FABRIC_SUPPLIER: string;
-    BUYER_PO: string;
-    ORDER_DATE: string;
-    EXFACTORY_DATE: string;
-    ACTUAL_EXFACTORY_DATE: string;
-    HANDOVER_DATE: string;
-    ETD_DATE: string;
-    LOT_QUANTITY: number;
-    DELIVERY_QUANTITY: number;
-    FOB_RATE: number;
-    FACTORY_RATE: number;
-    PO_CLOSE: boolean;
-    ORDER_RDL_VALUE: number;
-    DELIVERED_RDL_VALUE: number;
-    FACTORY_ORDER_VALUE: number;
-    FACTORY_DELIVERY_VALUE: number;
-    TEAM_NAME: string;
-}
 
 const normalizeOrderSummaryRow = (row: OrderSummaryReportRow): OrderSummaryReportRow => ({
     ...row,

@@ -5,37 +5,7 @@ import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID, DOC_SUBMIT_TO_BANK, DOC_SUBMIT_TO_CUSTOMER } from "~/utils/config";
-
-interface DocumentSubmissions {
-    id: string;
-    term: string;
-    buyer_name: string;
-    fdbc_no: string;
-    fdbc_value: number;
-    submission_date: Date;
-    added_at: Date;
-    awb_no: string;
-    total_count: bigint;
-}
-
-interface RDLInvoice {
-    id: string,
-    invoice_no: string,
-    total_quantity: bigint,
-    total_value: bigint,
-    invoice_date: Date,
-    previous_value: bigint,
-}
-
-interface FactoryInvoiceDetails {
-    risdid: string,
-    factory_name: string,
-    factory_invoice_id: string,
-    factory_invoice_no: string,
-    invoice_date: Date,
-    factory_invoice_value: bigint,
-    quantity: bigint,
-}
+import type { DocumentSubmissions, RDLInvoice, FactoryInvoiceDetails } from './_types/documentSubmission';
 
 export const documentSubmissionRouter = createTRPCRouter({
     getDocumentSubmission: protectedProcedure

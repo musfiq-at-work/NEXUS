@@ -1,8 +1,8 @@
 import ExcelJS from "exceljs";
-import type { CiAndRealizationData, FactoryInvoiceData, PoWiseData } from "../../../api/routers/reports/commercialActivityReport";
 import { generatePoWiseDataWorkSheet } from "./worksheets/poWiseDataWorkSheet";
 import { generateFactoryPaymentWorkSheet } from "./worksheets/factoryPaymentWorkSheet";
 import { generateCiAndRealizationWorkSheet } from "./worksheets/CIandRealizationWorkSheet";
+import type { CiAndRealizationData, FactoryInvoiceData, PoWiseData } from "~/server/api/routers/reports/_types/commercialActivityReport";
 
 export interface ActivityReportMeta {
     fromDate: string;

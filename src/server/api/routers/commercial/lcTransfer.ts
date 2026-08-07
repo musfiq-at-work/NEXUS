@@ -1,21 +1,3 @@
-/**
- * @description
- * This router handles all operations related to LC Transfers, including creating, updating, deleting, and fetching LC Transfer records. 
- * It also includes permission checks to ensure that only authorized users can perform certain actions. 
- * The router uses Prisma for database interactions and TRPC for API routing.
- * @permissions
- * - View LC Transfers: Users with view permission can fetch LC Transfer records and details.
- * - Add LC Transfer: Users with add permission can create new LC Transfer records along with their details.
- * - Update LC Transfer: Users with update permission can modify existing LC Transfer records and their details.
- * - Delete LC Transfer: Users with delete permission can remove LC Transfer records and their details.
- * @errorHandling
- * The router includes error handling using TRPCError to return appropriate error messages and status codes 
- * when a user does not have the required permissions or when there are issues with database operations.
- * @transactions
- * The add, update, and delete operations are wrapped in database transactions to ensure data integrity. 
- * If any part of the operation fails, the entire transaction will be rolled back to maintain a consistent state in the database.
- */
-
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
@@ -24,33 +6,7 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 
-interface LcTransferListItem {
-    DB_ID: string;
-    LC_NO: string;
-    LC_OPEN_DATE: Date;
-    LC_TRANSFER_DATE: Date;
-    BUYER_NAME: string;
-    total_count: bigint;
-}
-
-interface LcTransferDetails {
-    lc_quantity: number;
-    lc_value: number;
-    lc_open_date: Date;
-    lc_received_date: Date;
-    lc_expire_date: Date;
-    latest_shipment_date: Date;
-    buyer_name: string;
-    buyer_id: string;
-    currency: string;
-}
-
-interface GetSalesContractValueAndQuantity {
-    sc_value : number, 
-    sc_quantity: number,
-    previous_transfer_quantity: number,
-    previous_transfer_value: number,
-}
+import type { LcTransferListItem, LcTransferDetails, GetSalesContractValueAndQuantity } from "./_types/lcTransfer";
 
 export const lcTransferRouter = createTRPCRouter({
     getLcTransferList: protectedProcedure

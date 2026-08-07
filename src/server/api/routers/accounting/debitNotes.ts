@@ -8,47 +8,7 @@ import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 import { amountToWords, currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
 import { safeNumber } from "~/utils/numbers";
 import { amountToWordsBDT, currencyFormatterBDT } from "~/utils/localNumberStringBDT";
-
-interface LCListItem {
-    id: string;
-    factory_name: string;
-    debit_note_ref: string;
-    term_name: string;
-    lc_sc_no: string;
-    buyer_name: string;
-    debit_note_date: Date;
-    total_count: number;
-}
-
-interface ShipmentDetails { 
-    id: string; 
-    buyer_po: string; 
-    invoice_no: string; 
-    dn_value: number 
-}
-
-interface DebitNoteHeader {
-    debit_note_ref: string;
-    debit_note_date: Date;
-    factory_name: string;
-    factory_address: string;
-    processing_charge: number;
-    conversion_rate: number;
-    additional_adjustment: number;
-    less: number;
-    lc_no: string;
-    lc_open_date: Date;
-}
-
-interface DebitNoteTableData {
-    buyer_po: string;
-    quantity: number;
-    factory_rate: number;
-    transfer_rate: number;
-    margin: number;
-    excess_value: number;
-    symbol: string;
-}
+import type { LCListItem, ShipmentDetails, DebitNoteHeader, DebitNoteTableData } from './_types/debitNotes';
 
 export const debitNotesRouter = createTRPCRouter({
     getAllDebitNotes: protectedProcedure

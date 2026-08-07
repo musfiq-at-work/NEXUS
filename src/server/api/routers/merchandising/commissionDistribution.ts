@@ -6,55 +6,7 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions } from "@prisma/client";
 import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
-
-type CommissionDistribution = {
-    id: string;
-    ref_no: string;
-    buyer_name: string;
-    plan_date: Date;
-    approval_status: string;
-    total_count: bigint;
-}
-
-type CommissionDistributionDetail = {
-    db_id: string;
-    style: string;
-    po: string;
-    destination: string;
-    size: string;
-    order_quantity: number;
-    rdl_fob: number;
-    factory_fob: number;
-    rdl_value: number;
-    factory_value: number;
-    margin_per_piece: number;
-    commission_value: number;
-    commission_percentage: number;
-    dhaka_commission_percentage: number;
-    overseas_commission_percentage: number;
-    others_commission_percentage: number;
-}
-
-type PDFHeader = {
-    ref_no: string;
-    buyer_name: string;
-    order_date: Date;
-}
-
-type PDFDetail = {
-    style: string;
-    buyer_po: string;
-    order_quantity: number;
-    rdl_fob: number;
-    rdl_value: number;
-    factory_fob: number;
-    factory_value: number;
-    commission_percentage: number;
-    commission_value: number;
-    dhaka_commission: number;
-    overseas_commission: number;
-    others_commission: number;
-}
+import type { CommissionDistribution, CommissionDistributionDetail, PDFHeader, PDFDetail } from './_types/commissionDestribution';
 
 export const commissionDistributionRouter = createTRPCRouter({
     getCommissionDistribution: protectedProcedure
