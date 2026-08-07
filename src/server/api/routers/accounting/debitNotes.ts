@@ -598,6 +598,12 @@ export const debitNotesRouter = createTRPCRouter({
                             WHERE DND.factory_shipment_id = FSD.id
                                 ${addExistingDNCondition}
                         )
+                        AND EXISTS (
+                            SELECT 1
+                            FROM factory_payments AS FP
+                            INNER JOIN factory_invoice_details AS FID ON FID.factory_invoice_id = FP.factory_invoice_id
+                            WHERE FID.exfactory_shipment_id = ES.id
+                        )
                         AND FSD.factory_rate <> FSD.transfer_rate
                         AND SC.id = ${input.lc_sc_id}
                         AND FI.factory_id = ${input.factory_id}
@@ -625,6 +631,12 @@ export const debitNotesRouter = createTRPCRouter({
                             FROM debit_note_details AS DND
                             WHERE DND.factory_shipment_id = FSD.id
                                 ${addExistingDNCondition}
+                        )
+                        AND EXISTS (
+                            SELECT 1
+                            FROM factory_payments AS FP
+                            INNER JOIN factory_invoice_details AS FID ON FID.factory_invoice_id = FP.factory_invoice_id
+                            WHERE FID.exfactory_shipment_id = ES.id
                         )
                         AND FSD.factory_rate <> FSD.transfer_rate
                         AND LC.id = ${input.lc_sc_id}

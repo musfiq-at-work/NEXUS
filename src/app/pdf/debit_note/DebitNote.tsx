@@ -20,6 +20,8 @@ const BlankRow = () => (
 )
 
 const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
+	const {user} = useDecodedUser();
+
 	const tableColumns: { key: keyof DebitNoteTableRow; label: string; width: number }[] = [
 		{ key: 'buyer_po', label: 'Style and Invoice Number', width: 300},
 		{ key: 'quantity', label: 'Quantity (PCS)', width: 140 },
@@ -29,16 +31,14 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 		{ key: 'excess_value', label: 'Total Excess', width: 140 },
 	];
 
-	const {user} = useDecodedUser();
-
 	const colWidth = { width: `${1000 / tableColumns.length}` };
 
     return (
 		<Document
-            title={`Commission Distribution - ${data.headerData[0]?.debit_note_ref}`}
+            title={`Debit Note - ${data.headerData[0]?.debit_note_ref}`}
             author="RDL Nexus"
-            subject="Commission Distribution PDF"
-            keywords="Commission, Distribution, PDF, RDL Nexus, ERP"
+            subject="Debit Note PDF"
+            keywords="Debit, Note, PDF, RDL Nexus, ERP"
             creator={`${user?.first_name} ${user?.last_name}`}
             producer="RDL Nexus"
 			pageMode='useOutlines'
@@ -49,6 +49,7 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 				<PrintByAndDate />
 				<ReportTitle title="DEBIT NOTE" />
 
+				{/* Header Information */}
 				<Text style={{fontWeight: 'bold', fontSize: 9, letterSpacing: 0.3, fontFamily: 'Roboto'}}>To</Text>
 				<View style={{...styles.doubleColumnContainer, marginBottom: 15, fontFamily: 'Roboto'}}>
 					<View style={{fontSize: 9, letterSpacing: 0.3}}>
@@ -61,12 +62,13 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 							<Text>{data.headerData[0]?.debit_note_ref}</Text>
 						</View>
 						<View style={{flexDirection: 'row', gap: 5}}>
-							<Text style={{fontWeight: 'bold'}}>Date: </Text>
+							<Text style={{fontWeight: 'bold'}}>Date:</Text>
 							<Text>{data.headerData[0]?.debit_note_date ? formatDate(data.headerData[0].debit_note_date) : ''}</Text>
 						</View>
 					</View>
 				</View>
 
+				{/* Table */}
 				<View style={styles.tableContainer}>
 					<View style={styles.headerRow} fixed>
 						{tableColumns.map((column, index) => (
@@ -106,6 +108,7 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 					</View>
 				</View>
 
+				{/* Discounts */}
             	<View
 					wrap={false}
 					style={{
@@ -140,6 +143,7 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 					</View>
 				</View>
 
+				{/* Invoice information, and table summary */}
 				<View style={styles.tableContainer}>
 					<View style={{
 						flexDirection: 'row', 
@@ -150,7 +154,7 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 							style={{ 
 								width: 300, 
 								fontSize: 9, 
-								paddingHorizontal: 15, 
+								paddingHorizontal: 5, 
 								borderRightWidth: 0.75, 
 								borderRightColor: tableBorderColor 
 							}} 
@@ -190,6 +194,7 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 					</View>
 				</View>
 
+				{/* Early Payment Adjustments */}
 				<View style={styles.tableContainer}>
 					<View style={{
 						flexDirection: 'row', 
@@ -200,7 +205,7 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 							style={{ 
 								width: 300, 
 								fontSize: 9, 
-								paddingHorizontal: 15, 
+								paddingHorizontal: 5, 
 								borderRightWidth: 0.75, 
 								borderRightColor: tableBorderColor,
 								paddingTop: 15
@@ -225,6 +230,7 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 					</View>
 				</View>
 
+				{/* Processing Charge */}
 				<View style={styles.tableContainer}>
 					<View style={{
 						borderBottomWidth: 0.75, 
@@ -237,7 +243,7 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 							style={{ 
 								width: 300, 
 								fontSize: 9, 
-								paddingHorizontal: 15, 
+								paddingHorizontal: 5, 
 								borderRightWidth: 0.75, 
 								borderRightColor: tableBorderColor,
 								paddingTop: 10,
@@ -267,6 +273,7 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 					</View>
 				</View>
 				
+				{/* Grand Total (USD) */}
 				<View wrap={false}
 					style={{
 						borderBottomWidth: 0.75, 
@@ -296,6 +303,7 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 					</View>
 				</View>
 
+				{/* USD in Word */}
 				<View wrap={false}
 					style={{
 						borderBottomWidth: 0.75, 
@@ -317,6 +325,7 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 					</View>
 				</View>
 
+				{/* Taka in Word and BDT Total */}
 				<View wrap={false}
 					style={{
 						borderBottomWidth: 0.75, 
@@ -327,21 +336,22 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 					}} 
 				>
 					<View style={{ 
-						width: 860, 
+						width: 720, 
 						flexDirection: 'row', 
 						borderRight: `0.75px solid ${tableBorderColor}`, 
 						paddingHorizontal: 5, 
 						paddingVertical: 5
 					}}>
 						<Text style={{ fontWeight: 'bold', fontFamily: 'poppins', fontSize: 9 }}> TAKA IN WORD: {' '}</Text>
-						<Text style={{ fontFamily: 'poppins', fontSize: 9, width: 380 }}> {data.totals.inWordBDT} </Text>
+						<Text style={{ fontFamily: 'poppins', fontSize: 9, width: 300 }}> {data.totals.inWordBDT} </Text>
 					</View>
 
-					<View style={[styles.cell, { width: 140 }]}>
+					<View style={[styles.cell, { width: 280 }]}>
 						<Text style={{ fontWeight: 'bold', fontFamily: 'poppins' }}>{data.totals.inBDT}</Text>
 					</View>
 				</View>
 
+				{/* Currency Rate */}
 				<View wrap={false}
 					style={{
 						borderBottomWidth: 0.75, 
