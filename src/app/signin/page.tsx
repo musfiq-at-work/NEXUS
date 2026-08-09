@@ -13,7 +13,7 @@ import { parseTRPCError } from "~/utils/parseTRPCError";
 
 const DEVICE_ID_KEY = "zLREy5TEEswiTXe762jrevfTdg4FyN";
 
-export const getDeviceId = () => {
+const getDeviceId = () => {
     let deviceId = localStorage.getItem(DEVICE_ID_KEY);
 
     if (!deviceId) {

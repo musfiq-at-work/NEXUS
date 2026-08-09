@@ -1,4 +1,3 @@
-// @ts-expect-error - CSS side-effect imports are handled by Next.js and the project config
 import "~/styles/globals.css";
 
 import { type Metadata } from "next";

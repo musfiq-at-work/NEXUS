@@ -124,10 +124,7 @@ export const authRouter = createTRPCRouter({
 
 	// Logout user and clear session cookie
 	logout: protectedProcedure
-		.input(z.object({
-			device_id: z.string().optional(),
-		}))
-		.mutation(async ({ctx, input}) => {
+		.mutation(async ({ctx}) => {
 		try {
 			const cookiesStore = await cookies();
 
@@ -139,7 +136,6 @@ export const authRouter = createTRPCRouter({
 					where: { session_token: token },
 					data: { 
 						logout_at: new Date(),
-						device_id: input.device_id ?? "Unknown Device",
 					},
 				});
 			}
