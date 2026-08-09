@@ -24,6 +24,7 @@ export const useFactoryInvoiceForm = (initialData?: GetFactoryInvoiceByIdTypes) 
             invoice_date: initialData.invoice_date ? formatDateForInput(new Date(initialData.invoice_date)) : '',
             remarks: initialData.remarks ?? '',
             discount: initialData.discount ?? undefined,
+            shipment_mode: initialData.shipment_mode ?? '',
             notifyParties: initialData.notifyPartyIds?.map((notifyParty) => notifyParty.notify_party_id ?? undefined) ?? [],
             consignee_ids: initialData.consignee_ids?.map((consignee) => consignee.consignee_id ?? undefined) ?? [],
             freight_term_id: initialData.freight_term_id ?? undefined,

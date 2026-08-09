@@ -128,8 +128,7 @@ const EditRDLInvoicePage = ({ params }: ParamsProp) => {
                 )
             )
         );
-     }, [isAuthorizationLoading, authorizations, user]);
-
+    }, [isAuthorizationLoading, authorizations, user]);
     
     const db_id = useWatch({ control, name: "db_id" });
     
@@ -139,7 +138,6 @@ const EditRDLInvoicePage = ({ params }: ParamsProp) => {
 
     const exists = !!documentSubmissionExistsData?.exists;
     
- 
     return (
         <Wrapper heading='Update RDL Invoice' 
             subSectionRight={

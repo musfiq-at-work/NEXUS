@@ -3,7 +3,7 @@ import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { actions, Prisma } from "@prisma/client";
+import { actions, Prisma, shipment_modes } from "@prisma/client";
 import { ACTUAL_EXFACTORY_DATE, ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID, FACTORY_INVOICE } from "~/utils/config";
 import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
 import type { FactoryInvoiceListItem, ScLcListItem, ExfactoryShipmentDetails, FactoryInvoicePDFTableItem } from './_types/factoryInvoice';
@@ -271,6 +271,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
             lc_sc_id: z.string(),
             invoice_no: z.string(),
             invoice_date: z.date(),
+            shipment_mode: z.string().optional(),
             port_of_loading: z.number().optional(),
             freight_term_id: z.number().optional(),
             discount: z.number().optional(),
@@ -319,6 +320,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
                             remarks: input.remarks,
                             port_of_loading: input.port_of_loading,
                             freight_term_id: input.freight_term_id,
+                            shipment_mode: input.shipment_mode as shipment_modes,
                             discount: input.discount,
                         }
                     });
@@ -566,6 +568,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
                             FROM factory_invoice_details AS FID
                             WHERE FID.exfactory_shipment_id = ES.id
                         )
+                        AND COALESCE(ES.DELIVERY_QUANTITY, 0) > 0
                         AND F.id = ${input.factory_id}
                         AND B.id = ${input.buyer_id}
                         AND E.is_authorized = TRUE
@@ -593,6 +596,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
                             FROM factory_invoice_details AS FID
                             WHERE FID.exfactory_shipment_id = ES.id
                         )
+                        AND COALESCE(ES.DELIVERY_QUANTITY, 0) > 0
                         AND F.id = ${input.factory_id}
                         AND B.id = ${input.buyer_id}
                         AND E.is_authorized = TRUE
@@ -705,6 +709,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
                                         AND TM.USER_ID = ${ctx.user.id}
                                 )
                             )
+                            AND COALESCE(EFSD.DELIVERY_QUANTITY, 0) > 0
                             ${scLcWhereClause}
                         GROUP BY EFSD.ID, BO.ID, OS.ID, SD.ID, D.ID, FSD.ID, ES.ID;
                     `;
@@ -811,6 +816,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
                         invoice_date: true,
                         discount: true,
                         remarks: true,
+                        shipment_mode: true,
                         port_of_loading: true,
                         freight_term_id: true,
                         factory_invoice_consignee: {
@@ -851,6 +857,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
                         : invoiceObj.lc_master?.lc_no),
                     invoice_no: invoiceObj.invoice_no,
                     invoice_date: invoiceObj.invoice_date,
+                    shipment_mode: invoiceObj.shipment_mode,
                     discount: invoiceObj.discount,
                     remarks: invoiceObj.remarks,
                     port_of_loading: invoiceObj.port_of_loading,
@@ -877,6 +884,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
             id: z.string(),
             discount: z.number().optional(),
             remarks: z.string().optional(),
+            shipment_mode: z.string().optional(),
             details: z.array(z.object({
                 db_id: z.string().optional(),
                 exfactory_shipment_id: z.string(),
@@ -885,6 +893,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
         .mutation(async ({ ctx, input }) => {
             try {
                 const can_update = ctx.permissions[m.FACTORY_INVOICE]?.can_update;
+
                 if (!can_update) {
                     throw new TRPCError({ 
                         code: 'FORBIDDEN', 
@@ -896,6 +905,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
                     const updatedInvoice = await tx.factory_invoice.update({
                         where: { id: input.id },
                         data: {
+                            shipment_mode: input.shipment_mode as shipment_modes,
                             discount: input.discount,
                             remarks: input.remarks,
                         }

@@ -65,11 +65,8 @@ export default function ErrorCard({ error }: ErrorCardProps) {
                 </div>
 
                 <div className="flex flex-col gap-2 text-right p-2">
-                    <span className="text-sm text-rose-700">
-                        REQUEST ID: {error.request_id}
-                    </span>
-                    <span className="text-sm text-rose-700 uppercase">
-                        REQUEST TIME: {formatDateTime(new Date(error.created_at))}
+                    <span className="text-sm text-rose-700/70 uppercase">
+                        {formatDateTime(new Date(error.created_at))}
                     </span>
                 </div>
             </div>
@@ -91,6 +88,7 @@ export default function ErrorCard({ error }: ErrorCardProps) {
                 <InfoRow label="User ID" value={error.user_id} />
                 <InfoRow label="IP Address" value={error.ip_address} />
                 <InfoRow label="User Agent" value={error.user_agent} />
+                <InfoRow label="Request ID" value={error.request_id} />
             </div>
 
             {/* Input Data */}

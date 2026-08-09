@@ -53,13 +53,9 @@ const EditFactoryInvoicePage = ({ params }: ParamsProp) => {
 
             const payload = {
                 id: factoryInvoiceData.db_id ?? id,
-                factory_id: safeNumber(factoryInvoiceData.factory_id),
-                term_id: safeNumber(factoryInvoiceData.term_id),
-                lc_sc_id: factoryInvoiceData.lc_sc_id,
-                invoice_no: factoryInvoiceData.invoice_no.toLocaleUpperCase(),
-                invoice_date: new Date(factoryInvoiceData.invoice_date ?? new Date()),
-                remarks: factoryInvoiceData.remarks,
                 discount: factoryInvoiceData.discount ? safeNumber(factoryInvoiceData.discount) : undefined,
+                remarks: factoryInvoiceData.remarks,
+                shipment_mode: factoryInvoiceData.shipment_mode,
                 details: (factoryInvoiceData.details ?? []).map((detail) => ({
                     db_id: detail.db_id,
                     exfactory_shipment_id: detail.exfactory_shipment_id,

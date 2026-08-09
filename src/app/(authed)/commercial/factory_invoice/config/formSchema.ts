@@ -31,6 +31,7 @@ export const FactoryInvoiceFormSchema = z.object({
     consignee_ids: z.array(z.number()).optional(),
     notifyParties: z.array(z.number()).optional(),
     port_of_loading: z.number().optional(),
+    shipment_mode: z.string().optional(),
     discount: z.preprocess(
         (val) => {
             if (val === "" || val === null || val === undefined) return undefined;

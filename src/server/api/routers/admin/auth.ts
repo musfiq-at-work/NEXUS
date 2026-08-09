@@ -123,7 +123,11 @@ export const authRouter = createTRPCRouter({
     }),
 
 	// Logout user and clear session cookie
-	logout: protectedProcedure.mutation(async ({ctx}) => {
+	logout: protectedProcedure
+		.input(z.object({
+			device_id: z.string().optional(),
+		}))
+		.mutation(async ({ctx, input}) => {
 		try {
 			const cookiesStore = await cookies();
 
@@ -133,7 +137,10 @@ export const authRouter = createTRPCRouter({
 				console.log("Logging out user with token:", new Date().toLocaleString());
 				await ctx.db.user_sessions.updateMany({
 					where: { session_token: token },
-					data: { logout_at: new Date() },
+					data: { 
+						logout_at: new Date(),
+						device_id: input.device_id ?? "Unknown Device",
+					},
 				});
 			}
 

@@ -11,7 +11,7 @@ import { useDecodedUser } from "~/hooks/useDecodedUser";
 import { toast } from "sonner";
 import { parseTRPCError } from "~/utils/parseTRPCError";
 
-const DEVICE_ID_KEY = "SAY_MY_NAME";
+const DEVICE_ID_KEY = "zLREy5TEEswiTXe762jrevfTdg4FyN";
 
 export const getDeviceId = () => {
     let deviceId = localStorage.getItem(DEVICE_ID_KEY);

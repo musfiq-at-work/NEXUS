@@ -27,7 +27,7 @@
     /* Path Aliases */
     "paths": {
       "~/*": ["./src/*"]
-    }
+    },
   },
   "include": [
     "next-env.d.ts",
@@ -35,7 +35,7 @@
     "**/*.tsx",
     "**/*.cjs",
     "**/*.js",
-    ".next/types/**/*.ts"
-, "src/app/api/trpc/[trpc]/pdf/sales_contract/[id]/route.tss"  ],
+    ".next/types/**/*.ts", 
+    "src/app/api/trpc/[trpc]/pdf/sales_contract/[id]/route.tss"  ],
   "exclude": ["node_modules"]
 }

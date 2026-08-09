@@ -111,6 +111,17 @@ export const useFormFields = ({lcList, isEdit, buyer_id}: PropsType): Field<keyo
             disabled: true,
         },
         {
+            name: 'shipment_mode',
+            label: 'Shipment Mode',
+            type: 'select',
+            options: [
+                { label: 'AIR', value: 'AIR' },
+                { label: 'SEA', value: 'SEA' },
+                { label: 'LAND', value: 'LAND' },
+            ],
+            optional: true,
+        },
+        {
             name: "discount",
             label: "Discount",
             type: "number",

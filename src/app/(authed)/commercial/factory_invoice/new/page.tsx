@@ -50,6 +50,7 @@ const NewFactoryInvoicePage = () => {
                 freight_term_id: factoryInvoiceData.freight_term_id ? safeNumber(factoryInvoiceData.freight_term_id) : undefined,
                 userConsigneeIds: factoryInvoiceData.consignee_ids ? factoryInvoiceData.consignee_ids.map(id => safeNumber(id)) : undefined,
                 notifyPartyIds: factoryInvoiceData.notifyParties ? factoryInvoiceData.notifyParties.map(id => safeNumber(id)) : undefined,
+                shipment_mode: factoryInvoiceData.shipment_mode,
                 details: (factoryInvoiceData.details ?? []).map((detail) => ({
                     exfactory_shipment_id: detail.exfactory_shipment_id,
                 })),

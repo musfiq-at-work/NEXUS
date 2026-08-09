@@ -1,3 +1,4 @@
+// @ts-expect-error - CSS side-effect imports are handled by Next.js and the project config
 import "~/styles/globals.css";
 
 import { type Metadata } from "next";
@@ -7,27 +8,27 @@ import { Toaster } from 'sonner';
 import { headers } from "next/headers";
 
 export const metadata: Metadata = {
-  title: "RDL Nexus",
-  description: "RDL Nexus Application",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+	title: "RDL Nexus",
+	description: "RDL Nexus Application",
+	icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
 const poppins = Poppins({
-  subsets: ["latin"],
-  variable: "--font-poppins",
-  weight: ["400", "500", "600", "700"],
+	subsets: ["latin"],
+	variable: "--font-poppins",
+	weight: ["400", "500", "600", "700"],
 });
 
 const rajdhani = Rajdhani({
-  subsets: ["latin"],
-  variable: "--font-rajdhani",
-  weight: ["400", "500", "600", "700"],
+	subsets: ["latin"],
+	variable: "--font-rajdhani",
+	weight: ["400", "500", "600", "700"],
 });
 
 const lato = Lato({
-  subsets: ['latin'],
-  variable: '--font-lato',
-  weight: ["400", "700"],
+	subsets: ['latin'],
+	variable: '--font-lato',
+	weight: ["400", "700"],
 })
 
 export default async function RootLayout({children}: Readonly<{ children: React.ReactNode }>) {

@@ -1322,8 +1322,8 @@ export const rdlInvoiceRouter = createTRPCRouter({
                     lc_no: data.lc_master?.lc_no ?? null,
                     lc_open_date: data.lc_master?.lc_open_date ?? null,
                     discount: data.discount,
-                    shipment_mode: data.rdl_invoice_details?.[0]?.factory_invoice?.factory_invoice_details?.[0]?.exfactory_shipments?.shipment_details?.shipment_mode 
-                        ?? data.rdl_invoice_details?.[0]?.factory_invoice?.shipment_mode,
+                    shipment_mode: data.rdl_invoice_details?.[0]?.factory_invoice?.shipment_mode 
+                        ?? data.rdl_invoice_details?.[0]?.factory_invoice?.factory_invoice_details?.[0]?.exfactory_shipments?.shipment_details?.shipment_mode,
                     freight_term_name: data.rdl_invoice_details?.[0]?.factory_invoice?.freight_term?.name ?? null,
                     port_of_loading: data.rdl_invoice_details?.[0]?.factory_invoice?.destinations?.name 
                         ?? data.sales_contracts?.destinations?.name
