@@ -29,7 +29,8 @@ const errorCodes: Record<string, string> = {
     'P2002': 'UNIQUE CONSTRAINT FAILED',
     'P2003': 'FOREIGN KEY CONSTRAINT FAILED',
     'P2025': 'NOT_FOUND',
-    'P1010': 'FORBIDDEN'
+    'P1010': 'FORBIDDEN',
+    'UnknownCode': 'UNKNOWN ERROR CODE'
 }
 
 export default function ErrorCard({ error }: ErrorCardProps) {
@@ -63,7 +64,7 @@ export default function ErrorCard({ error }: ErrorCardProps) {
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-2 text-left p-2">
+                <div className="flex flex-col gap-2 text-right p-2">
                     <span className="text-sm text-rose-700">
                         REQUEST ID: {error.request_id}
                     </span>

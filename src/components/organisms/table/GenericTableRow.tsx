@@ -42,7 +42,7 @@ const GenericTableRow = <T extends FieldValues>(props: TableRowProps<T>) => {
                                 return <p>{formatDate(rowData[col.key] as Date)}</p>;
 
                             case 'datetime':
-                                return <p>{formatDateTime(rowData[col.key] as Date)}</p>;
+                                return <p>{rowData[col.key] ? formatDateTime(rowData[col.key] as Date) : '-'}</p>;
 
                             case 'password':
                                 return <ShowPassword password={String(rowData[col.key])} />;

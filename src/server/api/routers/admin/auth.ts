@@ -32,6 +32,7 @@ export const authRouter = createTRPCRouter({
 		.input(z.object({
 			user_id: z.string(),
 			password: z.string(),
+			device_id: z.string().optional(),
 		}),
     ).mutation(async ({ ctx, input }) => {
 		const user = await ctx.db.users.findUnique({
@@ -103,6 +104,7 @@ export const authRouter = createTRPCRouter({
 				session_token: token,
 				ip: getClientIp(ctx.headers)?.replace(/^::ffff:/, ""),
 				browser: getBrowserInfo(ctx.headers),
+				device_id: input.device_id ?? "Unknown Device",
 			},
 		});
 
@@ -121,9 +123,20 @@ export const authRouter = createTRPCRouter({
     }),
 
 	// Logout user and clear session cookie
-	logout: protectedProcedure.mutation(async () => {
+	logout: protectedProcedure.mutation(async ({ctx}) => {
 		try {
 			const cookiesStore = await cookies();
+
+			const token = cookiesStore.get("access-token")?.value;
+
+			if (token) {
+				console.log("Logging out user with token:", new Date().toLocaleString());
+				await ctx.db.user_sessions.updateMany({
+					where: { session_token: token },
+					data: { logout_at: new Date() },
+				});
+			}
+
 			cookiesStore.delete("access-token"); 
 			return { success: true };
 		} catch (error) {

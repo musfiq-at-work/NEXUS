@@ -80,7 +80,8 @@ enum moduleMap {
     EARLY_SETTLEMENT_PERCENTAGE = 82,
     SYSTEM = 85,
     MAINTENANCE = 86,
-    ERROR_LOGS = 87
+    ERROR_LOGS = 87,
+    USER_SESSIONS = 88,
 }
 
 export { moduleMap as m };

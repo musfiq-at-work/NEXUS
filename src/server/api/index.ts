@@ -75,3 +75,4 @@ export { exportSummaryReportRouter } from "./routers/reports/exportSummaryReport
 
 // Maintenance router
 export { errorLogsRouter } from "./routers/maintenance/error_logs";
+export { userSessionsRouter } from "./routers/maintenance/user_sessions";

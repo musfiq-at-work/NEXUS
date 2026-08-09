@@ -10,7 +10,19 @@ import { useRouter } from "next/navigation";
 import { useDecodedUser } from "~/hooks/useDecodedUser";
 import { toast } from "sonner";
 import { parseTRPCError } from "~/utils/parseTRPCError";
-import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
+
+const DEVICE_ID_KEY = "SAY_MY_NAME";
+
+export const getDeviceId = () => {
+    let deviceId = localStorage.getItem(DEVICE_ID_KEY);
+
+    if (!deviceId) {
+        deviceId = crypto.randomUUID();
+        localStorage.setItem(DEVICE_ID_KEY, deviceId);
+    }
+
+    return deviceId;
+};
 
 const formSchema = z.object({
   name: z.string().min(4, "Name must be at least 4 characters long"),
@@ -48,12 +60,6 @@ const SignInPage = () => {
     const signInMutation = api.auth.login.useMutation({
         onSuccess: (data) => {
             localStorage.setItem("token", data.token);
-            const deptId = Array.isArray(data.user?.departments)
-                ? Number(data.user?.departments[0]?.id)
-                : Number(data.user?.departments?.id);
-            const levelId = Array.isArray(data.user?.levels)
-                ? Number(data.user?.levels[0]?.id)
-                : Number(data.user?.levels?.id);
             router.push("/dashboard");
         },
         onError: (error) => {
@@ -77,6 +83,7 @@ const SignInPage = () => {
             await signInMutation.mutateAsync({
                 user_id: data.name,
                 password: data.password,
+                device_id: getDeviceId(),
             });
         } catch (error) {
             const parsedError = parseTRPCError(error);

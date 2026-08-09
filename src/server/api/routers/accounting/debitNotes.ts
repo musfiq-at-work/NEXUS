@@ -958,7 +958,6 @@ export const debitNotesRouter = createTRPCRouter({
                 return { headerData, formattedTable, totals, factoryInvoices };
             }
             catch(error) {
-                console.error("Error fetching PDF data for debit note:", error);
                 await logError(error, ctx, input);
                 handlePrismaError(error);
             }

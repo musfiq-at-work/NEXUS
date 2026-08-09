@@ -111,8 +111,9 @@ const sideBarConfig: Record<number, {href: string;}> = {
     [m.LC_SC_CLOSING]: { href: "/reports/com_report/lc_sc_closing" },
     [m.COMMERCIAL_ACTIVITY_REPORT]: { href: "/reports/com_report/activity_report" },
 
-    // DEV
+    // Maintenance
     [m.ERROR_LOGS]: { href: "/maintenance/error_logs" },
+    [m.USER_SESSIONS]: { href: "/maintenance/user_sessions" },
 };
 
 export default sideBarConfig;

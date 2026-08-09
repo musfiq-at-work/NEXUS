@@ -31,7 +31,7 @@ const DestinationsPage = () => {
         { enabled: debouncedSearch.length > 0 }
     );
 
-    const editURL = '/maintenance/early_settlement_percentage/edit/';
+    const editURL = '/system/early_settlement_percentage/edit/';
 
     const deleteMutation = api.earlySettlementPercentage.deleteEarlySettlement.useMutation({
         onSuccess: async () => {
@@ -68,7 +68,7 @@ const DestinationsPage = () => {
                             <Button
                                 variant="secondary"
                                 leftIcon={plusIcon}
-                                onClick={() => router.push('/maintenance/early_settlement_percentage/new')}
+                                onClick={() => router.push('/system/early_settlement_percentage/new')}
                                 label="Add Early Settlement"
                             />
                         </div>
