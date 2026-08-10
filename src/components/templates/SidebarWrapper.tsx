@@ -29,14 +29,13 @@ const SideBarWrapper = ({children}: {children: React.ReactNode}) => {
     // React Query is too dynamic + async for permission checks.
     // but we need No waiting, No async, Just cheap JS object lookups for fast access
     useEffect(() => {
-      if (permissions && Array.isArray(permissions)) {
-        permissions.forEach((p) => addPermission(p));
-      }
+		if (permissions && Array.isArray(permissions)) {
+			permissions.forEach((p) => addPermission(p));
+		}
     }, [permissions, addPermission]);
 
-
     useEffect(() => {
-      load(sideBarConfig);
+      	load(sideBarConfig);
     }, []);
 
     if (isLoading) {

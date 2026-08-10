@@ -11,7 +11,7 @@ import { useDecodedUser } from "~/hooks/useDecodedUser";
 import { toast } from "sonner";
 import { parseTRPCError } from "~/utils/parseTRPCError";
 
-const DEVICE_ID_KEY = "zLREy5TEEswiTXe762jrevfTdg4FyN";
+const DEVICE_ID_KEY = "say_my_name";
 
 const getDeviceId = () => {
     let deviceId = localStorage.getItem(DEVICE_ID_KEY);
@@ -25,8 +25,8 @@ const getDeviceId = () => {
 };
 
 const formSchema = z.object({
-  name: z.string().min(4, "Name must be at least 4 characters long"),
-  password: z.string().min(3, "Password must be at least 3 characters long"),
+    name: z.string().min(4, "Name must be at least 4 characters long"),
+    password: z.string().min(3, "Password must be at least 3 characters long"),
 });
 
 type FormValues = z.infer<typeof formSchema>;

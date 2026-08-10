@@ -8,9 +8,9 @@ import type { BaseField } from "~/types/form";
 import Image from "next/image";
 
 type TableHeader<T> = {
-  key: keyof T | string;
-  label: string;
-  type?: string;
+    key: keyof T | string;
+    label: string;
+    type?: string;
 };
 
 type Props<T extends FieldValues> = {

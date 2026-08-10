@@ -111,11 +111,6 @@ const Form = <T extends FieldValues, >(props: Props<T>) => {
 
                                     case 'checkbox':
                                         return (
-                                            /* CHANGES HERE:
-                                              1. Added col-span-full to break out of the row grid.
-                                              2. Forced a clean row layout where checkbox is on the left 
-                                                 and labels align perfectly in a straight vertical column line.
-                                            */
                                             <div className="col-span-full flex items-center gap-3 p-2 min-h-10 max-w-md">
                                                 <Controller
                                                     name={fieldName as Path<T>}

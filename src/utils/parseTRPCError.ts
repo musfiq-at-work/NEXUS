@@ -1,5 +1,5 @@
 export const parseTRPCError = (error: any): string => {
-  // Zod validation errors
+    // Zod validation errors
     const zodIssues = error?.data?.zodError?.issues;
     if (Array.isArray(zodIssues) && zodIssues.length > 0) {
         return zodIssues[0].message || "Invalid input";

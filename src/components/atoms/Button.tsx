@@ -32,7 +32,11 @@ const Button = (props: ButtonProps) => {
         <button {...rest}
             onClick={onClick} 
             disabled={disabled}
-            className={clsx(`px-4 flex flex-row items-center w-full text-white shadow-md transition-all duration-150 active:scale-98 active:translate-y-0.25`, variantClasses, className)}
+            className={clsx(
+                `px-4 flex flex-row items-center w-full text-white shadow-md transition-all duration-150 active:scale-98 active:translate-y-0.25`, 
+                variantClasses, 
+                className
+            )}
             type={ type} 
         >
             <span className="flex gap-3 items-center">

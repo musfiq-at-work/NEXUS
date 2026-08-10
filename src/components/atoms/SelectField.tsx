@@ -3,16 +3,16 @@ import clsx from "clsx";
 import React from "react";
 
 type Option = {
-  label: string;
-  value: string | number | boolean;
+    label: string;
+    value: string | number | boolean;
 };
 
 type FormSelectProps = {
-  options?: Option[];
-  value: string | number | boolean | null;
-  onChange: (value: string | number | boolean | null) => void;
-  error?: boolean;
-  disabled?: boolean;
+    options?: Option[];
+    value: string | number | boolean | null;
+    onChange: (value: string | number | boolean | null) => void;
+    error?: boolean;
+    disabled?: boolean;
 };
 
 const SelectField = ({ options, value, onChange, error, disabled}: FormSelectProps) => {

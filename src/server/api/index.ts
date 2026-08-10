@@ -72,6 +72,7 @@ export { exportReportRouter } from "./routers/reports/exportReport";
 export { orderSummaryReportRouter } from "./routers/reports/orderSummaryReport";
 export { activityReportRouter } from "./routers/reports/commercialActivityReport";
 export { exportSummaryReportRouter } from "./routers/reports/exportSummaryReport";
+export { lcScClosingRouter } from "./routers/reports/lcScClosing"
 
 // Maintenance router
 export { errorLogsRouter } from "./routers/maintenance/error_logs";

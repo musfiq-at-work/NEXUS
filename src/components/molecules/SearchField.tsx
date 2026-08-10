@@ -25,7 +25,9 @@ const SearchField = ({ handleSearchChange, placeholder, infoText }: SearchFieldP
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
                 />
-                <label htmlFor="search"><Image width={20} height={20} src={searchIcon.src} alt="Search Icon" className="w-fit h-10 py-2 px-3 rounded-l-full" /></label>
+                <label htmlFor="search">
+                    <Image width={20} height={20} src={searchIcon.src} alt="Search Icon" className="w-fit h-10 py-2 px-3 rounded-l-full" />
+                </label>
             </div>
             <div className="min-h-8">
                 {isFocused && infoText &&

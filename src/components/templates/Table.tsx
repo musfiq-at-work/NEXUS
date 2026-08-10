@@ -24,7 +24,25 @@ type TableProps<T extends Record<string, unknown>> = {
 
 // Table component to render data in tabular format with pagination
 const Table = <T extends Record<string, unknown>>( props: TableProps<T>) => {
-    const { data, columns, isLoading, nextPage, prevPage, page, limit, total, editURL, deleteFunction, allowDelete, allowPrint, printURL, allowPrint2, printURL2, allowEdit, view } = props;
+    const { 
+        data, 
+        columns, 
+        isLoading, 
+        nextPage, 
+        prevPage, 
+        page, 
+        limit, 
+        total, 
+        editURL, 
+        deleteFunction, 
+        allowDelete, 
+        allowPrint, 
+        printURL, 
+        allowPrint2, 
+        printURL2, 
+        allowEdit, 
+        view 
+    } = props;
 
     if (isLoading) return <Loader />;
 
