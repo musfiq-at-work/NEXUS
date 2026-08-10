@@ -35,16 +35,16 @@ export const orderSummaryReportRouter = createTRPCRouter({
             seasonIds: z.array(z.number()).optional(),
         }))
         .mutation(async ({ ctx, input }) => {
-            try {
-                const can_view = ctx.permissions[m.ORDER_SUMMARY_REPORT]?.can_view;
-            
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view order summary report.",
-                    });
-                }
+            const can_view = ctx.permissions[m.ORDER_SUMMARY_REPORT]?.can_view;
 
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view order summary report.",
+                });
+            }
+
+            try {
                 const buyerIds = input.buyerIds ?? [];
                 const factoryIds = input.factoryIds ?? [];
                 const brandIds = input.brandIds ?? [];
