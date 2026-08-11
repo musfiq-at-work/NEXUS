@@ -7,7 +7,7 @@ export interface LcScClosingHeader {
     symbol: string;
 }
 
-export interface TableData {
+export interface LcScTableData {
     min_exfactory_date: Date;
     max_exfactory_date: Date;
     export_invoice_quantity: number;
@@ -15,6 +15,7 @@ export interface TableData {
     rdl_export_value_usd: number;
     factory_export_value: number;
     symbol: string;
+    debit_note: string;
     realized_amount: number;
     factory_paid_amount: number;
 }

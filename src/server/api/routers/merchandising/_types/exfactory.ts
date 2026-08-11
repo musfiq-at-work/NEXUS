@@ -35,4 +35,5 @@ export interface PendingExFactory {
     total_quantity: string;
     total_delivery_quantity: string;
     ex_factory_date: Date;
+    total_count: bigint;
 }

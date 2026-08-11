@@ -1138,33 +1138,6 @@ export const factoryInvoiceRouter = createTRPCRouter({
                     }
                 });
 
-                const factoryInvoiceHeader = data ? {
-                    factory_name: data.factories.name,
-                    factory_address: data.factories.factory_address,
-                    factory_bank_account_name: data.factories.factory_bank?.[0]?.account_name ?? null,
-                    factory_bank_account_no: data.factories.factory_bank?.[0]?.account_no ?? null,
-                    factory_bank_address: data.factories.factory_bank?.[0]?.address ?? null,
-                    factory_bank_branch_name: data.factories.factory_bank?.[0]?.branch_name ?? null,
-                    factory_bank_swift_code: data.factories.factory_bank?.[0]?.swift_code ?? null,
-                    factory_bank_name: data.factories.factory_bank?.[0]?.banks?.name ?? null,
-                    buyer_name: data.buyers?.buyer_name ?? null,
-                    buyer_address: data.buyers?.address ?? null,
-                    invoice_no: data.invoice_no,
-                    invoice_date: data.invoice_date,
-                    term_name: data.terms?.name ?? null,
-                    freight_term_name: data.freight_term?.name ?? null,
-                    port_of_loading: data.destinations?.name ? data.destinations?.name : data.sales_contracts?.destinations?.name,
-                    sales_contract_no: data.sales_contracts?.sales_contract_no ?? null,
-                    sales_contract_date: data.sales_contracts?.sales_contract_date ?? null,
-                    lc_no: data.lc_master?.lc_no ?? null,
-                    lc_open_date: data.lc_master?.lc_open_date ?? null,
-                    final_destination: data.factory_invoice_details?.[0]?.exfactory_shipments?.shipment_details?.destinations?.name ?? null,
-                    consignees: data.factory_invoice_consignee,
-                    notify_parties: data.factory_invoice_notify_party,
-                    discount: data.discount,
-                    shipment_mode: data.shipment_mode ? data.shipment_mode : data.factory_invoice_details?.[0]?.exfactory_shipments?.shipment_details?.shipment_mode,
-                } : null;
-
                 const table = await ctx.db.$queryRaw<FactoryInvoicePDFTableItem[]>`
                     SELECT
                         BB.brand,
@@ -1202,6 +1175,33 @@ export const factoryInvoiceRouter = createTRPCRouter({
                         INNER JOIN currencies AS C ON C.id = FO.currency_id
                     WHERE FI.ID = ${input.id};
                 `;
+
+                const factoryInvoiceHeader = data ? {
+                    factory_name: data.factories.name,
+                    factory_address: data.factories.factory_address,
+                    factory_bank_account_name: data.factories.factory_bank?.[0]?.account_name ?? null,
+                    factory_bank_account_no: data.factories.factory_bank?.[0]?.account_no ?? null,
+                    factory_bank_address: data.factories.factory_bank?.[0]?.address ?? null,
+                    factory_bank_branch_name: data.factories.factory_bank?.[0]?.branch_name ?? null,
+                    factory_bank_swift_code: data.factories.factory_bank?.[0]?.swift_code ?? null,
+                    factory_bank_name: data.factories.factory_bank?.[0]?.banks?.name ?? null,
+                    buyer_name: data.buyers?.buyer_name ?? null,
+                    buyer_address: data.buyers?.address ?? null,
+                    invoice_no: data.invoice_no,
+                    invoice_date: data.invoice_date,
+                    term_name: data.terms?.name ?? null,
+                    freight_term_name: data.freight_term?.name ?? null,
+                    port_of_loading: data.destinations?.name ? data.destinations?.name : data.sales_contracts?.destinations?.name,
+                    sales_contract_no: data.sales_contracts?.sales_contract_no ?? null,
+                    sales_contract_date: data.sales_contracts?.sales_contract_date ?? null,
+                    lc_no: data.lc_master?.lc_no ?? null,
+                    lc_open_date: data.lc_master?.lc_open_date ?? null,
+                    final_destination: data.factory_invoice_details?.[0]?.exfactory_shipments?.shipment_details?.destinations?.name ?? null,
+                    consignees: data.factory_invoice_consignee,
+                    notify_parties: data.factory_invoice_notify_party,
+                    discount: data.discount,
+                    shipment_mode: data.shipment_mode ? data.shipment_mode : data.factory_invoice_details?.[0]?.exfactory_shipments?.shipment_details?.shipment_mode,
+                } : null;
 
                 const tableWithFormattedValues = table.map(item => ({
                     ...item,

@@ -182,13 +182,26 @@ export const documentSubmissionRouter = createTRPCRouter({
                         }
                     });
 
-                    await tx.document_submission_factory_invoices.deleteMany({
-                        where: {
-                            document_submissions_details_id: {
-                                in: documentSubmissionDetails.map(detail => detail.id)
+                    await Promise.all([
+                        await tx.document_submission_factory_invoices.deleteMany({
+                            where: {
+                                document_submissions_details_id: {
+                                    in: documentSubmissionDetails.map(detail => detail.id)
+                                }
                             }
-                        }
-                    });
+                        }),
+                        
+                        await tx.document_submissions_details_history.createMany({
+                            data: documentSubmissionDetails.map(detail => ({
+                                document_submissions_details_id: detail.id,
+                                document_submissions_id: detail.document_submissions_id,
+                                rdl_invoice_id: detail.rdl_invoice_id,
+                                received_value: detail.received_value,
+                                action_type: actions.DELETE,
+                                action_by: ctx.user.id,
+                            }))
+                        })
+                    ]);
 
                     await tx.document_submissions_details.deleteMany({
                         where: {
@@ -234,16 +247,6 @@ export const documentSubmissionRouter = createTRPCRouter({
                         }))
                     });
 
-                    await tx.document_submissions_details_history.createMany({
-                        data: documentSubmissionDetails.map(detail => ({
-                            document_submissions_details_id: detail.id,
-                            document_submissions_id: detail.document_submissions_id,
-                            rdl_invoice_id: detail.rdl_invoice_id,
-                            received_value: detail.received_value,
-                            action_type: actions.DELETE,
-                            action_by: ctx.user.id,
-                        }))
-                    });
 
                     return deletedDocumentSubmission;
                 }, {timeout: 30000});

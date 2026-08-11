@@ -182,21 +182,23 @@ export const proceedRealizationRouter = createTRPCRouter({
                         },
                     });
 
-                    await tx.proceed_realization_details_history.createMany({
-                        data: deletedDetails.map((detail) => ({
-                            realization_details_id: detail.id,
-                            realization_id: detail.realization_id,
-                            rdl_invoice_id: detail.rdl_invoice_id,
-                            action_type: actions.DELETE,
-                            action_by: ctx.user.id,
-                        })),
-                    });
-
-                    await tx.proceed_realization_details.deleteMany({
-                        where: {
-                            realization_id: input.id,
-                        },
-                    });
+                    await Promise.all([
+                        await tx.proceed_realization_details_history.createMany({
+                            data: deletedDetails.map((detail) => ({
+                                realization_details_id: detail.id,
+                                realization_id: detail.realization_id,
+                                rdl_invoice_id: detail.rdl_invoice_id,
+                                action_type: actions.DELETE,
+                                action_by: ctx.user.id,
+                            })),
+                        }),
+                        
+                        await tx.proceed_realization_details.deleteMany({
+                            where: {
+                                realization_id: input.id,
+                            },
+                        }),
+                    ])
 
                     const deletedRealization = await tx.proceed_realization.delete({
                         where: {
@@ -210,17 +212,31 @@ export const proceedRealizationRouter = createTRPCRouter({
                         }
                     });
 
-                    await tx.factory_payments.deleteMany({
-                        where: {
-                            document_submission_id: deletedRealization.document_submission_id,
-                        }
-                    });
+                    await Promise.all([
+                        await tx.factory_payments.deleteMany({
+                            where: {
+                                document_submission_id: deletedRealization.document_submission_id,
+                            }
+                        }),
 
-                    await tx.factory_payment_header.deleteMany({
-                        where: {
-                            document_submission_id: deletedRealization.document_submission_id,
-                        }
-                    });
+                        await tx.factory_payment_header.deleteMany({
+                            where: {
+                                document_submission_id: deletedRealization.document_submission_id,
+                            }
+                        }),
+
+                        await tx.proceed_realization_history.create({
+                            data: {
+                                proceed_realization_id: deletedRealization.id,
+                                buyer_id: deletedRealization.buyer_id,
+                                document_submission_id: deletedRealization.document_submission_id,
+                                term_id: deletedRealization.term_id,
+                                realization_date: deletedRealization.realization_date,
+                                action_type: actions.DELETE,
+                                action_by: ctx.user.id,
+                            },
+                        })
+                    ]);
 
                     await tx.factory_payments_history.createMany({
                         data: factoryPayments.map((payment) => ({
@@ -233,17 +249,6 @@ export const proceedRealizationRouter = createTRPCRouter({
                         })),
                     });
 
-                    await tx.proceed_realization_history.create({
-                        data: {
-                            proceed_realization_id: deletedRealization.id,
-                            buyer_id: deletedRealization.buyer_id,
-                            document_submission_id: deletedRealization.document_submission_id,
-                            term_id: deletedRealization.term_id,
-                            realization_date: deletedRealization.realization_date,
-                            action_type: actions.DELETE,
-                            action_by: ctx.user.id,
-                        },
-                    });
                 }, {timeout: 30000}); 
             }
             catch (error) {
@@ -322,62 +327,64 @@ export const proceedRealizationRouter = createTRPCRouter({
                         },
                     });
 
-                    await tx.proceed_realization_history.create({
-                        data: {
-                            proceed_realization_id: newProceedRealization.id,
-                            buyer_id: newProceedRealization.buyer_id,
-                            document_submission_id: newProceedRealization.document_submission_id,
-                            term_id: newProceedRealization.term_id,
-                            realization_date: newProceedRealization.realization_date,
-                            action_type: actions.ADDED,
-                            action_by: ctx.user.id,
-                        },
-                    });
-
-                    await tx.proceed_realization_details.createMany({
-                        data: input.rdl_invoice_details.map((detail) => ({
-                            realization_id: newProceedRealization.id,
-                            rdl_invoice_id: detail.rdl_invoice_id,
-                            realized_amount: detail.proceed_value,
-                        })),
-                    });
-
-                    await tx.proceed_realization_details.findMany({
-                        where: {
-                            realization_id: newProceedRealization.id,
-                        },
-                    }).then(async (details) => {
-                        await tx.proceed_realization_details_history.createMany({
-                            data: details.map((detail) => ({
-                                realization_details_id: detail.id,
-                                realization_id: detail.realization_id,
-                                rdl_invoice_id: detail.rdl_invoice_id,
+                    await Promise.all([
+                        await tx.proceed_realization_history.create({
+                            data: {
+                                proceed_realization_id: newProceedRealization.id,
+                                buyer_id: newProceedRealization.buyer_id,
+                                document_submission_id: newProceedRealization.document_submission_id,
+                                term_id: newProceedRealization.term_id,
+                                realization_date: newProceedRealization.realization_date,
                                 action_type: actions.ADDED,
                                 action_by: ctx.user.id,
-                            })),
-                        });
-                    })
+                            },
+                        }),
 
-                    await tx.$executeRaw`
-                        UPDATE commercial_tna_planning_details AS CTPD
-                            SET actual_date = PR.realization_date
-                        FROM commercial_tna_planning AS CTP,
-                            factory_invoice AS FI,
-                            rdl_invoice_details AS RID,
-                            commercial_tna_templates_actions AS CTTA,
-                            tna_actions AS TA,
-                            proceed_realization_details AS PRD,
-                            proceed_realization AS PR
-                        WHERE CTP.id = CTPD.commercial_tna_planning_id
-                            AND FI.id = CTP.factory_invoice_id
-                            AND CTTA.id = CTPD.commercial_tna_templates_actions_id
-                            AND TA.id = CTTA.tna_action_id
-                            AND RID.factory_invoice_id = FI.id
-                            AND PRD.rdl_invoice_id = RID.rdl_invoice_id
-                            AND PRD.realization_id = PR.id
-                            AND TA.id = ${PROCEED_DATE}
-                            AND PR.id = ${newProceedRealization.id};
-                    `;
+                        await tx.proceed_realization_details.createMany({
+                            data: input.rdl_invoice_details.map((detail) => ({
+                                realization_id: newProceedRealization.id,
+                                rdl_invoice_id: detail.rdl_invoice_id,
+                                realized_amount: detail.proceed_value,
+                            })),
+                        }),
+
+                        await tx.proceed_realization_details.findMany({
+                            where: {
+                                realization_id: newProceedRealization.id,
+                            },
+                        }).then(async (details) => {
+                            await tx.proceed_realization_details_history.createMany({
+                                data: details.map((detail) => ({
+                                    realization_details_id: detail.id,
+                                    realization_id: detail.realization_id,
+                                    rdl_invoice_id: detail.rdl_invoice_id,
+                                    action_type: actions.ADDED,
+                                    action_by: ctx.user.id,
+                                })),
+                            });
+                        }),
+
+                        await tx.$executeRaw`
+                            UPDATE commercial_tna_planning_details AS CTPD
+                                SET actual_date = PR.realization_date
+                            FROM commercial_tna_planning AS CTP,
+                                factory_invoice AS FI,
+                                rdl_invoice_details AS RID,
+                                commercial_tna_templates_actions AS CTTA,
+                                tna_actions AS TA,
+                                proceed_realization_details AS PRD,
+                                proceed_realization AS PR
+                            WHERE CTP.id = CTPD.commercial_tna_planning_id
+                                AND FI.id = CTP.factory_invoice_id
+                                AND CTTA.id = CTPD.commercial_tna_templates_actions_id
+                                AND TA.id = CTTA.tna_action_id
+                                AND RID.factory_invoice_id = FI.id
+                                AND PRD.rdl_invoice_id = RID.rdl_invoice_id
+                                AND PRD.realization_id = PR.id
+                                AND TA.id = ${PROCEED_DATE}
+                                AND PR.id = ${newProceedRealization.id};
+                        `
+                    ]);
 
                     return newProceedRealization.id;
                 }, {timeout: 30000});
@@ -590,43 +597,45 @@ export const proceedRealizationRouter = createTRPCRouter({
                         },
                     });
 
-                    await tx.proceed_realization_history.create({
-                        data: {
-                            proceed_realization_id: updatedProceedRealization.id,
-                            buyer_id: updatedProceedRealization.buyer_id,
-                            document_submission_id: updatedProceedRealization.document_submission_id,
-                            term_id: updatedProceedRealization.term_id,
-                            realization_date: updatedProceedRealization.realization_date,
-                            bank_charge: updatedProceedRealization.bank_charge,
-                            document_charge: updatedProceedRealization.document_charge,
-                            discount_charge: updatedProceedRealization.discount_charge,
-                            action_type: actions.UPDATE,
-                            action_by: ctx.user.id,
-                        },
-                    });
+                    await Promise.all([
+                        await tx.proceed_realization_history.create({
+                            data: {
+                                proceed_realization_id: updatedProceedRealization.id,
+                                buyer_id: updatedProceedRealization.buyer_id,
+                                document_submission_id: updatedProceedRealization.document_submission_id,
+                                term_id: updatedProceedRealization.term_id,
+                                realization_date: updatedProceedRealization.realization_date,
+                                bank_charge: updatedProceedRealization.bank_charge,
+                                document_charge: updatedProceedRealization.document_charge,
+                                discount_charge: updatedProceedRealization.discount_charge,
+                                action_type: actions.UPDATE,
+                                action_by: ctx.user.id,
+                            },
+                        }),
 
-                    await Promise.all(input.rdl_invoice_details.map(async (detail) => {
-                        if (detail.db_id) {
-                            await tx.proceed_realization_details.update({
-                                where: {
-                                    id: detail.db_id,
-                                },
-                                data: {
-                                    realized_amount: detail.proceed_value,
-                                },
-                            });
-                            
-                            await tx.proceed_realization_details_history.create({
-                                data: {
-                                    realization_details_id: detail.db_id,
-                                    realization_id: updatedProceedRealization.id,
-                                    rdl_invoice_id: detail.rdl_invoice_id,
-                                    action_type: actions.UPDATE,
-                                    action_by: ctx.user.id,
-                                },
-                            });
-                        }
-                    }));
+                        await Promise.all(input.rdl_invoice_details.map(async (detail) => {
+                            if (detail.db_id) {
+                                await tx.proceed_realization_details.update({
+                                    where: {
+                                        id: detail.db_id,
+                                    },
+                                    data: {
+                                        realized_amount: detail.proceed_value,
+                                    },
+                                });
+                                
+                                await tx.proceed_realization_details_history.create({
+                                    data: {
+                                        realization_details_id: detail.db_id,
+                                        realization_id: updatedProceedRealization.id,
+                                        rdl_invoice_id: detail.rdl_invoice_id,
+                                        action_type: actions.UPDATE,
+                                        action_by: ctx.user.id,
+                                    },
+                                });
+                            }
+                        }))
+                    ])
                 })
             }
             catch (error) {

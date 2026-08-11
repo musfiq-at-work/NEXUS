@@ -859,6 +859,7 @@ export const debitNotesRouter = createTRPCRouter({
             }
         }),
 
+
     getPDFData: protectedProcedure
         .input(z.object({
             debit_note_id: z.string(),
@@ -874,42 +875,61 @@ export const debitNotesRouter = createTRPCRouter({
                     })
                 }
 
-                const headerData = await ctx.db.$queryRaw<DebitNoteHeader[]>`
-                    SELECT 
-                        DN.debit_note_ref,
-                        DN.debit_note_date,
-                        F.NAME AS factory_name,
-                        F.factory_address,
-                        COALESCE(DN.processing_charge, 0) AS processing_charge,
-                        DN.conversion_rate,
-                        COALESCE(DN.additional_adjustment, 0) AS additional_adjustment,
-                        COALESCE(DN.less, 0) AS less,
-                        LC.lc_no,
-                        LC.lc_open_date
-                    FROM debit_note AS DN
-                        INNER JOIN factories AS F ON F.id = DN.factory_id
-                        LEFT JOIN lc_master AS LC ON LC.id = DN.lc_id
-                    WHERE DN.ID = ${input.debit_note_id};
-                `;
+                let headerData: DebitNoteHeader[];
+                let table: DebitNoteTableData[];
+                let factoryInvoices: { factory_invoices: string }[];
 
-                const table = await ctx.db.$queryRaw<DebitNoteTableData[]>`
-                    SELECT 
-                        SD.buyer_po,
-                        SUM(ES.delivery_quantity) AS QUANTITY,
-                        FSD.factory_rate,
-                        FSD.transfer_rate,
-                        (FSD.transfer_rate - FSD.factory_rate)::NUMERIC(18, 2) AS MARGIN,
-                        (SUM(ES.delivery_quantity) * (FSD.transfer_rate - FSD.factory_rate))::NUMERIC(18, 2) AS EXCESS_VALUE,
-                        C.SYMBOL
-                    FROM DEBIT_NOTE_DETAILS AS DND
-                        INNER JOIN factory_shipment_details AS FSD ON FSD.id = DND.factory_shipment_id
-                        INNER JOIN shipment_details AS SD ON SD.id = FSD.shipment_detail_id
-                        INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = SD.id
-                        INNER JOIN factory_orders AS FO ON FO.id = FSD.factory_order_id
-                        INNER JOIN CURRENCIES AS C ON C.id = FO.currency_id
-                    WHERE DND.debit_note_header_id = ${input.debit_note_id}
-                    GROUP BY SD.ID, FSD.ID, C.ID;
-                `;
+                await Promise.all([
+                    headerData = await ctx.db.$queryRaw<DebitNoteHeader[]>`
+                        SELECT 
+                            DN.debit_note_ref,
+                            DN.debit_note_date,
+                            F.NAME AS factory_name,
+                            F.factory_address,
+                            COALESCE(DN.processing_charge, 0) AS processing_charge,
+                            DN.conversion_rate,
+                            COALESCE(DN.additional_adjustment, 0) AS additional_adjustment,
+                            COALESCE(DN.less, 0) AS less,
+                            LC.lc_no,
+                            LC.lc_open_date
+                        FROM debit_note AS DN
+                            INNER JOIN factories AS F ON F.id = DN.factory_id
+                            LEFT JOIN lc_master AS LC ON LC.id = DN.lc_id
+                        WHERE DN.ID = ${input.debit_note_id};
+                    `,
+
+                    table = await ctx.db.$queryRaw<DebitNoteTableData[]>`
+                        SELECT 
+                            SD.buyer_po,
+                            SUM(ES.delivery_quantity) AS QUANTITY,
+                            FSD.factory_rate,
+                            FSD.transfer_rate,
+                            (FSD.transfer_rate - FSD.factory_rate)::NUMERIC(18, 2) AS MARGIN,
+                            (SUM(ES.delivery_quantity) * (FSD.transfer_rate - FSD.factory_rate))::NUMERIC(18, 2) AS EXCESS_VALUE,
+                            C.SYMBOL
+                        FROM DEBIT_NOTE_DETAILS AS DND
+                            INNER JOIN factory_shipment_details AS FSD ON FSD.id = DND.factory_shipment_id
+                            INNER JOIN shipment_details AS SD ON SD.id = FSD.shipment_detail_id
+                            INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = SD.id
+                            INNER JOIN factory_orders AS FO ON FO.id = FSD.factory_order_id
+                            INNER JOIN CURRENCIES AS C ON C.id = FO.currency_id
+                        WHERE DND.debit_note_header_id = ${input.debit_note_id}
+                        GROUP BY SD.ID, FSD.ID, C.ID;
+                    `,
+
+                    factoryInvoices = await ctx.db.$queryRaw<{ factory_invoices: string }[]>`
+                        SELECT DISTINCT 
+                            FI.invoice_no AS FACTORY_INVOICES
+                        FROM DEBIT_NOTE_DETAILS AS DND
+                            INNER JOIN factory_shipment_details AS FSD ON FSD.id = DND.factory_shipment_id
+                            INNER JOIN shipment_details AS SD ON SD.id = FSD.shipment_detail_id
+                            INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = SD.id
+                            INNER JOIN factory_invoice_details AS FID ON FID.exfactory_shipment_id = ES.id
+                            INNER JOIN factory_invoice AS FI ON FI.id = FID.factory_invoice_id
+                        WHERE DND.debit_note_header_id = ${input.debit_note_id};
+                    `
+                ]);
+
 
                 const formattedTable = table.map(item => ({
                     buyer_po: item.buyer_po,
@@ -942,18 +962,6 @@ export const debitNotesRouter = createTRPCRouter({
                     inBDT: currencyFormatterBDT(inBDT, 'BDT'),
                     inWordBDT: amountToWordsBDT(inBDT),
                 }
-
-                const factoryInvoices = await ctx.db.$queryRaw<{ factory_invoices: string }[]>`
-                    SELECT DISTINCT 
-                        FI.invoice_no AS FACTORY_INVOICES
-                    FROM DEBIT_NOTE_DETAILS AS DND
-                        INNER JOIN factory_shipment_details AS FSD ON FSD.id = DND.factory_shipment_id
-                        INNER JOIN shipment_details AS SD ON SD.id = FSD.shipment_detail_id
-                        INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = SD.id
-                        INNER JOIN factory_invoice_details AS FID ON FID.exfactory_shipment_id = ES.id
-                        INNER JOIN factory_invoice AS FI ON FI.id = FID.factory_invoice_id
-                    WHERE DND.debit_note_header_id = ${input.debit_note_id};
-                `;
 
                 return { headerData, formattedTable, totals, factoryInvoices };
             }

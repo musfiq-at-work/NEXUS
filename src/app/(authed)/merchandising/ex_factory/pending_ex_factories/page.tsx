@@ -63,12 +63,13 @@ const PendingExFactories = () => {
     const tableData = toTableData(pendingExFactoryList);
     
     // Search query (enabled only when there's a search term)
-    const searchQuery = api.exFactory.searchPendingExFactories.useQuery(
+    const {data: searchQuery, isLoading: isSearchLoading} = api.exFactory.searchPendingExFactories.useQuery(
         { search_term: debouncedSearch, limit, offset: page * limit },
         { enabled: debouncedSearch.length > 0 }
     );
 
-    const searchTableData = toTableData(searchQuery.data?.results ?? []);
+    const searchTableData = toTableData(searchQuery?.results ?? []);
+    const searchCount = searchQuery?.count ?? 0;
 
     const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         setPage(0); 
@@ -98,11 +99,11 @@ const PendingExFactories = () => {
            <div className="w-full">
                 <Table
                     data={debouncedSearch.length > 0 ? searchTableData : tableData}
-                    isLoading={isLoading || searchQuery.isLoading || isPendingExFactoriesLoading}
+                    isLoading={isLoading || isSearchLoading || isPendingExFactoriesLoading}
                     columns={tableHeaders}
                     nextPage={nextPage}
                     prevPage={prevPage}
-                    total={total}
+                    total={total || searchCount}
                     page={page}
                     limit={limit}
                     editURL={''}

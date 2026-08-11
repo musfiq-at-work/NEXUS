@@ -198,37 +198,39 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         },
                     });
 
-                    await tx.rdl_invoice_shipment_details_history.createMany({
-                        data: rdlInvoiceShipmentDetails.map(detail => ({
-                            rdl_invoice_details_id: detail.rdl_invoice_details_id,
-                            shipment_details_id: detail.shipment_details_id,
-                            invoice_quantity: detail.invoice_quantity,
-                            action_type: actions.DELETE,
-                            action_by: ctx.user.id,
-                        })),
-                    });
+                    await Promise.all([
+                        await tx.rdl_invoice_shipment_details_history.createMany({
+                            data: rdlInvoiceShipmentDetails.map(detail => ({
+                                rdl_invoice_details_id: detail.rdl_invoice_details_id,
+                                shipment_details_id: detail.shipment_details_id,
+                                invoice_quantity: detail.invoice_quantity,
+                                action_type: actions.DELETE,
+                                action_by: ctx.user.id,
+                            })),
+                        }),
 
-                    await tx.rdl_invoice_details_history.createMany({
-                        data: rdlInvoiceDetails.map(detail => ({
-                            rdl_invoice_details: detail.id,
-                            rdl_invoice_id: detail.rdl_invoice_id,
-                            factory_invoice_id: detail.factory_invoice_id,
-                            action_type: actions.DELETE,
-                            action_by: ctx.user.id,
-                        })),
-                    });
+                        await tx.rdl_invoice_details_history.createMany({
+                            data: rdlInvoiceDetails.map(detail => ({
+                                rdl_invoice_details: detail.id,
+                                rdl_invoice_id: detail.rdl_invoice_id,
+                                factory_invoice_id: detail.factory_invoice_id,
+                                action_type: actions.DELETE,
+                                action_by: ctx.user.id,
+                            })),
+                        }),
 
-                    await tx.rdl_invoice_shipment_details.deleteMany({
-                        where: {
-                            rdl_invoice_details_id: {
-                                in: rdlInvoiceDetails.map(detail => detail.id),
+                        await tx.rdl_invoice_shipment_details.deleteMany({
+                            where: {
+                                rdl_invoice_details_id: {
+                                    in: rdlInvoiceDetails.map(detail => detail.id),
+                                },
                             },
-                        },
-                    });
+                        }),
 
-                    await tx.rdl_invoice_details.deleteMany({
-                        where: { rdl_invoice_id: input.id },
-                    });
+                        await tx.rdl_invoice_details.deleteMany({
+                            where: { rdl_invoice_id: input.id },
+                        }),
+                    ]);
 
                     const deleted = await tx.rdl_invoice.delete({
                         where: { id: input.id },

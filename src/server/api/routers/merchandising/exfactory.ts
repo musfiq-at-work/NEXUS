@@ -600,27 +600,28 @@ export const exFactoryRouter = createTRPCRouter({
                         });
                     }
 
-                    await tx.exfactory_shipments.deleteMany({
-                        where: {
-                            exfactory_orders_id: exfactoryOrder.id,
-                        },
-                    });
-
-                    await tx.exfactory_orders.delete({
-                        where: {
-                            id: exfactoryOrder.id,
-                        },
-                    });
-
-                    await tx.exfactory_orders_history.create({
-                        data: {
-                            order_id: exfactoryOrder.order_id,
-                            exfactory_id: exfactoryOrder.exfactory_id,
-                            action_type: actions.DELETE,
-                            action_by: ctx.user.id,
-                        },
-                    });
-
+                    await Promise.all([
+                        await tx.exfactory_shipments.deleteMany({
+                            where: {
+                                exfactory_orders_id: exfactoryOrder.id,
+                            },
+                        }),
+    
+                        await tx.exfactory_orders.delete({
+                            where: {
+                                id: exfactoryOrder.id,
+                            },
+                        }),
+    
+                        await tx.exfactory_orders_history.create({
+                            data: {
+                                order_id: exfactoryOrder.order_id,
+                                exfactory_id: exfactoryOrder.exfactory_id,
+                                action_type: actions.DELETE,
+                                action_by: ctx.user.id,
+                            },
+                        })
+                    ])
                 }, {timeout: 30000});
             }
             catch (error) {
@@ -1173,84 +1174,60 @@ export const exFactoryRouter = createTRPCRouter({
 
             try {
                 const results = await ctx.db.$queryRaw<PendingExFactory[]>`
-                    WITH shipment_qty AS (
-                        SELECT 
-                            SD.id AS shipment_detail_id,
-                            SUM(SID.quantity) AS total_sid_qty
-                        FROM SHIPMENT_DETAILS AS SD
-                        JOIN SHIPMENT_ITEM_DETAILS AS SID ON SID.shipment_detail_id = SD.id
-                        GROUP BY SD.id
-                    ),
-                    exfactory_qty AS (
-                        SELECT 
-                            ES.shipment_details_id,
-                            COALESCE(BOOL_OR(ES.po_close), false) AS po_close,
-                            SUM(ES.delivery_quantity) AS total_es_qty
-                        FROM EXFACTORY_SHIPMENTS AS ES
-                        GROUP BY ES.shipment_details_id
+                    WITH EXFACTORY AS (
+                        WITH shipment_qty AS (
+                            SELECT 
+                                SD.id AS shipment_detail_id,
+                                SUM(SID.quantity) AS total_sid_qty
+                            FROM SHIPMENT_DETAILS AS SD
+                            JOIN SHIPMENT_ITEM_DETAILS AS SID ON SID.shipment_detail_id = SD.id
+                            GROUP BY SD.id
+                        ),
+                        exfactory_qty AS (
+                            SELECT 
+                                ES.shipment_details_id,
+                                COALESCE(BOOL_OR(ES.po_close), false) AS po_close,
+                                SUM(ES.delivery_quantity) AS total_es_qty
+                            FROM EXFACTORY_SHIPMENTS AS ES
+                            GROUP BY ES.shipment_details_id
+                        )
+                        SELECT
+                            BO.ID AS ORDER_ID,
+                            B.BUYER_NAME AS BUYER_NAME,
+                            F.NAME AS FACTORY_NAME,
+                            BO.REF_NO AS ORDER_REF,
+                            OS.STYLE AS STYLE,
+                            SD.BUYER_PO AS PO,
+                            FSD.exfactory_date AS EXFACTORY_DATE,
+                            COALESCE(SQ.total_sid_qty, 0) AS TOTAL_QUANTITY,
+                            COALESCE(EQ.total_es_qty, 0)AS TOTAL_DELIVERY_QUANTITY
+                        FROM BUYER_ORDERS AS BO
+                        INNER JOIN ORDER_STYLES AS OS ON OS.order_id = BO.id
+                        INNER JOIN SHIPMENT_DETAILS AS SD ON SD.order_style_id = OS.id
+                        INNER JOIN FACTORY_SHIPMENT_DETAILS AS FSD ON FSD.shipment_detail_id = SD.id
+                        INNER JOIN BUYERS AS B ON B.ID = BO.buyer_id
+                        INNER JOIN FACTORIES AS F ON F.id = BO.factory_id
+                        LEFT JOIN shipment_qty AS SQ ON SQ.shipment_detail_id = SD.id
+                        LEFT JOIN exfactory_qty AS EQ ON EQ.shipment_details_id = SD.id
+                        LEFT JOIN shipment_tolerance_level as STL on STL.buyer_id = BO.buyer_id
+                        WHERE                   
+                            BO.buyer_id = ${input.buyer_id}
+                            AND BO.factory_id = ${input.factory_id}
+                            AND COALESCE(EQ.total_es_qty, 0)::NUMERIC(18,2) < COALESCE(SQ.total_sid_qty * (1 + COALESCE(STL.tolerance_level, 10) / 100), 0)::NUMERIC(18,2)
+                            AND COALESCE(EQ.po_close, false) = false
+                            AND FSD.exfactory_date BETWEEN ${input.from_date} AND ${input.to_date}
+                        GROUP BY BO.ID, B.ID, F.ID, OS.ID, SD.id, SQ.total_sid_qty, EQ.total_es_qty, FSD.exfactory_date
                     )
-                    SELECT
-                        BO.ID AS ORDER_ID,
-                        B.BUYER_NAME AS BUYER_NAME,
-                        F.NAME AS FACTORY_NAME,
-                        BO.REF_NO AS ORDER_REF,
-                        OS.STYLE AS STYLE,
-                        SD.BUYER_PO AS PO,
-                        FSD.exfactory_date AS EXFACTORY_DATE,
-                        COALESCE(SQ.total_sid_qty, 0) AS TOTAL_QUANTITY,
-                        COALESCE(EQ.total_es_qty, 0)AS TOTAL_DELIVERY_QUANTITY
-                    FROM BUYER_ORDERS AS BO
-                    INNER JOIN ORDER_STYLES AS OS ON OS.order_id = BO.id
-                    INNER JOIN SHIPMENT_DETAILS AS SD ON SD.order_style_id = OS.id
-                    INNER JOIN FACTORY_SHIPMENT_DETAILS AS FSD ON FSD.shipment_detail_id = SD.id
-                    INNER JOIN BUYERS AS B ON B.ID = BO.buyer_id
-                    INNER JOIN FACTORIES AS F ON F.id = BO.factory_id
-                    LEFT JOIN shipment_qty AS SQ ON SQ.shipment_detail_id = SD.id
-                    LEFT JOIN exfactory_qty AS EQ ON EQ.shipment_details_id = SD.id
-                    LEFT JOIN shipment_tolerance_level as STL on STL.buyer_id = BO.buyer_id
-                    WHERE                   
-                        BO.buyer_id = ${input.buyer_id}
-                        AND BO.factory_id = ${input.factory_id}
-                        AND COALESCE(EQ.total_es_qty, 0)::NUMERIC(18,2) < COALESCE(SQ.total_sid_qty * (1 + COALESCE(STL.tolerance_level, 10) / 100), 0)::NUMERIC(18,2)
-                        AND COALESCE(EQ.po_close, false) = false
-                        AND FSD.exfactory_date BETWEEN ${input.from_date} AND ${input.to_date}
-                    GROUP BY BO.ID, B.ID, F.ID, OS.ID, SD.id, SQ.total_sid_qty, EQ.total_es_qty, FSD.exfactory_date
+                    SELECT *,
+                        COUNT(*) OVER() AS TOTAL_COUNT
+                    FROM EXFACTORY
                     LIMIT ${input.limit}    
                     OFFSET ${input.offset};
                 `;
 
-                const count = await ctx.db.$queryRaw<{ count: bigint }[]>`
-                    SELECT COUNT(*)
-                    FROM BUYER_ORDERS AS BO
-                    INNER JOIN ORDER_STYLES AS OS ON OS.order_id = BO.id
-                    INNER JOIN SHIPMENT_DETAILS AS SD ON SD.order_style_id = OS.id
-                    INNER JOIN FACTORY_SHIPMENT_DETAILS AS FSD ON FSD.shipment_detail_id = SD.id
-                    LEFT JOIN (
-                        SELECT 
-                            ES.shipment_details_id,
-                            COALESCE(BOOL_OR(ES.po_close), false) AS po_close,
-                            SUM(ES.delivery_quantity) AS total_es_qty
-                        FROM EXFACTORY_SHIPMENTS AS ES
-                        GROUP BY ES.shipment_details_id
-                    ) AS EQ ON EQ.shipment_details_id = SD.id
-                    LEFT JOIN (
-                        SELECT 
-                            SD.id AS shipment_detail_id,
-                            SUM(SID.quantity) AS total_sid_qty
-                        FROM SHIPMENT_DETAILS SD
-                        JOIN SHIPMENT_ITEM_DETAILS SID ON SID.shipment_detail_id = SD.id
-                        GROUP BY SD.id
-                    ) AS SQ ON SQ.shipment_detail_id = SD.id
-                    LEFT JOIN shipment_tolerance_level as STL on STL.buyer_id = BO.buyer_id
-                    WHERE
-                        BO.buyer_id = ${input.buyer_id}
-                        AND BO.factory_id = ${input.factory_id}
-                        AND COALESCE(EQ.total_es_qty, 0)::NUMERIC(18,2) < COALESCE(SQ.total_sid_qty * (1 + COALESCE(STL.tolerance_level, 10) / 100), 0)::NUMERIC(18,2)
-                        AND COALESCE(EQ.po_close, false) = false
-                        AND FSD.exfactory_date BETWEEN ${input.from_date} AND ${input.to_date};
-                    `;
+                const total = results.length > 0 ? Number(results[0]?.total_count) : 0;
 
-                return {results, count: Number(count[0]?.count ?? 0)};
+                return {results, count: total};
             }
             catch (error) {
                 await logError(error, ctx, input);
@@ -1277,94 +1254,64 @@ export const exFactoryRouter = createTRPCRouter({
 
             try {
                 const results = await ctx.db.$queryRaw<PendingExFactory[]>`
-                    WITH shipment_qty AS (
-                        SELECT
-                            SD.id AS shipment_detail_id,
-                            SUM(SID.quantity) AS total_sid_qty
-                        FROM SHIPMENT_DETAILS AS SD
-                        JOIN SHIPMENT_ITEM_DETAILS AS SID ON SID.shipment_detail_id = SD.id
-                        GROUP BY SD.id
-                    ),
-                    exfactory_qty AS (
-                        SELECT
-                            ES.shipment_details_id,
-                            COALESCE(BOOL_OR(ES.po_close), false) AS po_close,
-                            SUM(ES.delivery_quantity) AS total_es_qty
-                        FROM EXFACTORY_SHIPMENTS AS ES
-                        GROUP BY ES.shipment_details_id
-                    )
-                    SELECT
-                        BO.ID AS ORDER_ID,
-                        B.BUYER_NAME AS BUYER_NAME,
-                        F.NAME AS FACTORY_NAME,
-                        BO.REF_NO AS ORDER_REF,
-                        OS.STYLE AS STYLE,
-                        SD.BUYER_PO AS PO,
-                        FSD.exfactory_date AS EXFACTORY_DATE,
-                        COALESCE(SQ.total_sid_qty, 0) AS TOTAL_QUANTITY,
-                        COALESCE(EQ.total_es_qty, 0)AS TOTAL_DELIVERY_QUANTITY
-                    FROM BUYER_ORDERS AS BO 
-                    INNER JOIN ORDER_STYLES AS OS ON OS.order_id = BO.id
-                    INNER JOIN SHIPMENT_DETAILS AS SD ON SD.order_style_id = OS.id
-                    INNER JOIN FACTORY_SHIPMENT_DETAILS AS FSD ON FSD.shipment_detail_id = SD.id
-                    INNER JOIN BUYERS AS B ON B.ID = BO.buyer_id
-                    INNER JOIN FACTORIES AS F ON F.id = BO.factory_id
-                    LEFT JOIN shipment_qty AS SQ ON SQ.shipment_detail_id = SD.id
-                    LEFT JOIN exfactory_qty AS EQ ON EQ.shipment_details_id = SD.id
-                    LEFT JOIN shipment_tolerance_level as STL on STL.buyer_id = BO.buyer_id
-                    WHERE
-                        COALESCE(EQ.total_es_qty, 0)::NUMERIC(18,2) < COALESCE(SQ.total_sid_qty * (1 + COALESCE(STL.tolerance_level, 10) / 100), 0)::NUMERIC(18,2)
-                        AND COALESCE(EQ.po_close, false) = false
-                        AND (
-                            BO.REF_NO ILIKE '%' || ${input.search_term} || '%' OR
-                            B.BUYER_NAME ILIKE '%' || ${input.search_term} || '%' OR
-                            F.NAME ILIKE '%' || ${input.search_term} || '%' OR
-                            OS.STYLE ILIKE '%' || ${input.search_term} || '%' OR
-                            SD.BUYER_PO ILIKE '%' || ${input.search_term} || '%'
+                    WITH EXFACTORY AS (
+                        WITH shipment_qty AS (
+                            SELECT
+                                SD.id AS shipment_detail_id,
+                                SUM(SID.quantity) AS total_sid_qty
+                            FROM SHIPMENT_DETAILS AS SD
+                            JOIN SHIPMENT_ITEM_DETAILS AS SID ON SID.shipment_detail_id = SD.id
+                            GROUP BY SD.id
+                        ),
+                        exfactory_qty AS (
+                            SELECT
+                                ES.shipment_details_id,
+                                COALESCE(BOOL_OR(ES.po_close), false) AS po_close,
+                                SUM(ES.delivery_quantity) AS total_es_qty
+                            FROM EXFACTORY_SHIPMENTS AS ES
+                            GROUP BY ES.shipment_details_id
                         )
-                    GROUP BY BO.ID, B.ID, F.ID, OS.ID, SD.id, SQ.total_sid_qty, EQ.total_es_qty, FSD.exfactory_date
+                        SELECT
+                            BO.ID AS ORDER_ID,
+                            B.BUYER_NAME AS BUYER_NAME,
+                            F.NAME AS FACTORY_NAME,
+                            BO.REF_NO AS ORDER_REF,
+                            OS.STYLE AS STYLE,
+                            SD.BUYER_PO AS PO,
+                            FSD.exfactory_date AS EXFACTORY_DATE,
+                            COALESCE(SQ.total_sid_qty, 0) AS TOTAL_QUANTITY,
+                            COALESCE(EQ.total_es_qty, 0)AS TOTAL_DELIVERY_QUANTITY
+                        FROM BUYER_ORDERS AS BO 
+                        INNER JOIN ORDER_STYLES AS OS ON OS.order_id = BO.id
+                        INNER JOIN SHIPMENT_DETAILS AS SD ON SD.order_style_id = OS.id
+                        INNER JOIN FACTORY_SHIPMENT_DETAILS AS FSD ON FSD.shipment_detail_id = SD.id
+                        INNER JOIN BUYERS AS B ON B.ID = BO.buyer_id
+                        INNER JOIN FACTORIES AS F ON F.id = BO.factory_id
+                        LEFT JOIN shipment_qty AS SQ ON SQ.shipment_detail_id = SD.id
+                        LEFT JOIN exfactory_qty AS EQ ON EQ.shipment_details_id = SD.id
+                        LEFT JOIN shipment_tolerance_level as STL on STL.buyer_id = BO.buyer_id
+                        WHERE
+                            COALESCE(EQ.total_es_qty, 0)::NUMERIC(18,2) < COALESCE(SQ.total_sid_qty * (1 + COALESCE(STL.tolerance_level, 10) / 100), 0)::NUMERIC(18,2)
+                            AND COALESCE(EQ.po_close, false) = false
+                            AND (
+                                BO.REF_NO ILIKE '%' || ${input.search_term} || '%' OR
+                                B.BUYER_NAME ILIKE '%' || ${input.search_term} || '%' OR
+                                F.NAME ILIKE '%' || ${input.search_term} || '%' OR
+                                OS.STYLE ILIKE '%' || ${input.search_term} || '%' OR
+                                SD.BUYER_PO ILIKE '%' || ${input.search_term} || '%'
+                            )
+                        GROUP BY BO.ID, B.ID, F.ID, OS.ID, SD.id, SQ.total_sid_qty, EQ.total_es_qty, FSD.exfactory_date
+                    )
+                    SELECT *,
+                        COUNT(*) OVER() AS total_count
+                    FROM EXFACTORY
                     LIMIT ${input.limit}
                     OFFSET ${input.offset};
                 `;
 
-                const count = await ctx.db.$queryRaw<{ count: bigint }[]>`
-                    SELECT COUNT(*)
-                    FROM BUYER_ORDERS AS BO
-                    INNER JOIN ORDER_STYLES AS OS ON OS.order_id = BO.id
-                    INNER JOIN SHIPMENT_DETAILS AS SD ON SD.order_style_id = OS.id
-                    INNER JOIN FACTORY_SHIPMENT_DETAILS AS FSD ON FSD.shipment_detail_id = SD.id
-                    INNER JOIN BUYERS AS B ON B.ID = BO.buyer_id
-                    INNER JOIN FACTORIES AS F ON F.id = BO.factory_id
-                    LEFT JOIN (
-                        SELECT
-                            ES.shipment_details_id,
-                            COALESCE(BOOL_OR(ES.po_close), false) AS po_close,
-                            SUM(ES.delivery_quantity) AS total_es_qty
-                        FROM EXFACTORY_SHIPMENTS AS ES
-                        GROUP BY ES.shipment_details_id
-                    ) AS EQ ON EQ.shipment_details_id = SD.id
-                    LEFT JOIN (
-                        SELECT
-                            SD.id AS shipment_detail_id,
-                            SUM(SID.quantity) AS total_sid_qty
-                        FROM SHIPMENT_DETAILS AS SD
-                        JOIN SHIPMENT_ITEM_DETAILS AS SID ON SID.shipment_detail_id = SD.id
-                        GROUP BY SD.id
-                    ) AS SQ ON SQ.shipment_detail_id = SD.id
-                    LEFT JOIN shipment_tolerance_level as STL on STL.buyer_id = BO.buyer_id
-                    WHERE
-                        COALESCE(EQ.total_es_qty, 0)::NUMERIC(18,2) < COALESCE(SQ.total_sid_qty * (1 + COALESCE(STL.tolerance_level, 10) / 100), 0)::NUMERIC(18,2)
-                        AND COALESCE(EQ.po_close, false) = false
-                        AND (
-                            BO.REF_NO ILIKE '%' || ${input.search_term} || '%' OR
-                            B.BUYER_NAME ILIKE '%' || ${input.search_term} || '%' OR
-                            F.NAME ILIKE '%' || ${input.search_term} || '%' OR
-                            OS.STYLE ILIKE '%' || ${input.search_term} || '%' OR
-                            SD.BUYER_PO ILIKE '%' || ${input.search_term} || '%'
-                        );
-                `;
+                const total = results.length > 0 ? Number(results[0]?.total_count) : 0;
 
-                return {results, count: Number(count[0]?.count ?? 0)};
+                return {results, count: total};
             }
             catch (error) {
                 await logError(error, ctx, input);
