@@ -6,6 +6,7 @@ import { api } from "~/trpc/react";
 import { toast } from "sonner";
 import { tableHeaders } from "./config/columns";
 import { useSearchablePagination, useModulePermissions, useDeleteConfirmation } from "~/hooks";
+import { useEffect } from "react";
 
 const DebitNotePage = () => {
     const router = useRouter();
@@ -29,6 +30,10 @@ const DebitNotePage = () => {
         { query: debouncedSearch, limit, offset: page * limit },
         { enabled: debouncedSearch.length > 0 }
     );
+
+    useEffect(() => {
+        console.log(searchQuery.data?.debitNotes)
+    }, [searchQuery.data?.debitNotes])
 
     const deleteMutation = api.debitNotes.deleteDebitNote.useMutation({
         onSuccess: async () => {

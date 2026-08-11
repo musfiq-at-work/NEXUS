@@ -19,3 +19,13 @@ export interface LcScTableData {
     realized_amount: number;
     factory_paid_amount: number;
 }
+
+export interface Charges {
+    bank_charge: number;
+    document_charge: number;
+    discount_charge: number;
+}
+
+export interface ClaimAdjustment {
+    claim_adjustment: number;
+}

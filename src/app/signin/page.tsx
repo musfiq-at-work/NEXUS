@@ -13,11 +13,18 @@ import { parseTRPCError } from "~/utils/parseTRPCError";
 
 const DEVICE_ID_KEY = "say_my_name";
 
+const generateDeviceId = () => {
+    const random = crypto.getRandomValues(new Uint8Array(6));
+
+    return `${Date.now()}-${[...random].map(x => x.toString(16).padStart(2, "0").toUpperCase()).join("").match(/.{1,4}/g)?.join("-")}`;
+};
+
 const getDeviceId = () => {
     let deviceId = localStorage.getItem(DEVICE_ID_KEY);
 
     if (!deviceId) {
-        deviceId = crypto.randomUUID();
+        deviceId = generateDeviceId();
+
         localStorage.setItem(DEVICE_ID_KEY, deviceId);
     }
 

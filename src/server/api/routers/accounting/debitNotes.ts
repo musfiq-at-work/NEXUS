@@ -134,19 +134,21 @@ export const debitNotesRouter = createTRPCRouter({
                             LEFT JOIN sales_contracts AS SC ON SC.id = SCS.sales_contract_id
                             INNER JOIN BUYERS AS B ON B.id = DN.buyer_id
                             INNER JOIN TERMS AS T ON T.ID = DN.term_id
-                        WHERE EXISTS ( -- Admin
-                            SELECT 1
-                            FROM USERS AS U
-                            WHERE U.ID = ${ctx.user.id}
-                                AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
-                                AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
-                        )
-                        OR EXISTS ( -- Team Member
-                            SELECT 1
-                            FROM TEAM_MEMBERS AS TM
-                                INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
-                            WHERE T.BUYER_ID = B.ID
-                                AND TM.USER_ID = ${ctx.user.id}
+                        WHERE (
+                            EXISTS ( -- Admin
+                                SELECT 1
+                                FROM USERS AS U
+                                WHERE U.ID = ${ctx.user.id}
+                                    AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
+                                    AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
+                            )
+                            OR EXISTS ( -- Team Member
+                                SELECT 1
+                                FROM TEAM_MEMBERS AS TM
+                                    INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
+                                WHERE T.BUYER_ID = B.ID
+                                    AND TM.USER_ID = ${ctx.user.id}
+                            )
                         )
                         AND (
                             F.NAME ILIKE '%' || ${input.query} || '%'
@@ -543,7 +545,7 @@ export const debitNotesRouter = createTRPCRouter({
                             FSD.id,
                             SD.buyer_po,
                             FI.invoice_no,
-                            SUM(ES.delivery_quantity) * (FSD.transfer_rate - FSD.factory_rate) AS dn_value
+                            SUM(ES.delivery_quantity * (FSD.transfer_rate - FSD.factory_rate)) AS dn_value
                         FROM sales_contracts AS SC
                             INNER JOIN sales_contract_details AS SCD ON SCD.sales_contract_id = SC.id
                             INNER JOIN order_styles AS SO ON SO.order_id = SCD.order_id
@@ -577,7 +579,7 @@ export const debitNotesRouter = createTRPCRouter({
                             FSD.id,
                             SD.buyer_po,
                             FI.invoice_no,
-                            SUM(ES.delivery_quantity) * (FSD.transfer_rate - FSD.factory_rate) AS dn_value
+                            SUM(ES.delivery_quantity * (FSD.transfer_rate - FSD.factory_rate)) AS dn_value
                         FROM lc_master AS LC
                             INNER JOIN lc_orders AS LO ON LO.lc_master_id = LC.id
                             INNER JOIN lc_shipments AS LS ON LS.lc_order_id = LO.id
@@ -948,7 +950,7 @@ export const debitNotesRouter = createTRPCRouter({
                 const lessValue = totalValue * (headerData[0]?.less ?? 0) / 100;
                 const initialTotal = totalValue - lessValue;
                 const grandTotal = totalValue - paymentAdjustmentValue - processingChargeValue - lessValue;
-                const inBDT = initialTotal * (headerData[0]?.conversion_rate ?? 1);
+                const inBDT = grandTotal * (headerData[0]?.conversion_rate ?? 1);
 
                 const totals = {
                     totalQuantity: quantityFormatter(totalQuantity),

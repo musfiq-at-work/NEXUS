@@ -5,7 +5,7 @@ import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { Prisma } from "@prisma/client";
 import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
-import type { LcScClosingHeader, LcScTableData } from "./_types/lcScClosing";
+import type { Charges, ClaimAdjustment, LcScClosingHeader, LcScTableData } from "./_types/lcScClosing";
 import { dividedByZeroSafe, safeNumber } from "~/utils/numbers";
 
 export const lcScClosingRouter = createTRPCRouter({
@@ -79,6 +79,8 @@ export const lcScClosingRouter = createTRPCRouter({
 
                 let headerData: LcScClosingHeader[];
                 let tableData: LcScTableData[];
+                let charges: Charges[];
+                let claimAdjustment: ClaimAdjustment[];
 
                 // Parallel Query Processing
                 await Promise.all([
@@ -175,6 +177,23 @@ export const lcScClosingRouter = createTRPCRouter({
                             p.REALIZED_AMOUNT,
                             F.FACTORY_PAID_AMOUNT;
                     `,
+
+                    charges = await ctx.db.$queryRaw<Charges[]>`
+                        SELECT
+                            COALESCE(SUM(PR.bank_charge), 0) AS bank_charge,
+                            COALESCE(SUM(PR.discount_charge), 0) AS discount_charge,
+                            COALESCE(SUM(PR.document_charge), 0) AS document_charge
+                        FROM document_submissions AS DS
+                        INNER JOIN proceed_realization AS PR ON PR.document_submission_id = DS.id
+                        WHERE DS.lc_id = ${input.lcScId};
+                    `,
+
+                    claimAdjustment = await ctx.db.$queryRaw<ClaimAdjustment[]>`
+                        SELECT 
+                            COALESCE(SUM(discount), 0) AS CLAIM_ADJUSTMENT
+                        FROM rdl_invoice
+                        WHERE lc_id = = ${input.lcScId};
+                    `,
                 ]);
 
                 const header = headerData.length > 0 ? {
@@ -199,7 +218,7 @@ export const lcScClosingRouter = createTRPCRouter({
                 const commission_percentage = dividedByZeroSafe(commission, safeNumber(tableData[0]?.rdl_export_value_usd)) * 100;
 
                 const commission_realized = safeNumber(tableData[0]?.realized_amount) - safeNumber(tableData[0]?.factory_paid_amount);
-                const commission_realized_percentage = dividedByZeroSafe(commission_realized, safeNumber(tableData[0]?.factory_paid_amount)) * 100
+                const commission_realized_percentage = dividedByZeroSafe(commission_realized, safeNumber(tableData[0]?.factory_paid_amount)) * 100;
 
                 const debit_note = safeNumber(tableData[0]?.debit_note);
 
@@ -233,7 +252,35 @@ export const lcScClosingRouter = createTRPCRouter({
                     total_commission_realized_percentage
                 }
 
-                return { header, table, table_summary }
+                const gain_lose = ( - (
+                    safeNumber(tableData[0]?.rdl_export_value_usd) - safeNumber(tableData[0]?.realized_amount)
+                ) - (
+                    safeNumber(charges[0]?.bank_charge) + 
+                    safeNumber(charges[0]?.document_charge) + 
+                    safeNumber(charges[0]?.discount_charge) +
+                    safeNumber(claimAdjustment[0]?.claim_adjustment)
+                ));
+
+                const reduction_in_factory_payment = safeNumber(tableData[0]?.factory_export_value) - safeNumber(tableData[0]?.factory_paid_amount);
+
+                const chargesTable = {
+                    bank_charge: currencyFormatter(safeNumber(charges[0]?.bank_charge), '$'),
+                    document_charge: currencyFormatter(safeNumber(charges[0]?.document_charge), '$'),
+                    discount_charge: currencyFormatter(safeNumber(charges[0]?.discount_charge), '$'),
+                    claim_adjustment: currencyFormatter(safeNumber(claimAdjustment[0]?.claim_adjustment), '$'),
+                    gain_lose: currencyFormatter(gain_lose, '$'),
+                    reduction_in_factory_payment: currencyFormatter(reduction_in_factory_payment, '$')
+                }
+
+                const difference_between_commissions = currencyFormatter(total_calculated_commission - total_commission_realized, '$');
+
+                return { 
+                    header, 
+                    table, 
+                    table_summary, 
+                    chargesTable,
+                    difference_between_commissions
+                }
             }
             catch (error){
                 await logError(error, ctx, input);
