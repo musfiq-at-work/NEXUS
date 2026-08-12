@@ -16,7 +16,7 @@ export const debitNotesRouter = createTRPCRouter({
             offset: z.number().optional(),
             limit: z.number().optional(),
         }))
-        .query(async ({ ctx }) => {
+        .query(async ({ ctx, input}) => {
             try {
                 const can_view = ctx.permissions[m.DEBIT_NOTE]?.can_view;
 
@@ -74,8 +74,8 @@ export const debitNotesRouter = createTRPCRouter({
                         COUNT(*) OVER() AS TOTAL_COUNT
                     FROM DEBIT_NOTES
                     ORDER BY ADDED_AT DESC
-                    LIMIT 15
-                    OFFSET 0;
+                    LIMIT ${input.limit ?? 15}
+                    OFFSET ${input.offset ?? 0};
                 `;
 
                 const total = result.length > 0 ? Number(result[0]?.total_count) : 0;
@@ -152,21 +152,19 @@ export const debitNotesRouter = createTRPCRouter({
                         AND (
                             F.NAME ILIKE '%' || ${input.query} || '%'
                             OR DN.DEBIT_NOTE_REF ILIKE '%' || ${input.query} || '%'
-                            OR T.NAME ILIKE '%' || ${input.query} || '%'
-                            OR SC.SALES_CONTRACT_NO ILIKE '%' || ${input.query} || '%'
                             OR LC.LC_NO ILIKE '%' || ${input.query} || '%'
-                            OR B.BUYER_NAME ILIKE '%' || ${input.query} || '%'
+                            OR SC.SALES_CONTRACT_NO ILIKE '%' || ${input.query} || '%'
                             OR SD.BUYER_PO ILIKE '%' || ${input.query} || '%'
-                            OR OS.STYLE ILIKE '%' || ${input.query} || '%'
-                            OR BO.REF_NO ILIKE '%' || ${input.query} || '%'
+                            OR B.BUYER_NAME ILIKE '%' || ${input.query} || '%'
+                            OR T.NAME ILIKE '%' || ${input.query} || '%'
                         )
                     )
                     SELECT *, 
                         COUNT(*) OVER() AS TOTAL_COUNT
                     FROM DEBIT_NOTES
                     ORDER BY ADDED_AT DESC
-                    LIMIT 15
-                    OFFSET 0;
+                    LIMIT ${input.limit ?? 15}
+                    OFFSET ${input.offset ?? 0};
                 `;
 
                 const total = result.length > 0 ? Number(result[0]?.total_count) : 0;

@@ -19,6 +19,46 @@ const BlankRow = () => (
 	</View>
 )
 
+const LessBlocks = ({text, value}: {text: React.ReactNode		, value: string}) => (
+	<View style={styles.tableContainer}>
+		<View style={{
+			flexDirection: 'row', 
+			borderLeftWidth: 0.75, 
+			borderLeftColor: tableBorderColor,
+		}} wrap={false}>
+			<View wrap={true}
+				style={{ 
+					width: 300, 
+					fontSize: 9, 
+					paddingHorizontal: 5, 
+					borderRightWidth: 0.75, 
+					borderRightColor: tableBorderColor,
+					paddingTop: 10,
+				}} 
+			>
+				<Text>
+					{text}
+				</Text>
+			</View>
+
+			<BlankRow />
+			<BlankRow />
+			<BlankRow />
+			<BlankRow />
+
+			<View style={[styles.cell, { width: 140 }]}>
+				<Text style={{ 
+					fontWeight: 'bold', 
+					fontFamily: 'poppins', 
+					paddingTop: 10 
+				}}>
+					{value}
+				</Text>
+			</View>
+		</View>
+	</View>
+)
+
 const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 	const {user} = useDecodedUser();
 
@@ -160,132 +200,47 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 					</View>
 				</View>
 
-				{/* Early Payment Adjustments */}
-				<View style={styles.tableContainer}>
-					<View style={{
-						flexDirection: 'row', 
-						borderLeftWidth: 0.75, 
-						borderLeftColor: tableBorderColor,
-					}} wrap={false}>
-						<View wrap={true}
-							style={{ 
-								width: 300, 
-								fontSize: 9, 
-								paddingHorizontal: 5, 
-								borderRightWidth: 0.75, 
-								borderRightColor: tableBorderColor,
-								paddingTop: 15
-							}} 
-						>
-							<Text>
-								LESS {' '}
-								<Text style={{ fontWeight: 'bold' }}>{data.headerData[0]?.additional_adjustment}% {' '}</Text> 
-								EARLIER PAYMENT {'\n'}ADJUSTMENT (ON OUR EXCESS VALUE USD {' '}
-								<Text style={{ fontWeight: 'bold' }}>{data.totals.totalValue}</Text>)
-							</Text>
-						</View>
+				<LessBlocks 
+					text={
+						<Text>
+							LESS {' '}
+							<Text style={{ fontWeight: 'bold' }}>{data.headerData[0]?.additional_adjustment}% {' '}</Text> 
+							EARLIER PAYMENT {'\n'}ADJUSTMENT (ON OUR EXCESS VALUE USD {' '}
+							<Text style={{ fontWeight: 'bold' }}>{data.totals.totalValue}</Text>)
+						</Text>
+					}
+					value={data.totals.paymentAdjustmentValue}
+				/>
 
-						<BlankRow />
-						<BlankRow />
-						<BlankRow />
-						<BlankRow />
-
-						<View style={[styles.cell, { width: 140, paddingTop: 15 }]}>
-							<Text style={{ fontWeight: 'bold', fontFamily: 'poppins' }}>
-								{data.totals.paymentAdjustmentValue}
-							</Text>
-						</View>
-					</View>
-				</View>
-
-				{/* Processing Charge */}
-				<View style={styles.tableContainer}>
-					<View style={{
-						flexDirection: 'row', 
-						borderLeftWidth: 0.75, 
-						borderLeftColor: tableBorderColor,
-					}} wrap={false}>
-						<View wrap={true}
-							style={{ 
-								width: 300, 
-								fontSize: 9, 
-								paddingHorizontal: 5, 
-								borderRightWidth: 0.75, 
-								borderRightColor: tableBorderColor,
-								paddingTop: 10,
-							}} 
-						>
-							<Text>
-								LESS {' '}
-								<Text style={{ fontWeight: 'bold' }}>{data.headerData[0]?.processing_charge}% {' '}</Text> 
-								Processing Charge
-							</Text>
-						</View>
-
-						<BlankRow />
-						<BlankRow />
-						<BlankRow />
-						<BlankRow />
-
-						<View style={[styles.cell, { width: 140 }]}>
-							<Text style={{ 
-								fontWeight: 'bold', 
-								fontFamily: 'poppins', 
-								paddingTop: 10 
-							}}>
-								{data.totals.processingChargeValue}
-							</Text>
-						</View>
-					</View>
-				</View>
+				<LessBlocks 
+					text={
+						<Text>
+							LESS {' '}
+							<Text style={{ fontWeight: 'bold' }}>{data.headerData[0]?.processing_charge}% {' '}</Text> 
+							Processing Charge
+						</Text>
+					}
+					value={data.totals.processingChargeValue}
+				/>
 
 				{/* Less Amount*/}
-				<View style={styles.tableContainer}>
-					<View style={{
-						borderBottomWidth: 0.75, 
-						borderBottomColor: tableBorderColor, 
-						flexDirection: 'row', 
-						borderLeftWidth: 0.75, 
-						borderLeftColor: tableBorderColor,
-					}} wrap={false}>
-						<View wrap={true}
-							style={{ 
-								width: 300, 
-								fontSize: 9, 
-								paddingHorizontal: 5, 
-								borderRightWidth: 0.75, 
-								borderRightColor: tableBorderColor,
-								paddingTop: 10 
-							}} 
-						>
-							<Text>
-								LESS AMOUNT{' '}
-								<Text style={{ fontWeight: 'bold' }}>{data.totals.lessValue}</Text> 
-							</Text>
-						</View>
+				<LessBlocks
+					text={
+						<Text>
+							LESS AMOUNT{' '}
+							<Text style={{ fontWeight: 'bold' }}>{data.totals.lessValue}</Text> 
+						</Text>
+					}
+					value={data.totals.lessValue}
+				/>
 
-						<BlankRow />
-						<BlankRow />
-						<BlankRow />
-						<BlankRow />
-
-						<View style={[styles.cell, { width: 140 }]}>
-							<Text style={{ 
-								fontWeight: 'bold', 
-								fontFamily: 'poppins', 
-								paddingTop: 10 
-							}}>
-								{data.totals.lessValue}
-							</Text>
-						</View>
-					</View>
-				</View>
-				
 				{/* Grand Total (USD) */}
 				<View wrap={false}
 					style={{
 						borderBottomWidth: 0.75, 
 						borderBottomColor: tableBorderColor, 
+						borderTopWidth: 0.75, 
+						borderTopColor: tableBorderColor,
 						flexDirection: 'row', 
 						borderLeftWidth: 0.75, 
 						borderLeftColor: tableBorderColor,

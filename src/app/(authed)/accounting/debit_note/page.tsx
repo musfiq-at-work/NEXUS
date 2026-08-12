@@ -60,7 +60,7 @@ const DebitNotePage = () => {
                 subSectionLeft={
                     <SearchField
                         placeholder="Search Debit Notes..."
-                        infoText="Debit Note No, Buyer Name, Payment Term, PO, Style, Order Ref, Factory Name, LC no and Sales Contract No"
+                        infoText="Debit Note No, Buyer Name, Payment Term, PO, Factory Name, LC no and Sales Contract No"
                         handleSearchChange={handleSearchChange}
                     />
                 }
