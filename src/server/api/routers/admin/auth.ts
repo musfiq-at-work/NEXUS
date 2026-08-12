@@ -97,6 +97,8 @@ export const authRouter = createTRPCRouter({
 			level_name: user.levels?.name,
 		});
 
+		const loginTime = new Date();
+
 		// Store session in DB
 		await ctx.db.user_sessions.create({
 			data: {
@@ -105,6 +107,8 @@ export const authRouter = createTRPCRouter({
 				ip: getClientIp(ctx.headers)?.replace(/^::ffff:/, ""),
 				browser: getBrowserInfo(ctx.headers),
 				device_id: input.device_id ?? "Unknown Device",
+				login_time: loginTime,
+        		expire_date: new Date(loginTime.getTime() + 18 * 60 * 60 * 1000),
 			},
 		});
 

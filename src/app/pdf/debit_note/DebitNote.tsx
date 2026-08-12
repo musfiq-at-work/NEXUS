@@ -19,7 +19,7 @@ const BlankRow = () => (
 	</View>
 )
 
-const LessBlocks = ({text, value}: {text: React.ReactNode		, value: string}) => (
+const LessBlocks = ({text, value}: {text: React.ReactNode, value: string}) => (
 	<View style={styles.tableContainer}>
 		<View style={{
 			flexDirection: 'row', 

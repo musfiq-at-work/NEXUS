@@ -5,7 +5,7 @@ import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { Prisma } from "@prisma/client";
 import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
-import type { Charges, ClaimAdjustment, LcScClosingHeader, LcScTableData } from "./_types/lcScClosing";
+import type { Charges, ClaimAdjustment, DebitNotes, LcScClosingHeader, LcScTableData } from "./_types/lcScClosing";
 import { dividedByZeroSafe, safeNumber } from "~/utils/numbers";
 
 export const lcScClosingRouter = createTRPCRouter({
@@ -81,6 +81,7 @@ export const lcScClosingRouter = createTRPCRouter({
                 let tableData: LcScTableData[];
                 let charges: Charges[];
                 let claimAdjustment: ClaimAdjustment[];
+                let debitNotes: DebitNotes[];
 
                 // Parallel Query Processing
                 await Promise.all([
@@ -192,8 +193,23 @@ export const lcScClosingRouter = createTRPCRouter({
                         SELECT 
                             COALESCE(SUM(discount), 0) AS CLAIM_ADJUSTMENT
                         FROM rdl_invoice
-                        WHERE lc_id = = ${input.lcScId};
+                        WHERE lc_id = ${input.lcScId};
                     `,
+
+                    debitNotes = await ctx.db.$queryRaw<DebitNotes[]>`
+                        SELECT 
+                            DN.debit_note_ref,
+                            DN.debit_note_date,
+                            SUM(ES.delivery_quantity * (FSD.TRANSFER_RATE - FSD.FACTORY_RATE)) AS DEBIT_NOTE_VALUE,
+                            F.name AS FACTORY_NAME
+                        FROM debit_note AS DN
+                            INNER JOIN debit_note_details AS DND ON DND.debit_note_header_id = DN.id
+                            INNER JOIN exfactory_shipments AS ES ON ES.id = DND.exfactory_shipment_id
+                            INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = ES.shipment_details_id
+                            INNER JOIN factories AS F ON F.id = DN.factory_id
+                        WHERE DN.lc_id = ${input.lcScId};
+                        GROUP BY DN.id, F.id;
+                    `
                 ]);
 
                 const header = headerData.length > 0 ? {
