@@ -29,7 +29,7 @@ const DebitNoteDetails = (props: props) => {
             db_id: undefined,
             po_no: undefined,
             factory_invoice_no: undefined,
-            factory_shipment_id: '',
+            exfactory_shipment_id: '',
             value: undefined,
         });
     }, [addShipment]);

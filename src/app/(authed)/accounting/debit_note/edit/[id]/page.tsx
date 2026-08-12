@@ -55,7 +55,7 @@ const EditDebitNotePage = ({ params }: ParamsProp) => {
                 additional_charges: safeNumber(debitNoteData.additional_charges),
                 details: (debitNoteData.details ?? []).map((detail) => ({
                     db_id: detail.db_id,
-                    factory_shipment_id: detail.factory_shipment_id,
+                    exfactory_shipment_id: detail.exfactory_shipment_id,
                 })).filter((detail) => detail.db_id === undefined),
             };
 

@@ -52,7 +52,7 @@ const DebitNoteDetailsRow = (props: Props) => {
 
     const selectedFactoryShipmentIds = details
         ?.filter((_, i) => i !== index)
-        .map((detail) => detail.factory_shipment_id);
+        .map((detail) => detail.exfactory_shipment_id);
 
     const filteredFactoryShipments = shipmentDetails?.filter(
         (invoice) => !selectedFactoryShipmentIds?.includes(invoice.id)

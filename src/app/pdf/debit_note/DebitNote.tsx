@@ -108,40 +108,6 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 					</View>
 				</View>
 
-				{/* Discounts */}
-            	<View
-					wrap={false}
-					style={{
-						flexDirection: "row",
-						width: "100%",
-						borderLeft:  `0.75px solid ${tableBorderColor}`,
-						borderBottom:  `0.75px solid ${tableBorderColor}`,
-					}}
-				>
-					<View
-						style={{
-							width: 860,
-							borderRight: `0.75px solid ${tableBorderColor}`,
-							padding: "4px",
-							fontSize: 7, 
-							textAlign: 'right', 
-							fontWeight: 'semibold'
-						}}
-					>
-						<Text>Discount</Text>
-					</View>
-					<View
-						style={{
-							width: 140,
-							borderRight: `0.75px solid ${tableBorderColor}`,
-							padding: "4px",
-							fontSize: 7, 
-							textAlign: 'center', 
-						}}
-					>
-						<Text>{data.totals.lessValue}</Text>
-					</View>
-				</View>
 
 				{/* Invoice information, and table summary */}
 				<View style={styles.tableContainer}>
@@ -181,7 +147,7 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 						</View>
 
 						<View style={[styles.cell, { width: 140 }]}>
-							<Text style={{ fontWeight: 'bold', fontFamily: 'poppins' }}>{data.totals.totalQuantity}</Text>
+							<Text style={{ fontWeight: 'bold', fontFamily: 'poppins' }}>{data.totals.totalQuantity} PCS</Text>
 						</View>
 
 						<BlankRow />
@@ -225,7 +191,9 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 						<BlankRow />
 
 						<View style={[styles.cell, { width: 140, paddingTop: 15 }]}>
-							<Text style={{ fontWeight: 'bold', fontFamily: 'poppins' }}>{data.totals.paymentAdjustmentValue}</Text>
+							<Text style={{ fontWeight: 'bold', fontFamily: 'poppins' }}>
+								{data.totals.paymentAdjustmentValue}
+							</Text>
 						</View>
 					</View>
 				</View>
@@ -233,8 +201,6 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 				{/* Processing Charge */}
 				<View style={styles.tableContainer}>
 					<View style={{
-						borderBottomWidth: 0.75, 
-						borderBottomColor: tableBorderColor, 
 						flexDirection: 'row', 
 						borderLeftWidth: 0.75, 
 						borderLeftColor: tableBorderColor,
@@ -265,9 +231,51 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 							<Text style={{ 
 								fontWeight: 'bold', 
 								fontFamily: 'poppins', 
-								paddingTop: 10 }}
-							>
+								paddingTop: 10 
+							}}>
 								{data.totals.processingChargeValue}
+							</Text>
+						</View>
+					</View>
+				</View>
+
+				{/* Less Amount*/}
+				<View style={styles.tableContainer}>
+					<View style={{
+						borderBottomWidth: 0.75, 
+						borderBottomColor: tableBorderColor, 
+						flexDirection: 'row', 
+						borderLeftWidth: 0.75, 
+						borderLeftColor: tableBorderColor,
+					}} wrap={false}>
+						<View wrap={true}
+							style={{ 
+								width: 300, 
+								fontSize: 9, 
+								paddingHorizontal: 5, 
+								borderRightWidth: 0.75, 
+								borderRightColor: tableBorderColor,
+								paddingTop: 10 
+							}} 
+						>
+							<Text>
+								LESS AMOUNT{' '}
+								<Text style={{ fontWeight: 'bold' }}>{data.totals.lessValue}</Text> 
+							</Text>
+						</View>
+
+						<BlankRow />
+						<BlankRow />
+						<BlankRow />
+						<BlankRow />
+
+						<View style={[styles.cell, { width: 140 }]}>
+							<Text style={{ 
+								fontWeight: 'bold', 
+								fontFamily: 'poppins', 
+								paddingTop: 10 
+							}}>
+								{data.totals.lessValue}
 							</Text>
 						</View>
 					</View>

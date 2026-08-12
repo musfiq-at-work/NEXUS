@@ -47,7 +47,7 @@ const NewDebitNotePage = () => {
                 conversion_rate: safeNumber(debitNoteData.conversion_rate),
                 additional_charges: safeNumber(debitNoteData.additional_charges),
                 details: (debitNoteData.details ?? []).map((detail) => ({
-                    factory_shipment_id: detail.factory_shipment_id,
+                    exfactory_shipment_id: detail.exfactory_shipment_id,
                 })),
             };
 

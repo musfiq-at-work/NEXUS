@@ -45,11 +45,11 @@ export const debitNotesRouter = createTRPCRouter({
                         FROM DEBIT_NOTE AS DN
                             INNER JOIN debit_note_details AS DND ON DND.debit_note_header_id = DN.id
                             INNER JOIN factories AS F ON F.id = DN.factory_id
-                            INNER JOIN factory_shipment_details AS FSD ON FSD.id = DND.factory_shipment_id
-                            LEFT JOIN lc_shipments AS LS ON LS.shipment_details_id = FSD.shipment_detail_id
+                            INNER JOIN exfactory_shipments AS ES ON ES.id = DND.exfactory_shipment_id
+                            LEFT JOIN lc_shipments AS LS ON LS.shipment_details_id = ES.shipment_detailS_id
                             LEFT JOIN lc_orders AS LO ON LO.id = LS.lc_order_id
                             LEFT JOIN lc_master AS LC ON LC.id = LO.lc_master_id
-                            LEFT JOIN shipment_details AS SD ON SD.id = FSD.shipment_detail_id
+                            LEFT JOIN shipment_details AS SD ON SD.id = ES.shipment_detailS_id
                             LEFT JOIN order_styles AS OS ON OS.id = SD.order_style_id
                             LEFT JOIN sales_contract_details AS SCS ON SCS.order_id = OS.order_id
                             LEFT JOIN sales_contracts AS SC ON SC.id = SCS.sales_contract_id
@@ -123,13 +123,12 @@ export const debitNotesRouter = createTRPCRouter({
                         FROM DEBIT_NOTE AS DN
                             INNER JOIN debit_note_details AS DND ON DND.debit_note_header_id = DN.id
                             INNER JOIN factories AS F ON F.id = DN.factory_id
-                            INNER JOIN factory_shipment_details AS FSD ON FSD.id = DND.factory_shipment_id
-                            LEFT JOIN lc_shipments AS LS ON LS.shipment_details_id = FSD.shipment_detail_id
+                            INNER JOIN exfactory_shipments AS ES ON ES.id = DND.exfactory_shipment_id
+                            LEFT JOIN lc_shipments AS LS ON LS.shipment_details_id = ES.shipment_detailS_id
                             LEFT JOIN lc_orders AS LO ON LO.id = LS.lc_order_id
                             LEFT JOIN lc_master AS LC ON LC.id = LO.lc_master_id
-                            INNER JOIN shipment_details AS SD ON SD.id = FSD.shipment_detail_id
-                            INNER JOIN order_styles AS OS ON OS.id = SD.order_style_id
-                            INNER JOIN buyer_orders AS BO ON BO.id = OS.order_id
+                            LEFT JOIN shipment_details AS SD ON SD.id = ES.shipment_detailS_id
+                            LEFT JOIN order_styles AS OS ON OS.id = SD.order_style_id
                             LEFT JOIN sales_contract_details AS SCS ON SCS.order_id = OS.order_id
                             LEFT JOIN sales_contracts AS SC ON SC.id = SCS.sales_contract_id
                             INNER JOIN BUYERS AS B ON B.id = DN.buyer_id
@@ -209,7 +208,7 @@ export const debitNotesRouter = createTRPCRouter({
                     await db.debit_note_details_history.createMany({
                         data: deletedDetails.map(detail => ({
                             debit_note_header_id: detail.debit_note_header_id,
-                            factory_shipment_id: detail.factory_shipment_id,
+                            exfactory_shipment_id: detail.exfactory_shipment_id,
                             action_type: actions.DELETE,
                             action_by: ctx.user.id,
                             action_at: new Date(),
@@ -289,7 +288,7 @@ export const debitNotesRouter = createTRPCRouter({
                             AND NOT EXISTS (
                                 SELECT 1
                                 FROM debit_note_details AS DND
-                                WHERE DND.factory_shipment_id = FSD.ID
+                                WHERE DND.exfactory_shipment_id = ES.ID
                             )
                             AND SC.buyer_id = ${input.buyer_id}
                             AND (
@@ -326,7 +325,7 @@ export const debitNotesRouter = createTRPCRouter({
                             AND NOT EXISTS (
                                 SELECT 1
                                 FROM debit_note_details AS DND
-                                WHERE DND.factory_shipment_id = FSD.ID
+                                WHERE DND.exfactory_shipment_id = ES.ID
                             )
                             AND LC.buyer_id = ${input.buyer_id}
                             AND (
@@ -370,7 +369,7 @@ export const debitNotesRouter = createTRPCRouter({
             additional_charges: z.number().optional(),
             remarks: z.string().optional(),
             details: z.array(z.object({
-                factory_shipment_id: z.string(),
+                exfactory_shipment_id: z.string(),
             })).optional(),
         }))
         .mutation(async ({ ctx, input }) => {
@@ -479,7 +478,7 @@ export const debitNotesRouter = createTRPCRouter({
                     if (input.details && input.details.length > 0) {
                         const debitNoteDetails = input.details.map(detail => ({
                             debit_note_header_id: debitNoteHeader.id,
-                            factory_shipment_id: detail.factory_shipment_id,
+                            exfactory_shipment_id: detail.exfactory_shipment_id,
                         }));
                         await tx.debit_note_details.createMany({
                             data: debitNoteDetails,
@@ -496,7 +495,7 @@ export const debitNotesRouter = createTRPCRouter({
                 await ctx.db.debit_note_details_history.createMany({
                     data: newDebitNoteDetails?.map(detail => ({
                         debit_note_header_id: detail.debit_note_header_id,
-                        factory_shipment_id: detail.factory_shipment_id,
+                        exfactory_shipment_id: detail.exfactory_shipment_id,
                         action_type: actions.ADDED,
                         action_by: ctx.user.id,
                     })) ?? [],
@@ -542,10 +541,10 @@ export const debitNotesRouter = createTRPCRouter({
                 if (isTT) {
                     shipmentDetails = await ctx.db.$queryRaw<ShipmentDetails[]>`
                         SELECT
-                            FSD.id,
+                            ES.id,
                             SD.buyer_po,
                             FI.invoice_no,
-                            SUM(ES.delivery_quantity * (FSD.transfer_rate - FSD.factory_rate)) AS dn_value
+                            ES.delivery_quantity * (FSD.transfer_rate - FSD.factory_rate) AS dn_value
                         FROM sales_contracts AS SC
                             INNER JOIN sales_contract_details AS SCD ON SCD.sales_contract_id = SC.id
                             INNER JOIN order_styles AS SO ON SO.order_id = SCD.order_id
@@ -557,7 +556,7 @@ export const debitNotesRouter = createTRPCRouter({
                         WHERE NOT EXISTS (
                             SELECT 1
                             FROM debit_note_details AS DND
-                            WHERE DND.factory_shipment_id = FSD.id
+                            WHERE DND.exfactory_shipment_id = ES.ID
                                 ${addExistingDNCondition}
                         )
                         AND EXISTS (
@@ -569,17 +568,16 @@ export const debitNotesRouter = createTRPCRouter({
                         AND FSD.factory_rate <> FSD.transfer_rate
                         AND SC.id = ${input.lc_sc_id}
                         AND FI.factory_id = ${input.factory_id}
-                        GROUP BY SD.ID, FI.ID, FSD.ID
                         ORDER BY SD.added_at DESC;
                     `;
                 }
                 else {
                     shipmentDetails = await ctx.db.$queryRaw<ShipmentDetails[]>`
                         SELECT
-                            FSD.id,
+                            ES.id,
                             SD.buyer_po,
                             FI.invoice_no,
-                            SUM(ES.delivery_quantity * (FSD.transfer_rate - FSD.factory_rate)) AS dn_value
+                            ES.delivery_quantity * (FSD.transfer_rate - FSD.factory_rate) AS dn_value
                         FROM lc_master AS LC
                             INNER JOIN lc_orders AS LO ON LO.lc_master_id = LC.id
                             INNER JOIN lc_shipments AS LS ON LS.lc_order_id = LO.id
@@ -591,7 +589,7 @@ export const debitNotesRouter = createTRPCRouter({
                         WHERE NOT EXISTS (
                             SELECT 1
                             FROM debit_note_details AS DND
-                            WHERE DND.factory_shipment_id = FSD.id
+                            WHERE DND.exfactory_shipment_id = ES.ID
                                 ${addExistingDNCondition}
                         )
                         AND EXISTS (
@@ -603,7 +601,6 @@ export const debitNotesRouter = createTRPCRouter({
                         AND FSD.factory_rate <> FSD.transfer_rate
                         AND LC.id = ${input.lc_sc_id}
                         AND FI.factory_id = ${input.factory_id}
-                        GROUP BY SD.ID, FI.ID, FSD.ID
                         ORDER BY SD.added_at DESC;
                     `;
                 }
@@ -650,7 +647,7 @@ export const debitNotesRouter = createTRPCRouter({
                     await db.debit_note_details_history.create({
                         data: {
                             debit_note_header_id: deletedDetail.debit_note_header_id,
-                            factory_shipment_id: deletedDetail.factory_shipment_id,
+                            exfactory_shipment_id: deletedDetail.exfactory_shipment_id,
                             action_type: actions.DELETE,
                             action_by: ctx.user.id,
                             action_at: new Date(),
@@ -712,7 +709,7 @@ export const debitNotesRouter = createTRPCRouter({
                         debit_note_details: {
                             select: {
                                 id: true,
-                                factory_shipment_id: true,
+                                exfactory_shipment_id: true,
                             },
                         },
                     },
@@ -727,18 +724,17 @@ export const debitNotesRouter = createTRPCRouter({
 
                 const debitNotePoDetails = await ctx.db.$queryRaw<ShipmentDetails[]>`
                     SELECT
-                        FSD.id,
+                        ES.id,
                         SD.buyer_po,
                         FI.invoice_no,
-                        SUM(ES.delivery_quantity) * (FSD.transfer_rate - FSD.factory_rate) AS dn_value
+                        ES.delivery_quantity * (FSD.transfer_rate - FSD.factory_rate) AS dn_value
                     FROM debit_note_details AS DND
-                        INNER JOIN factory_shipment_details AS FSD ON FSD.id = DND.factory_shipment_id
-                        INNER JOIN shipment_details AS SD ON SD.id = FSD.shipment_detail_id
-                        INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = SD.id
+                        INNER JOIN exfactory_shipments AS ES ON ES.id = DND.exfactory_shipment_id
+                        INNER JOIN shipment_details AS SD ON SD.id = ES.shipment_details_id
+                        INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = SD.id
                         INNER JOIN factory_invoice_details AS FID ON FID.exfactory_shipment_id = ES.id
                         INNER JOIN factory_invoice AS FI ON FI.id = FID.factory_invoice_id
                     WHERE DND.debit_note_header_id = ${input.debit_note_id}
-                    GROUP BY SD.ID, FI.ID, FSD.ID
                     ORDER BY SD.added_at DESC;
                 `;
 
@@ -758,10 +754,10 @@ export const debitNotesRouter = createTRPCRouter({
                     remarks: debitNoteObj.remarks,
                     details: debitNoteObj.debit_note_details.map(detail => ({
                         db_id: detail.id,
-                        factory_shipment_id: detail.factory_shipment_id,
-                        po_no: debitNotePoDetails.find(poDetail => poDetail.id === detail.factory_shipment_id)?.buyer_po ?? '',
-                        factory_invoice_no: debitNotePoDetails.find(poDetail => poDetail.id === detail.factory_shipment_id)?.invoice_no ?? '',
-                        value: debitNotePoDetails.find(poDetail => poDetail.id === detail.factory_shipment_id)?.dn_value ?? 0,
+                        exfactory_shipment_id: detail.exfactory_shipment_id,
+                        po_no: debitNotePoDetails.find(poDetail => poDetail.id === detail.exfactory_shipment_id)?.buyer_po ?? '',
+                        factory_invoice_no: debitNotePoDetails.find(poDetail => poDetail.id === detail.exfactory_shipment_id)?.invoice_no ?? '',
+                        value: debitNotePoDetails.find(poDetail => poDetail.id === detail.exfactory_shipment_id)?.dn_value ?? 0,
                     })),
                 };
 
@@ -784,7 +780,7 @@ export const debitNotesRouter = createTRPCRouter({
             remarks: z.string().optional(),
             details: z.array(z.object({
                 db_id: z.string().optional(),
-                factory_shipment_id: z.string(),
+                exfactory_shipment_id: z.string(),
             })).optional(),
         }))
         .mutation(async ({ ctx, input }) => {
@@ -836,7 +832,7 @@ export const debitNotesRouter = createTRPCRouter({
                                 await db.debit_note_details.create({
                                     data: {
                                         debit_note_header_id: input.id,
-                                        factory_shipment_id: detail.factory_shipment_id,
+                                        exfactory_shipment_id: detail.exfactory_shipment_id,
                                     },
                                 });
                             }
@@ -844,7 +840,7 @@ export const debitNotesRouter = createTRPCRouter({
                             await db.debit_note_details_history.create({
                                 data: {
                                     debit_note_header_id: input.id,
-                                    factory_shipment_id: detail.factory_shipment_id,
+                                    exfactory_shipment_id: detail.exfactory_shipment_id,
                                     action_type: actions.UPDATE,
                                     action_by: ctx.user.id,
                                 },
@@ -903,29 +899,28 @@ export const debitNotesRouter = createTRPCRouter({
                     table = await ctx.db.$queryRaw<DebitNoteTableData[]>`
                         SELECT 
                             SD.buyer_po,
-                            SUM(ES.delivery_quantity) AS QUANTITY,
+                            ES.delivery_quantity AS QUANTITY,
                             FSD.factory_rate,
                             FSD.transfer_rate,
                             (FSD.transfer_rate - FSD.factory_rate)::NUMERIC(18, 2) AS MARGIN,
-                            (SUM(ES.delivery_quantity) * (FSD.transfer_rate - FSD.factory_rate))::NUMERIC(18, 2) AS EXCESS_VALUE,
+                            (ES.delivery_quantity * (FSD.transfer_rate - FSD.factory_rate))::NUMERIC(18, 2) AS EXCESS_VALUE,
                             C.SYMBOL
                         FROM DEBIT_NOTE_DETAILS AS DND
-                            INNER JOIN factory_shipment_details AS FSD ON FSD.id = DND.factory_shipment_id
-                            INNER JOIN shipment_details AS SD ON SD.id = FSD.shipment_detail_id
-                            INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = SD.id
+                            INNER JOIN exfactory_shipments AS ES ON ES.id = DND.exfactory_shipment_id
+                            INNER JOIN shipment_details AS SD ON SD.id = ES.shipment_details_id
+                            INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = SD.id
                             INNER JOIN factory_orders AS FO ON FO.id = FSD.factory_order_id
                             INNER JOIN CURRENCIES AS C ON C.id = FO.currency_id
                         WHERE DND.debit_note_header_id = ${input.debit_note_id}
-                        GROUP BY SD.ID, FSD.ID, C.ID;
                     `,
 
                     factoryInvoices = await ctx.db.$queryRaw<{ factory_invoices: string }[]>`
                         SELECT DISTINCT 
                             FI.invoice_no AS FACTORY_INVOICES
                         FROM DEBIT_NOTE_DETAILS AS DND
-                            INNER JOIN factory_shipment_details AS FSD ON FSD.id = DND.factory_shipment_id
-                            INNER JOIN shipment_details AS SD ON SD.id = FSD.shipment_detail_id
-                            INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = SD.id
+                            INNER JOIN exfactory_shipments AS ES ON ES.id = DND.exfactory_shipment_id
+                            INNER JOIN shipment_details AS SD ON SD.id = ES.shipment_details_id
+                            INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = SD.id
                             INNER JOIN factory_invoice_details AS FID ON FID.exfactory_shipment_id = ES.id
                             INNER JOIN factory_invoice AS FI ON FI.id = FID.factory_invoice_id
                         WHERE DND.debit_note_header_id = ${input.debit_note_id};
@@ -947,7 +942,7 @@ export const debitNotesRouter = createTRPCRouter({
 
                 const paymentAdjustmentValue = totalValue * (headerData[0]?.additional_adjustment ?? 0) / 100;
                 const processingChargeValue = totalValue * (headerData[0]?.processing_charge ?? 0) / 100;
-                const lessValue = totalValue * (headerData[0]?.less ?? 0) / 100;
+                const lessValue = safeNumber(headerData[0]?.less);
                 const initialTotal = totalValue - lessValue;
                 const grandTotal = totalValue - paymentAdjustmentValue - processingChargeValue - lessValue;
                 const inBDT = grandTotal * (headerData[0]?.conversion_rate ?? 1);

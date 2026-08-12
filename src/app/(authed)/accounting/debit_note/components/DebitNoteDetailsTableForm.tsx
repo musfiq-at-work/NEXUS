@@ -48,10 +48,10 @@ const TableForm = (props: Props) => {
         if (!shipmentDetails) return;
         
         details?.forEach((detail, index) => {
-            if (!detail.factory_shipment_id) return;
+            if (!detail.exfactory_shipment_id) return;
             
             const shipment = shipmentDetails.find(
-                (item) => item.id === detail.factory_shipment_id,
+                (item) => item.id === detail.exfactory_shipment_id,
             );
 
             if (!shipment) return;

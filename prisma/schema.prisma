@@ -1422,20 +1422,19 @@ model factory_orders_history {
 }
 
 model factory_shipment_details {
-  id                      String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  factory_order_id        String               @db.Uuid
-  shipment_detail_id      String               @db.Uuid
-  exfactory_date          DateTime             @db.Date
+  id                      String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  factory_order_id        String           @db.Uuid
+  shipment_detail_id      String           @db.Uuid
+  exfactory_date          DateTime         @db.Date
   factory_rate            Float?
   transfer_rate           Float?
   status                  order_status?
   old_factory_order_id    Int?
   old_shipment_details_id Int?
   old_pk                  Int?
-  added_at                DateTime?            @default(now()) @db.Timestamp(6)
-  debit_note_details      debit_note_details[]
-  factory_orders          factory_orders       @relation(fields: [factory_order_id], references: [id], onUpdate: NoAction, map: "factory_order_fk")
-  shipment_details        shipment_details     @relation(fields: [shipment_detail_id], references: [id], onUpdate: NoAction, map: "shipment_details_fk")
+  added_at                DateTime?        @default(now()) @db.Timestamp(6)
+  factory_orders          factory_orders   @relation(fields: [factory_order_id], references: [id], onUpdate: NoAction, map: "factory_order_fk")
+  shipment_details        shipment_details @relation(fields: [shipment_detail_id], references: [id], onUpdate: NoAction, map: "shipment_details_fk")
 }
 
 model factory_shipment_details_history {
@@ -2100,6 +2099,7 @@ model exfactory_shipments {
   po_close                          Boolean?                  @default(false)
   style_close                       Boolean?                  @default(false)
   changed_shipment_mode             shipment_modes?
+  debit_note_details                debit_note_details[]
   exfactory_orders                  exfactory_orders?         @relation(fields: [exfactory_orders_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   shipment_details                  shipment_details?         @relation(fields: [shipment_details_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   factory_invoice_details           factory_invoice_details[]
@@ -2873,27 +2873,26 @@ model debit_note_history {
 }
 
 model debit_note_details {
-  id                       String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  debit_note_header_id     String                   @db.Uuid
-  factory_shipment_id      String                   @db.Uuid
-  old_pk                   Int?
-  old_debit_note_header_id Int?
-  old_factory_shipment_id  Int?
-  added_at                 DateTime?                @default(now()) @db.Timestamp(6)
-  debit_note               debit_note               @relation(fields: [debit_note_header_id], references: [id], onUpdate: NoAction)
-  factory_shipment_details factory_shipment_details @relation(fields: [factory_shipment_id], references: [id], onUpdate: NoAction)
+  id                               String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  debit_note_header_id             String              @db.Uuid
+  old_pk                           Int?
+  old_debit_note_header_id         Int?
+  added_at                         DateTime?           @default(now()) @db.Timestamp(6)
+  exfactory_shipment_id            String              @db.Uuid
+  old_exfactory_shipment_detail_id Int?
+  debit_note                       debit_note          @relation(fields: [debit_note_header_id], references: [id], onUpdate: NoAction)
+  exfactory_shipments              exfactory_shipments @relation(fields: [exfactory_shipment_id], references: [id], onUpdate: NoAction)
 }
 
 model debit_note_details_history {
-  id                   String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  debit_note_details   Int?
-  debit_note_header_id String?   @db.Uuid
-  factory_payment_id   String?   @db.Uuid
-  factory_shipment_id  String?   @db.Uuid
-  action_type          actions?
-  action_by            String?   @db.Uuid
-  action_at            DateTime? @default(now()) @db.Timestamp(6)
-  users                users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  debit_note_details    Int?
+  debit_note_header_id  String?   @db.Uuid
+  action_type           actions?
+  action_by             String?   @db.Uuid
+  action_at             DateTime? @default(now()) @db.Timestamp(6)
+  exfactory_shipment_id String?   @db.VarChar(40)
+  users                 users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model debit_note_metadata {

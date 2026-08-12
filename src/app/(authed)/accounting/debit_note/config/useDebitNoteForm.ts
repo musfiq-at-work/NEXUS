@@ -4,7 +4,7 @@ import { useEffect, useMemo } from "react";
 import { DebitNoteFormSchema } from "./formSchema";
 import type { DebitNoteFormValues } from "./formSchema";
 import { useFormFields } from "./useFormFields";
-import { formatDate, formatDateForInput } from "~/utils/localDateString";
+import { formatDateForInput } from "~/utils/localDateString";
 import type { GetDebitNoteByIdTypes } from "~/types/accountingAPITypes";
 import { safeNumber } from "~/utils/numbers";
 import { quantityFormatter } from "~/utils/localNumberStrings";
@@ -35,7 +35,7 @@ export const useDebitNoteForm = (initialData?: DebitNoteType) => {
                 po_no: detail.po_no ?? undefined,
                 factory_invoice_id: detail.factory_invoice_id ?? undefined,
                 factory_invoice_no: detail.factory_invoice_no ?? undefined,
-                factory_shipment_id: detail.factory_shipment_id ?? undefined,
+                exfactory_shipment_id: detail.exfactory_shipment_id ?? undefined,
                 value: quantityFormatter(safeNumber(detail.value)) ?? undefined,
             })) ?? [],
         } : undefined;
