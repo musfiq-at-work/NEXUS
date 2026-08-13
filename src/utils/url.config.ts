@@ -73,6 +73,7 @@ const sideBarConfig: Record<number, {href: string;}> = {
     [m.EX_FACTORY]: { href: "/merchandising/ex_factory" },
     [m.PENDING_EX_FACTORIES]: { href: "/merchandising/ex_factory/pending_ex_factories" },
     [m.EX_FACTORIES]: { href: "/merchandising/ex_factory/ex_factories" },
+    [m.EARLY_SETTLEMENT] : { href: "/merchandising/early_settlement" },
 
     // Admin Module
     [m.ADMIN]: { href: "/admin" },

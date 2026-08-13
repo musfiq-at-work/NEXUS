@@ -29,3 +29,10 @@ export interface Charges {
 export interface ClaimAdjustment {
     claim_adjustment: number;
 }
+
+export interface DebitNotes {
+    debit_note_ref: string;
+    debit_note_date: Date;
+    debit_note_value: number;
+    factory_name: string;
+}

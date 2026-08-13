@@ -178,6 +178,7 @@ model users {
   document_submission_factory_invoices_history                       document_submission_factory_invoices_history[]
   document_submissions_details_history                               document_submissions_details_history[]
   document_submissions_history                                       document_submissions_history[]
+  early_settlement_details_history                                   early_settlement_details_history[]
   early_settlement_percentage_history                                early_settlement_percentage_history[]
   ev_permission_history                                              ev_permission_history[]
   ev_permissions                                                     ev_permissions[]
@@ -1258,6 +1259,7 @@ model buyer_orders {
   currencies                       currencies?                        @relation(fields: [secondary_currency_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   teams                            teams                              @relation(fields: [team_id], references: [id], onUpdate: NoAction)
   commission_distributions         commission_distributions?
+  early_settlement                 early_settlement[]
   exfactory_orders                 exfactory_orders[]
   factory_orders                   factory_orders?
   lc_amendment_orders              lc_amendment_orders[]
@@ -1357,6 +1359,7 @@ model shipment_details {
   cancel_status                    Boolean?                          @default(false)
   added_at                         DateTime?                         @default(now()) @db.Timestamp(6)
   commission_distributions_details commission_distributions_details?
+  early_settlement_details         early_settlement_details[]
   exfactory_shipments              exfactory_shipments[]
   factory_shipment_details         factory_shipment_details[]
   lc_amendment_shipments           lc_amendment_shipments[]
@@ -3114,6 +3117,33 @@ model error_logs {
   error_code     String?  @db.VarChar(100)
   user_id        String?  @db.Uuid
   error_message  String?
+}
+
+model early_settlement {
+  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  order_id     String       @db.Uuid
+  remarks      String?
+  added_at     DateTime?    @default(now()) @db.Timestamp(6)
+  buyer_orders buyer_orders @relation(fields: [order_id], references: [id], onUpdate: NoAction)
+}
+
+model early_settlement_details {
+  id                      String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  shipment_details_id     String           @db.Uuid
+  early_settlement_charge Float
+  added_at                DateTime?        @default(now()) @db.Timestamp(6)
+  shipment_details        shipment_details @relation(fields: [shipment_details_id], references: [id], onUpdate: NoAction)
+}
+
+model early_settlement_details_history {
+  id                          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  early_settlement_details_id String?   @db.Uuid
+  shipment_details_id         String?   @db.Uuid
+  early_settlement_charge     Float?
+  action_type                 actions?
+  action_by                   String?   @db.Uuid
+  action_at                   DateTime? @default(now()) @db.Timestamp(6)
+  users                       users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 enum actions {

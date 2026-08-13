@@ -284,7 +284,7 @@ export const commissionDistributionRouter = createTRPCRouter({
                 return orders;
             }
             catch (error) {
-                            handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -314,49 +314,79 @@ export const commissionDistributionRouter = createTRPCRouter({
                         }
                     });
 
-                    await tx.commission_distribution_history.create({
-                        data: {
-                            commission_distribution_id: newDistribution.id,
-                            order_id: newDistribution.order_id,
-                            plan_date: newDistribution.plan_date,
-                            approval_status: newDistribution.approval_status,
-                            action_type: actions.ADDED,
-                            action_by: ctx.user.id,
-                        }
-                    });
+                    await Promise.all([
+                        await tx.commission_distribution_history.create({
+                            data: {
+                                commission_distribution_id: newDistribution.id,
+                                order_id: newDistribution.order_id,
+                                plan_date: newDistribution.plan_date,
+                                approval_status: newDistribution.approval_status,
+                                action_type: actions.ADDED,
+                                action_by: ctx.user.id,
+                            }
+                        }),
 
+                        // Generate commission distribution details per po
+                        await tx.$queryRaw`
+                            INSERT INTO commission_distributions_details (
+                                commission_distribution_id,
+                                shipment_details_id,
+                                overseas_commission_percentage,
+                                others_commission_percentage,
+                                dhaka_commission_percentage
+                            )
+                            SELECT
+                                CD.id,
+                                SD.id,
+                                COALESCE(CP.overseas_percentage, 0),
+                                COALESCE(CP.other_percentage, 0),
+                                CASE 
+                                    WHEN (SD.fob_rate / COALESCE(NULLIF(BO.currency_rate, 0), 1)) = 0 
+                                        THEN 0
+                                    ELSE (
+                                        (
+                                            (SD.fob_rate / COALESCE(NULLIF(BO.currency_rate, 0), 1)) - FSD.factory_rate
+                                        )
+                                        / (SD.fob_rate / COALESCE(NULLIF(BO.currency_rate, 0), 1))
+                                    ) * 100 - COALESCE(CP.overseas_percentage, 0) - COALESCE(CP.other_percentage, 0)
+                                END
+                            FROM commission_distributions AS CD
+                                INNER JOIN buyer_orders AS BO ON CD.order_id = BO.id
+                                INNER JOIN order_styles AS OS ON BO.id = OS.order_id
+                                INNER JOIN shipment_details AS SD ON SD.order_style_id = OS.id
+                                INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = SD.id
+                                LEFT JOIN commission_percentage AS CP ON CP.buyer_id = BO.buyer_id
+                            WHERE CD.id = ${newDistribution.id}   
+                            ON CONFLICT (shipment_details_id)
+                                DO UPDATE SET dhaka_commission_percentage = EXCLUDED.dhaka_commission_percentage;
+                        `,
+                        
+                        await tx.early_settlement.create({
+                            data: {
+                                order_id: input.order_id,
+                            }
+                        })
+                    ]);
+
+
+                    // Generate Early Settlement per order PO
                     await tx.$queryRaw`
-                        INSERT INTO commission_distributions_details (
-                            commission_distribution_id,
-                            shipment_details_id,
-                            overseas_commission_percentage,
-                            others_commission_percentage,
-                            dhaka_commission_percentage
+                        INSERT INTO EARLY_SETTLEMENT_DETAILS (
+                            SHIPMENT_DETAILS_ID,
+                            EARLY_SETTLEMENT_CHARGE,
+                            EARLY_SETTLEMENT_ID
                         )
                         SELECT
-                            CD.id,
                             SD.id,
-                            COALESCE(CP.overseas_percentage, 0),
-                            COALESCE(CP.other_percentage, 0),
-                            CASE 
-                                WHEN (SD.fob_rate / COALESCE(NULLIF(BO.currency_rate, 0), 1)) = 0 
-                                    THEN 0
-                                ELSE (
-                                    (
-                                        (SD.fob_rate / COALESCE(NULLIF(BO.currency_rate, 0), 1)) - FSD.factory_rate
-                                    )
-                                    / (SD.fob_rate / COALESCE(NULLIF(BO.currency_rate, 0), 1))
-                                ) * 100 - COALESCE(CP.overseas_percentage, 0) - COALESCE(CP.other_percentage, 0)
-                            END
+                            ESP.charge,
+                            ES.id
                         FROM commission_distributions AS CD
-                            INNER JOIN buyer_orders AS BO ON CD.order_id = BO.id
-                            INNER JOIN order_styles AS OS ON BO.id = OS.order_id
+                            INNER JOIN buyer_orders AS BO ON BO.id = CD.order_id
+                            INNER JOIN order_styles AS OS ON OS.order_id = BO.id
                             INNER JOIN shipment_details AS SD ON SD.order_style_id = OS.id
-                            INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = SD.id
-                            LEFT JOIN commission_percentage AS CP ON CP.buyer_id = BO.buyer_id
-                        WHERE CD.id = ${newDistribution.id}   
-                        ON CONFLICT (shipment_details_id)
-                            DO UPDATE SET dhaka_commission_percentage = EXCLUDED.dhaka_commission_percentage;
+                            INNER JOIN early_settlement AS ES ON ES.order_id = BO.id
+                            INNER JOIN early_settlement_percentage AS ESP ON ESP.buyer_id = BO.buyer_id
+                        WHERE CD.id = ${newDistribution.id};
                     `;
 
                     return newDistribution;

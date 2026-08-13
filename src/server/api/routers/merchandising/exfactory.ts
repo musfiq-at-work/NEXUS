@@ -68,8 +68,8 @@ export const exFactoryRouter = createTRPCRouter({
                     FROM EX_FACTORIES
                     ORDER BY ADDED_AT DESC
                     LIMIT ${input.limit}
-                    OFFSET ${input.offset}
-                ;`;
+                    OFFSET ${input.offset};
+                `;
 
                 const total = results.length > 0 ? Number(results[0]?.total_count) : 0;
                 

@@ -49,8 +49,13 @@ const PermissionsTable = (props: PermissionsProps) => {
                                                     checked={updates[row.id]?.[col.key] ?? Boolean(row[col.key as keyof typeof row])}
                                                     onClick={(e) => handleClick(e, row.id, col.key)}
                                                     id={row.id}
-                                                    disabled={ // Disable checkboxes for Reports module except for 'View' permission
+                                                    disabled={ // Disable checkboxes for Reports and Maintenance module except for 'View' permission
                                                         row?.parent_module_name === 'Reports' && (
+                                                            col.key === 'can_add'
+                                                            || col.key === 'can_update'
+                                                            || col.key === 'can_delete'
+                                                        )
+                                                        || row?.parent_module_name === 'Maintenance' && (
                                                             col.key === 'can_add'
                                                             || col.key === 'can_update'
                                                             || col.key === 'can_delete'

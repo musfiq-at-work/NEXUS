@@ -82,6 +82,7 @@ enum moduleMap {
     MAINTENANCE = 86,
     ERROR_LOGS = 87,
     USER_SESSIONS = 88,
+    EARLY_SETTLEMENT = 89,
 }
 
 export { moduleMap as m };

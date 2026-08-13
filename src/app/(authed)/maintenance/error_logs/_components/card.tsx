@@ -74,7 +74,7 @@ export default function ErrorCard({ error }: ErrorCardProps) {
                 </div>
 
                 <div className="flex flex-col gap-2 text-right p-2">
-                    <span className="text-sm text-rose-700/70 uppercase">
+                    <span className="text-sm text-rose-700/60 uppercase">
                         {formatDateTime(new Date(error.created_at))}
                     </span>
                 </div>

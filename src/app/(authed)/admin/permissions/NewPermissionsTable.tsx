@@ -131,6 +131,11 @@ const NewPermissionsTable = (props: NewPermissionsProps) => {
                                                                                     || col.key === 'can_update'
                                                                                     || col.key === 'can_delete'
                                                                                 )
+                                                                                || permissionHash[safeNumber(rootId)]?.module_name === 'Maintenance' && (
+                                                                                    col.key === 'can_add'
+                                                                                    || col.key === 'can_update'
+                                                                                    || col.key === 'can_delete'
+                                                                                )
                                                                             }
                                                                         />
                                                                     ) : (

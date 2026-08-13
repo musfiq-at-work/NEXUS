@@ -50,6 +50,7 @@ export { salesContractAmendmentRouter } from "./routers/merchandising/salesContr
 export { lcMasterRouter } from "./routers/merchandising/lcMaster";
 export { lcAmendmentRouter } from "./routers/merchandising/lcAmendment";
 export { exFactoryRouter } from "./routers/merchandising/exfactory";
+export { earlySettlementRouter } from "./routers/merchandising/earlySettlement"
 
 // Commercial routers
 export { lcTransferRouter } from "./routers/commercial/lcTransfer";
