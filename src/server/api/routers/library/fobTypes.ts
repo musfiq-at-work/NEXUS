@@ -62,16 +62,16 @@ export const fobTypesRouter = createTRPCRouter({
             })
         )
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.FOB_TYPES]?.can_view;
+
+            if(!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view FOB Types." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.FOB_TYPES]?.can_view;
-
-                if(!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to view FOB Types." 
-                    });
-                }
-
                 const fobTypes = await ctx.db.fob_types.findMany({
                     where: {
                         name: {
@@ -118,16 +118,16 @@ export const fobTypesRouter = createTRPCRouter({
             })
         )
         .mutation(async ({ ctx, input }) => {
+            const can_delete = ctx.permissions[m.FOB_TYPES]?.can_delete;
+
+            if(!can_delete) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to delete FOB Types." 
+                });
+            }
+            
             try {
-                const can_delete = ctx.permissions[m.FOB_TYPES]?.can_delete;
-
-                if(!can_delete) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to delete FOB Types." 
-                    });
-                }
-
                 return await ctx.db.$transaction(async (tx) => {
                     const deletedFobType = await tx.fob_types.delete({
                         where: {
@@ -158,16 +158,16 @@ export const fobTypesRouter = createTRPCRouter({
             })
         )
         .mutation(async ({ ctx, input }) => {
+            const can_add = ctx.permissions[m.FOB_TYPES]?.can_add;
+
+            if(!can_add) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to add FOB Types." 
+                });
+            }
+            
             try {
-                const can_add = ctx.permissions[m.FOB_TYPES]?.can_add;
-
-                if(!can_add) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to add FOB Types." 
-                    });
-                }
-
                 return await ctx.db.$transaction(async (tx) => {
                     const newFobType = await tx.fob_types.create({
                         data: {
@@ -200,16 +200,16 @@ export const fobTypesRouter = createTRPCRouter({
             })
         )
         .mutation(async ({ ctx, input }) => {
+            const can_update = ctx.permissions[m.FOB_TYPES]?.can_update;
+
+            if(!can_update) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to update FOB Types." 
+                });
+            }
+            
             try {
-                const can_update = ctx.permissions[m.FOB_TYPES]?.can_update;
-
-                if(!can_update) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to update FOB Types." 
-                    });
-                }
-
                 return await ctx.db.$transaction(async (tx) => {
                     const updatedFobType = await tx.fob_types.update({
                         where: {
@@ -244,16 +244,16 @@ export const fobTypesRouter = createTRPCRouter({
             })
         )
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.FOB_TYPES]?.can_view;
+
+            if(!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view FOB Types." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.FOB_TYPES]?.can_view;
-
-                if(!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to view FOB Types." 
-                    });
-                }
-
                 return await ctx.db.fob_types.findUnique({
                     where: {
                         id: parseInt(input.id),

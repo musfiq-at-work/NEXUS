@@ -17,16 +17,16 @@ export const commissionInvoiceRouter = createTRPCRouter({
             offset: z.number(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.COMMISSION_INVOICE]?.can_add;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view commission invoices." 
+                });
+            }
+
             try {
-                const can_view = ctx.permissions[m.COMMISSION_INVOICE]?.can_add;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to view commission invoices." 
-                    });
-                }
-
                 const result = await ctx.db.$queryRaw<CommissionInvoiceListItem[]>`
                     WITH COMMISSION_INVOICE_LIST AS (
                         SELECT
@@ -88,16 +88,16 @@ export const commissionInvoiceRouter = createTRPCRouter({
             offset: z.number(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.COMMISSION_INVOICE]?.can_add;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view commission invoices." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.COMMISSION_INVOICE]?.can_add;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to view commission invoices." 
-                    });
-                }
-
                 const result = await ctx.db.$queryRaw<CommissionInvoiceListItem[]>`
                     WITH COMMISSION_INVOICE_LIST AS (
                         SELECT DISTINCT
@@ -175,16 +175,16 @@ export const commissionInvoiceRouter = createTRPCRouter({
             id: z.string(),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_delete = ctx.permissions[m.COMMISSION_INVOICE]?.can_delete;
+
+            if (!can_delete) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to delete commission invoices." 
+                });
+            }
+
             try {
-                const can_delete = ctx.permissions[m.COMMISSION_INVOICE]?.can_delete;
-
-                if (!can_delete) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to delete commission invoices." 
-                    });
-                }
-
                 return await ctx.db.$transaction(async (tx) => {
                     const deletedInvoice = await tx.commission_invoice.delete({
                         where: { id: input.id },
@@ -221,16 +221,16 @@ export const commissionInvoiceRouter = createTRPCRouter({
             id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.COMMISSION_INVOICE]?.can_add;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view commission invoices." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.COMMISSION_INVOICE]?.can_add;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to view commission invoices." 
-                    });
-                }
-
                 const invoiceObj = await ctx.db.commission_invoice.findUnique({
                     where: { id: input.id },
                     select: {
@@ -294,16 +294,16 @@ export const commissionInvoiceRouter = createTRPCRouter({
             buyer_id: z.number(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.COMMISSION_INVOICE]?.can_add;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view commission invoices." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.COMMISSION_INVOICE]?.can_add;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to view commission invoices." 
-                    });
-                }
-
                 const terms = await ctx.db.terms.findUnique({
                     where: { id: input.term_id },
                     select: { name: true },
@@ -366,16 +366,16 @@ export const commissionInvoiceRouter = createTRPCRouter({
             lc_sc_id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.COMMISSION_INVOICE]?.can_add;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view commission invoices." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.COMMISSION_INVOICE]?.can_add;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to view commission invoices." 
-                    });
-                }
-
                 const terms = await ctx.db.terms.findUnique({
                     where: { id: input.term_id },
                     select: { name: true },
@@ -438,16 +438,16 @@ export const commissionInvoiceRouter = createTRPCRouter({
             lc_sc_id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.COMMISSION_INVOICE]?.can_add;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view commission invoices." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.COMMISSION_INVOICE]?.can_add;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to view commission invoices." 
-                    });
-                }
-
                 const terms = await ctx.db.terms.findUnique({
                     where: { id: input.term_id },
                     select: { name: true },
@@ -503,16 +503,16 @@ export const commissionInvoiceRouter = createTRPCRouter({
             invoice_date: z.date(),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_add = ctx.permissions[m.COMMISSION_INVOICE]?.can_add;
+
+            if (!can_add) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to add commission invoices." 
+                });
+            }
+            
             try {
-                const can_add = ctx.permissions[m.COMMISSION_INVOICE]?.can_add;
-
-                if (!can_add) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to add commission invoices." 
-                    });
-                }
-
                 const currentYear = new Date().getFullYear();
 
                 const meta = await ctx.db.commission_invoice_metadata.upsert({
@@ -602,16 +602,16 @@ export const commissionInvoiceRouter = createTRPCRouter({
             invoice_date: z.date(),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_update = ctx.permissions[m.COMMISSION_INVOICE]?.can_update;
+
+            if (!can_update) {
+                throw new TRPCError({
+                    code: 'FORBIDDEN',
+                    message: "You are not allowed to update Commission Invoices."
+                });
+            }
+            
             try {
-                const can_update = ctx.permissions[m.COMMISSION_INVOICE]?.can_update;
-
-                if (!can_update) {
-                    throw new TRPCError({
-                        code: 'FORBIDDEN',
-                        message: "You are not allowed to update Commission Invoices."
-                    });
-                }
-
                 return await ctx.db.$transaction(async (tx) => {
                     const updatedInvoice = await ctx.db.commission_invoice.update({
                         where: { id: input.id },
@@ -650,16 +650,16 @@ export const commissionInvoiceRouter = createTRPCRouter({
             id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.COMMISSION_INVOICE]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: 'FORBIDDEN',
+                    message: "You are not allowed to view Commission Invoices."
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.COMMISSION_INVOICE]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: 'FORBIDDEN',
-                        message: "You are not allowed to view Commission Invoices."
-                    });
-                }
-
                 const isATeamMember = await ctx.db.team_members.findFirst({
                     where: {
                         user_id: ctx.user.id,

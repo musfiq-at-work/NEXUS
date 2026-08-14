@@ -22,16 +22,16 @@ export const commercialTnaPlanRouter = createTRPCRouter({
             offset: z.number(),
         }))
         .query(async ({ctx, input}) => {
+            const can_view = ctx.permissions[m.TNA_PLANNING_COMMERCIAL]?.can_view;
+
+            if(!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view RDL Invoices." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.TNA_PLANNING_COMMERCIAL]?.can_view;
-
-                if(!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to view RDL Invoices." 
-                    });
-                }
-
                 const result = await ctx.db.$queryRaw<CommercialTNAPlanning[]>`
                     WITH COMMERCIAL_TNA AS (
                         SELECT
@@ -97,16 +97,16 @@ export const commercialTnaPlanRouter = createTRPCRouter({
             offset: z.number(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.TNA_PLANNING_COMMERCIAL]?.can_view;
+
+            if(!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view RDL Invoices." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.TNA_PLANNING_COMMERCIAL]?.can_view;
-
-                if(!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to view RDL Invoices." 
-                    });
-                }
-
                 const result = await ctx.db.$queryRaw<CommercialTNAPlanning[]>`
                     WITH COMMERCIAL_TNA AS (
                         SELECT
@@ -176,16 +176,16 @@ export const commercialTnaPlanRouter = createTRPCRouter({
             id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.TNA_PLANNING_COMMERCIAL]?.can_view;
+
+            if(!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view RDL Invoices." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.TNA_PLANNING_COMMERCIAL]?.can_view;
-
-                if(!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to view RDL Invoices." 
-                    });
-                }
-
                 const tnaPlansObj = await ctx.db.commercial_tna_planning.findUnique({
                     where: {
                         id: input.id
@@ -260,16 +260,16 @@ export const commercialTnaPlanRouter = createTRPCRouter({
             }))
         }))
         .mutation(async ({ctx, input}) => {
+            const can_add = ctx.permissions[m.TNA_PLANNING_COMMERCIAL]?.can_update;
+
+            if(!can_add){
+                throw new TRPCError({
+                    code: 'FORBIDDEN',
+                    message: "You don't have permission to update commercial TNA plans"
+                })
+            }
+            
             try {
-                const can_add = ctx.permissions[m.TNA_PLANNING_COMMERCIAL]?.can_update;
-
-                if(!can_add){
-                    throw new TRPCError({
-                        code: 'FORBIDDEN',
-                        message: "You don't have permission to update commercial TNA plans"
-                    })
-                }
-
                 return ctx.db.$transaction(async (tx) => {
                     await Promise.all(
                         input.details.map(async (items) => {

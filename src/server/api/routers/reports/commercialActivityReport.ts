@@ -41,16 +41,16 @@ export const activityReportRouter = createTRPCRouter({
             })
         )
         .mutation(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.COMMERCIAL_ACTIVITY_REPORT]?.can_view;
+            
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view commercial activity report.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.COMMERCIAL_ACTIVITY_REPORT]?.can_view;
-                
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view commercial activity report.",
-                    });
-                }
-
                 const isBuyersSelected = input.buyerIds && input.buyerIds.length > 0;
 
                 const buyerSelectClause = isBuyersSelected 

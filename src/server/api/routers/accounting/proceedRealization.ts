@@ -15,16 +15,16 @@ export const proceedRealizationRouter = createTRPCRouter({
             offset: z.number(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.PROCEED_REALIZATION]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view proceed realization.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.PROCEED_REALIZATION]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view proceed realization.",
-                    });
-                }
-
                 const result = await ctx.db.$queryRaw<ProceedRealizationResult[]>`
                     WITH PROCEED AS (
                         SELECT
@@ -87,16 +87,16 @@ export const proceedRealizationRouter = createTRPCRouter({
             offset: z.number(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.PROCEED_REALIZATION]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view proceed realization.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.PROCEED_REALIZATION]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view proceed realization.",
-                    });
-                }
-
                 const result = await ctx.db.$queryRaw<ProceedRealizationResult[]>`
                     WITH PROCEED AS (
                         SELECT DISTINCT
@@ -165,16 +165,16 @@ export const proceedRealizationRouter = createTRPCRouter({
             id: z.string(),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_delete = ctx.permissions[m.PROCEED_REALIZATION]?.can_delete;
+
+            if (!can_delete) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to delete proceed realization.",
+                });
+            }
+            
             try {
-                const can_delete = ctx.permissions[m.PROCEED_REALIZATION]?.can_delete;
-
-                if (!can_delete) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to delete proceed realization.",
-                    });
-                }
-
                 await ctx.db.$transaction(async (tx) => {
                     const deletedDetails = await tx.proceed_realization_details.findMany({
                         where: {
@@ -263,16 +263,16 @@ export const proceedRealizationRouter = createTRPCRouter({
             term_id: z.number(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.PROCEED_REALIZATION]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view document submissions for proceed realization.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.PROCEED_REALIZATION]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view document submissions for proceed realization.",
-                    });
-                }
-
                 const documentSubmissions = await ctx.db.$queryRaw<{ id: string, fdbc_no: string; }[]>`
                     SELECT DISTINCT
                         ID, FDBC_NO
@@ -307,16 +307,16 @@ export const proceedRealizationRouter = createTRPCRouter({
             })),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_add = ctx.permissions[m.PROCEED_REALIZATION]?.can_add;
+
+            if (!can_add) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to add proceed realization.",
+                });
+            }
+            
             try {
-                const can_add = ctx.permissions[m.PROCEED_REALIZATION]?.can_add;
-
-                if (!can_add) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to add proceed realization.",
-                    });
-                }
-
                 return await ctx.db.$transaction(async (tx) => {
                     const newProceedRealization = await tx.proceed_realization.create({
                         data: {
@@ -400,16 +400,16 @@ export const proceedRealizationRouter = createTRPCRouter({
             id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.PROCEED_REALIZATION]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view proceed realization.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.PROCEED_REALIZATION]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view proceed realization.",
-                    });
-                }
-
                 const proceedRealizationObj = await ctx.db.proceed_realization.findUnique({
                     where: {
                         id: input.id,
@@ -521,16 +521,16 @@ export const proceedRealizationRouter = createTRPCRouter({
             document_submission_id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.PROCEED_REALIZATION]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view RDL invoice details for proceed realization.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.PROCEED_REALIZATION]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view RDL invoice details for proceed realization.",
-                    });
-                }
-
                 const rdlInvoiceDetails = await ctx.db.$queryRaw<RdlInvoiceDetailsResult[]>`
                     WITH RDL_INVOICE_DETAILS AS (
                         SELECT 

@@ -307,16 +307,16 @@ export const exFactoryRouter = createTRPCRouter({
             })
         )
         .mutation(async ({ ctx, input }) => {
+            const can_add = ctx.permissions[m.EX_FACTORIES]?.can_add;
+
+            if (!can_add) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to add exfactory",
+                });
+            }
+            
             try {
-                const can_add = ctx.permissions[m.EX_FACTORIES]?.can_add;
-
-                if (!can_add) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to add exfactory",
-                    });
-                }
-
                 return await ctx.db.$transaction(async (tx) => {
                     const currentYear = new Date().getFullYear();
 

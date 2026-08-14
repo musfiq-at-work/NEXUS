@@ -886,16 +886,16 @@ export const commissionDistributionRouter = createTRPCRouter({
             id: z.string().min(1),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.COMMISSION_DISTRIBUTION]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view Commission Distributions.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.COMMISSION_DISTRIBUTION]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view Commission Distributions.",
-                    });
-                }
-
                 const isFactoryOrderUnauthorized = await ctx.db.$queryRaw<{approval_status: boolean}[]>`
                     SELECT 
                         FO.approval_status <> 2 AS approval_status 
@@ -917,16 +917,16 @@ export const commissionDistributionRouter = createTRPCRouter({
             id: z.string().min(1),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.COMMISSION_DISTRIBUTION]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view Commission Distributions.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.COMMISSION_DISTRIBUTION]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view Commission Distributions.",
-                    });
-                }
-
                 const isSalesContractApproved = await ctx.db.$queryRaw<{approved: boolean}[]>`
                     SELECT 
                         sc.approval_status = 2 AS approved 

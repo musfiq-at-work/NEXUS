@@ -22,16 +22,16 @@ export const crossPaymentsRouter = createTRPCRouter({
             })).optional(),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_add = ctx.permissions[m.CROSS_PAYMENT]?.can_add;
+
+            if (!can_add) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to add cross payment.",
+                });
+            }
+
             try {
-                const can_add = ctx.permissions[m.CROSS_PAYMENT]?.can_add;
-
-                if (!can_add) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to add cross payment.",
-                    });
-                }
-
                 const currentYear = new Date().getFullYear();
                 
                 return await ctx.db.$transaction(async (tx) => {
@@ -66,11 +66,13 @@ export const crossPaymentsRouter = createTRPCRouter({
                         });
                     }
 
+                    const ref_no = `CROSS PAY/${buyer_prefix.prefix}/${currentYear}/${String(meta.last_ref).padStart(4, '0')}`;
+
                     const crossPayment = await tx.cross_payments.create({
                         data: {
                             term_id: input.term_id,
                             buyer_id: input.buyer_id,
-                            cross_payment_ref: `CROSS PAY/${buyer_prefix.prefix}/${currentYear}/${String(meta.last_ref).padStart(4, '0')}`, // Generate a unique reference
+                            cross_payment_ref: ref_no,
                             cross_payment_date: new Date(input.cross_payment_date),
                             remarks: input.remarks,
                         },
@@ -134,16 +136,16 @@ export const crossPaymentsRouter = createTRPCRouter({
             cross_payment_id: z.string().optional(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.CROSS_PAYMENT]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view factory invoices.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.CROSS_PAYMENT]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view factory invoices.",
-                    });
-                }
-
                 const crossPaymentClause = !!input.cross_payment_id ?
                     Prisma.sql`AND CPD.cross_payment_id <> ${input.cross_payment_id}` :
                     Prisma.empty;
@@ -211,16 +213,16 @@ export const crossPaymentsRouter = createTRPCRouter({
             factory_invoice_id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.CROSS_PAYMENT]?.can_view;    
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view factory invoice details.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.CROSS_PAYMENT]?.can_view;    
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view factory invoice details.",
-                    });
-                }
-
                 const factoryInvoiceDetails = await ctx.db.$queryRaw<CrossPaymentDetails[]>`
                     WITH FOB_RATE AS (
                         SELECT
@@ -265,16 +267,16 @@ export const crossPaymentsRouter = createTRPCRouter({
             limit: z.number().optional(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.CROSS_PAYMENT]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view cross payments.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.CROSS_PAYMENT]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view cross payments.",
-                    });
-                }
-
                 const result = await ctx.db.$queryRaw<CrossPaymentList[]>`
                     WITH CROSS_PAYS AS (
                         SELECT 
@@ -333,16 +335,16 @@ export const crossPaymentsRouter = createTRPCRouter({
             limit: z.number().optional(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.CROSS_PAYMENT]?.can_view;
+
+            if (!can_view) {    
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to search cross payments.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.CROSS_PAYMENT]?.can_view;
-
-                if (!can_view) {    
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to search cross payments.",
-                    });
-                }
-
                 const result = await ctx.db.$queryRaw<CrossPaymentList[]>`
                     WITH CROSS_PAYS AS (
                         SELECT DISTINCT
@@ -486,16 +488,16 @@ export const crossPaymentsRouter = createTRPCRouter({
             cross_payment_id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.CROSS_PAYMENT]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view cross payment details.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.CROSS_PAYMENT]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view cross payment details.",
-                    });
-                }
-
                 const crossPayment = await ctx.db.cross_payments.findUnique({
                     where: { id: input.cross_payment_id },
                     select: {
@@ -698,16 +700,16 @@ export const crossPaymentsRouter = createTRPCRouter({
             cross_payment_id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.CROSS_PAYMENT]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view cross payment status.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.CROSS_PAYMENT]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view cross payment status.",
-                    });
-                }
-
                 const crossPayment = await ctx.db.$queryRaw`
                     SELECT
                         CPD.id,

@@ -16,16 +16,16 @@ export const factoryOrderRouter = createTRPCRouter({
             offset: z.number().min(0).default(0),  
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.FACTORY_ORDERS]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view Factory Orders.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.FACTORY_ORDERS]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view Factory Orders.",
-                    });
-                }
-
                 const rows = await ctx.db.$queryRaw<(FactoryOrderRow & { total_count: bigint })[]>`
                     SELECT
                         FO.id,
@@ -192,16 +192,16 @@ export const factoryOrderRouter = createTRPCRouter({
 
     getBuyerOrdersForFactoryOrder: protectedProcedure
         .query(async ({ ctx }) => {
+            const can_view = ctx.permissions[m.FACTORY_ORDERS]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view Buyer Orders.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.FACTORY_ORDERS]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view Buyer Orders.",
-                    });
-                }
-
                 const buyerOrders = await ctx.db.$queryRaw<{ id: string; ref_no: string }[]>`
                     WITH style_shipments AS (
                         SELECT
@@ -251,16 +251,16 @@ export const factoryOrderRouter = createTRPCRouter({
             orderId: z.string().min(1),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.FACTORY_ORDERS]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view Buyer Orders.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.FACTORY_ORDERS]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view Buyer Orders.",
-                    });
-                }
-
                 const buyerOrderDetailsObj = await ctx.db.buyer_orders.findUnique({
                     where: { id: input.orderId },
                     select: {
@@ -447,17 +447,17 @@ export const factoryOrderRouter = createTRPCRouter({
             })
         )
         .mutation(async ({ ctx, input }) => {
+            const can_add = ctx.permissions[m.FACTORY_ORDERS]?.can_add;
+
+            if (!can_add) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message:
+                        "You do not have permission to add Factory Orders.",
+                });
+            }
+            
             try {
-                const can_add = ctx.permissions[m.FACTORY_ORDERS]?.can_add;
-
-                if (!can_add) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message:
-                            "You do not have permission to add Factory Orders.",
-                    });
-                }
-
                 return await ctx.db.$transaction(async (tx) => {
                     const factoryOrderDate = new Date(
                         input.factory_order_date
@@ -539,16 +539,16 @@ export const factoryOrderRouter = createTRPCRouter({
             factoryOrderId: z.string().min(1),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.FACTORY_ORDERS]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view Factory Orders.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.FACTORY_ORDERS]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view Factory Orders.",
-                    });
-                }
-
                 const users_team = await ctx.db.factory_orders.findFirst({
                     where: {
                         id: input.factoryOrderId,
@@ -668,16 +668,16 @@ export const factoryOrderRouter = createTRPCRouter({
             })),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_update = ctx.permissions[m.FACTORY_ORDERS]?.can_update;
+
+            if (!can_update) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to update Factory Orders.",
+                });
+            }
+            
             try {
-                const can_update = ctx.permissions[m.FACTORY_ORDERS]?.can_update;
-
-                if (!can_update) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to update Factory Orders.",
-                    });
-                }
-
                 const user_team = await ctx.db.factory_orders.findFirst({
                     where: {
                         id: input.factoryOrderId,
@@ -828,16 +828,16 @@ export const factoryOrderRouter = createTRPCRouter({
             factoryOrderId: z.string().min(1),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.FACTORY_ORDERS]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view Factory Orders.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.FACTORY_ORDERS]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view Factory Orders.",
-                    });
-                }
-
                 // Check if the factory order is complete and get its approval status
                 const authorizations = await ctx.db.$queryRaw<{is_complete: boolean, approval_status: number}[]>`
                     SELECT
@@ -985,16 +985,16 @@ export const factoryOrderRouter = createTRPCRouter({
             id: z.string().min(1),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_delete = ctx.permissions[m.FACTORY_ORDERS]?.can_delete;
+
+            if (!can_delete) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to delete Factory Orders.",
+                });
+            }
+            
             try {
-                const can_delete = ctx.permissions[m.FACTORY_ORDERS]?.can_delete;
-
-                if (!can_delete) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to delete Factory Orders.",
-                    });
-                }
-
                 const isFactoryOrderAuthorized = await ctx.db.factory_orders.findUnique({
                     where: { id: input.id },
                     select: { approval_status: true },
@@ -1076,16 +1076,16 @@ export const factoryOrderRouter = createTRPCRouter({
             factoryOrderId: z.string().min(1),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.FACTORY_ORDERS]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view Factory Orders.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.FACTORY_ORDERS]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view Factory Orders.",
-                    });
-                }
-
                 const isATeamMember = await ctx.db.factory_orders.findUnique({
                     where: {
                         id: input.factoryOrderId,
@@ -1224,16 +1224,16 @@ export const factoryOrderRouter = createTRPCRouter({
             factoryOrderId: z.string().min(1),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.FACTORY_ORDERS]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view Factory Orders.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.FACTORY_ORDERS]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view Factory Orders.",
-                    });
-                }
-
                 const isCommissionDistributionAuthorized = await ctx.db.$queryRaw<{approval_status: boolean}[]>`
                     SELECT CD.approval_status FROM commission_distributions AS CD
                         INNER JOIN factory_orders AS FO ON FO.order_id = CD.order_id

@@ -17,16 +17,16 @@ export const debitNotesRouter = createTRPCRouter({
             limit: z.number().optional(),
         }))
         .query(async ({ ctx, input}) => {
+            const can_view = ctx.permissions[m.DEBIT_NOTE]?.can_view;
+
+            if(!can_view) {
+                throw new TRPCError({
+                    code: 'FORBIDDEN',
+                    message: "You do not have permission to view debit notes."
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.DEBIT_NOTE]?.can_view;
-
-                if(!can_view) {
-                    throw new TRPCError({
-                        code: 'FORBIDDEN',
-                        message: "You do not have permission to view debit notes."
-                    });
-                }
-
                 const result = await ctx.db.$queryRaw<LCListItem[]>`
                     WITH DEBIT_NOTES AS (	
                         SELECT DISTINCT
@@ -95,16 +95,16 @@ export const debitNotesRouter = createTRPCRouter({
             limit: z.number().optional(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.DEBIT_NOTE]?.can_view;
+
+            if(!can_view) {
+                throw new TRPCError({
+                    code: 'FORBIDDEN',
+                    message: "You do not have permission to view debit notes."
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.DEBIT_NOTE]?.can_view;
-
-                if(!can_view) {
-                    throw new TRPCError({
-                        code: 'FORBIDDEN',
-                        message: "You do not have permission to view debit notes."
-                    });
-                }
-
                 const result = await ctx.db.$queryRaw<LCListItem[]>`
                     WITH DEBIT_NOTES AS (	
                         SELECT DISTINCT
@@ -183,16 +183,16 @@ export const debitNotesRouter = createTRPCRouter({
             debit_note_id: z.string(),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_delete = ctx.permissions[m.DEBIT_NOTE]?.can_delete;
+
+            if(!can_delete) {
+                throw new TRPCError({
+                    code: 'FORBIDDEN',
+                    message: "You do not have permission to delete debit notes."
+                });
+            }
+            
             try {
-                const can_delete = ctx.permissions[m.DEBIT_NOTE]?.can_delete;
-
-                if(!can_delete) {
-                    throw new TRPCError({
-                        code: 'FORBIDDEN',
-                        message: "You do not have permission to delete debit notes."
-                    });
-                }
-
                 const deletedDebitNote = await ctx.db.$transaction(async (db) => {
                     // Delete associated debit note details first
                     const deletedDetails = await db.debit_note_details.findMany({
@@ -371,16 +371,16 @@ export const debitNotesRouter = createTRPCRouter({
             })).optional(),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_add = ctx.permissions[m.DEBIT_NOTE]?.can_add;
+
+            if(!can_add) {
+                throw new TRPCError({
+                    code: 'FORBIDDEN',
+                    message: "You do not have permission to add debit notes."
+                });
+            }
+            
             try {
-                const can_add = ctx.permissions[m.DEBIT_NOTE]?.can_add;
-
-                if(!can_add) {
-                    throw new TRPCError({
-                        code: 'FORBIDDEN',
-                        message: "You do not have permission to add debit notes."
-                    });
-                }
-
                 const currentYear = new Date().getFullYear();
 
                 const meta = await ctx.db.debit_note_metadata.upsert({
@@ -616,16 +616,16 @@ export const debitNotesRouter = createTRPCRouter({
             db_id: z.string(),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_delete = ctx.permissions[m.DEBIT_NOTE]?.can_delete;
+
+            if(!can_delete) {
+                throw new TRPCError({
+                    code: 'FORBIDDEN',
+                    message: "You do not have permission to delete debit note shipments."
+                });
+            }
+            
             try {
-                const can_delete = ctx.permissions[m.DEBIT_NOTE]?.can_delete;
-
-                if(!can_delete) {
-                    throw new TRPCError({
-                        code: 'FORBIDDEN',
-                        message: "You do not have permission to delete debit note shipments."
-                    });
-                }
-
                 const deletedShipment = await ctx.db.$transaction(async (db) => {
                     const deletedDetail = await db.debit_note_details.findUnique({
                         where: { id: input.db_id },
@@ -668,16 +668,16 @@ export const debitNotesRouter = createTRPCRouter({
             debit_note_id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.DEBIT_NOTE]?.can_view;
+
+            if(!can_view) {
+                throw new TRPCError({
+                    code: 'FORBIDDEN',
+                    message: "You do not have permission to view debit notes."
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.DEBIT_NOTE]?.can_view;
-
-                if(!can_view) {
-                    throw new TRPCError({
-                        code: 'FORBIDDEN',
-                        message: "You do not have permission to view debit notes."
-                    });
-                }
-
                 const debitNoteObj = await ctx.db.debit_note.findUnique({
                     where: { id: input.debit_note_id },
                     select: {
@@ -782,16 +782,16 @@ export const debitNotesRouter = createTRPCRouter({
             })).optional(),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_update = ctx.permissions[m.DEBIT_NOTE]?.can_update;
+
+            if(!can_update) {
+                throw new TRPCError({
+                    code: 'FORBIDDEN',
+                    message: "You do not have permission to update debit notes."
+                });
+            }
+            
             try {
-                const can_update = ctx.permissions[m.DEBIT_NOTE]?.can_update;
-
-                if(!can_update) {
-                    throw new TRPCError({
-                        code: 'FORBIDDEN',
-                        message: "You do not have permission to update debit notes."
-                    });
-                }
-
                 return await ctx.db.$transaction(async (db) => {
                     const updatedHeader = await db.debit_note.update({
                         where: { id: input.id },
@@ -861,16 +861,16 @@ export const debitNotesRouter = createTRPCRouter({
             debit_note_id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.DEBIT_NOTE]?.can_view;
+
+            if(!can_view) {
+                throw new TRPCError({
+                    code: 'FORBIDDEN',
+                    message: 'You do not have permission to view Debit Note'
+                })
+            }
+            
             try {
-                const can_view = ctx.permissions[m.DEBIT_NOTE]?.can_view;
-
-                if(!can_view) {
-                    throw new TRPCError({
-                        code: 'FORBIDDEN',
-                        message: 'You do not have permission to view Debit Note'
-                    })
-                }
-
                 let headerData: DebitNoteHeader[];
                 let table: DebitNoteTableData[];
                 let factoryInvoices: { factory_invoices: string }[];

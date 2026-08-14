@@ -50,16 +50,16 @@ export const freightTermsRouter = createTRPCRouter({
             })
         )
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.FREIGHT_TERMS]?.can_view;
+
+            if(!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view Freight Terms." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.FREIGHT_TERMS]?.can_view;
-
-                if(!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to view Freight Terms." 
-                    });
-                }
-
                 const freightTerms = await ctx.db.freight_term.findMany({
                     where: {
                         name: {
@@ -100,16 +100,16 @@ export const freightTermsRouter = createTRPCRouter({
             })
         )
         .mutation(async ({ ctx, input }) => {
+            const can_delete = ctx.permissions[m.FREIGHT_TERMS]?.can_delete;
+
+            if(!can_delete) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to delete Freight Terms." 
+                });
+            }
+            
             try {
-                const can_delete = ctx.permissions[m.FREIGHT_TERMS]?.can_delete;
-
-                if(!can_delete) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to delete Freight Terms." 
-                    });
-                }
-
                 return await ctx.db.$transaction(async (tx) => {
                     const freightTerm = await tx.freight_term.delete({
                         where: {
@@ -140,16 +140,16 @@ export const freightTermsRouter = createTRPCRouter({
             })
         )
         .mutation(async ({ ctx, input }) => {
+            const can_add = ctx.permissions[m.FREIGHT_TERMS]?.can_add;
+
+            if(!can_add) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to add Freight Terms." 
+                });
+            }
+            
             try {
-                const can_add = ctx.permissions[m.FREIGHT_TERMS]?.can_add;
-
-                if(!can_add) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to add Freight Terms." 
-                    });
-                }
-
                 return await ctx.db.$transaction(async (tx) => {
                     const freightTerm = await tx.freight_term.create({
                         data: {
@@ -183,16 +183,16 @@ export const freightTermsRouter = createTRPCRouter({
             })
         )
         .mutation(async ({ ctx, input }) => {
+            const can_update = ctx.permissions[m.FREIGHT_TERMS]?.can_update;
+
+            if(!can_update) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to update Freight Terms." 
+                });
+            }
+            
             try {
-                const can_update = ctx.permissions[m.FREIGHT_TERMS]?.can_update;
-
-                if(!can_update) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to update Freight Terms." 
-                    });
-                }
-
                 return await ctx.db.$transaction(async (tx) => {
                     const freightTerm = await tx.freight_term.update({
                         where: {
@@ -228,16 +228,16 @@ export const freightTermsRouter = createTRPCRouter({
             })
         )
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.FREIGHT_TERMS]?.can_view;
+
+            if(!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view Freight Terms." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.FREIGHT_TERMS]?.can_view;
-
-                if(!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to view Freight Terms." 
-                    });
-                }
-
                 return await ctx.db.freight_term.findUnique({
                     where: {
                         id: input.id,

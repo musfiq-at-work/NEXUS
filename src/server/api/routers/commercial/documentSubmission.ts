@@ -14,16 +14,16 @@ export const documentSubmissionRouter = createTRPCRouter({
             offset: z.number(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view document submissions." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view document submissions." 
-                    });
-                }
-
                 const result = await ctx.db.$queryRaw<DocumentSubmissions[]>`
                     WITH DOCUMENTS AS (
                         SELECT 
@@ -81,16 +81,16 @@ export const documentSubmissionRouter = createTRPCRouter({
             offset: z.number(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view document submissions." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view document submissions." 
-                    });
-                }
-
                 const result = await ctx.db.$queryRaw<DocumentSubmissions[]>`
                     WITH DOCUMENTS AS (
                         SELECT DISTINCT
@@ -155,16 +155,16 @@ export const documentSubmissionRouter = createTRPCRouter({
             id: z.string(),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_delete = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_delete;
+
+            if (!can_delete) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to delete document submissions." 
+                });
+            }
+            
             try {
-                const can_delete = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_delete;
-
-                if (!can_delete) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to delete document submissions." 
-                    });
-                }
-
                 return await ctx.db.$transaction(async (tx) => {
                     const documentSubmissionDetails = await tx.document_submissions_details.findMany({
                         where: {
@@ -280,16 +280,16 @@ export const documentSubmissionRouter = createTRPCRouter({
             })).optional(),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_add = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_add;
+
+            if (!can_add) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to add document submissions." 
+                });
+            }
+            
             try {
-                const can_add = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_add;
-
-                if (!can_add) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to add document submissions." 
-                    });
-                }
-
                 const terms = await ctx.db.terms.findUnique({
                     where: { id: input.term_id },
                     select: { name: true },
@@ -428,16 +428,16 @@ export const documentSubmissionRouter = createTRPCRouter({
             term_id: z.number(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: 'FORBIDDEN', 
+                    message: "You don't have permission to view Document Submissions." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: 'FORBIDDEN', 
-                        message: "You don't have permission to view Document Submissions." 
-                    });
-                }
-
                 const terms = await ctx.db.terms.findUnique({
                     where: { id: input.term_id },
                     select: { name: true },
@@ -529,16 +529,16 @@ export const documentSubmissionRouter = createTRPCRouter({
             document_submission_id: z.string().optional(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: 'FORBIDDEN', 
+                    message: "You don't have permission to view Document Submissions." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: 'FORBIDDEN', 
-                        message: "You don't have permission to view Document Submissions." 
-                    });
-                }
-
                 const terms = await ctx.db.terms.findUnique({
                     where: { id: input.term_id },
                     select: { name: true },
@@ -611,16 +611,16 @@ export const documentSubmissionRouter = createTRPCRouter({
             db_id: z.string(),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_delete = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_delete;
+
+            if (!can_delete) {
+                throw new TRPCError({ 
+                    code: 'FORBIDDEN', 
+                    message: "You do not have permission to delete RDL Invoices from document submissions." 
+                });
+            }
+            
             try {
-                const can_delete = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_delete;
-
-                if (!can_delete) {
-                    throw new TRPCError({ 
-                        code: 'FORBIDDEN', 
-                        message: "You do not have permission to delete RDL Invoices from document submissions." 
-                    });
-                }
-
                 return await ctx.db.$transaction(async (tx) => {
                     const deletedRdlInvoice = await tx.document_submissions_details.delete({
                         where: {
@@ -675,16 +675,16 @@ export const documentSubmissionRouter = createTRPCRouter({
             rdl_invoice_id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: 'FORBIDDEN', 
+                    message: "You don't have permission to view Document Submissions." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: 'FORBIDDEN', 
-                        message: "You don't have permission to view Document Submissions." 
-                    });
-                }
-
                 const result = await ctx.db.$queryRaw<FactoryInvoiceDetails[]>`
                     WITH FACTORY_INVOICE_CALC AS (
                         SELECT
@@ -739,16 +739,16 @@ export const documentSubmissionRouter = createTRPCRouter({
             id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: 'FORBIDDEN', 
+                    message: "You don't have permission to view Document Submissions." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: 'FORBIDDEN', 
-                        message: "You don't have permission to view Document Submissions." 
-                    });
-                }
-
                 const result = await ctx.db.document_submissions.findUnique({
                     where: { id: input.id },
                     select: {
@@ -1008,16 +1008,16 @@ export const documentSubmissionRouter = createTRPCRouter({
             id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: 'FORBIDDEN', 
+                    message: "You don't have permission to view Document Submissions." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.DOCUMENT_SUBMISSION]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: 'FORBIDDEN', 
-                        message: "You don't have permission to view Document Submissions." 
-                    });
-                }
-
                 const result = await ctx.db.proceed_realization.findFirst({
                     where: {
                         document_submission_id: input.id,

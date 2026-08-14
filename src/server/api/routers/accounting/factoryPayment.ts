@@ -14,16 +14,16 @@ export const factoryPaymentRouter = createTRPCRouter({
             limit: z.number().optional(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.REGULAR_PAYMENT]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view factory payments.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.REGULAR_PAYMENT]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view factory payments.",
-                    });
-                }
-
                 const results = await ctx.db.$queryRaw<FactoryPaymentResult[]>`
                     WITH RDL_INVOICE_IN_DOCUMENT_SUBMISSIONS AS (
                         SELECT 
@@ -123,16 +123,16 @@ export const factoryPaymentRouter = createTRPCRouter({
             limit: z.number().optional(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.REGULAR_PAYMENT]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view factory payments.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.REGULAR_PAYMENT]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view factory payments.",
-                    });
-                }
-
                 const results = await ctx.db.$queryRaw<FactoryPaymentResult[]>`
                     WITH RDL_INVOICE_IN_DOCUMENT_SUBMISSIONS AS (
                         SELECT 
@@ -245,16 +245,16 @@ export const factoryPaymentRouter = createTRPCRouter({
             id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.REGULAR_PAYMENT]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view factory payments.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.REGULAR_PAYMENT]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view factory payments.",
-                    });
-                }
-
                 let result: FactoryPaymentDetailsById[];
                 let factoryPayments: FactoryPaymentDetails[];
 
@@ -376,18 +376,16 @@ export const factoryPaymentRouter = createTRPCRouter({
             })).optional(),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_update = ctx.permissions[m.REGULAR_PAYMENT]?.can_update;
+
+            if (!can_update) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to update factory payments.",
+                });
+            }
+            
             try {
-                const can_update = ctx.permissions[m.REGULAR_PAYMENT]?.can_update;
-
-                if (!can_update) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to update factory payments.",
-                    });
-                }
-
-                console.log('Factory Payment', input);
-
                 await ctx.db.$transaction(async (tx) => {
                     for (const factoryInvoice of input.factoryInvoices ?? []) {
                         if (factoryInvoice.db_id) {
@@ -455,16 +453,16 @@ export const factoryPaymentRouter = createTRPCRouter({
             document_submission_id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.REGULAR_PAYMENT]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to check cross payment for document submission.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.REGULAR_PAYMENT]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to check cross payment for document submission.",
-                    });
-                }
-
                 const crossPaymentDetails = await ctx.db.$queryRaw<GetCrossPaymentByIdTypes[]>`
                     SELECT 
                         CPD.id AS factory_payment_detail_id,
@@ -498,16 +496,16 @@ export const factoryPaymentRouter = createTRPCRouter({
             cross_payment_details_id: z.string()
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_update = ctx.permissions[m.REGULAR_PAYMENT]?.can_update;
+
+            if (!can_update) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to regularize cross payment.",
+                });
+            }
+            
             try {
-                const can_update = ctx.permissions[m.REGULAR_PAYMENT]?.can_update;
-
-                if (!can_update) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to regularize cross payment.",
-                    });
-                }
-
                 await ctx.db.$transaction(async (tx) => {
                     const crossPaymentDetail = await tx.cross_payment_details.findUnique({
                         where: {

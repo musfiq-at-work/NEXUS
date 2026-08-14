@@ -18,16 +18,16 @@ export const rdlInvoiceRouter = createTRPCRouter({
             offset: z.number(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.RDL_INVOICE]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view RDL Invoices." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.RDL_INVOICE]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to view RDL Invoices." 
-                    });
-                }
-
                 const result = await ctx.db.$queryRaw<RdlInvoiceListItem[]>`
                      WITH RDL_INVOICES AS (
                         SELECT
@@ -94,16 +94,16 @@ export const rdlInvoiceRouter = createTRPCRouter({
             offset: z.number(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.RDL_INVOICE]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view RDL Invoices." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.RDL_INVOICE]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to view RDL Invoices." 
-                    });
-                }
-
                 const result = await ctx.db.$queryRaw<RdlInvoiceListItem[]>`
                     WITH RDL_INVOICES AS (
                         SELECT
@@ -175,16 +175,16 @@ export const rdlInvoiceRouter = createTRPCRouter({
             id: z.string(),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_delete = ctx.permissions[m.RDL_INVOICE]?.can_delete;
+
+            if (!can_delete) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to delete RDL Invoices." 
+                });
+            }
+            
             try {
-                const can_delete = ctx.permissions[m.RDL_INVOICE]?.can_delete;
-
-                if (!can_delete) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to delete RDL Invoices." 
-                    });
-                }
-
                 await ctx.db.$transaction(async (tx) => {
                     const rdlInvoiceDetails = await tx.rdl_invoice_details.findMany({
                         where: { rdl_invoice_id: input.id },
@@ -266,16 +266,16 @@ export const rdlInvoiceRouter = createTRPCRouter({
             id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.RDL_INVOICE]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view RDL Invoices." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.RDL_INVOICE]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to view RDL Invoices." 
-                    });
-                }
-
                 const rdlInvoice = await ctx.db.rdl_invoice.findUnique({
                     where: { id: input.id },
                     select: {
@@ -351,16 +351,16 @@ export const rdlInvoiceRouter = createTRPCRouter({
             term_id: z.number(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.RDL_INVOICE]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: 'FORBIDDEN', 
+                    message: "You don't have permission to view RDL Invoices." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.RDL_INVOICE]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: 'FORBIDDEN', 
-                        message: "You don't have permission to view RDL Invoices." 
-                    });
-                }
-
                 const terms = await ctx.db.terms.findUnique({
                     where: { id: input.term_id },
                     select: { name: true },
@@ -593,16 +593,16 @@ export const rdlInvoiceRouter = createTRPCRouter({
             rdl_invoice_id: z.string().optional(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.RDL_INVOICE]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view Factory Invoices." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.RDL_INVOICE]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to view Factory Invoices." 
-                    });
-                }
-
                 const terms = await ctx.db.terms.findUnique({
                     where: { id: input.term_id },
                     select: { name: true },
@@ -713,16 +713,16 @@ export const rdlInvoiceRouter = createTRPCRouter({
             db_id: z.string(),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_delete = ctx.permissions[m.RDL_INVOICE]?.can_delete;
+
+            if (!can_delete) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to delete Factory Invoices from RDL Invoices." 
+                });
+            }
+            
             try {
-                const can_delete = ctx.permissions[m.RDL_INVOICE]?.can_delete;
-
-                if (!can_delete) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to delete Factory Invoices from RDL Invoices." 
-                    });
-                }
-
                 await ctx.db.$transaction(async (tx) => {
                     const rdlInvoiceDetail = await tx.rdl_invoice_details.findUnique({
                         where: { id: input.db_id },
@@ -774,15 +774,16 @@ export const rdlInvoiceRouter = createTRPCRouter({
             rdl_invoice_id: z.string().optional(),
         }))
         .query(async ({ ctx, input }) => {
-            try {
-                const can_view = ctx.permissions[m.RDL_INVOICE]?.can_view;
+            const can_view = ctx.permissions[m.RDL_INVOICE]?.can_view;
 
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to view Shipment Details for Factory Invoices." 
-                    });
-                }
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view Shipment Details for Factory Invoices." 
+                });
+            }
+            
+            try {
                 const excludeCurrentInvoiceClause = input.rdl_invoice_id 
                     ? Prisma.sql`WHERE RI.ID <> ${input.rdl_invoice_id}` 
                     : Prisma.empty;
@@ -862,16 +863,16 @@ export const rdlInvoiceRouter = createTRPCRouter({
             }))
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_update = ctx.permissions[m.RDL_INVOICE]?.can_update;
+
+            if (!can_update) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to update RDL Invoices." 
+                });
+            }
+            
             try {
-                const can_update = ctx.permissions[m.RDL_INVOICE]?.can_update;
-
-                if (!can_update) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to update RDL Invoices." 
-                    });
-                }
-
                 await ctx.db.$transaction(async (tx) => {
                     const updated = await tx.rdl_invoice.update({
                         where: { id: input.id },
@@ -1114,16 +1115,16 @@ export const rdlInvoiceRouter = createTRPCRouter({
             id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.RDL_INVOICE]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: 'FORBIDDEN', 
+                    message: "You don't have permission to view factory invoice details." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.RDL_INVOICE]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: 'FORBIDDEN', 
-                        message: "You don't have permission to view factory invoice details." 
-                    });
-                }
-
                 const isATeamMember = await ctx.db.team_members.findFirst({
                     where: {
                         user_id: ctx.user.id,

@@ -15,16 +15,16 @@ export const factoryInvoiceRouter = createTRPCRouter({
             offset: z.number(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.FACTORY_INVOICE]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: 'FORBIDDEN', 
+                    message: "You don't have permission to view factory invoices." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.FACTORY_INVOICE]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: 'FORBIDDEN', 
-                        message: "You don't have permission to view factory invoices." 
-                    });
-                }
-
                 const result = await ctx.db.$queryRaw<FactoryInvoiceListItem[]>`
                     WITH FACTORY_INVOICES AS (
                         SELECT
@@ -99,16 +99,16 @@ export const factoryInvoiceRouter = createTRPCRouter({
             offset: z.number(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.FACTORY_INVOICE]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: 'FORBIDDEN', 
+                    message: "You don't have permission to view factory invoices." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.FACTORY_INVOICE]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: 'FORBIDDEN', 
-                        message: "You don't have permission to view factory invoices." 
-                    });
-                }
-
                 const result = await ctx.db.$queryRaw<FactoryInvoiceListItem[]>`
                     WITH FACTORY_INVOICES AS (
                         SELECT
@@ -190,16 +190,16 @@ export const factoryInvoiceRouter = createTRPCRouter({
             id: z.string(),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_delete = ctx.permissions[m.FACTORY_INVOICE]?.can_delete;
+
+            if (!can_delete) {
+                throw new TRPCError({ 
+                    code: 'FORBIDDEN', 
+                    message: "You don't have permission to delete factory invoices." 
+                });
+            }
+            
             try {
-                const can_delete = ctx.permissions[m.FACTORY_INVOICE]?.can_delete;
-
-                if (!can_delete) {
-                    throw new TRPCError({ 
-                        code: 'FORBIDDEN', 
-                        message: "You don't have permission to delete factory invoices." 
-                    });
-                }
-
                 return await ctx.db.$transaction(async (tx) => {
                     const tnaPlan = await tx.commercial_tna_planning.findUnique({    
                         where: { factory_invoice_id: input.id },
@@ -283,16 +283,16 @@ export const factoryInvoiceRouter = createTRPCRouter({
             })).optional(),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_add = ctx.permissions[m.FACTORY_INVOICE]?.can_add;
+
+            if (!can_add) {
+                throw new TRPCError({ 
+                    code: 'FORBIDDEN', 
+                    message: "You don't have permission to add factory invoices." 
+                });
+            }
+            
             try {
-                const can_add = ctx.permissions[m.FACTORY_INVOICE]?.can_add;
-
-                if (!can_add) {
-                    throw new TRPCError({ 
-                        code: 'FORBIDDEN', 
-                        message: "You don't have permission to add factory invoices." 
-                    });
-                }
-
                 return await ctx.db.$transaction(async (tx) => {
                     const terms = await ctx.db.terms.findUnique({
                         where: { id: input.term_id },
@@ -524,16 +524,16 @@ export const factoryInvoiceRouter = createTRPCRouter({
             factory_id: z.number(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.FACTORY_INVOICE]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: 'FORBIDDEN', 
+                    message: "You don't have permission to view LC and Sales Contract details." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.FACTORY_INVOICE]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: 'FORBIDDEN', 
-                        message: "You don't have permission to view LC and Sales Contract details." 
-                    });
-                }
-
                 const terms = await ctx.db.terms.findUnique({
                     where: { id: input.term_id },
                     select: { name: true },
@@ -618,15 +618,15 @@ export const factoryInvoiceRouter = createTRPCRouter({
             term_id: z.number(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.FACTORY_INVOICE]?.can_view;
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: 'FORBIDDEN', 
+                    message: "You don't have permission to view LC and Sales Contract details." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.FACTORY_INVOICE]?.can_view;
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: 'FORBIDDEN', 
-                        message: "You don't have permission to view LC and Sales Contract details." 
-                    });
-                }
-
                 return await ctx.db.$transaction(async (tx) => {
                     const terms = await ctx.db.terms.findUnique({
                         where: { id: input.term_id },
@@ -728,15 +728,15 @@ export const factoryInvoiceRouter = createTRPCRouter({
             exfactory_shipment_id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.FACTORY_INVOICE]?.can_view;
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: 'FORBIDDEN', 
+                    message: "You don't have permission to view shipment details." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.FACTORY_INVOICE]?.can_view;
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: 'FORBIDDEN', 
-                        message: "You don't have permission to view shipment details." 
-                    });
-                }
-
                 const details = await ctx.db.$queryRaw<ExfactoryShipmentDetails[]>`
                     SELECT
                         BO.ref_no AS ORDER_NO,
@@ -782,16 +782,16 @@ export const factoryInvoiceRouter = createTRPCRouter({
             id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.FACTORY_INVOICE]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: 'FORBIDDEN', 
+                    message: "You don't have permission to view factory invoice details." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.FACTORY_INVOICE]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: 'FORBIDDEN', 
-                        message: "You don't have permission to view factory invoice details." 
-                    });
-                }
-
                 const invoiceObj = await ctx.db.factory_invoice.findUnique({
                     where: { id: input.id },
                     select: {
@@ -891,16 +891,16 @@ export const factoryInvoiceRouter = createTRPCRouter({
             })).optional(),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_update = ctx.permissions[m.FACTORY_INVOICE]?.can_update;
+
+            if (!can_update) {
+                throw new TRPCError({ 
+                    code: 'FORBIDDEN', 
+                    message: "You don't have permission to update factory invoices." 
+                });
+            }
+            
             try {
-                const can_update = ctx.permissions[m.FACTORY_INVOICE]?.can_update;
-
-                if (!can_update) {
-                    throw new TRPCError({ 
-                        code: 'FORBIDDEN', 
-                        message: "You don't have permission to update factory invoices." 
-                    });
-                }
-
                 return await ctx.db.$transaction(async (tx) => {
                     const updatedInvoice = await tx.factory_invoice.update({
                         where: { id: input.id },
@@ -962,15 +962,15 @@ export const factoryInvoiceRouter = createTRPCRouter({
             id: z.string(),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_delete = ctx.permissions[m.FACTORY_INVOICE]?.can_delete;
+            if (!can_delete) {
+                throw new TRPCError({ 
+                    code: 'FORBIDDEN', 
+                    message: "You don't have permission to delete factory invoice details." 
+                });
+            }
+            
             try {
-                const can_delete = ctx.permissions[m.FACTORY_INVOICE]?.can_delete;
-                if (!can_delete) {
-                    throw new TRPCError({ 
-                        code: 'FORBIDDEN', 
-                        message: "You don't have permission to delete factory invoice details." 
-                    });
-                }
-                
                 return await ctx.db.$transaction(async (tx) => {
                     const detail = await tx.factory_invoice_details.delete({
                         where: { id: input.id },
@@ -1000,15 +1000,15 @@ export const factoryInvoiceRouter = createTRPCRouter({
             id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.FACTORY_INVOICE]?.can_view;
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: 'FORBIDDEN', 
+                    message: "You don't have permission to view factory invoice details." 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.FACTORY_INVOICE]?.can_view;
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: 'FORBIDDEN', 
-                        message: "You don't have permission to view factory invoice details." 
-                    });
-                }
-
                 const isATeamMember = await ctx.db.team_members.findFirst({
                     where: {
                         user_id: ctx.user.id,

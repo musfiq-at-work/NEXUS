@@ -207,16 +207,16 @@ export const buyerOrdersRouter = createTRPCRouter({
             offset: z.number().min(0).default(0),            
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.BUYER_ORDERS]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: 'FORBIDDEN', 
+                    message: 'You do not have permission to view buyer orders.' 
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.BUYER_ORDERS]?.can_view;
-
-                if (!can_view) {
-                    throw new TRPCError({ 
-                        code: 'FORBIDDEN', 
-                        message: 'You do not have permission to view buyer orders.' 
-                    });
-                }
-
                 const result = await ctx.db.$queryRaw<BuyerOrderRow[]>`
                     SELECT
                         BO.id,
@@ -292,16 +292,16 @@ export const buyerOrdersRouter = createTRPCRouter({
             id: z.string().uuid(),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_delete = ctx.permissions[m.BUYER_ORDERS]?.can_delete;
+
+            if (!can_delete) {
+                throw new TRPCError({ 
+                    code: 'FORBIDDEN', 
+                    message: 'You do not have permission to delete buyer orders.' 
+                });
+            }
+            
             try {
-                const can_delete = ctx.permissions[m.BUYER_ORDERS]?.can_delete;
-
-                if (!can_delete) {
-                    throw new TRPCError({ 
-                        code: 'FORBIDDEN', 
-                        message: 'You do not have permission to delete buyer orders.' 
-                    });
-                }
-
                 const isFactoryOrderApproved = await ctx.db.factory_orders.findFirst({
                     where: {
                         order_id: input.id,

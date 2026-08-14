@@ -36,18 +36,16 @@ export const exportSummaryReportRouter = createTRPCRouter({
             })
         )
         .query(async ({ctx, input}) => {
+            const can_view = ctx.permissions[m.EXPORT_SUMMARY]?.can_view;
+
+            if(!can_view) {
+                throw new TRPCError({
+                    code: 'FORBIDDEN',
+                    message: 'You do not have permission to view LC Export summary report'
+                })
+            }
+            
             try {
-                const can_view = ctx.permissions[m.EXPORT_SUMMARY]?.can_view;
-
-                if(!can_view) {
-                    throw new TRPCError({
-                        code: 'FORBIDDEN',
-                        message: 'You do not have permission to view LC Export summary report'
-                    })
-                }
-
-                console.log('input', input);
-
                 let report: ExportSummary[] = [];
 
                 const buyerFilter = (input.buyerIds ?? []).length > 0
@@ -292,16 +290,16 @@ export const exportSummaryReportRouter = createTRPCRouter({
             buyerIds: z.array(z.number()).optional()
         }))
         .query(async ({ctx, input}) => {
+            const can_view = ctx.permissions[m.EXPORT_SUMMARY]?.can_view;
+
+            if(!can_view) {
+                throw new TRPCError({
+                    code: 'FORBIDDEN',
+                    message: 'You do not have permission to view LC Export summary report'
+                })
+            }
+            
             try {
-                const can_view = ctx.permissions[m.EXPORT_SUMMARY]?.can_view;
-
-                if(!can_view) {
-                    throw new TRPCError({
-                        code: 'FORBIDDEN',
-                        message: 'You do not have permission to view LC Export summary report'
-                    })
-                }
-
                 let scLcList: { id: string, sc_lc_no: string}[] = [];
 
                 if(input.base === 'LC'){

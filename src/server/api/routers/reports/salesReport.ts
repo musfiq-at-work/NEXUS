@@ -40,16 +40,16 @@ export const salesReportRouter = createTRPCRouter({
             })
         )
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.SALES_REPORT]?.can_view;
+            
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view sales report.",
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.SALES_REPORT]?.can_view;
-                
-                if (!can_view) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to view sales report.",
-                    });
-                }
-
                 const fromDate = input.fromDate;
                 const toDate = input.toDate;
                 const base = input.base;

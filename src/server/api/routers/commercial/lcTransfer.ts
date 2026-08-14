@@ -17,16 +17,16 @@ export const lcTransferRouter = createTRPCRouter({
             })
         )
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.LC_TRANSFER]?.can_view;
+
+            if(!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view this LC Transfer."
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.LC_TRANSFER]?.can_view;
-
-                if(!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to view this LC Transfer."
-                    });
-                }
-
                 const result = await ctx.db.$queryRaw<LcTransferListItem[]>`
                     WITH Transfers AS (
                         SELECT 
@@ -85,16 +85,16 @@ export const lcTransferRouter = createTRPCRouter({
             })
         )
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.LC_TRANSFER]?.can_view;
+
+            if(!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view this LC Transfer."
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.LC_TRANSFER]?.can_view;
-
-                if(!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to view this LC Transfer."
-                    });
-                }
-
                 const result = await ctx.db.$queryRaw<LcTransferListItem[]>`
                     WITH Transfers AS (
                         SELECT 
@@ -155,16 +155,16 @@ export const lcTransferRouter = createTRPCRouter({
             })
         )
         .mutation(async ({ ctx, input }) => {
+            const can_delete = ctx.permissions[m.LC_TRANSFER]?.can_delete;
+
+            if(!can_delete) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to delete this LC Transfer."
+                });
+            }
+            
             try {
-                const can_delete = ctx.permissions[m.LC_TRANSFER]?.can_delete;
-
-                if(!can_delete) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to delete this LC Transfer."
-                    });
-                }
-
                 return await ctx.db.$transaction(async (tx) => {
                     const lcDetails = await tx.lc_transfer_details.findMany({
                         where: {
@@ -233,16 +233,16 @@ export const lcTransferRouter = createTRPCRouter({
             })
         )
         .mutation(async ({ ctx, input }) => {
+            const can_add = ctx.permissions[m.LC_TRANSFER]?.can_add;
+
+            if(!can_add) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to add a new LC Transfer."
+                });
+            }
+            
             try {
-                const can_add = ctx.permissions[m.LC_TRANSFER]?.can_add;
-
-                if(!can_add) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to add a new LC Transfer."
-                    });
-                }
-
                 return await ctx.db.$transaction(async (tx) => {
                     const newLcTransfer = await tx.lc_transfer.create({
                         data: {
@@ -367,16 +367,16 @@ export const lcTransferRouter = createTRPCRouter({
             })
         )
         .query(async ({ ctx, input }) => {
-            try {
-                const can_view = ctx.permissions[m.LC_TRANSFER]?.can_view;
+            const can_view = ctx.permissions[m.LC_TRANSFER]?.can_view;
 
-                if(!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to view this LC Transfer."
-                    });
-                }
-                
+            if(!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view this LC Transfer."
+                });
+            }
+            
+            try {
                 const lcDetails = await ctx.db.$queryRaw<LcTransferDetails[]>`
                     WITH SHIPMENTS AS ( -- Calculate the latest ex-factory date for each LC
                         SELECT 
@@ -545,16 +545,16 @@ export const lcTransferRouter = createTRPCRouter({
             lc_transfer_id: z.string(),
         }))
         .mutation(async ({ ctx, input }) => {
+            const can_delete = ctx.permissions[m.LC_TRANSFER]?.can_delete;
+
+            if(!can_delete) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to delete this LC Transfer detail."
+                });
+            }
+            
             try {
-                const can_delete = ctx.permissions[m.LC_TRANSFER]?.can_delete;
-
-                if(!can_delete) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to delete this LC Transfer detail."
-                    });
-                }
-
                 return await ctx.db.$transaction(async (tx) => {
                     const transferDetail = await tx.lc_transfer_details.delete({
                         where: {
@@ -606,16 +606,16 @@ export const lcTransferRouter = createTRPCRouter({
             })
         )
         .mutation(async ({ ctx, input }) => {
+            const can_update = ctx.permissions[m.LC_TRANSFER]?.can_update;
+
+            if(!can_update) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to update this LC Transfer."
+                });
+            }
+            
             try {
-                const can_update = ctx.permissions[m.LC_TRANSFER]?.can_update;
-
-                if(!can_update) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to update this LC Transfer."
-                    });
-                }
-
                 return await ctx.db.$transaction(async (tx) => {
                     const newLcTransfer = await tx.lc_transfer.update({
                         where: {
@@ -718,16 +718,16 @@ export const lcTransferRouter = createTRPCRouter({
             id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.LC_TRANSFER]?.can_view;
+
+            if(!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view this LC Transfer."
+                });
+            }
+            
             try {
-                const can_view = ctx.permissions[m.LC_TRANSFER]?.can_view;
-
-                if(!can_view) {
-                    throw new TRPCError({ 
-                        code: "FORBIDDEN", 
-                        message: "You do not have permission to view this LC Transfer."
-                    });
-                }
-
                 const lcTransferObj = await ctx.db.lc_transfer.findUnique({
                     where: {
                         id: input.id,
