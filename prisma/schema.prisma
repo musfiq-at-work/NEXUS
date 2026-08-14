@@ -2943,6 +2943,7 @@ model cross_payments {
   term_id               Int
   added_at              DateTime?               @default(now()) @db.Timestamp(6)
   remarks               String?
+  is_authorized         Boolean?                @default(false)
   cross_payment_details cross_payment_details[]
   buyers                buyers                  @relation(fields: [buyer_id], references: [id], onUpdate: NoAction)
   terms                 terms                   @relation(fields: [term_id], references: [id], onUpdate: NoAction)
@@ -2958,6 +2959,7 @@ model cross_payments_history {
   action_type        actions?
   action_by          String?   @db.Uuid
   action_at          DateTime? @default(now()) @db.Timestamp(6)
+  is_authorized      Boolean?
   users              users?    @relation(fields: [action_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
@@ -3120,19 +3122,22 @@ model error_logs {
 }
 
 model early_settlement {
-  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  order_id     String       @db.Uuid
-  remarks      String?
-  added_at     DateTime?    @default(now()) @db.Timestamp(6)
-  buyer_orders buyer_orders @relation(fields: [order_id], references: [id], onUpdate: NoAction)
+  id                       String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  order_id                 String                     @db.Uuid
+  remarks                  String?
+  added_at                 DateTime?                  @default(now()) @db.Timestamp(6)
+  buyer_orders             buyer_orders               @relation(fields: [order_id], references: [id], onUpdate: NoAction)
+  early_settlement_details early_settlement_details[]
 }
 
 model early_settlement_details {
-  id                      String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  shipment_details_id     String           @db.Uuid
+  id                      String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  shipment_details_id     String            @db.Uuid
   early_settlement_charge Float
-  added_at                DateTime?        @default(now()) @db.Timestamp(6)
-  shipment_details        shipment_details @relation(fields: [shipment_details_id], references: [id], onUpdate: NoAction)
+  added_at                DateTime?         @default(now()) @db.Timestamp(6)
+  early_settlement_id     String?           @db.Uuid
+  early_settlement        early_settlement? @relation(fields: [early_settlement_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  shipment_details        shipment_details  @relation(fields: [shipment_details_id], references: [id], onUpdate: NoAction)
 }
 
 model early_settlement_details_history {

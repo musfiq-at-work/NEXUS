@@ -172,10 +172,12 @@ export const crossPaymentsRouter = createTRPCRouter({
                             FI.invoice_no,
                             FI.added_at
                         FROM factory_invoice AS FI
-                        WHERE NOT EXISTS ( -- BOOKMARK CROSS PAY
+                        WHERE NOT EXISTS (
                             SELECT 1
-                            FROM document_submission_factory_invoices AS DSFI
-                            WHERE DSFI.factory_invoice_id = FI.id
+                            FROM proceed_realization_details AS PRD
+                                INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = PRD.rdl_invoice_id
+                                INNER JOIN factory_invoice_details AS FID ON FID.factory_invoice_id = RID.factory_invoice_id
+                            WHERE FID.factory_invoice_id = FI.id
                         )
                         AND EXISTS (
                             SELECT 1
@@ -282,6 +284,7 @@ export const crossPaymentsRouter = createTRPCRouter({
                             B.BUYER_NAME,
                             T.NAME AS TERM_NAME,
                             SUM(CPD.VALUE) AS PAID_AMOUNT,
+                            CP.IS_AUTHORIZED,
                             CP.ADDED_AT
                         FROM CROSS_PAYMENTS AS CP
                             INNER JOIN CROSS_PAYMENT_DETAILS AS CPD ON CPD.cross_payment_id = CP.id
@@ -349,6 +352,7 @@ export const crossPaymentsRouter = createTRPCRouter({
                             B.BUYER_NAME,
                             T.NAME AS TERM_NAME,
                             SUM(CPD.VALUE) AS PAID_AMOUNT,
+                            CP.IS_AUTHORIZED,
                             CP.ADDED_AT
                         FROM CROSS_PAYMENTS AS CP
                             INNER JOIN CROSS_PAYMENT_DETAILS AS CPD ON CPD.cross_payment_id = CP.id
@@ -405,52 +409,70 @@ export const crossPaymentsRouter = createTRPCRouter({
             cross_payment_id: z.string(),
         }))
         .mutation(async ({ ctx, input }) => {
-            try {
-                const can_delete = ctx.permissions[m.CROSS_PAYMENT]?.can_delete;
+            const can_delete = ctx.permissions[m.CROSS_PAYMENT]?.can_delete;
 
-                if (!can_delete) {
-                    throw new TRPCError({
-                        code: "FORBIDDEN",
-                        message: "You do not have permission to delete cross payments.",
-                    });
+            if (!can_delete) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to delete cross payments.",
+                });
+            }
+
+            const getAuthorization = await ctx.db.cross_payments.findUnique({
+                where: {
+                    id: input.cross_payment_id
+                },
+                select: {
+                    is_authorized: true
                 }
+            });
 
+            if(!getAuthorization?.is_authorized) {
+                throw new TRPCError({
+                    code: 'CONFLICT',
+                    message: "This Cross Payment has been approved and can't be deleted"
+                })
+            }
+
+            try {
                 return await ctx.db.$transaction(async (tx) => {
                     const crossPaymentDetails = await tx.cross_payment_details.findMany({
-                        where: { cross_payment_id: input.cross_payment_id },
-                    });
-
-                    await tx.cross_payment_details_history.createMany({
-                        data: crossPaymentDetails.map((detail) => ({
-                            cross_payment_details_id: detail.id,
-                            cross_payment_id: input.cross_payment_id,
-                            factory_invoice_id: detail.factory_invoice_id,
-                            factory_payment_no: detail.factory_payment_no,
-                            factory_payment_date: detail.factory_payment_date,
-                            value: detail.value,
-                            action_type: actions.DELETE,
-                            action_by: ctx.user.id,
-                        })),
-                    });
-
-                    await tx.cross_payment_details.deleteMany({
                         where: { cross_payment_id: input.cross_payment_id },
                     });
 
                     const deletedCrossPayment = await tx.cross_payments.delete({
                         where: { id: input.cross_payment_id },
                     });
+                    
+                    await Promise.all([
+                        await tx.cross_payment_details.deleteMany({
+                            where: { cross_payment_id: input.cross_payment_id },
+                        }),
 
-                    await tx.cross_payments_history.create({
-                        data: {
-                            cross_payments_id: deletedCrossPayment.id,
-                            buyer_id: deletedCrossPayment.buyer_id,
-                            cross_payment_date: deletedCrossPayment.cross_payment_date,
-                            cross_payment_ref: deletedCrossPayment.cross_payment_ref,
-                            action_type: actions.DELETE,
-                            action_by: ctx.user.id,
-                        },
-                    });
+                        await tx.cross_payment_details_history.createMany({
+                            data: crossPaymentDetails.map((detail) => ({
+                                cross_payment_details_id: detail.id,
+                                cross_payment_id: input.cross_payment_id,
+                                factory_invoice_id: detail.factory_invoice_id,
+                                factory_payment_no: detail.factory_payment_no,
+                                factory_payment_date: detail.factory_payment_date,
+                                value: detail.value,
+                                action_type: actions.DELETE,
+                                action_by: ctx.user.id,
+                            })),
+                        }),
+    
+                        await tx.cross_payments_history.create({
+                            data: {
+                                cross_payments_id: deletedCrossPayment.id,
+                                buyer_id: deletedCrossPayment.buyer_id,
+                                cross_payment_date: deletedCrossPayment.cross_payment_date,
+                                cross_payment_ref: deletedCrossPayment.cross_payment_ref,
+                                action_type: actions.DELETE,
+                                action_by: ctx.user.id,
+                            },
+                        }),
+                    ]);
                 })
             }
             catch (error) {
@@ -716,6 +738,111 @@ export const crossPaymentsRouter = createTRPCRouter({
                 `;
             
                 return crossPayment;
+            }
+            catch (error) {
+                await logError(error, ctx, input);
+                handlePrismaError(error);
+            }
+        }),
+
+    getAuthorizations: protectedProcedure
+        .input(z.object({
+            id: z.string(),
+        }))
+        .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.CROSS_PAYMENT]?.can_view;
+
+            if(!can_view) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view cross payment." 
+                });
+            }
+
+            try {
+                const authorizationState = await ctx.db.cross_payments.findUnique({
+                    where: { id: input.id },
+                    select: {
+                        is_authorized: true,
+                    }
+                });
+
+                const authorizationPermission = await ctx.db.$queryRaw<{department_id: number, level_id: number}[]>`
+                    SELECT 
+                        department_id, level_id 
+                    FROM AUTHORIZATIONS 
+                    WHERE module_id = ${m.CROSS_PAYMENT}
+                        AND level_id = ${ctx.user.level_id}
+                        AND department_id = ${ctx.user.department_id}
+                    LIMIT 1;
+                `;
+
+                return {authorization: authorizationState, permission: authorizationPermission[0]};
+            }
+            catch (error) {
+                await logError(error, ctx, input);
+                handlePrismaError(error);
+            }
+        }),
+
+    approveCrossPayment: protectedProcedure
+        .input(z.object({
+            id: z.string(),
+            approval_status: z.boolean(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            const can_approve = ctx.permissions[m.CROSS_PAYMENT]?.can_update;
+
+            if(!can_approve) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to approve cross payment." 
+                });
+            }
+
+            try {
+                const userLevel = ctx.user.level_id;
+                const userDepartment = ctx.user.department_id;
+                const isAdmin = userLevel === ADMIN_LEVEL_ID && userDepartment === ADMIN_DEPARTMENT_ID;
+
+                const can_approve = await ctx.db.$queryRaw<{ can_approve: boolean }[]>`
+                    SELECT 
+                        1 as can_approve
+                    FROM AUTHORIZATIONS
+                    WHERE module_id = ${m.CROSS_PAYMENT}
+                        AND level_id = ${userLevel}
+                        AND department_id = ${userDepartment}
+                    LIMIT 1;
+                `;
+
+                if (can_approve.length === 0 && !isAdmin) {
+                    throw new TRPCError({
+                        code: "FORBIDDEN",
+                        message: "You do not have permission to Authorize this Cross Payment.",
+                    });
+                }
+
+                const updatedCrossPayment = await ctx.db.cross_payments.update({
+                    where: { id: input.id },
+                    data: {
+                        is_authorized: input.approval_status,
+                    }
+                });
+
+                await ctx.db.cross_payments_history.create({
+                    data: {
+                        cross_payments_id: updatedCrossPayment.id,
+                        cross_payment_ref: updatedCrossPayment.cross_payment_ref,
+                        cross_payment_date: updatedCrossPayment.cross_payment_date,
+                        buyer_id: updatedCrossPayment.buyer_id,
+                        term_id: updatedCrossPayment.term_id,
+                        is_authorized: updatedCrossPayment.is_authorized,
+                        action_type: actions.UPDATE,
+                        action_by: ctx.user.id,
+                    }
+                });
+
+                return updatedCrossPayment;
             }
             catch (error) {
                 await logError(error, ctx, input);

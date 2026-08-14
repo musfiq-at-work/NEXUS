@@ -15,6 +15,7 @@ export interface CrossPaymentList {
     buyer_name: string;
     term_name: string;
     paid_amount: number;
+    is_authorized: boolean;
     added_at: Date;
     total_count: number;
 }
