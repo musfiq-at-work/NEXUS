@@ -32,13 +32,15 @@ export const earlySettlementRouter = createTRPCRouter({
                     SELECT
                         BO.REF_NO,
                         B.BUYER_NAME,
-                        COALESCE(SUM(ESS.DELIVERY_QUANTITY * SD.FOB_RATE * ESD.EARLY_SETTLEMENT_CHARGE / 100)::TEXT, '-') AS CHARGE
+                        SUM(SID.QUANTITY * SD.FOB_RATE * ESD.EARLY_SETTLEMENT_CHARGE / 100) AS CHARGE,
+                        CU.SYMBOL
                     FROM early_settlement AS ES
                         INNER JOIN buyer_orders AS BO ON BO.id = ES.order_id
                         INNER JOIN buyers AS B ON BO.buyer_id = B.id
                         INNER JOIN early_settlement_details AS ESD ON ESD.EARLY_SETTLEMENT_ID = ES.id
                         INNER JOIN shipment_details AS SD ON SD.id = ESD.shipment_details_id
-                        LEFT JOIN exfactory_shipments AS ESS ON ESS.shipment_details_id = SD.id
+                        INNER JOIN shipment_item_details AS SID ON SID.shipment_detail_id = SD.id
+                        LEFT JOIN currencies AS CU ON CU.id = BO.secondary_currency_id
                     WHERE (
                         EXISTS ( -- Admin
                             SELECT 1
@@ -55,7 +57,7 @@ export const earlySettlementRouter = createTRPCRouter({
                                 AND TM.USER_ID = ${ctx.user.id}
                         )
                     )
-                    GROUP BY ES.ID, B.ID, BO.ID
+                    GROUP BY ES.ID, B.ID, BO.ID, CU.id
                     ORDER BY ES.added_at DESC
                 )
                 SELECT
@@ -71,7 +73,8 @@ export const earlySettlementRouter = createTRPCRouter({
             const earlySettlements = results.map(({total_count: _, ...earlySettlements}) => {
                 return {
                     ...earlySettlements,
-                    charge: earlySettlements.charge === '-' ? '-' : currencyFormatter(safeNumber(earlySettlements.charge), '$')
+                    charge: earlySettlements.charge === '-' ? '-' 
+                        : currencyFormatter(safeNumber(earlySettlements.charge), earlySettlements.symbol ?? '$')
                 }
             });
 
@@ -101,13 +104,15 @@ export const earlySettlementRouter = createTRPCRouter({
                     SELECT
                         BO.REF_NO,
                         B.BUYER_NAME,
-                        COALESCE(SUM(ESS.DELIVERY_QUANTITY * SD.FOB_RATE * ESD.EARLY_SETTLEMENT_CHARGE / 100)::TEXT, '-') AS CHARGE
+                        SUM(SID.QUANTITY * SD.FOB_RATE * ESD.EARLY_SETTLEMENT_CHARGE / 100) AS CHARGE,
+                        CU.SYMBOL
                     FROM early_settlement AS ES
                         INNER JOIN buyer_orders AS BO ON BO.id = ES.order_id
                         INNER JOIN buyers AS B ON BO.buyer_id = B.id
                         INNER JOIN early_settlement_details AS ESD ON ESD.EARLY_SETTLEMENT_ID = ES.id
                         INNER JOIN shipment_details AS SD ON SD.id = ESD.shipment_details_id
-                        LEFT JOIN exfactory_shipments AS ESS ON ESS.shipment_details_id = SD.id
+                        INNER JOIN shipment_item_details AS SID ON SID.shipment_detail_id = SD.id
+                        LEFT JOIN currencies AS CU ON CU.id = BO.secondary_currency_id
                     WHERE (
                         EXISTS ( -- Admin
                             SELECT 1
@@ -128,7 +133,7 @@ export const earlySettlementRouter = createTRPCRouter({
                         BO.REF_NO ILIKE '%' || ${input.query} || '%'
                         OR B.BUYER_NAME ILIKE '%' || ${input.query} || '%'
                     )
-                    GROUP BY ES.ID, B.ID, BO.ID
+                    GROUP BY ES.ID, B.ID, BO.ID, CU.id
                     ORDER BY ES.added_at DESC
                 )
                 SELECT
@@ -144,7 +149,8 @@ export const earlySettlementRouter = createTRPCRouter({
             const earlySettlements = results.map(({total_count: _, ...earlySettlements}) => {
                 return {
                     ...earlySettlements,
-                    charge: earlySettlements.charge === '-' ? '-' : currencyFormatter(safeNumber(earlySettlements.charge), '$')
+                    charge: earlySettlements.charge === '-' ? '-' 
+                        : currencyFormatter(safeNumber(earlySettlements.charge), earlySettlements.symbol ?? '$')
                 }
             });
 
