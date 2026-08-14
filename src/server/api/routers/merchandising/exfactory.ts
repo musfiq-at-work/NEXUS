@@ -73,11 +73,7 @@ export const exFactoryRouter = createTRPCRouter({
 
                 const total = results.length > 0 ? Number(results[0]?.total_count) : 0;
                 
-                const exFactories = results.map(({total_count: _, ...exFactories}) => {
-                    return {
-                        ...exFactories,
-                    }
-                });
+                const exFactories = results.map(({total_count: _, ...exFactories}) => exFactories);
 
                 return { exFactories, total };
             }
