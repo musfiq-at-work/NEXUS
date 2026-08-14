@@ -4,7 +4,7 @@ import { plusIcon } from "~/assets";
 import { Button, SearchField, Table, Wrapper, Popup } from "~/components";
 import { api } from "~/trpc/react";
 import { toast } from "sonner";
-// import { tableHeaders } from "./config/columns";
+import { tableHeaders } from "./config/columns";
 import { useSearchablePagination, useModulePermissions, useDeleteConfirmation } from "~/hooks";
 
 const EarlySettlement = () => {
@@ -16,29 +16,28 @@ const EarlySettlement = () => {
     const { can_add, can_update, can_delete } = useModulePermissions();
 
     // Fetch paginated data
-    const {data: buyerOrders, isLoading} = api.buyerOrders.getBuyerOrders.useQuery({
+    const {data: earlySettlements, isLoading} = api.earlySettlement.getEarlySettlements.useQuery({
         limit,
         offset: page * limit,
     });
 
-    const buyerOrdersList = buyerOrders?.buyerOrders ?? [];
-    const total = buyerOrders?.total ?? 0;
+    const buyerOrdersList = earlySettlements?.earlySettlements ?? [];
+    const total = earlySettlements?.total ?? 0;
     
     // Search query (enabled only when there's a search term)
-    const searchQuery = api.buyerOrders.searchBuyerOrders.useQuery(
+    const searchQuery = api.earlySettlement.searchEarlySettlements.useQuery(
         { query: debouncedSearch, limit, offset: page * limit },
         { enabled: debouncedSearch.length > 0 }
     );
 
     const editURL = '/merchandising/early_settlement/edit/';
-    const printURL = `/pdf/buyer_order/`;
 
     const deleteMutation = api.buyerOrders.deleteBuyerOrder.useMutation({
         onSuccess: async () => {
-            toast.success("Buyer Order deleted successfully!");
+            toast.success("Early Settlement deleted successfully!");
             await Promise.all([
-                utils.buyerOrders.getBuyerOrders.invalidate(),
-                utils.buyerOrders.searchBuyerOrders.invalidate(),
+                utils.earlySettlement.getEarlySettlements.invalidate(),
+                utils.earlySettlement.searchEarlySettlements.invalidate(),
             ]);
         },
     });
@@ -47,7 +46,7 @@ const EarlySettlement = () => {
         deleteID, isLoadingDelete, deleteClicked, setDeleteClicked, handleDeleteClicked, handleDeleteConfirmed 
     } = useDeleteConfirmation({
         mutation: deleteMutation,
-        successMessage: 'Buyer Order deleted successfully',
+        successMessage: 'Early Settlement deleted successfully',
         payloadBuilder: id => ({ id }),
     });
 
@@ -76,15 +75,15 @@ const EarlySettlement = () => {
                 }
             >
                 <div className="w-full">
-                    {/* <Table
-                        data={searchQuery.data?.buyerOrders && !!debouncedSearch 
-                            ? searchQuery.data.buyerOrders : buyerOrdersList
+                    <Table
+                        data={searchQuery.data?.earlySettlements && !!debouncedSearch 
+                            ? searchQuery.data.earlySettlements : buyerOrdersList
                         }
                         isLoading={isLoading || searchQuery.isLoading}
                         columns={tableHeaders}
                         nextPage={nextPage}
                         prevPage={prevPage}
-                        total={searchQuery.data?.buyerOrders && searchQuery.data.buyerOrders.length > 0 
+                        total={searchQuery.data?.earlySettlements && searchQuery.data.earlySettlements.length > 0 
                             ? searchQuery.data.total ?? 0 : total
                         }
                         deleteFunction={handleDeleteClicked}
@@ -94,7 +93,7 @@ const EarlySettlement = () => {
                         allowDelete={can_delete}
                         allowEdit={can_update}
                         view={!can_update}
-                    /> */}
+                    />
                 </div>
             </Wrapper>
             {/* <Popup

@@ -6,6 +6,8 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma, shipment_modes } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 import type { EarlySettlements } from "./_types/earlySettlement";
+import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
+import { safeNumber } from "~/utils/numbers";
 
 export const earlySettlementRouter = createTRPCRouter({
     getEarlySettlements: protectedProcedure
@@ -30,14 +32,13 @@ export const earlySettlementRouter = createTRPCRouter({
                     SELECT
                         BO.REF_NO,
                         B.BUYER_NAME,
-                        SUM(SID.QUANTITY * SD.FOB_RATE * ESD.EARLY_SETTLEMENT_CHARGE) / SUM(SID.QUANTITY * SD.FOB_RATE) AS AVG_CHARGE,
-                        SUM(SID.QUANTITY * SD.FOB_RATE * ESD.EARLY_SETTLEMENT_CHARGE / 100) AS CHARGE
+                        COALESCE(SUM(ESS.DELIVERY_QUANTITY * SD.FOB_RATE * ESD.EARLY_SETTLEMENT_CHARGE / 100)::TEXT, '-') AS CHARGE
                     FROM early_settlement AS ES
                         INNER JOIN buyer_orders AS BO ON BO.id = ES.order_id
                         INNER JOIN buyers AS B ON BO.buyer_id = B.id
                         INNER JOIN early_settlement_details AS ESD ON ESD.EARLY_SETTLEMENT_ID = ES.id
                         INNER JOIN shipment_details AS SD ON SD.id = ESD.shipment_details_id
-                        INNER JOIN shipment_item_details AS SID ON SID.shipment_detail_id = SD.id
+                        LEFT JOIN exfactory_shipments AS ESS ON ESS.shipment_details_id = SD.id
                     WHERE (
                         EXISTS ( -- Admin
                             SELECT 1
@@ -67,7 +68,12 @@ export const earlySettlementRouter = createTRPCRouter({
 
             const total = results.length > 0 ? Number(results[0]?.total_count) : 0;
                 
-            const earlySettlements = results.map(({total_count: _, ...earlySettlements}) => earlySettlements);
+            const earlySettlements = results.map(({total_count: _, ...earlySettlements}) => {
+                return {
+                    ...earlySettlements,
+                    charge: earlySettlements.charge === '-' ? '-' : currencyFormatter(safeNumber(earlySettlements.charge), '$')
+                }
+            });
 
             return { earlySettlements, total };
         }),
@@ -95,14 +101,13 @@ export const earlySettlementRouter = createTRPCRouter({
                     SELECT
                         BO.REF_NO,
                         B.BUYER_NAME,
-                        SUM(SID.QUANTITY * SD.FOB_RATE * ESD.EARLY_SETTLEMENT_CHARGE) / SUM(SID.QUANTITY * SD.FOB_RATE) AS AVG_CHARGE,
-                        SUM(SID.QUANTITY * SD.FOB_RATE * ESD.EARLY_SETTLEMENT_CHARGE / 100) AS CHARGE
+                        COALESCE(SUM(ESS.DELIVERY_QUANTITY * SD.FOB_RATE * ESD.EARLY_SETTLEMENT_CHARGE / 100)::TEXT, '-') AS CHARGE
                     FROM early_settlement AS ES
                         INNER JOIN buyer_orders AS BO ON BO.id = ES.order_id
                         INNER JOIN buyers AS B ON BO.buyer_id = B.id
                         INNER JOIN early_settlement_details AS ESD ON ESD.EARLY_SETTLEMENT_ID = ES.id
                         INNER JOIN shipment_details AS SD ON SD.id = ESD.shipment_details_id
-                        INNER JOIN shipment_item_details AS SID ON SID.shipment_detail_id = SD.id
+                        LEFT JOIN exfactory_shipments AS ESS ON ESS.shipment_details_id = SD.id
                     WHERE (
                         EXISTS ( -- Admin
                             SELECT 1
@@ -136,7 +141,12 @@ export const earlySettlementRouter = createTRPCRouter({
 
             const total = results.length > 0 ? Number(results[0]?.total_count) : 0;
                 
-            const earlySettlements = results.map(({total_count: _, ...earlySettlements}) => earlySettlements);
+            const earlySettlements = results.map(({total_count: _, ...earlySettlements}) => {
+                return {
+                    ...earlySettlements,
+                    charge: earlySettlements.charge === '-' ? '-' : currencyFormatter(safeNumber(earlySettlements.charge), '$')
+                }
+            });
 
             return { earlySettlements, total };
         })
