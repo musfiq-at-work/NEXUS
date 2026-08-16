@@ -7,8 +7,6 @@ import { api } from "~/trpc/react";
 import { tableFormColumns } from "../rdlInvoiceConfig/tableFormColumns";
 import { skipToken } from "@tanstack/react-query";
 import TableForm from "./rdlInvoiceTableForm";
-import { formatDate } from "~/utils/localDateString";
-import { formFields } from "../rdlInvoiceConfig/tableFormFields";
 import { currencyFormatter } from "~/utils/localNumberStrings";
 import { safeNumber } from "~/utils/numbers";
 

@@ -1,7 +1,6 @@
 export interface EarlySettlements {
+    id: string;
     ref_no: string;
     buyer_name: string;
-    charge: string;
-    symbol: string;
     total_count: bigint;
 }

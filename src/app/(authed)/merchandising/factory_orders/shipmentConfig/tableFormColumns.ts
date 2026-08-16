@@ -9,7 +9,7 @@ export const tableFormColumns = [
     { key: 'size_name', label: 'Size Range' },
     { key: 'colors', label: 'Colors (Quantity)' },
     { key: 'lot_quantity', label: 'Quantity' },
-    { key: 'factory_fob', label: 'Factory Rate' },
+    { key: 'factory_fob', label: 'Factory FOB' },
     { key: 'factory_value', label: 'Factory Value' },
     { key: 'transfer_rate', label: 'Transfer Rate' },
     { key: 'transfer_value', label: 'Transfer Value' },

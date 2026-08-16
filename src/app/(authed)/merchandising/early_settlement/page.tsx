@@ -32,7 +32,7 @@ const EarlySettlement = () => {
 
     const editURL = '/merchandising/early_settlement/edit/';
 
-    const deleteMutation = api.buyerOrders.deleteBuyerOrder.useMutation({
+    const deleteMutation = api.earlySettlement.deleteEarlySettlement.useMutation({
         onSuccess: async () => {
             toast.success("Early Settlement deleted successfully!");
             await Promise.all([
@@ -66,7 +66,7 @@ const EarlySettlement = () => {
                         <div className="w-70">
                             <Button
                                 variant="secondary"
-                                label="Add New Buyer Order"
+                                label="Add Early Settlement"
                                 leftIcon={plusIcon}
                                 onClick={() => router.push('/merchandising/early_settlement/new')}
                             />
@@ -96,19 +96,19 @@ const EarlySettlement = () => {
                     />
                 </div>
             </Wrapper>
-            {/* <Popup
+            <Popup
                 open={deleteClicked}
                 onClose={() => setDeleteClicked(false)}
                 heading="Confirm Deletion"
-                description={`Are you sure you want to delete "${(
-                    searchQuery.data?.buyerOrders && !!debouncedSearch 
-                        ? searchQuery.data.buyerOrders : buyerOrdersList
+                description={`Are you sure you want to delete Early Settlement of "${(
+                    searchQuery.data?.earlySettlements && !!debouncedSearch 
+                        ? searchQuery.data.earlySettlements : buyerOrdersList
                 ).find(order => order.id === deleteID)?.ref_no}"?`}
                 actionLabel="DELETE"
                 negativeAction={true}
                 loading={isLoadingDelete}
                 action={handleDeleteConfirmed}
-            /> */}
+            />
         </>
     )
 }
