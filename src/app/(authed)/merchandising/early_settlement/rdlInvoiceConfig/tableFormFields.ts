@@ -1,29 +1,132 @@
-import type { RDLInvoiceDetailsFormValues } from "../config/formSchema";
+import type { ShipmentFormValues } from "../config/formSchema";
 import type { BaseField } from "~/types/form";
 
-export type Field<T extends keyof RDLInvoiceDetailsFormValues> = BaseField<T>;
+export type Field<T extends keyof ShipmentFormValues> = BaseField<T>;
 
-export const formFields = (): Field<keyof RDLInvoiceDetailsFormValues>[] => {
+export const formFields = (): Field<keyof ShipmentFormValues>[] => {
     return [
         {
-            name: "rdl_invoice_no",
-            label: "RDL Invoice No",
-            placeholder: "Enter RDL invoice no",
+            name: "style",
+            label: "Style",
+            placeholder: "Enter Style",
             optional: true,
             disabled: true,
         },
         {
-            name: "invoice_value",
-            label: "Invoice Value",
-            placeholder: "Enter invoice value",
+            name: "buyer_po",
+            label: "Buyer PO",
+            placeholder: "Enter PO",
             optional: true,
             disabled: true,
         },
         {
-            name: "proceed_value",
+            name: "destination",
+            label: "Destination",
+            placeholder: "Enter Destination",
+            optional: true,
+            disabled: true,
+        },
+        {
+            name: "size",
+            label: "Size",
+            placeholder: "Enter size",
+            optional: true,
+            disabled: true,
+        },
+        {
+            name: "order_quantity",
+            label: "Order Quantity",
+            placeholder: "Enter Quantity",
+            type: 'number',
+            optional: true,
+            disabled: true,
+        },
+        {
+            name: "fob_rate",
+            label: "FOB Rate",
+            placeholder: "Enter FOB Rate",
+            optional: true,
+            disabled: true,
+        },
+        {
+            name: "rdl_value",
+            label: "RDL Value",
+            placeholder: "Enter RDL value",
+            type: 'number',
+            optional: true,
+            disabled: true,
+        },
+        {
+            name: "early_settlement_charge",
+            label: "Early Settlement Charge",
+            placeholder: "Enter Settlement Charge",
+            type: 'number',
+            optional: true,
+            disabled: true,
+        },
+        {
+            name: "effective_rdl_fob",
+            label: "Effective RDL FOB",
+            placeholder: "Enter Effective RDL FOB",
+            type: 'number',
+            optional: true,
+            disabled: true,
+        },
+        {
+            name: "effective_rdl_value",
+            label: "Effective RDL Value",
+            placeholder: "Enter Effective RDL Value",
+            type: 'number',
+            optional: true,
+            disabled: true,
+        },
+        {
+            name: "factory_rate",
+            label: "Factory Rate",
+            placeholder: "Enter Factory Rate",
+            type: 'number',
+            optional: true,
+            disabled: true,
+        },
+        {
+            name: "factory_value",
             label: "Factory Value",
-            placeholder: "Enter factory value",
-            type: "number",
+            placeholder: "Enter Factory Value",
+            type: 'number',
+            optional: true,
+            disabled: true,
+        },
+        {
+            name: "commission",
+            label: "Commission",
+            placeholder: "Enter Commission",
+            type: 'number',
+            optional: true,
+            disabled: true,
+        },
+        {
+            name: "dhaka_commission",
+            label: "Dhaka Commission",
+            placeholder: "Enter Dhaka Commission",
+            type: 'number',
+            optional: true,
+            disabled: true,
+        },
+        {
+            name: "other_commission",
+            label: "Other Commission",
+            placeholder: "Enter Other Commission",
+            type: 'number',
+            optional: true,
+            disabled: true,
+        },
+        {
+            name: "overseas_commission",
+            label: "Overseas Commission",
+            placeholder: "Enter Overseas Commission",
+            type: 'number',
+            optional: true,
+            disabled: true,
         },
     ]
 }

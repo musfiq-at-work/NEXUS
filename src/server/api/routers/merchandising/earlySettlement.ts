@@ -5,7 +5,7 @@ import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma, shipment_modes } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
-import type { EarlySettlements } from "./_types/earlySettlement";
+import type { EarlySettlements, ShipmentDetails } from "./_types/earlySettlement";
 import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
 import { safeNumber } from "~/utils/numbers";
 
@@ -199,12 +199,12 @@ export const earlySettlementRouter = createTRPCRouter({
                     message: "You don't have permission to view Early Settlements"
                 })
             }
-            
-            const shipments = await ctx.db.$executeRaw`
+
+            const shipments = await ctx.db.$executeRaw<ShipmentDetails[]>`
                 WITH BASE AS (
                     SELECT
+                        ESD.id AS early_settlement_details_id,
                         OS.style,
-                        SD.id AS shipment_detail_id,
                         SD.buyer_po,
                         D.name AS destination,
                         BDS.size,
@@ -239,6 +239,7 @@ export const earlySettlementRouter = createTRPCRouter({
                     FROM BASE
                 )
                 SELECT
+                    early_settlement_details_id,
                     style,
                     buyer_po,
                     destination,
@@ -252,11 +253,137 @@ export const earlySettlementRouter = createTRPCRouter({
                     factory_rate,
                     factory_value,
                     commission,
-                    commission * dhaka_percentage / NULLIF(total_percentage, 0) AS dhaka_commission,
-                    commission * others_percentage / NULLIF(total_percentage, 0) AS other_commission,
-                    commission * overseas_percentage / NULLIF(total_percentage, 0) AS overseas_commission
-                FROM CALC;
-            `
+                    CASE 
+                        WHEN total_percentage = 0 THEN 0 
+                        ELSE commission * dhaka_percentage / total_percentage 
+                    END AS dhaka_commission,
+                    CASE 
+                        WHEN total_percentage = 0 THEN 0 
+                        ELSE commission * others_percentage / total_percentage 
+                    END AS other_commission,
+                    CASE 
+                        WHEN total_percentage = 0 THEN 0 
+                        ELSE commission * overseas_percentage / total_percentage 
+                    END AS overseas_commission
+                    FROM CALC;
+            `;
+
+            return shipments;
+        }),
+
+    addEarlySettlement: protectedProcedure
+        .input(z.object({
+            order_id: z.string().min(1, 'Order is Mandatory'),
+            remarks: z.string().optional(),
+        }))
+        .mutation(async({ctx, input}) => {
+            const can_add = ctx.permissions[m.EARLY_SETTLEMENT]?.can_add;
+
+            if(!can_add){
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You don't have permission to add Early Settlement"
+                })
+            }
+            
+            try {
+                const newEarlySettlement = await ctx.db.early_settlement.create({
+                    data: {
+                        order_id: input.order_id,
+                        remarks: input.remarks
+                    }
+                })
+
+                await ctx.db.$queryRaw`
+                    INSERT INTO EARLY_SETTLEMENT_DETAILS (
+                        SHIPMENT_DETAILS_ID,
+                        EARLY_SETTLEMENT_CHARGE,
+                        EARLY_SETTLEMENT_ID
+                    )
+                    SELECT
+                        SD.id,
+                        ESP.charge,
+                        ES.id
+                    FROM buyer_orders AS BO ON BO.id = CD.order_id
+                        INNER JOIN order_styles AS OS ON OS.order_id = BO.id
+                        INNER JOIN shipment_details AS SD ON SD.order_style_id = OS.id
+                        INNER JOIN early_settlement AS ES ON ES.order_id = BO.id
+                        INNER JOIN early_settlement_percentage AS ESP ON ESP.buyer_id = BO.buyer_id
+                    WHERE BO.id = ${newEarlySettlement.id};
+                `;
+            }
+            catch (error){
+                await logError(error, ctx, input);
+                handlePrismaError(error);
+            }
+        }),
+
+        
+        
+    getOrderForEarlySettlement: protectedProcedure
+        .input(z.object({
+            buyer_id: z.number().min(1, 'Select Buyer')
+        }))
+        .query(async ({ctx, input}) => {
+            const can_view = ctx.permissions[m.EARLY_SETTLEMENT]?.can_add;
+            
+            if(!can_view){
+                throw new TRPCError({
+                    code: 'FORBIDDEN',
+                    message: "You don't have permission to view Early Settlement"
+                })
+            }
+            
+            const buyer_orders = await ctx.db.$queryRaw<{id: string; ref_no: string}[]>`
+                SELECT  
+                    ID,
+                    REF_NO
+                FROM buyer_orders AS BO WHERE ID NOT IN (
+                    SELECT ORDER_ID FROM early_settlement
+                )
+                AND BO.BUYER_ID = ${input.buyer_id};
+            `;
+
+            return buyer_orders;
+        }),
+    
+    getBuyersForEarlySettlement: protectedProcedure
+        .query(async ({ctx}) => {
+            const can_view = ctx.permissions[m.EARLY_SETTLEMENT]?.can_add;
+            
+            if(!can_view){
+                throw new TRPCError({
+                    code: 'FORBIDDEN',
+                    message: "You don't have permission to view Early Settlement"
+                })
+            }
+
+            const buyers = await ctx.db.$queryRaw<{id: number, buyer_name: string}[]>`
+                SELECT
+                    DISTINCT B.ID, B.BUYER_NAME
+                FROM early_settlement_percentage AS ESP
+                    INNER JOIN BUYERS AS B ON ESP.buyer_id = B.id
+                    INNER JOIN TEAMS AS T ON T.buyer_id = B.id
+                WHERE (
+                    EXISTS (
+                        SELECT 1
+                        FROM USERS U
+                        WHERE U.ID = ${ctx.user.id}
+                        AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
+                        AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
+                    )
+                    OR EXISTS (
+                        SELECT 1
+                        FROM TEAM_MEMBERS TM
+                        WHERE TM.TEAM_ID = T.ID
+                        AND TM.USER_ID = ${ctx.user.id}
+                    )
+                )
+                GROUP BY B.ID
+                ORDER BY B.BUYER_NAME ASC;
+            `;
+
+            return buyers;
         })
 });
 
