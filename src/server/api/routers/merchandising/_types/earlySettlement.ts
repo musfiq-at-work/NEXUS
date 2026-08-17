@@ -13,6 +13,7 @@ export interface ShipmentDetails {
     size: string;
     order_quantity: number;
     fob_rate: number;
+    rdl_value: number;
     early_settlement_charge: number;
     effective_rdl_fob: number;
     effective_rdl_value: number;

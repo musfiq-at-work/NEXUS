@@ -25,7 +25,7 @@ export type ShipmentFormValues = z.infer<typeof shipmentSchema>;
 export const earlySettlementFormSchema = z.object({
 	db_id: z.string().optional(),
 	order_id: z.string().min(1, "Order ID is required"),
-	buyer_id: z.string().optional(),
+	buyer_id: z.number().optional(),
 	remarks: z.string().optional(),
 	pos: z.array(shipmentSchema).optional(),
 });

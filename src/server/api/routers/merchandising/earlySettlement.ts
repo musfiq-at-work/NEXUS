@@ -200,7 +200,7 @@ export const earlySettlementRouter = createTRPCRouter({
                 })
             }
 
-            const shipments = await ctx.db.$executeRaw<ShipmentDetails[]>`
+            const shipments = await ctx.db.$queryRaw<ShipmentDetails[]>`
                 WITH BASE AS (
                     SELECT
                         ESD.id AS early_settlement_details_id,
@@ -287,30 +287,33 @@ export const earlySettlementRouter = createTRPCRouter({
             }
             
             try {
-                const newEarlySettlement = await ctx.db.early_settlement.create({
-                    data: {
-                        order_id: input.order_id,
-                        remarks: input.remarks
-                    }
+                return await ctx.db.$transaction(async (tx) => {
+                    const newEarlySettlement = await tx.early_settlement.create({
+                        data: {
+                            order_id: input.order_id,
+                            remarks: input.remarks
+                        }
+                    })
+
+                    await tx.$queryRaw`
+                        INSERT INTO EARLY_SETTLEMENT_DETAILS (
+                            SHIPMENT_DETAILS_ID,
+                            EARLY_SETTLEMENT_CHARGE,
+                            EARLY_SETTLEMENT_ID
+                        )
+                        SELECT
+                            SD.id,
+                            ESP.charge,
+                            ES.id
+                        FROM buyer_orders AS BO
+                            INNER JOIN order_styles AS OS ON OS.order_id = BO.id
+                            INNER JOIN shipment_details AS SD ON SD.order_style_id = OS.id
+                            INNER JOIN early_settlement AS ES ON ES.order_id = BO.id
+                            INNER JOIN early_settlement_percentage AS ESP ON ESP.buyer_id = BO.buyer_id
+                        WHERE BO.id = ${newEarlySettlement.id};
+                    `;
                 })
 
-                await ctx.db.$queryRaw`
-                    INSERT INTO EARLY_SETTLEMENT_DETAILS (
-                        SHIPMENT_DETAILS_ID,
-                        EARLY_SETTLEMENT_CHARGE,
-                        EARLY_SETTLEMENT_ID
-                    )
-                    SELECT
-                        SD.id,
-                        ESP.charge,
-                        ES.id
-                    FROM buyer_orders AS BO ON BO.id = CD.order_id
-                        INNER JOIN order_styles AS OS ON OS.order_id = BO.id
-                        INNER JOIN shipment_details AS SD ON SD.order_style_id = OS.id
-                        INNER JOIN early_settlement AS ES ON ES.order_id = BO.id
-                        INNER JOIN early_settlement_percentage AS ESP ON ESP.buyer_id = BO.buyer_id
-                    WHERE BO.id = ${newEarlySettlement.id};
-                `;
             }
             catch (error){
                 await logError(error, ctx, input);
@@ -318,7 +321,6 @@ export const earlySettlementRouter = createTRPCRouter({
             }
         }),
 
-        
         
     getOrderForEarlySettlement: protectedProcedure
         .input(z.object({

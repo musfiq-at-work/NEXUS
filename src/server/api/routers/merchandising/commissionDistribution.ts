@@ -361,13 +361,23 @@ export const commissionDistributionRouter = createTRPCRouter({
                                 DO UPDATE SET dhaka_commission_percentage = EXCLUDED.dhaka_commission_percentage;
                         `,
                         
-                        await tx.early_settlement.create({
-                            data: {
-                                order_id: input.order_id,
-                            }
-                        })
                     ]);
-
+                    
+                    const buyer_id = await ctx.db.buyer_orders.findUnique({
+                        where: {
+                            id: input.order_id
+                        },
+                        select: {
+                            buyer_id: true
+                        }
+                    })
+                    
+                    await tx.early_settlement.create({
+                        data: {
+                            order_id: input.order_id,
+                            buyer_id: buyer_id?.buyer_id
+                        }
+                    })
 
                     // Generate Early Settlement per order PO
                     await tx.$queryRaw`

@@ -3,21 +3,21 @@
 import React from "react";
 import { GenericFormTableRow, Heading, TableBody, TableWrapper } from "~/components";
 import { type FieldArrayWithId, type FieldErrors } from "react-hook-form";
-import type { useProceedRealizationForm } from "../config/useProceedRealizationForm";
+import type { useEarlySettlementForm } from "../config/useEarlySettlementForm";
 import TableHeader, { type TableHeaderType } from "~/components/organisms/table/TableHeader";
-import type { ProceedRealizationFormValues } from "../config/formSchema";
+import type { EarlySettlementFormValues } from "../config/formSchema";
 import { formFields as shipmentTableFormFields } from "../rdlInvoiceConfig/tableFormFields";
 
-type RdlInvoiceRow = FieldArrayWithId<ProceedRealizationFormValues>;
+type ShipmentRow = FieldArrayWithId<EarlySettlementFormValues>;
 
 type Props = {
     isLoading?: boolean;
-    columns: TableHeaderType<RdlInvoiceRow>[];
-    rows: RdlInvoiceRow[];
+    columns: TableHeaderType<ShipmentRow>[];
+    rows: ShipmentRow[];
     disabled?: boolean;
     name: string;
-    methods: ReturnType<typeof useProceedRealizationForm>['methods'];
-    validationError: FieldErrors<ProceedRealizationFormValues>;
+    methods: ReturnType<typeof useEarlySettlementForm>['methods'];
+    validationError: FieldErrors<EarlySettlementFormValues>;
 }
 
 const TableForm = (props: Props) => {
@@ -26,7 +26,7 @@ const TableForm = (props: Props) => {
     return (
         <>
             <Heading as ='h3' className="mx-8">
-                RDL Invoice Details
+                PO Details
             </Heading>
             <form className="flex flex-col justify-start w-full px-8 pb-8">
                 <div className="grid grid-cols-[repeat(auto-fit,minmax(400px,1fr))] items-center gap-4 w-full">
@@ -39,7 +39,7 @@ const TableForm = (props: Props) => {
                                     fields={shipmentTableFormFields()}
                                     register={methods.register}
                                     disabled={disabled}
-                                    validationError={validationError.details?.[index] ?? {}}
+                                    validationError={validationError.pos?.[index] ?? {}}
                                     name={name}
                                     control={methods.control}
                                     index={index}
