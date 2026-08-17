@@ -8,13 +8,14 @@ export type Field<T extends keyof EarlySettlementFormValues> = BaseField<T>;
 interface FieldProps {
     isEdit: boolean;
     buyer_id?: number;
+    early_settlement_id?: string;
 }
 
-export const useFormFields = ({isEdit, buyer_id}: FieldProps): Field<keyof EarlySettlementFormValues>[] => {
+export const useFormFields = ({isEdit, buyer_id, early_settlement_id}: FieldProps): Field<keyof EarlySettlementFormValues>[] => {
     const buyers = api.earlySettlement.getBuyersForEarlySettlement.useQuery().data ?? [];
 
     const orders = api.earlySettlement.getOrderForEarlySettlement.useQuery(
-        !!buyer_id ? { buyer_id } : skipToken
+        !!buyer_id ? { buyer_id, early_settlement_id } : skipToken
     ).data ?? [];
 
     return [

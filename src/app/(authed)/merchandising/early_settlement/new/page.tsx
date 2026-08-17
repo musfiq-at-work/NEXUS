@@ -37,6 +37,7 @@ const NewEarlySettlementPage = () => {
             const payload = {
                 order_id: earlySettlement.order_id,
                 remarks: earlySettlement.remarks,
+                buyer_id: earlySettlement.buyer_id
             };
 
             const newId = await addEarlySettlement.mutateAsync(payload);

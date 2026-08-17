@@ -51,8 +51,11 @@ const ShipmentDetails = (props: props) => {
                     factory_value: item.factory_value,
                     commission: item.commission,
                     dhaka_commission: item.dhaka_commission,
+                    dhaka_percentage: item.dhaka_percentage,
                     other_commission: item.other_commission,
-                    overseas_commission: item.overseas_commission
+                    others_percentage: item.others_percentage,
+                    overseas_commission: item.overseas_commission,
+                    overseas_percentage: item.overseas_percentage
                 }
             })
         )
@@ -60,7 +63,7 @@ const ShipmentDetails = (props: props) => {
 
     return (
         <TableForm 
-            name='details'
+            name='pos'
             rows={shipmentFields}
             columns={tableFormColumns}
             disabled={disabled}

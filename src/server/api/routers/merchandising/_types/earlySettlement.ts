@@ -21,6 +21,9 @@ export interface ShipmentDetails {
     factory_value: number;
     commission: number;
     dhaka_commission: number;
+    dhaka_percentage: number;
     other_commission: number;
+    others_percentage: number;
     overseas_commission: number;
+    overseas_percentage: number;
 }

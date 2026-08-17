@@ -200,7 +200,7 @@ export const earlySettlementRouter = createTRPCRouter({
                 })
             }
 
-            const shipments = await ctx.db.$queryRaw<ShipmentDetails[]>`
+            const shipmentsObj = await ctx.db.$queryRaw<ShipmentDetails[]>`
                 WITH BASE AS (
                     SELECT
                         ESD.id AS early_settlement_details_id,
@@ -257,16 +257,38 @@ export const earlySettlementRouter = createTRPCRouter({
                         WHEN total_percentage = 0 THEN 0 
                         ELSE commission * dhaka_percentage / total_percentage 
                     END AS dhaka_commission,
+                    dhaka_percentage,
                     CASE 
                         WHEN total_percentage = 0 THEN 0 
                         ELSE commission * others_percentage / total_percentage 
                     END AS other_commission,
+                    others_percentage,
                     CASE 
                         WHEN total_percentage = 0 THEN 0 
                         ELSE commission * overseas_percentage / total_percentage 
-                    END AS overseas_commission
+                    END AS overseas_commission,
+                    overseas_percentage
                     FROM CALC;
             `;
+
+            const shipments = shipmentsObj.map((item) => ({
+                ...item,
+                order_quantity: quantityFormatter(Number(item.order_quantity)),
+                fob_rate: currencyFormatter(Number(item.fob_rate),'$'),
+                rdl_value:currencyFormatter( Number(item.rdl_value),'$'),
+                early_settlement_charge: Number(item.early_settlement_charge),
+                effective_rdl_fob: currencyFormatter(Number(item.effective_rdl_fob),'$'),
+                effective_rdl_value: currencyFormatter(Number(item.effective_rdl_value),'$'),
+                factory_rate: currencyFormatter(Number(item.factory_rate),'$'),
+                factory_value: currencyFormatter(Number(item.factory_value),'$'),
+                commission: currencyFormatter(Number(item.commission), '$'),
+                dhaka_commission: currencyFormatter(Number(item.dhaka_commission), '$'),
+                dhaka_percentage: `${quantityFormatter(Number(item.dhaka_percentage))} %`,
+                other_commission: currencyFormatter(Number(item.other_commission), '$'),
+                others_percentage: `${quantityFormatter(Number(item.others_percentage))} %`,
+                overseas_commission: currencyFormatter(Number(item.overseas_commission), '$'),
+                overseas_percentage: `${quantityFormatter(Number(item.overseas_percentage))} %`
+            }))
 
             return shipments;
         }),
@@ -275,6 +297,7 @@ export const earlySettlementRouter = createTRPCRouter({
         .input(z.object({
             order_id: z.string().min(1, 'Order is Mandatory'),
             remarks: z.string().optional(),
+            buyer_id: z.number(),
         }))
         .mutation(async({ctx, input}) => {
             const can_add = ctx.permissions[m.EARLY_SETTLEMENT]?.can_add;
@@ -291,6 +314,7 @@ export const earlySettlementRouter = createTRPCRouter({
                     const newEarlySettlement = await tx.early_settlement.create({
                         data: {
                             order_id: input.order_id,
+                            buyer_id: input.buyer_id,
                             remarks: input.remarks
                         }
                     })
@@ -310,8 +334,10 @@ export const earlySettlementRouter = createTRPCRouter({
                             INNER JOIN shipment_details AS SD ON SD.order_style_id = OS.id
                             INNER JOIN early_settlement AS ES ON ES.order_id = BO.id
                             INNER JOIN early_settlement_percentage AS ESP ON ESP.buyer_id = BO.buyer_id
-                        WHERE BO.id = ${newEarlySettlement.id};
+                        WHERE ES.id = ${newEarlySettlement.id};
                     `;
+
+                    return newEarlySettlement.id;
                 })
 
             }
@@ -324,7 +350,8 @@ export const earlySettlementRouter = createTRPCRouter({
         
     getOrderForEarlySettlement: protectedProcedure
         .input(z.object({
-            buyer_id: z.number().min(1, 'Select Buyer')
+            buyer_id: z.number().min(1, 'Select Buyer'),
+            early_settlement_id: z.string().optional()
         }))
         .query(async ({ctx, input}) => {
             const can_view = ctx.permissions[m.EARLY_SETTLEMENT]?.can_add;
@@ -336,12 +363,19 @@ export const earlySettlementRouter = createTRPCRouter({
                 })
             }
             
+            const whereClause = input.early_settlement_id 
+                ? Prisma.sql`WHERE ID <> ${input.early_settlement_id}`
+                : Prisma.empty;
+
+
             const buyer_orders = await ctx.db.$queryRaw<{id: string; ref_no: string}[]>`
                 SELECT  
                     ID,
                     REF_NO
                 FROM buyer_orders AS BO WHERE ID NOT IN (
                     SELECT ORDER_ID FROM early_settlement
+                    ${whereClause}
+                    ORDER BY ADDED_AT DESC
                 )
                 AND BO.BUYER_ID = ${input.buyer_id};
             `;
@@ -386,6 +420,109 @@ export const earlySettlementRouter = createTRPCRouter({
             `;
 
             return buyers;
-        })
-});
+        }),
 
+
+    getEarlySettlementById: protectedProcedure
+        .input(z.object({
+            id: z.string()
+        }))
+        .query(async ({ctx, input}) => {
+            const can_view = ctx.permissions[m.EARLY_SETTLEMENT]?.can_view;
+
+            if(!can_view){
+                throw new TRPCError({
+                    code: 'FORBIDDEN',
+                    message: "You don't have permission to view Early Settlement"
+                })
+            }
+
+            try {
+                const earlySettlement = await ctx.db.early_settlement.findUnique({
+                    where: {
+                        id: input.id
+                    },
+                    select: {
+                        id: true,
+                        order_id: true,
+                        buyer_id: true,
+                        remarks: true
+                    }
+                });
+
+                return earlySettlement;
+            }
+            catch(error){
+                await logError(error, ctx, input);
+                handlePrismaError(error);
+            }
+        }),
+
+    updateEarlySettlement: protectedProcedure
+        .input(z.object({
+            id: z.string(),
+            remarks: z.string().optional(),
+            pos: z.array(z.object({
+                id: z.string(),
+                percentage: z.number()
+            }))
+        }))
+        .mutation(async ({ctx, input}) => {
+            const can_update = ctx.permissions[m.EARLY_SETTLEMENT]?.can_update;
+
+            if(!can_update){
+                throw new TRPCError({
+                    code: 'FORBIDDEN',
+                    message: "You don't have permission to update early settlement"
+                })
+            }
+
+            return ctx.db.$transaction(async (tx) => {
+                const existingDetails = await tx.early_settlement_details.findMany({
+                    where: {
+                        early_settlement_id: input.id
+                    }
+                })
+
+                try {
+                    await Promise.all([
+                        await tx.early_settlement.update({
+                            where: {
+                                id: input.id
+                            },
+                            data: {
+                                remarks: input.remarks
+                            }
+                        }),
+
+                        input.pos.map(async (item) => {
+                            await tx.early_settlement_details.update({
+                                where: {
+                                    id: item.id
+                                },
+                                data: {
+                                    early_settlement_charge: item.percentage
+                                }
+                            })
+                        }),
+
+                        await tx.early_settlement_details_history.createMany({
+                            data: existingDetails.map((item) => ({
+                                early_settlement_details_id: item.id,
+                                early_settlement_charge: item.early_settlement_charge,
+                                shipment_details_id: item.shipment_details_id,
+                                action_by: ctx.user.id,
+                                action_type: actions.UPDATE
+                            }))
+                        })
+                        
+                    ])
+                }
+                catch (error){
+                    await logError(error, ctx, input);
+                    handlePrismaError(error);
+                }
+            })
+        })
+
+});

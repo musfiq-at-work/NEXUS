@@ -360,24 +360,30 @@ export const commissionDistributionRouter = createTRPCRouter({
                             ON CONFLICT (shipment_details_id)
                                 DO UPDATE SET dhaka_commission_percentage = EXCLUDED.dhaka_commission_percentage;
                         `,
-                        
                     ]);
                     
-                    const buyer_id = await ctx.db.buyer_orders.findUnique({
+                    const buyerOrder = await ctx.db.buyer_orders.findUnique({
                         where: {
                             id: input.order_id
                         },
                         select: {
                             buyer_id: true
                         }
-                    })
-                    
+                    });
+
+                    if (buyerOrder?.buyer_id == null) {
+                        throw new TRPCError({
+                            code: "BAD_REQUEST",
+                            message: "Buyer order does not have a valid buyer associated."
+                        });
+                    }
+
                     await tx.early_settlement.create({
                         data: {
                             order_id: input.order_id,
-                            buyer_id: buyer_id?.buyer_id
+                            buyer_id: buyerOrder.buyer_id
                         }
-                    })
+                    });
 
                     // Generate Early Settlement per order PO
                     await tx.$queryRaw`

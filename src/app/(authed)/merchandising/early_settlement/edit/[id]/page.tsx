@@ -17,11 +17,11 @@ const EditEarlySettlementPage = ({ params }: ParamsProp) => {
 
     const [isLoadingSubmit, setIsLoadingSubmit] = useState(false);
 
-    const { data: proceedRealizationData, isLoading } = api.proceedRealization.getProceedRealizationById.useQuery({ id: id });
+    const { data: earlySettlement, isLoading } = api.earlySettlement.getEarlySettlementById.useQuery({ id: id });
 
     // Form setup
     const { methods, handleSubmit, formFields, validationError, control } = useEarlySettlementForm(
-        proceedRealizationData ?? undefined
+        earlySettlement ?? undefined
     );
 
     // TRPC utils
@@ -29,33 +29,29 @@ const EditEarlySettlementPage = ({ params }: ParamsProp) => {
 
     const { can_update } = useModulePermissions();
 
-    const updateProceedRealization = api.proceedRealization.updateProceedRealization.useMutation({
+    const updateProceedRealization = api.earlySettlement.updateEarlySettlement.useMutation({
         onSuccess: async () => {
             setError(null);
             toast.success("Early Settlement updated successfully!");
             await Promise.all([
-                utils.proceedRealization.getProceedRealizationById.invalidate({ id }),
-                utils.proceedRealization.getProceedRealization.invalidate(),
-                utils.proceedRealization.searchProceedRealization.invalidate()
+                utils.earlySettlement.getEarlySettlementById.invalidate({ id }),
+                utils.earlySettlement.getEarlySettlements.invalidate(),
+                utils.earlySettlement.searchEarlySettlements.invalidate()
             ]);
         }
     });
 
     // Handle form submission for all fields
-    const onSubmitAll = useCallback(handleSubmit(async (proceedRealizationData) => {
+    const onSubmitAll = useCallback(handleSubmit(async (settlements) => {
         try {
             setIsLoadingSubmit(true);
 
             const payload = {
-                id: id,
-                realization_date: new Date(proceedRealizationData.proceed_date ?? new Date()),
-                bank_charge: proceedRealizationData.bank_charge ? safeNumber(proceedRealizationData.bank_charge) : undefined,
-                document_charge: proceedRealizationData.document_charge ? safeNumber(proceedRealizationData.document_charge) : undefined,
-                discount_charge: proceedRealizationData.discount_charge ? safeNumber(proceedRealizationData.discount_charge) : undefined,
-                rdl_invoice_details: (proceedRealizationData.details ?? []).map((detail) => ({
-                    db_id: detail.db_id,
-                    rdl_invoice_id: detail.rdl_invoice_id,
-                    proceed_value: safeNumber(detail.proceed_value ?? 0),
+                id: settlements.db_id ?? "",
+                remarks: settlements.remarks,
+                pos: (settlements.pos ?? []).map((po) => ({
+                    id: po.db_id ?? "",
+                    percentage: po.early_settlement_charge ?? 0,
                 })),
             };
 
