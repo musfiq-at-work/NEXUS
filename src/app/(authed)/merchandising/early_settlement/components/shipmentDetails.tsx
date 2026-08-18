@@ -49,13 +49,20 @@ const ShipmentDetails = (props: props) => {
                     effective_rdl_value: item.effective_rdl_value,
                     factory_rate: item.factory_rate,
                     factory_value: item.factory_value,
-                    commission: item.commission,
-                    dhaka_commission: item.dhaka_commission,
-                    dhaka_percentage: item.dhaka_percentage,
-                    other_commission: item.other_commission,
-                    others_percentage: item.others_percentage,
-                    overseas_commission: item.overseas_commission,
-                    overseas_percentage: item.overseas_percentage
+                    commission_percentage: item.commission_percentage,
+                    effective_commission_percentage: item.effective_commission_percentage,
+                    commission_value: item.commission_value,
+                    effective_commission: item.effective_commission,
+                    dhaka_commission_percentage: item.dhaka_commission_percentage,
+                    effective_dhaka_commission_percentage: item.effective_dhaka_commission_percentage,
+                    dhaka_value: item.dhaka_value,
+                    effective_dhaka_value: item.effective_dhaka_value,
+                    overseas_commission_percentage: item.overseas_commission_percentage,
+                    overseas_value: item.overseas_value,
+                    effective_overseas_value: item.effective_overseas_value,
+                    other_commission_percentage: item.other_commission_percentage,
+                    other_value: item.other_value,
+                    effective_other_value: item.effective_other_value
                 }
             })
         )
