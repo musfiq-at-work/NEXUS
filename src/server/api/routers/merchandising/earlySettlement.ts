@@ -201,74 +201,90 @@ export const earlySettlementRouter = createTRPCRouter({
             }
 
             const shipmentsObj = await ctx.db.$queryRaw<ShipmentDetails[]>`
-                WITH BASE AS (
+                WITH shipment_agg AS (
                     SELECT
-                        ESD.id AS early_settlement_details_id,
+                        SD.id AS shipment_detail_id,
                         OS.style,
                         SD.buyer_po,
-                        D.name AS destination,
-                        BDS.size,
-                        SUM(SID.quantity) AS order_quantity,
-                        SD.fob_rate,
-                        ESD.early_settlement_charge,
-                        SD.fob_rate * (1 - ESD.early_settlement_charge / 100) AS effective_rdl_fob,
+                        SD.fob_rate / BO.currency_rate as fob_rate,
                         FSD.factory_rate,
-                        COALESCE(CDD.dhaka_commission_percentage, 0) AS dhaka_percentage,
-                        COALESCE(CDD.others_commission_percentage, 0) AS others_percentage,
-                        COALESCE(CDD.overseas_commission_percentage, 0) AS overseas_percentage
-                    FROM early_settlement_details AS ESD
-                    INNER JOIN shipment_details AS SD ON SD.id = ESD.shipment_details_id
-                    INNER JOIN shipment_item_details AS SID ON SID.shipment_detail_id = SD.id
-                    INNER JOIN commission_distributions_details AS CDD ON CDD.shipment_details_id = SD.id
-                    INNER JOIN order_styles AS OS ON OS.id = SD.order_style_id
-                    INNER JOIN buyer_orders AS BO ON BO.id = OS.order_id
-                    INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = SD.id
-                    INNER JOIN buyer_department_sizes AS BDS ON BDS.id = SD.size_id
-                    INNER JOIN destinations AS D ON D.id = SD.destination_id
-                    WHERE ESD.early_settlement_id = ${input.id}
-                    GROUP BY OS.id, SD.id, D.id, BDS.id, ESD.id, FSD.id, CDD.id
+                        SUM(SID.quantity) AS order_quantity,
+                        COALESCE(ESD.early_settlement_charge, 0) AS early_settlement_charge,
+                        (SD.fob_rate / BO.currency_rate) * (1 - COALESCE(ESD.early_settlement_charge, 0) / 100) AS effective_fob,
+                        D.name AS destination,
+                        BDS.size
+                    FROM shipment_details AS SD
+                        INNER JOIN shipment_item_details AS SID ON SID.shipment_detail_id = SD.id
+                        INNER JOIN order_styles AS OS ON OS.id = SD.order_style_id
+                        INNER JOIN buyer_orders AS BO ON BO.id = OS.order_id
+                        INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = SD.id
+                        LEFT JOIN early_settlement_details AS ESD ON ESD.shipment_details_id = SD.id
+                        INNER JOIN destinations AS D ON D.id = SD.destination_id
+                        INNER JOIN buyer_department_sizes AS BDS ON BDS.id = SD.size_id
+                    GROUP BY 
+                        SD.id,
+                        OS.style,
+                        SD.buyer_po,
+                        SD.fob_rate,
+                        BO.currency_rate,
+                        FSD.factory_rate,
+                        ESD.id,
+                        D.id,
+                        BDS.id
                 ),
                 CALC AS (
                     SELECT
                         *,
-                        order_quantity * fob_rate AS rdl_value,
-                        order_quantity * effective_rdl_fob AS effective_rdl_value,
-                        order_quantity * factory_rate AS factory_value,
-                        order_quantity * (effective_rdl_fob - factory_rate) AS commission,
-                        dhaka_percentage + others_percentage + overseas_percentage AS total_percentage
-                    FROM BASE
+                        SA.order_quantity * SA.fob_rate AS rdl_value,
+                        SA.order_quantity * SA.effective_fob AS effective_rdl_value,
+                        SA.order_quantity * SA.factory_rate AS factory_value,
+                        (SA.fob_rate - SA.factory_rate) * 100 / NULLIF(SA.fob_rate, 0) AS commission_percentage,
+                        (SA.effective_fob - SA.factory_rate) * 100 / SA.effective_fob AS effective_commission_percentage,
+                        SA.order_quantity * (SA.fob_rate - SA.factory_rate) AS commission_value,
+                        (SA.order_quantity * SA.effective_fob) - (SA.order_quantity * SA.factory_rate) AS effective_commission
+                    FROM shipment_agg AS SA
+                ),
+                DISTRIBUTIONS AS (
+                    SELECT
+                        CDD.shipment_details_id,
+                        COALESCE(CDD.dhaka_commission_percentage, 0) AS dhaka_commission,
+                        COALESCE(CDD.overseas_commission_percentage, 0) AS overseas_commission,
+                        COALESCE(CDD.others_commission_percentage, 0) AS others_commission,
+                        COALESCE(CDD.overseas_commission_percentage, 0) + COALESCE(CDD.others_commission_percentage, 0) AS mandatory_commission
+                    FROM commission_distributions_details AS CDD
                 )
                 SELECT
-                    early_settlement_details_id,
-                    style,
-                    buyer_po,
-                    destination,
-                    size,
-                    order_quantity,
-                    fob_rate,
-                    rdl_value,
-                    early_settlement_charge,
-                    effective_rdl_fob,
-                    effective_rdl_value,
-                    factory_rate,
-                    factory_value,
-                    commission,
-                    CASE 
-                        WHEN total_percentage = 0 THEN 0 
-                        ELSE commission * dhaka_percentage / total_percentage 
-                    END AS dhaka_commission,
-                    dhaka_percentage,
-                    CASE 
-                        WHEN total_percentage = 0 THEN 0 
-                        ELSE commission * others_percentage / total_percentage 
-                    END AS other_commission,
-                    others_percentage,
-                    CASE 
-                        WHEN total_percentage = 0 THEN 0 
-                        ELSE commission * overseas_percentage / total_percentage 
-                    END AS overseas_commission,
-                    overseas_percentage
-                    FROM CALC;
+                    ESD.id,
+                    C.style AS style, 
+                    C.buyer_po AS buyer_po, 
+                    C.destination, 
+                    C.size,
+                    C.order_quantity AS order_quantity,
+                    C.fob_rate,
+                    C.rdl_value,
+                    C.early_settlement_charge,
+                    C.effective_fob AS effective_rdl_fob, 
+                    C.effective_rdl_value,
+                    C.factory_rate, 
+                    C.factory_value,
+                    C.commission_percentage,
+                    C.effective_commission_percentage,
+                    C.commission_value,
+                    C.effective_commission,
+                    D.dhaka_commission AS dhaka_commission_percentage,
+                    (C.effective_commission_percentage - D.mandatory_commission) AS effective_dhaka_commission_percentage,
+                    C.order_quantity * C.fob_rate * D.dhaka_commission / 100 AS dhaka_value,
+                    C.order_quantity * C.effective_fob * (C.effective_commission_percentage - D.mandatory_commission) / 100 AS effective_dhaka_value,
+                    D.overseas_commission AS overseas_commission_percentage,--
+                    C.order_quantity * C.fob_rate * D.overseas_commission / 100 AS overseas_value,
+                    C.order_quantity * C.effective_fob * D.overseas_commission / 100 AS effective_overseas_value,
+                    D.others_commission AS other_commission_percentage,
+                    C.order_quantity * C.fob_rate * D.others_commission / 100 AS other_value,
+                    C.order_quantity * C.effective_fob * D.others_commission / 100 AS effective_other_value
+                FROM CALC AS C
+                JOIN DISTRIBUTIONS AS D ON D.shipment_details_id = C.shipment_detail_id
+                JOIN early_settlement_details AS ESD ON ESD.shipment_details_id = C.shipment_detail_id
+                where ESD.early_settlement_id = ${input.id};
             `;
 
             const shipments = shipmentsObj.map((item) => ({

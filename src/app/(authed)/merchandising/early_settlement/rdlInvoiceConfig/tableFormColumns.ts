@@ -12,11 +12,11 @@ export const tableFormColumns = [
     { key: 'factory_fob', label: 'Factory FOB' },
     { key: 'factory_value', label: 'Factory Value' },
     { key: 'commission', label: 'Effective Commission' },
-    { key: 'dhaka_commission', label: 'Effective Dhaka Commission' },
     { key: 'dhaka_percentage', label: 'Dhaka Commission Percentage' },
-    { key: 'other_commission', label: 'Effective Other Commission' },
+    { key: 'dhaka_commission', label: 'Effective Dhaka Commission' },
     { key: 'others_percentage', label: 'Other Commission Percentage' },
-    { key: 'overseas_commission', label: 'Effective Overseas Commission' },
+    { key: 'other_commission', label: 'Effective Other Commission' },
     { key: 'overseas_percentage', label: 'Overseas Commission Percentage' },
+    { key: 'overseas_commission', label: 'Effective Overseas Commission' },
 ];
 

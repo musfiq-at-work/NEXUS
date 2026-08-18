@@ -59,8 +59,6 @@ export const formFields = (): Field<keyof ShipmentFormValues>[] => {
             label: "Early Settlement Charge",
             placeholder: "Enter Settlement Charge",
             type: 'number',
-            optional: true,
-            disabled: true,
         },
         {
             name: "effective_rdl_fob",
