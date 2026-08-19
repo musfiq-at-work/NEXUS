@@ -36,7 +36,7 @@ const ShipmentDetails = (props: props) => {
         replaceShipments(
             (shipments ?? []).map((item) => {
                 return {
-                    db_id: item.early_settlement_details_id,
+                    db_id: item.id,
                     style: item.style,
                     buyer_po: item.buyer_po,
                     destination: item.destination,
@@ -66,7 +66,7 @@ const ShipmentDetails = (props: props) => {
                 }
             })
         )
-    }, [shipments, earlySettlementId])
+    }, [shipments])
 
     return (
         <TableForm 

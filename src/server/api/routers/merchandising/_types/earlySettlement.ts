@@ -6,7 +6,7 @@ export interface EarlySettlements {
 }
 
 export interface ShipmentDetails {
-    early_settlement_details_id: string; 
+    id: string; 
     style: string;
     buyer_po: string;
     destination: string;
@@ -35,5 +35,3 @@ export interface ShipmentDetails {
     effective_other_value: number;
     symbol: string;
 }
-
-

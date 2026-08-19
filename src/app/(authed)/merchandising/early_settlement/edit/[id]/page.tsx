@@ -8,7 +8,6 @@ import { parseTRPCError } from "~/utils/parseTRPCError";
 import { useModulePermissions } from "~/hooks";
 import { useEarlySettlementForm } from "../../config/useEarlySettlementForm";
 import ShipmentDetails from "../../components/shipmentDetails";
-import { safeNumber } from "~/utils/numbers";
 import type { ParamsProp } from "~/types/params";
 
 const EditEarlySettlementPage = ({ params }: ParamsProp) => {
@@ -36,7 +35,8 @@ const EditEarlySettlementPage = ({ params }: ParamsProp) => {
             await Promise.all([
                 utils.earlySettlement.getEarlySettlementById.invalidate({ id }),
                 utils.earlySettlement.getEarlySettlements.invalidate(),
-                utils.earlySettlement.searchEarlySettlements.invalidate()
+                utils.earlySettlement.searchEarlySettlements.invalidate(),
+                utils.earlySettlement.getPoDetails.invalidate()
             ]);
         }
     });
@@ -45,7 +45,7 @@ const EditEarlySettlementPage = ({ params }: ParamsProp) => {
     const onSubmitAll = useCallback(handleSubmit(async (settlements) => {
         try {
             setIsLoadingSubmit(true);
-
+            console.log(settlements)
             const payload = {
                 id: settlements.db_id ?? "",
                 remarks: settlements.remarks,

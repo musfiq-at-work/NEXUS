@@ -504,6 +504,8 @@ export const earlySettlementRouter = createTRPCRouter({
                 })
             }
 
+            console.log('Error', input)
+
             return ctx.db.$transaction(async (tx) => {
                 const existingDetails = await tx.early_settlement_details.findMany({
                     where: {
