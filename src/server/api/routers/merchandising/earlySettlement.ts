@@ -211,7 +211,7 @@ export const earlySettlementRouter = createTRPCRouter({
                             FSD.factory_rate,
                             SUM(SID.quantity) AS order_quantity,
                             COALESCE(ESD.early_settlement_charge, 0) AS early_settlement_charge,
-                            (SD.fob_rate / BO.currency_rate) * (1 - COALESCE(ESD.early_settlement_charge, 0) / 100) AS effective_fob,
+                            (SD.fob_rate / COALESCE(BO.currency_rate, 1)) * (1 - COALESCE(ESD.early_settlement_charge, 0) / 100) AS effective_fob,
                             D.name AS destination,
                             BDS.size,
                             C.symbol
@@ -224,17 +224,7 @@ export const earlySettlementRouter = createTRPCRouter({
                             INNER JOIN destinations AS D ON D.id = SD.destination_id
                             INNER JOIN buyer_department_sizes AS BDS ON BDS.id = SD.size_id
                             LEFT JOIN currencies AS C ON C.id = BO.secondary_currency_id
-                        GROUP BY 
-                            SD.id,
-                            OS.style,
-                            SD.buyer_po,
-                            SD.fob_rate,
-                            BO.currency_rate,
-                            FSD.factory_rate,
-                            ESD.id,
-                            D.id,
-                            BDS.id,
-                            C.id
+                        GROUP BY SD.id, OS.style, SD.buyer_po, SD.fob_rate, BO.currency_rate, FSD.factory_rate, ESD.id, D.id, BDS.id, C.id
                     ),
                     CALC AS (
                         SELECT
@@ -279,7 +269,7 @@ export const earlySettlementRouter = createTRPCRouter({
                         (C.effective_commission_percentage - D.mandatory_commission) AS effective_dhaka_commission_percentage,
                         C.order_quantity * C.fob_rate * D.dhaka_commission / 100 AS dhaka_value,
                         C.order_quantity * C.effective_fob * (C.effective_commission_percentage - D.mandatory_commission) / 100 AS effective_dhaka_value,
-                        D.overseas_commission AS overseas_commission_percentage,--
+                        D.overseas_commission AS overseas_commission_percentage,
                         C.order_quantity * C.fob_rate * D.overseas_commission / 100 AS overseas_value,
                         C.order_quantity * C.effective_fob * D.overseas_commission / 100 AS effective_overseas_value,
                         D.others_commission AS other_commission_percentage,
@@ -383,7 +373,6 @@ export const earlySettlementRouter = createTRPCRouter({
                 return {shipments, totals};
             }
             catch (error){
-                console.log('error', error)
                 await logError(error, ctx, input);
                 handlePrismaError(error);
             }
