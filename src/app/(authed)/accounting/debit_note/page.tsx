@@ -31,10 +31,6 @@ const DebitNotePage = () => {
         { enabled: debouncedSearch.length > 0 }
     );
 
-    useEffect(() => {
-        console.log(searchQuery.data?.debitNotes)
-    }, [searchQuery.data?.debitNotes])
-
     const deleteMutation = api.debitNotes.deleteDebitNote.useMutation({
         onSuccess: async () => {
             await Promise.all([

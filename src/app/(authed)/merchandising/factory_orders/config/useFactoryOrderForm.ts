@@ -159,6 +159,7 @@ export const useFactoryOrderForm = (initialData?: GetFactoryOrderByIdTypes) => {
                         exfactory_date: existingShipment?.exfactory_date ?? "",
                         factory_fob: existingShipment?.factory_fob ?? 0,
                         transfer_rate: existingShipment?.transfer_rate ?? 0,
+                        ex_factory_exists: existingShipment?.ex_factory_exists ?? false,
                     };
                 }) ?? [],
             };

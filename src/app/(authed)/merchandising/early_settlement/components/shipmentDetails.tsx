@@ -2,13 +2,11 @@
 import { useFieldArray, useWatch, type FieldErrors } from "react-hook-form";
 import type { EarlySettlementFormValues } from "../config/formSchema";
 import type { useEarlySettlementForm } from "../config/useEarlySettlementForm";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import { api } from "~/trpc/react";
-import { tableFormColumns } from "../rdlInvoiceConfig/tableFormColumns";
+import { tableFormColumns } from "../shipmentConfig/tableFormColumns";
 import { skipToken } from "@tanstack/react-query";
 import TableForm from "./shipmentTableForm";
-import { currencyFormatter } from "~/utils/localNumberStrings";
-import { safeNumber } from "~/utils/numbers";
 
 type props = {
     methods: ReturnType<typeof useEarlySettlementForm>['methods'];
@@ -34,7 +32,7 @@ const ShipmentDetails = (props: props) => {
 
     useEffect(() => {
         replaceShipments(
-            (shipments ?? []).map((item) => {
+            (shipments?.shipments ?? []).map((item) => {
                 return {
                     db_id: item.id,
                     style: item.style,
@@ -76,6 +74,7 @@ const ShipmentDetails = (props: props) => {
             disabled={disabled}
             methods={methods}
             validationError={validationError}
+            totals={shipments?.totals}
         />
     )
 }

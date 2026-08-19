@@ -45,7 +45,6 @@ const EditEarlySettlementPage = ({ params }: ParamsProp) => {
     const onSubmitAll = useCallback(handleSubmit(async (settlements) => {
         try {
             setIsLoadingSubmit(true);
-            console.log(settlements)
             const payload = {
                 id: settlements.db_id ?? "",
                 remarks: settlements.remarks,

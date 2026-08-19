@@ -278,7 +278,6 @@ export const exportSummaryReportRouter = createTRPCRouter({
                 return {table, totals};
             }
             catch (error) {
-                console.log(error);
                 await logError(error, ctx, input);
                 handlePrismaError(error);
             }

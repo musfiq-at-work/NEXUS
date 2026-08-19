@@ -61,3 +61,5 @@ export type GetExFactoryByIdTypes = ExFactoryRouterOutput['getExFactoryById'];
 type EarlySettlementOutput = inferRouterOutputs<typeof earlySettlementRouter>;
 
 export type GetEarlySettlementByIdTypes = EarlySettlementOutput['getEarlySettlementById'];
+
+export type GetEarlySettlementPoTotalsTypes = EarlySettlementOutput['getPoDetails']['totals'];

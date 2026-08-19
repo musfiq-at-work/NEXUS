@@ -6,7 +6,9 @@ import { type FieldArrayWithId, type FieldErrors } from "react-hook-form";
 import type { useEarlySettlementForm } from "../config/useEarlySettlementForm";
 import TableHeader, { type TableHeaderType } from "~/components/organisms/table/TableHeader";
 import type { EarlySettlementFormValues } from "../config/formSchema";
-import { formFields as shipmentTableFormFields } from "../rdlInvoiceConfig/tableFormFields";
+import { formFields as shipmentTableFormFields } from "../shipmentConfig/tableFormFields";
+import type { GetEarlySettlementPoTotalsTypes } from "~/types/merchandisingAPITypes";
+import ShipmentSummaryRow from "./ShipmentSummaryRow";
 
 type ShipmentRow = FieldArrayWithId<EarlySettlementFormValues>;
 
@@ -18,10 +20,11 @@ type Props = {
     name: string;
     methods: ReturnType<typeof useEarlySettlementForm>['methods'];
     validationError: FieldErrors<EarlySettlementFormValues>;
+    totals: GetEarlySettlementPoTotalsTypes | undefined;
 }
 
 const TableForm = (props: Props) => {
-    const {columns, rows, disabled = false, name, methods, validationError} = props;
+    const {columns, rows, disabled = false, name, methods, validationError, totals} = props;
 
     return (
         <>
@@ -45,6 +48,7 @@ const TableForm = (props: Props) => {
                                     index={index}
                                 />
                             ))}
+                            <ShipmentSummaryRow totals={totals}/>
                         </TableBody>
                     </TableWrapper>
                 </div>

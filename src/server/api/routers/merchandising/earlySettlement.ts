@@ -200,124 +200,193 @@ export const earlySettlementRouter = createTRPCRouter({
                 })
             }
 
-            const shipmentsObj = await ctx.db.$queryRaw<ShipmentDetails[]>`
-                WITH shipment_agg AS (
+            try {
+                const shipmentsObj = await ctx.db.$queryRaw<ShipmentDetails[]>`
+                    WITH shipment_agg AS (
+                        SELECT
+                            SD.id AS shipment_detail_id,
+                            OS.style,
+                            SD.buyer_po,
+                            SD.fob_rate / BO.currency_rate as fob_rate,
+                            FSD.factory_rate,
+                            SUM(SID.quantity) AS order_quantity,
+                            COALESCE(ESD.early_settlement_charge, 0) AS early_settlement_charge,
+                            (SD.fob_rate / BO.currency_rate) * (1 - COALESCE(ESD.early_settlement_charge, 0) / 100) AS effective_fob,
+                            D.name AS destination,
+                            BDS.size,
+                            C.symbol
+                        FROM shipment_details AS SD
+                            INNER JOIN shipment_item_details AS SID ON SID.shipment_detail_id = SD.id
+                            INNER JOIN order_styles AS OS ON OS.id = SD.order_style_id
+                            INNER JOIN buyer_orders AS BO ON BO.id = OS.order_id
+                            INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = SD.id
+                            LEFT JOIN early_settlement_details AS ESD ON ESD.shipment_details_id = SD.id
+                            INNER JOIN destinations AS D ON D.id = SD.destination_id
+                            INNER JOIN buyer_department_sizes AS BDS ON BDS.id = SD.size_id
+                            LEFT JOIN currencies AS C ON C.id = BO.secondary_currency_id
+                        GROUP BY 
+                            SD.id,
+                            OS.style,
+                            SD.buyer_po,
+                            SD.fob_rate,
+                            BO.currency_rate,
+                            FSD.factory_rate,
+                            ESD.id,
+                            D.id,
+                            BDS.id,
+                            C.id
+                    ),
+                    CALC AS (
+                        SELECT
+                            *,
+                            SA.order_quantity * SA.fob_rate AS rdl_value,
+                            SA.order_quantity * SA.effective_fob AS effective_rdl_value,
+                            SA.order_quantity * SA.factory_rate AS factory_value,
+                            (SA.fob_rate - SA.factory_rate) * 100 / NULLIF(SA.fob_rate, 0) AS commission_percentage,
+                            (SA.effective_fob - SA.factory_rate) * 100 / SA.effective_fob AS effective_commission_percentage,
+                            SA.order_quantity * (SA.fob_rate - SA.factory_rate) AS commission_value,
+                            (SA.order_quantity * SA.effective_fob) - (SA.order_quantity * SA.factory_rate) AS effective_commission
+                        FROM shipment_agg AS SA
+                    ),
+                    DISTRIBUTIONS AS (
+                        SELECT
+                            CDD.shipment_details_id,
+                            COALESCE(CDD.dhaka_commission_percentage, 0) AS dhaka_commission,
+                            COALESCE(CDD.overseas_commission_percentage, 0) AS overseas_commission,
+                            COALESCE(CDD.others_commission_percentage, 0) AS others_commission,
+                            COALESCE(CDD.overseas_commission_percentage, 0) + COALESCE(CDD.others_commission_percentage, 0) AS mandatory_commission
+                        FROM commission_distributions_details AS CDD
+                    )
                     SELECT
-                        SD.id AS shipment_detail_id,
-                        OS.style,
-                        SD.buyer_po,
-                        SD.fob_rate / BO.currency_rate as fob_rate,
-                        FSD.factory_rate,
-                        SUM(SID.quantity) AS order_quantity,
-                        COALESCE(ESD.early_settlement_charge, 0) AS early_settlement_charge,
-                        (SD.fob_rate / BO.currency_rate) * (1 - COALESCE(ESD.early_settlement_charge, 0) / 100) AS effective_fob,
-                        D.name AS destination,
-                        BDS.size,
-						C.symbol
-                    FROM shipment_details AS SD
-                        INNER JOIN shipment_item_details AS SID ON SID.shipment_detail_id = SD.id
-                        INNER JOIN order_styles AS OS ON OS.id = SD.order_style_id
-                        INNER JOIN buyer_orders AS BO ON BO.id = OS.order_id
-                        INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = SD.id
-                        LEFT JOIN early_settlement_details AS ESD ON ESD.shipment_details_id = SD.id
-                        INNER JOIN destinations AS D ON D.id = SD.destination_id
-                        INNER JOIN buyer_department_sizes AS BDS ON BDS.id = SD.size_id
-                        LEFT JOIN currencies AS C ON C.id = BO.secondary_currency_id
-                    GROUP BY 
-                        SD.id,
-                        OS.style,
-                        SD.buyer_po,
-                        SD.fob_rate,
-                        BO.currency_rate,
-                        FSD.factory_rate,
                         ESD.id,
-                        D.id,
-                        BDS.id,
-						C.id
-                ),
-                CALC AS (
-                    SELECT
-                        *,
-                        SA.order_quantity * SA.fob_rate AS rdl_value,
-                        SA.order_quantity * SA.effective_fob AS effective_rdl_value,
-                        SA.order_quantity * SA.factory_rate AS factory_value,
-                        (SA.fob_rate - SA.factory_rate) * 100 / NULLIF(SA.fob_rate, 0) AS commission_percentage,
-                        (SA.effective_fob - SA.factory_rate) * 100 / SA.effective_fob AS effective_commission_percentage,
-                        SA.order_quantity * (SA.fob_rate - SA.factory_rate) AS commission_value,
-                        (SA.order_quantity * SA.effective_fob) - (SA.order_quantity * SA.factory_rate) AS effective_commission
-                    FROM shipment_agg AS SA
-                ),
-                DISTRIBUTIONS AS (
-                    SELECT
-                        CDD.shipment_details_id,
-                        COALESCE(CDD.dhaka_commission_percentage, 0) AS dhaka_commission,
-                        COALESCE(CDD.overseas_commission_percentage, 0) AS overseas_commission,
-                        COALESCE(CDD.others_commission_percentage, 0) AS others_commission,
-                        COALESCE(CDD.overseas_commission_percentage, 0) + COALESCE(CDD.others_commission_percentage, 0) AS mandatory_commission
-                    FROM commission_distributions_details AS CDD
-                )
-                SELECT
-                    ESD.id,
-                    C.style AS style, 
-                    C.buyer_po AS buyer_po, 
-                    C.destination, 
-                    C.size,
-                    C.order_quantity AS order_quantity,
-                    C.fob_rate,
-                    C.rdl_value,
-                    C.early_settlement_charge,
-                    C.effective_fob AS effective_rdl_fob, 
-                    C.effective_rdl_value,
-                    C.factory_rate, 
-                    C.factory_value,
-                    C.commission_percentage,
-                    C.effective_commission_percentage,
-                    C.commission_value,
-                    C.effective_commission,
-                    D.dhaka_commission AS dhaka_commission_percentage,
-                    (C.effective_commission_percentage - D.mandatory_commission) AS effective_dhaka_commission_percentage,
-                    C.order_quantity * C.fob_rate * D.dhaka_commission / 100 AS dhaka_value,
-                    C.order_quantity * C.effective_fob * (C.effective_commission_percentage - D.mandatory_commission) / 100 AS effective_dhaka_value,
-                    D.overseas_commission AS overseas_commission_percentage,--
-                    C.order_quantity * C.fob_rate * D.overseas_commission / 100 AS overseas_value,
-                    C.order_quantity * C.effective_fob * D.overseas_commission / 100 AS effective_overseas_value,
-                    D.others_commission AS other_commission_percentage,
-                    C.order_quantity * C.fob_rate * D.others_commission / 100 AS other_value,
-                    C.order_quantity * C.effective_fob * D.others_commission / 100 AS effective_other_value,
-					C.symbol
-                FROM CALC AS C
-                JOIN DISTRIBUTIONS AS D ON D.shipment_details_id = C.shipment_detail_id
-                JOIN early_settlement_details AS ESD ON ESD.shipment_details_id = C.shipment_detail_id
-                where ESD.early_settlement_id = ${input.id};
-            `;
+                        C.style AS style, 
+                        C.buyer_po AS buyer_po, 
+                        C.destination, 
+                        C.size,
+                        C.order_quantity AS order_quantity,
+                        C.fob_rate,
+                        C.rdl_value,
+                        C.early_settlement_charge,
+                        C.effective_fob AS effective_rdl_fob, 
+                        C.effective_rdl_value,
+                        C.factory_rate, 
+                        C.factory_value,
+                        C.commission_percentage,
+                        C.effective_commission_percentage,
+                        C.commission_value,
+                        C.effective_commission,
+                        D.dhaka_commission AS dhaka_commission_percentage,
+                        (C.effective_commission_percentage - D.mandatory_commission) AS effective_dhaka_commission_percentage,
+                        C.order_quantity * C.fob_rate * D.dhaka_commission / 100 AS dhaka_value,
+                        C.order_quantity * C.effective_fob * (C.effective_commission_percentage - D.mandatory_commission) / 100 AS effective_dhaka_value,
+                        D.overseas_commission AS overseas_commission_percentage,--
+                        C.order_quantity * C.fob_rate * D.overseas_commission / 100 AS overseas_value,
+                        C.order_quantity * C.effective_fob * D.overseas_commission / 100 AS effective_overseas_value,
+                        D.others_commission AS other_commission_percentage,
+                        C.order_quantity * C.fob_rate * D.others_commission / 100 AS other_value,
+                        C.order_quantity * C.effective_fob * D.others_commission / 100 AS effective_other_value,
+                        C.symbol
+                    FROM CALC AS C
+                    JOIN DISTRIBUTIONS AS D ON D.shipment_details_id = C.shipment_detail_id
+                    JOIN early_settlement_details AS ESD ON ESD.shipment_details_id = C.shipment_detail_id
+                    where ESD.early_settlement_id = ${input.id};
+                `;
 
-            const shipments = shipmentsObj.map((item) => ({
-                ...item,
-                order_quantity: quantityFormatter(item.order_quantity),
-                fob_rate: currencyFormatter(item.fob_rate, item.symbol ?? '$'),
-                rdl_value: currencyFormatter(item.rdl_value, item.symbol ?? '$'),
-                early_settlement_charge: item.early_settlement_charge,
-                effective_rdl_fob: currencyFormatter(item.effective_rdl_fob, item.symbol ?? '$'),
-                effective_rdl_value: currencyFormatter(item.effective_rdl_value, item.symbol ?? '$'),
-                factory_rate: currencyFormatter(item.factory_rate, item.symbol ?? '$'),
-                factory_value: currencyFormatter(item.factory_value, item.symbol ?? '$'),
-                commission_percentage: `${quantityFormatter(item.commission_percentage)} %`,
-                effective_commission_percentage: `${quantityFormatter(item.effective_commission_percentage)} %`,
-                commission_value: currencyFormatter(item.commission_value, item.symbol ?? '$'),
-                effective_commission: currencyFormatter(item.effective_commission, item.symbol ?? '$'),
-                dhaka_commission_percentage: `${quantityFormatter(item.dhaka_commission_percentage)} %`,
-                effective_dhaka_commission_percentage: `${quantityFormatter(item.effective_dhaka_commission_percentage)} %`,
-                dhaka_value: currencyFormatter(item.dhaka_value, item.symbol ?? '$'),
-                effective_dhaka_value: currencyFormatter(item.effective_dhaka_value, item.symbol ?? '$'),
-                overseas_commission_percentage: `${quantityFormatter(item.overseas_commission_percentage)} %`,
-                overseas_value: currencyFormatter(item.overseas_value, item.symbol ?? '$'),
-                effective_overseas_value: currencyFormatter(item.effective_overseas_value, item.symbol ?? '$'),
-                other_commission_percentage: `${quantityFormatter(item.other_commission_percentage)} %`,
-                other_value: currencyFormatter(item.other_value, item.symbol ?? '$'),
-                effective_other_value: currencyFormatter(item.effective_other_value, item.symbol ?? '$'),
-            }))
+                const shipments = shipmentsObj.map((item) => ({
+                    ...item,
+                    order_quantity: quantityFormatter(item.order_quantity),
+                    fob_rate: currencyFormatter(item.fob_rate, item.symbol ?? '$'),
+                    rdl_value: currencyFormatter(item.rdl_value, item.symbol ?? '$'),
+                    early_settlement_charge: item.early_settlement_charge,
+                    effective_rdl_fob: currencyFormatter(item.effective_rdl_fob, item.symbol ?? '$'),
+                    effective_rdl_value: currencyFormatter(item.effective_rdl_value, item.symbol ?? '$'),
+                    factory_rate: currencyFormatter(item.factory_rate, item.symbol ?? '$'),
+                    factory_value: currencyFormatter(item.factory_value, item.symbol ?? '$'),
+                    commission_percentage: `${quantityFormatter(item.commission_percentage)} %`,
+                    effective_commission_percentage: `${quantityFormatter(item.effective_commission_percentage)} %`,
+                    commission_value: currencyFormatter(item.commission_value, item.symbol ?? '$'),
+                    effective_commission: currencyFormatter(item.effective_commission, item.symbol ?? '$'),
+                    dhaka_commission_percentage: `${quantityFormatter(item.dhaka_commission_percentage)} %`,
+                    effective_dhaka_commission_percentage: `${quantityFormatter(item.effective_dhaka_commission_percentage)} %`,
+                    dhaka_value: currencyFormatter(item.dhaka_value, item.symbol ?? '$'),
+                    effective_dhaka_value: currencyFormatter(item.effective_dhaka_value, item.symbol ?? '$'),
+                    overseas_commission_percentage: `${quantityFormatter(item.overseas_commission_percentage)} %`,
+                    overseas_value: currencyFormatter(item.overseas_value, item.symbol ?? '$'),
+                    effective_overseas_value: currencyFormatter(item.effective_overseas_value, item.symbol ?? '$'),
+                    other_commission_percentage: `${quantityFormatter(item.other_commission_percentage)} %`,
+                    other_value: currencyFormatter(item.other_value, item.symbol ?? '$'),
+                    effective_other_value: currencyFormatter(item.effective_other_value, item.symbol ?? '$'),
+                }));
 
-            return shipments;
+                const totals = {
+                    order_quantity: quantityFormatter(
+                        shipmentsObj.reduce(
+                            (sum, item) => sum = sum + safeNumber(item.order_quantity), 0
+                        )
+                    ),
+                    rdl_value: currencyFormatter(
+                        shipmentsObj.reduce(
+                            (sum, item) => sum = sum + safeNumber(item.rdl_value), 0
+                        ), shipmentsObj[0]?.symbol ?? '$'
+                    ),
+                    effective_rdl_value: currencyFormatter(
+                        shipmentsObj.reduce(
+                            (sum, item) => sum = sum + safeNumber(item.effective_rdl_value), 0
+                        ), shipmentsObj[0]?.symbol ?? '$'
+                    ),
+                    factory_value: currencyFormatter(
+                        shipmentsObj.reduce(
+                            (sum, item) => sum = sum + safeNumber(item.factory_value), 0
+                        ), shipmentsObj[0]?.symbol ?? '$'
+                    ),
+                    commission_value: currencyFormatter(
+                        shipmentsObj.reduce(
+                            (sum, item) => sum = sum + safeNumber(item.commission_value), 0
+                        ), shipmentsObj[0]?.symbol ?? '$'
+                    ),
+                    effective_commission: currencyFormatter(
+                        shipmentsObj.reduce(
+                            (sum, item) => sum = sum + safeNumber(item.effective_commission), 0
+                        ), shipmentsObj[0]?.symbol ?? '$'
+                    ),
+                    dhaka_value: currencyFormatter(
+                        shipmentsObj.reduce(
+                            (sum, item) => sum = sum + safeNumber(item.dhaka_value), 0
+                        ), shipmentsObj[0]?.symbol ?? '$'
+                    ),
+                    effective_dhaka_value: currencyFormatter(
+                        shipmentsObj.reduce(
+                            (sum, item) => sum = sum + safeNumber(item.effective_dhaka_value), 0
+                        ), shipmentsObj[0]?.symbol ?? '$'
+                    ),
+                    overseas_value: currencyFormatter(
+                        shipmentsObj.reduce(
+                            (sum, item) => sum = sum + safeNumber(item.overseas_value), 0
+                        ), shipmentsObj[0]?.symbol ?? '$'
+                    ),
+                    effective_overseas_value: currencyFormatter(
+                        shipmentsObj.reduce(
+                            (sum, item) => sum = sum + safeNumber(item.effective_overseas_value), 0
+                        ), shipmentsObj[0]?.symbol ?? '$'
+                    ),
+                    other_value: currencyFormatter(
+                        shipmentsObj.reduce(
+                            (sum, item) => sum = sum + safeNumber(item.other_value), 0
+                        ), shipmentsObj[0]?.symbol ?? '$'
+                    ),
+                    effective_other_value: currencyFormatter(
+                        shipmentsObj.reduce(
+                            (sum, item) => sum = sum + safeNumber(item.effective_other_value), 0
+                        ), shipmentsObj[0]?.symbol ?? '$'
+                    ),
+                }
+                return {shipments, totals};
+            }
+            catch (error){
+                console.log('error', error)
+                await logError(error, ctx, input);
+                handlePrismaError(error);
+            }
         }),
 
     addEarlySettlement: protectedProcedure
@@ -503,8 +572,6 @@ export const earlySettlementRouter = createTRPCRouter({
                     message: "You don't have permission to update early settlement"
                 })
             }
-
-            console.log('Error', input)
 
             return ctx.db.$transaction(async (tx) => {
                 const existingDetails = await tx.early_settlement_details.findMany({

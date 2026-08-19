@@ -1,7 +1,8 @@
 import React from "react";
 
 import { Loader, Toggle, FormSelect, TextField, Button, MultiSelect, CheckBox, Label} from '~/components'
-import { Controller, type Control, type FieldErrors, type FieldValues, type Path, type UseFormRegister } from "react-hook-form";
+import { Controller } from "react-hook-form";
+import type { Control, FieldValues, Path, UseFormRegister } from "react-hook-form";
 import type { BaseField } from "~/types/form";
 
 type Props<T extends FieldValues> = {
