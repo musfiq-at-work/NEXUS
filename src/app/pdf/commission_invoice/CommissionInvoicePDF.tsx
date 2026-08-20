@@ -135,7 +135,7 @@ const CommissionInvoicePDF = ({ data }: { data: GetPDFDataOutput }) => {
 								quantity={item.invoice_quantity}
 								value={item.invoice_value}
 								description={
-									<View style={{paddingTop: 5}}>
+									<View style={{ paddingTop: 5, ...(!item.charge && { marginBottom: 5 })}}>
 										<Text>RDL Invoice No: {item.invoice_no}</Text>
 										<Text style={{ marginTop: 2}}>Date: {item.invoice_date}</Text>
 									</View>
@@ -146,7 +146,7 @@ const CommissionInvoicePDF = ({ data }: { data: GetPDFDataOutput }) => {
 									quantity={' '}
 									value={item.charge}
 									description={
-										<Text style={{ marginTop: 2, paddingBottom: 5 }}>Early Settlement Charge</Text>
+										<Text style={{ marginTop: 5 }}>Early Settlement Charge</Text>
 									}
 								/>
 							}

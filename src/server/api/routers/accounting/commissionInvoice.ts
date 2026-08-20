@@ -1141,7 +1141,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
                     invoice_date: formatDate(ri.invoice_date),
                     invoice_quantity: quantityFormatter(ri.invoice_quantity),
                     invoice_value: currencyFormatter(ri.invoice_value, '$'),
-                    charge: currencyFormatter(ri.charge, '$'),
+                    ...(Number(ri.charge) !== 0 && { charge: currencyFormatter(Number(ri.charge * -1), '$') }),
                 }));
 
                 // Factory Invoice processing

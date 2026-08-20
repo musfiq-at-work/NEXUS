@@ -16,7 +16,7 @@ const TableRow = ({ index, description, quantity, value}: TableRowProps) => (
             borderLeftWidth: 0.75,
             borderLeftColor: tableBorderColor,
             borderRightWidth: 0.75,
-            borderRightColor: tableBorderColor,
+            borderRightColor: tableBorderColor
         }}
         wrap={false}
     >
