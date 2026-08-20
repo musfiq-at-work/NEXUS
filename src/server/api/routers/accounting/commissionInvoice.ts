@@ -750,6 +750,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
                                 RI.INVOICE_DATE,
                                 RID.INVOICE_QUANTITY,
                                 (RID.INVOICE_VALUE - COALESCE(RI.DISCOUNT, 0)) AS INVOICE_VALUE,
+                                RID.CHARGE_VALUE,
                                 DS.ID AS DS_ID
                             FROM document_submissions AS DS
                                 INNER JOIN document_submissions_details AS DSD ON DSD.document_submissions_id = DS.id
@@ -758,10 +759,12 @@ export const commissionInvoiceRouter = createTRPCRouter({
                                     SELECT
                                         RID.RDL_INVOICE_ID AS RIID,
                                         SUM(RISD.INVOICE_QUANTITY) AS INVOICE_QUANTITY,
-                                        SUM(RISD.INVOICE_QUANTITY * SD.FOB_RATE) AS INVOICE_VALUE
+                                        SUM(RISD.INVOICE_QUANTITY * SD.FOB_RATE) AS INVOICE_VALUE,
+                                        SUM(RISD.INVOICE_QUANTITY * SD.FOB_RATE * ESD.early_settlement_charge / 100) AS CHARGE_VALUE
                                     FROM rdl_invoice_details AS RID
                                         INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
                                         INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
+                                        LEFT JOIN early_settlement_details AS ESD ON ESD.shipment_details_id = SD.id
                                     GROUP BY RID.RDL_INVOICE_ID
                                 ) RID ON RID.RIID = RI.id 
                         ),
@@ -771,17 +774,20 @@ export const commissionInvoiceRouter = createTRPCRouter({
                                 RI.INVOICE_DATE,
                                 RID.INVOICE_QUANTITY,
                                 (RID.INVOICE_VALUE - COALESCE(RI.DISCOUNT, 0)) AS INVOICE_VALUE,
+                                RID.CHARGE_VALUE,
                                 RI.ID AS RI_ID
                             FROM rdl_invoice AS RI
                                 INNER JOIN (
                                     SELECT
                                         RID.RDL_INVOICE_ID AS RIID,
                                         SUM(RISD.INVOICE_QUANTITY) AS INVOICE_QUANTITY,
-                                        SUM(RISD.INVOICE_QUANTITY * SD.FOB_RATE) AS INVOICE_VALUE
+                                        SUM(RISD.INVOICE_QUANTITY * SD.FOB_RATE) AS INVOICE_VALUE,
+                                        SUM(RISD.INVOICE_QUANTITY * SD.FOB_RATE * ESD.early_settlement_charge / 100) AS CHARGE_VALUE
                                     FROM rdl_invoice_details AS RID
                                         INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
                                         INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
-                                    GROUP BY RID.RDL_INVOICE_ID
+                                        LEFT JOIN early_settlement_details AS ESD ON ESD.shipment_details_id = SD.id
+                                        GROUP BY RID.RDL_INVOICE_ID
                                 ) RID ON RID.RIID = RI.id 
                         )
                         SELECT DISTINCT
@@ -790,10 +796,12 @@ export const commissionInvoiceRouter = createTRPCRouter({
                             RFL.INVOICE_DATE AS rfl_invoice_date,
                             RFL.INVOICE_QUANTITY AS rfl_invoice_quantity,
                             RFL.INVOICE_VALUE AS rfl_invoice_value,
+                            RFL.CHARGE_VALUE AS rfl_charge_value,
                             RFT.INVOICE_NO AS rft_invoice_no,
                             RFT.INVOICE_DATE AS rft_invoice_date,
                             RFT.INVOICE_QUANTITY AS rft_invoice_quantity,
-                            RFT.INVOICE_VALUE AS rft_invoice_value
+                            RFT.INVOICE_VALUE AS rft_invoice_value,
+                            RFT.CHARGE_VALUE AS rft_charge_value
                         FROM commission_invoice AS CI
                             INNER JOIN TERMS AS T ON T.id = CI.term_id
                             LEFT JOIN RI_FOR_LC AS RFL ON RFL.DS_ID = CI.document_submission_id AND T.NAME = 'LC'
@@ -924,9 +932,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
                                 DS.id AS DS_ID,
 
                                 -- Original RDL value
-                                SUM(
-                                    INV.INVOICE_QUANTITY * SC.FOB_RATE
-                                ) AS TOTAL_RDL_VALUE,
+                                SUM(INV.INVOICE_QUANTITY * SC.FOB_RATE) AS TOTAL_RDL_VALUE,
 
                                 -- Effective CI after early settlement
                                 CASE
@@ -938,77 +944,22 @@ export const commissionInvoiceRouter = createTRPCRouter({
                                 -- DN is NOT affected by early settlement
                                 CASE
                                     WHEN COALESCE(AVG(FSD.TRANSFER_RATE), 0) <> 0
-                                        THEN COALESCE(
-                                            SUM(
-                                                INV.INVOICE_QUANTITY *
-                                                (FSD.TRANSFER_RATE - FSD.FACTORY_RATE) /
-                                                FO.CURRENCY_RATE
-                                            ),
-                                            0
-                                        )
+                                        THEN COALESCE(SUM(INV.INVOICE_QUANTITY * (FSD.TRANSFER_RATE - FSD.FACTORY_RATE) / FO.CURRENCY_RATE), 0)
                                     ELSE 0
                                 END AS TOTAL_DN,
 
                                 -- Effective CI distribution
-                                COALESCE(
-                                    SUM(
-                                        INV.INVOICE_QUANTITY *
-                                        SC.EFFECTIVE_FOB *
-                                        (
-                                            SC.EFFECTIVE_COMMISSION_PERCENTAGE
-                                            - SC.OTHERS_COMMISSION_PERCENTAGE
-                                            - SC.OVERSEAS_COMMISSION_PERCENTAGE
-                                        ) / 100
-                                    ),
-                                    0
-                                ) AS TOTAL_DHAKA_CI,
+                                COALESCE(SUM(INV.INVOICE_QUANTITY * SC.EFFECTIVE_FOB *
+                                    (SC.EFFECTIVE_COMMISSION_PERCENTAGE - SC.OTHERS_COMMISSION_PERCENTAGE - SC.OVERSEAS_COMMISSION_PERCENTAGE) / 100
+                                ), 0) AS TOTAL_DHAKA_CI,
 
-                                COALESCE(
-                                    SUM(
-                                        INV.INVOICE_QUANTITY *
-                                        SC.EFFECTIVE_FOB *
-                                        SC.OTHERS_COMMISSION_PERCENTAGE / 100
-                                    ),
-                                    0
-                                ) AS TOTAL_OTHER_CI,
-
-                                COALESCE(
-                                    SUM(
-                                        INV.INVOICE_QUANTITY *
-                                        SC.EFFECTIVE_FOB *
-                                        SC.OVERSEAS_COMMISSION_PERCENTAGE / 100
-                                    ),
-                                    0
-                                ) AS TOTAL_OVERSEAS_CI,
+                                COALESCE(SUM( INV.INVOICE_QUANTITY * SC.EFFECTIVE_FOB * SC.OTHERS_COMMISSION_PERCENTAGE / 100), 0) AS TOTAL_OTHER_CI,
+                                COALESCE(SUM(INV.INVOICE_QUANTITY * SC.EFFECTIVE_FOB * SC.OVERSEAS_COMMISSION_PERCENTAGE / 100), 0) AS TOTAL_OVERSEAS_CI,
 
                                 -- Original CI distribution for DN allocation
-                                COALESCE(
-                                    SUM(
-                                        INV.INVOICE_QUANTITY *
-                                        SC.FOB_RATE *
-                                        SC.DHAKA_COMMISSION_PERCENTAGE / 100
-                                    ),
-                                    0
-                                ) AS TOTAL_DHAKA_CI_ORIGINAL,
-
-                                COALESCE(
-                                    SUM(
-                                        INV.INVOICE_QUANTITY *
-                                        SC.FOB_RATE *
-                                        SC.OTHERS_COMMISSION_PERCENTAGE / 100
-                                    ),
-                                    0
-                                ) AS TOTAL_OTHER_CI_ORIGINAL,
-
-                                COALESCE(
-                                    SUM(
-                                        INV.INVOICE_QUANTITY *
-                                        SC.FOB_RATE *
-                                        SC.OVERSEAS_COMMISSION_PERCENTAGE / 100
-                                    ),
-                                    0
-                                ) AS TOTAL_OVERSEAS_CI_ORIGINAL
-
+                                COALESCE(SUM(INV.INVOICE_QUANTITY * SC.FOB_RATE * SC.DHAKA_COMMISSION_PERCENTAGE / 100 ), 0) AS TOTAL_DHAKA_CI_ORIGINAL,
+                                COALESCE(SUM(INV.INVOICE_QUANTITY * SC.FOB_RATE * SC.OTHERS_COMMISSION_PERCENTAGE / 100), 0) AS TOTAL_OTHER_CI_ORIGINAL,
+                                COALESCE(SUM(INV.INVOICE_QUANTITY * SC.FOB_RATE * SC.OVERSEAS_COMMISSION_PERCENTAGE / 100 ), 0) AS TOTAL_OVERSEAS_CI_ORIGINAL
                             FROM document_submissions DS
                                 INNER JOIN document_submissions_details DSD ON DSD.document_submissions_id = DS.id
                                 INNER JOIN rdl_invoice RI ON RI.id = DSD.rdl_invoice_id
@@ -1027,9 +978,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
                                 RI.id AS RI_ID,
 
                                 -- Original RDL value
-                                SUM(
-                                    INV.INVOICE_QUANTITY * SC.FOB_RATE
-                                ) AS TOTAL_RDL_VALUE,
+                                SUM(INV.INVOICE_QUANTITY * SC.FOB_RATE) AS TOTAL_RDL_VALUE,
 
                                 -- Effective CI after early settlement
                                 CASE
@@ -1041,76 +990,23 @@ export const commissionInvoiceRouter = createTRPCRouter({
                                 -- DN is NOT affected by early settlement
                                 CASE
                                     WHEN COALESCE(AVG(FSD.TRANSFER_RATE), 0) <> 0
-                                        THEN COALESCE(
-                                            SUM(
-                                                INV.INVOICE_QUANTITY *
-                                                (FSD.TRANSFER_RATE - FSD.FACTORY_RATE) /
-                                                FO.CURRENCY_RATE
-                                            ),
-                                            0
-                                        )
+                                        THEN COALESCE(SUM(INV.INVOICE_QUANTITY * (FSD.TRANSFER_RATE - FSD.FACTORY_RATE) / FO.CURRENCY_RATE), 0)
                                     ELSE 0
                                 END AS TOTAL_DN,
 
                                 -- Effective CI distribution
-                                COALESCE(
-                                    SUM(
-                                        INV.INVOICE_QUANTITY *
-                                        SC.EFFECTIVE_FOB *
-                                        (
-                                            SC.EFFECTIVE_COMMISSION_PERCENTAGE
-                                            - SC.OTHERS_COMMISSION_PERCENTAGE
-                                            - SC.OVERSEAS_COMMISSION_PERCENTAGE
-                                        ) / 100
-                                    ),
-                                    0
-                                ) AS TOTAL_DHAKA_CI,
+                                COALESCE(SUM(INV.INVOICE_QUANTITY * SC.EFFECTIVE_FOB *
+                                    (SC.EFFECTIVE_COMMISSION_PERCENTAGE - SC.OTHERS_COMMISSION_PERCENTAGE - SC.OVERSEAS_COMMISSION_PERCENTAGE) / 100
+                                ), 0) AS TOTAL_DHAKA_CI,
 
-                                COALESCE(
-                                    SUM(
-                                        INV.INVOICE_QUANTITY *
-                                        SC.EFFECTIVE_FOB *
-                                        SC.OTHERS_COMMISSION_PERCENTAGE / 100
-                                    ),
-                                    0
-                                ) AS TOTAL_OTHER_CI,
-
-                                COALESCE(
-                                    SUM(
-                                        INV.INVOICE_QUANTITY *
-                                        SC.EFFECTIVE_FOB *
-                                        SC.OVERSEAS_COMMISSION_PERCENTAGE / 100
-                                    ),
-                                    0
-                                ) AS TOTAL_OVERSEAS_CI,
+                                COALESCE(SUM(INV.INVOICE_QUANTITY * SC.EFFECTIVE_FOB * SC.OTHERS_COMMISSION_PERCENTAGE / 100), 0) AS TOTAL_OTHER_CI,
+                                COALESCE(SUM(INV.INVOICE_QUANTITY * SC.EFFECTIVE_FOB * SC.OVERSEAS_COMMISSION_PERCENTAGE / 100), 0) AS TOTAL_OVERSEAS_CI,
 
                                 -- Original CI distribution for DN allocation
-                                COALESCE(
-                                    SUM(
-                                        INV.INVOICE_QUANTITY *
-                                        SC.FOB_RATE *
-                                        SC.DHAKA_COMMISSION_PERCENTAGE / 100
-                                    ),
-                                    0
-                                ) AS TOTAL_DHAKA_CI_ORIGINAL,
+                                COALESCE(SUM(INV.INVOICE_QUANTITY * SC.FOB_RATE * SC.DHAKA_COMMISSION_PERCENTAGE / 100), 0) AS TOTAL_DHAKA_CI_ORIGINAL,
+                                COALESCE(SUM(INV.INVOICE_QUANTITY * SC.FOB_RATE * SC.OTHERS_COMMISSION_PERCENTAGE / 100), 0) AS TOTAL_OTHER_CI_ORIGINAL,
 
-                                COALESCE(
-                                    SUM(
-                                        INV.INVOICE_QUANTITY *
-                                        SC.FOB_RATE *
-                                        SC.OTHERS_COMMISSION_PERCENTAGE / 100
-                                    ),
-                                    0
-                                ) AS TOTAL_OTHER_CI_ORIGINAL,
-
-                                COALESCE(
-                                    SUM(
-                                        INV.INVOICE_QUANTITY *
-                                        SC.FOB_RATE *
-                                        SC.OVERSEAS_COMMISSION_PERCENTAGE / 100
-                                    ),
-                                    0
-                                ) AS TOTAL_OVERSEAS_CI_ORIGINAL
+                                COALESCE(SUM(INV.INVOICE_QUANTITY * SC.FOB_RATE * SC.OVERSEAS_COMMISSION_PERCENTAGE / 100), 0) AS TOTAL_OVERSEAS_CI_ORIGINAL
                             FROM rdl_invoice RI
                                 INNER JOIN rdl_invoice_details RID ON RID.rdl_invoice_id = RI.id
                                 INNER JOIN INV ON INV.RIDID = RID.id
@@ -1124,321 +1020,85 @@ export const commissionInvoiceRouter = createTRPCRouter({
                         )
                         SELECT
                             -- LC, CI Allocation
-                            SUM(
-                                CFL.TOTAL_CI *
-                                (
-                                    CFL.TOTAL_DHAKA_CI /
-                                    NULLIF(
-                                        CFL.TOTAL_DHAKA_CI +
-                                        CFL.TOTAL_OTHER_CI +
-                                        CFL.TOTAL_OVERSEAS_CI,
-                                        0
-                                    )
-                                )
-                            ) AS CFL_DHAKA_VALUE,
+                            SUM(CFL.TOTAL_CI * (CFL.TOTAL_DHAKA_CI / NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))) AS CFL_DHAKA_VALUE,
+                            SUM(CFL.TOTAL_CI * (CFL.TOTAL_OVERSEAS_CI / NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))) AS CFL_OVERSEAS_VALUE,
+                            SUM(CFL.TOTAL_CI * (CFL.TOTAL_OTHER_CI / NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))) AS CFL_OTHER_VALUE,
 
                             SUM(
-                                CFL.TOTAL_CI *
-                                (
-                                    CFL.TOTAL_OVERSEAS_CI /
-                                    NULLIF(
-                                        CFL.TOTAL_DHAKA_CI +
-                                        CFL.TOTAL_OTHER_CI +
-                                        CFL.TOTAL_OVERSEAS_CI,
-                                        0
-                                    )
-                                )
-                            ) AS CFL_OVERSEAS_VALUE,
-
-                            SUM(
-                                CFL.TOTAL_CI *
-                                (
-                                    CFL.TOTAL_OTHER_CI /
-                                    NULLIF(
-                                        CFL.TOTAL_DHAKA_CI +
-                                        CFL.TOTAL_OTHER_CI +
-                                        CFL.TOTAL_OVERSEAS_CI,
-                                        0
-                                    )
-                                )
-                            ) AS CFL_OTHER_VALUE,
-
-                            SUM(
-                                CFL.TOTAL_CI *
-                                (
-                                    CFL.TOTAL_DHAKA_CI /
-                                    NULLIF(
-                                        CFL.TOTAL_DHAKA_CI +
-                                        CFL.TOTAL_OTHER_CI +
-                                        CFL.TOTAL_OVERSEAS_CI,
-                                        0
-                                    )
-                                )
+                                CFL.TOTAL_CI *(CFL.TOTAL_DHAKA_CI /NULLIF(CFL.TOTAL_DHAKA_CI +CFL.TOTAL_OTHER_CI +CFL.TOTAL_OVERSEAS_CI,0))
                             ) / NULLIF(SUM(CFL.TOTAL_RDL_VALUE), 0) * 100 AS CFL_DHAKA_PERCENTAGE,
 
                             SUM(
-                                CFL.TOTAL_CI *
-                                (
-                                    CFL.TOTAL_OVERSEAS_CI /
-                                    NULLIF(
-                                        CFL.TOTAL_DHAKA_CI +
-                                        CFL.TOTAL_OTHER_CI +
-                                        CFL.TOTAL_OVERSEAS_CI,
-                                        0
-                                    )
-                                )
+                                CFL.TOTAL_CI *(CFL.TOTAL_OVERSEAS_CI /NULLIF(CFL.TOTAL_DHAKA_CI +CFL.TOTAL_OTHER_CI +CFL.TOTAL_OVERSEAS_CI,0))
                             ) / NULLIF(SUM(CFL.TOTAL_RDL_VALUE), 0) * 100 AS CFL_OVERSEAS_PERCENTAGE,
 
                             SUM(
-                                CFL.TOTAL_CI *
-                                (
-                                    CFL.TOTAL_OTHER_CI /
-                                    NULLIF(
-                                        CFL.TOTAL_DHAKA_CI +
-                                        CFL.TOTAL_OTHER_CI +
-                                        CFL.TOTAL_OVERSEAS_CI,
-                                        0
-                                    )
-                                )
+                                CFL.TOTAL_CI *(CFL.TOTAL_OTHER_CI /NULLIF(CFL.TOTAL_DHAKA_CI +CFL.TOTAL_OTHER_CI +CFL.TOTAL_OVERSEAS_CI,0))
                             ) / NULLIF(SUM(CFL.TOTAL_RDL_VALUE), 0) * 100 AS CFL_OTHER_PERCENTAGE,
 
                             -- TT, CI Allocation
-                            SUM(
-                                CFT.TOTAL_CI *
-                                (
-                                    CFT.TOTAL_DHAKA_CI /
-                                    NULLIF(
-                                        CFT.TOTAL_DHAKA_CI +
-                                        CFT.TOTAL_OTHER_CI +
-                                        CFT.TOTAL_OVERSEAS_CI,
-                                        0
-                                    )
-                                )
-                            ) AS CFT_DHAKA_VALUE,
+                            SUM(CFT.TOTAL_CI * (CFT.TOTAL_DHAKA_CI / NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))) AS CFT_DHAKA_VALUE,
+                            SUM(CFT.TOTAL_CI * (CFT.TOTAL_OVERSEAS_CI / NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))) AS CFT_OVERSEAS_VALUE,
+                            SUM(CFT.TOTAL_CI * (CFT.TOTAL_OTHER_CI / NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))) AS CFT_OTHER_VALUE,
 
-                            SUM(
-                                CFT.TOTAL_CI *
-                                (
-                                    CFT.TOTAL_OVERSEAS_CI /
-                                    NULLIF(
-                                        CFT.TOTAL_DHAKA_CI +
-                                        CFT.TOTAL_OTHER_CI +
-                                        CFT.TOTAL_OVERSEAS_CI,
-                                        0
-                                    )
-                                )
-                            ) AS CFT_OVERSEAS_VALUE,
-
-                            SUM(
-                                CFT.TOTAL_CI *
-                                (
-                                    CFT.TOTAL_OTHER_CI /
-                                    NULLIF(
-                                        CFT.TOTAL_DHAKA_CI +
-                                        CFT.TOTAL_OTHER_CI +
-                                        CFT.TOTAL_OVERSEAS_CI,
-                                        0
-                                    )
-                                )
-                            ) AS CFT_OTHER_VALUE,
-
-                            SUM(
-                                CFT.TOTAL_CI *
-                                (
-                                    CFT.TOTAL_DHAKA_CI /
-                                    NULLIF(
-                                        CFT.TOTAL_DHAKA_CI +
-                                        CFT.TOTAL_OTHER_CI +
-                                        CFT.TOTAL_OVERSEAS_CI,
-                                        0
-                                    )
-                                )
+                            SUM(CFT.TOTAL_CI * (CFT.TOTAL_DHAKA_CI / NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))
                             ) / NULLIF(SUM(CFT.TOTAL_RDL_VALUE), 0) * 100 AS CFT_DHAKA_PERCENTAGE,
 
-                            SUM(
-                                CFT.TOTAL_CI *
-                                (
-                                    CFT.TOTAL_OVERSEAS_CI /
-                                    NULLIF(
-                                        CFT.TOTAL_DHAKA_CI +
-                                        CFT.TOTAL_OTHER_CI +
-                                        CFT.TOTAL_OVERSEAS_CI,
-                                        0
-                                    )
-                                )
+                            SUM(CFT.TOTAL_CI * (CFT.TOTAL_OVERSEAS_CI / NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))
                             ) / NULLIF(SUM(CFT.TOTAL_RDL_VALUE), 0) * 100 AS CFT_OVERSEAS_PERCENTAGE,
 
-                            SUM(
-                                CFT.TOTAL_CI *
-                                (
-                                    CFT.TOTAL_OTHER_CI /
-                                    NULLIF(
-                                        CFT.TOTAL_DHAKA_CI +
-                                        CFT.TOTAL_OTHER_CI +
-                                        CFT.TOTAL_OVERSEAS_CI,
-                                        0
-                                    )
-                                )
+                            SUM(CFT.TOTAL_CI * (CFT.TOTAL_OTHER_CI / NULLIF(CFT.TOTAL_DHAKA_CI + CFT.TOTAL_OTHER_CI + CFT.TOTAL_OVERSEAS_CI, 0))
                             ) / NULLIF(SUM(CFT.TOTAL_RDL_VALUE), 0) * 100 AS CFT_OTHER_PERCENTAGE,
 
                             -- LC, DN Allocation - ORIGINAL COMMISSION DISTRIBUTION
-                            SUM(
-                                CFL.TOTAL_DN *
-                                (
-                                    CFL.TOTAL_DHAKA_CI_ORIGINAL /
-                                    NULLIF(
-                                        CFL.TOTAL_DHAKA_CI_ORIGINAL +
-                                        CFL.TOTAL_OTHER_CI_ORIGINAL +
-                                        CFL.TOTAL_OVERSEAS_CI_ORIGINAL,
-                                        0
-                                    )
-                                )
+                            SUM(CFL.TOTAL_DN * 
+                                (CFL.TOTAL_DHAKA_CI_ORIGINAL / NULLIF(CFL.TOTAL_DHAKA_CI_ORIGINAL + CFL.TOTAL_OTHER_CI_ORIGINAL + CFL.TOTAL_OVERSEAS_CI_ORIGINAL, 0))
                             ) AS CFL_DN_DHAKA_VALUE,
 
-                            SUM(
-                                CFL.TOTAL_DN *
-                                (
-                                    CFL.TOTAL_OVERSEAS_CI_ORIGINAL /
-                                    NULLIF(
-                                        CFL.TOTAL_DHAKA_CI_ORIGINAL +
-                                        CFL.TOTAL_OTHER_CI_ORIGINAL +
-                                        CFL.TOTAL_OVERSEAS_CI_ORIGINAL,
-                                        0
-                                    )
-                                )
+                            SUM(CFL.TOTAL_DN * 
+                                (CFL.TOTAL_OVERSEAS_CI_ORIGINAL / NULLIF(CFL.TOTAL_DHAKA_CI_ORIGINAL + CFL.TOTAL_OTHER_CI_ORIGINAL + CFL.TOTAL_OVERSEAS_CI_ORIGINAL, 0))
                             ) AS CFL_DN_OVERSEAS_VALUE,
 
-                            SUM(
-                                CFL.TOTAL_DN *
-                                (
-                                    CFL.TOTAL_OTHER_CI_ORIGINAL /
-                                    NULLIF(
-                                        CFL.TOTAL_DHAKA_CI_ORIGINAL +
-                                        CFL.TOTAL_OTHER_CI_ORIGINAL +
-                                        CFL.TOTAL_OVERSEAS_CI_ORIGINAL,
-                                        0
-                                    )
-                                )
+                            SUM(CFL.TOTAL_DN * 
+                                (CFL.TOTAL_OTHER_CI_ORIGINAL / NULLIF(CFL.TOTAL_DHAKA_CI_ORIGINAL + CFL.TOTAL_OTHER_CI_ORIGINAL + CFL.TOTAL_OVERSEAS_CI_ORIGINAL, 0))
                             ) AS CFL_DN_OTHER_VALUE,
 
-                            SUM(
-                                CFL.TOTAL_DN *
-                                (
-                                    CFL.TOTAL_DHAKA_CI_ORIGINAL /
-                                    NULLIF(
-                                        CFL.TOTAL_DHAKA_CI_ORIGINAL +
-                                        CFL.TOTAL_OTHER_CI_ORIGINAL +
-                                        CFL.TOTAL_OVERSEAS_CI_ORIGINAL,
-                                        0
-                                    )
-                                )
+                            SUM(CFL.TOTAL_DN * (
+                                CFL.TOTAL_DHAKA_CI_ORIGINAL / NULLIF(CFL.TOTAL_DHAKA_CI_ORIGINAL + CFL.TOTAL_OTHER_CI_ORIGINAL + CFL.TOTAL_OVERSEAS_CI_ORIGINAL, 0))
                             ) / NULLIF(SUM(CFL.TOTAL_RDL_VALUE), 0) * 100 AS CFL_DN_DHAKA_PERCENTAGE,
 
-                            SUM(
-                                CFL.TOTAL_DN *
-                                (
-                                    CFL.TOTAL_OVERSEAS_CI_ORIGINAL /
-                                    NULLIF(
-                                        CFL.TOTAL_DHAKA_CI_ORIGINAL +
-                                        CFL.TOTAL_OTHER_CI_ORIGINAL +
-                                        CFL.TOTAL_OVERSEAS_CI_ORIGINAL,
-                                        0
-                                    )
-                                )
+                            SUM(CFL.TOTAL_DN * (
+                                CFL.TOTAL_OVERSEAS_CI_ORIGINAL / NULLIF(CFL.TOTAL_DHAKA_CI_ORIGINAL + CFL.TOTAL_OTHER_CI_ORIGINAL + CFL.TOTAL_OVERSEAS_CI_ORIGINAL, 0))
                             ) / NULLIF(SUM(CFL.TOTAL_RDL_VALUE), 0) * 100 AS CFL_DN_OVERSEAS_PERCENTAGE,
 
-                            SUM(
-                                CFL.TOTAL_DN *
-                                (
-                                    CFL.TOTAL_OTHER_CI_ORIGINAL /
-                                    NULLIF(
-                                        CFL.TOTAL_DHAKA_CI_ORIGINAL +
-                                        CFL.TOTAL_OTHER_CI_ORIGINAL +
-                                        CFL.TOTAL_OVERSEAS_CI_ORIGINAL,
-                                        0
-                                    )
-                                )
+                            SUM(CFL.TOTAL_DN * (
+                                CFL.TOTAL_OTHER_CI_ORIGINAL / NULLIF(CFL.TOTAL_DHAKA_CI_ORIGINAL + CFL.TOTAL_OTHER_CI_ORIGINAL + CFL.TOTAL_OVERSEAS_CI_ORIGINAL, 0))
                             ) / NULLIF(SUM(CFL.TOTAL_RDL_VALUE), 0) * 100 AS CFL_DN_OTHER_PERCENTAGE,
 
                             -- TT, DN Allocation - ORIGINAL COMMISSION DISTRIBUTION
-                            SUM(
-                                CFT.TOTAL_DN *
-                                (
-                                    CFT.TOTAL_DHAKA_CI_ORIGINAL /
-                                    NULLIF(
-                                        CFT.TOTAL_DHAKA_CI_ORIGINAL +
-                                        CFT.TOTAL_OTHER_CI_ORIGINAL +
-                                        CFT.TOTAL_OVERSEAS_CI_ORIGINAL,
-                                        0
-                                    )
-                                )
+                            SUM(CFT.TOTAL_DN * 
+                                (CFT.TOTAL_DHAKA_CI_ORIGINAL / NULLIF(CFT.TOTAL_DHAKA_CI_ORIGINAL + CFT.TOTAL_OTHER_CI_ORIGINAL + CFT.TOTAL_OVERSEAS_CI_ORIGINAL, 0))
                             ) AS CFT_DN_DHAKA_VALUE,
 
-                            SUM(
-                                CFT.TOTAL_DN *
-                                (
-                                    CFT.TOTAL_OVERSEAS_CI_ORIGINAL /
-                                    NULLIF(
-                                        CFT.TOTAL_DHAKA_CI_ORIGINAL +
-                                        CFT.TOTAL_OTHER_CI_ORIGINAL +
-                                        CFT.TOTAL_OVERSEAS_CI_ORIGINAL,
-                                        0
-                                    )
-                                )
+                            SUM(CFT.TOTAL_DN * 
+                                (CFT.TOTAL_OVERSEAS_CI_ORIGINAL / NULLIF(CFT.TOTAL_DHAKA_CI_ORIGINAL + CFT.TOTAL_OTHER_CI_ORIGINAL + CFT.TOTAL_OVERSEAS_CI_ORIGINAL, 0))
                             ) AS CFT_DN_OVERSEAS_VALUE,
 
-                            SUM(
-                                CFT.TOTAL_DN *
-                                (
-                                    CFT.TOTAL_OTHER_CI_ORIGINAL /
-                                    NULLIF(
-                                        CFT.TOTAL_DHAKA_CI_ORIGINAL +
-                                        CFT.TOTAL_OTHER_CI_ORIGINAL +
-                                        CFT.TOTAL_OVERSEAS_CI_ORIGINAL,
-                                        0
-                                    )
-                                )
+                            SUM(CFT.TOTAL_DN * 
+                                (CFT.TOTAL_OTHER_CI_ORIGINAL / NULLIF(CFT.TOTAL_DHAKA_CI_ORIGINAL + CFT.TOTAL_OTHER_CI_ORIGINAL + CFT.TOTAL_OVERSEAS_CI_ORIGINAL, 0))
                             ) AS CFT_DN_OTHER_VALUE,
 
-                            SUM(
-                                CFT.TOTAL_DN *
-                                (
-                                    CFT.TOTAL_DHAKA_CI_ORIGINAL /
-                                    NULLIF(
-                                        CFT.TOTAL_DHAKA_CI_ORIGINAL +
-                                        CFT.TOTAL_OTHER_CI_ORIGINAL +
-                                        CFT.TOTAL_OVERSEAS_CI_ORIGINAL,
-                                        0
-                                    )
-                                )
+                            SUM(CFT.TOTAL_DN * (
+                                CFT.TOTAL_DHAKA_CI_ORIGINAL / NULLIF(CFT.TOTAL_DHAKA_CI_ORIGINAL + CFT.TOTAL_OTHER_CI_ORIGINAL + CFT.TOTAL_OVERSEAS_CI_ORIGINAL,0))
                             ) / NULLIF(SUM(CFT.TOTAL_RDL_VALUE), 0) * 100 AS CFT_DN_DHAKA_PERCENTAGE,
 
-                            SUM(
-                                CFT.TOTAL_DN *
-                                (
-                                    CFT.TOTAL_OVERSEAS_CI_ORIGINAL /
-                                    NULLIF(
-                                        CFT.TOTAL_DHAKA_CI_ORIGINAL +
-                                        CFT.TOTAL_OTHER_CI_ORIGINAL +
-                                        CFT.TOTAL_OVERSEAS_CI_ORIGINAL,
-                                        0
-                                    )
-                                )
+                            SUM(CFT.TOTAL_DN * (
+                                CFT.TOTAL_OVERSEAS_CI_ORIGINAL / NULLIF(CFT.TOTAL_DHAKA_CI_ORIGINAL + CFT.TOTAL_OTHER_CI_ORIGINAL + CFT.TOTAL_OVERSEAS_CI_ORIGINAL,0))
                             ) / NULLIF(SUM(CFT.TOTAL_RDL_VALUE), 0) * 100 AS CFT_DN_OVERSEAS_PERCENTAGE,
 
-                            SUM(
-                                CFT.TOTAL_DN *
-                                (
-                                    CFT.TOTAL_OTHER_CI_ORIGINAL /
-                                    NULLIF(
-                                        CFT.TOTAL_DHAKA_CI_ORIGINAL +
-                                        CFT.TOTAL_OTHER_CI_ORIGINAL +
-                                        CFT.TOTAL_OVERSEAS_CI_ORIGINAL,
-                                        0
-                                    )
-                                )
+                            SUM(CFT.TOTAL_DN * (
+                                CFT.TOTAL_OTHER_CI_ORIGINAL / NULLIF(CFT.TOTAL_DHAKA_CI_ORIGINAL + CFT.TOTAL_OTHER_CI_ORIGINAL + CFT.TOTAL_OVERSEAS_CI_ORIGINAL,0))
                             ) / NULLIF(SUM(CFT.TOTAL_RDL_VALUE), 0) * 100 AS CFT_DN_OTHER_PERCENTAGE
-
                         FROM commission_invoice CI
                             INNER JOIN terms T ON T.id = CI.term_id
                             LEFT JOIN CI_FOR_LC CFL ON CFL.DS_ID = CI.document_submission_id AND T.name = 'LC'
@@ -1473,6 +1133,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
                     invoice_date: isTT ? data.rft_invoice_date : data.rfl_invoice_date,
                     invoice_quantity: isTT ? data.rft_invoice_quantity : data.rfl_invoice_quantity,
                     invoice_value: isTT ? data.rft_invoice_value : data.rfl_invoice_value,
+                    charge: isTT ? data.rft_charge_value : data.rfl_charge_value,
                 }));
 
                 const formattedRdlInvoices = rdl_invoices.map((ri) => ({
@@ -1480,6 +1141,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
                     invoice_date: formatDate(ri.invoice_date),
                     invoice_quantity: quantityFormatter(ri.invoice_quantity),
                     invoice_value: currencyFormatter(ri.invoice_value, '$'),
+                    charge: currencyFormatter(ri.charge, '$'),
                 }));
 
                 // Factory Invoice processing
@@ -1555,7 +1217,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
                 } : null;
 
                 // Total Calculations
-                const totalRdlInvoiceValue = rdl_invoices.reduce((sum, ri) => sum + safeNumber(ri.invoice_value), 0);
+                const totalRdlInvoiceValue = rdl_invoices.reduce((sum, ri) => sum + safeNumber(ri.invoice_value) - safeNumber(ri.charge), 0);
                 const totalRdlInvoiceQuantity = rdl_invoices.reduce((sum, ri) => sum + safeNumber(ri.invoice_quantity), 0);
                 const totalFactoryInvoiceValue = factoryInvoices.reduce((sum, fi) => sum + safeNumber(fi.invoice_value), 0);
                 const totalFactoryInvoiceQuantity = factoryInvoices.reduce((sum, fi) => sum + safeNumber(fi.invoice_quantity), 0);

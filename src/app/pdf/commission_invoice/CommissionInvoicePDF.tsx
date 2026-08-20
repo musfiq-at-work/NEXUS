@@ -129,18 +129,28 @@ const CommissionInvoicePDF = ({ data }: { data: GetPDFDataOutput }) => {
 
                 <InvoiceTable
                     rows={data.formattedRdlInvoices.map((item, index) => (
-                        <TableRow
-                            key={index}
-                            index={index}
-                            quantity={item.invoice_quantity}
-                            value={item.invoice_value}
-                            description={
-                                <>
-                                    <Text>RDL Invoice No: {item.invoice_no}</Text>
-                                    <Text style={{ marginTop: 2}}>Date: {item.invoice_date}</Text>
-                                </>
-                            }
-                        />
+                        <View key={index}>
+							<TableRow
+								index={index}
+								quantity={item.invoice_quantity}
+								value={item.invoice_value}
+								description={
+									<View style={{paddingTop: 5}}>
+										<Text>RDL Invoice No: {item.invoice_no}</Text>
+										<Text style={{ marginTop: 2}}>Date: {item.invoice_date}</Text>
+									</View>
+								}
+							/>
+							{item.charge && 
+								<TableRow
+									quantity={' '}
+									value={item.charge}
+									description={
+										<Text style={{ marginTop: 2, paddingBottom: 5 }}>Early Settlement Charge</Text>
+									}
+								/>
+							}
+						</View>
                     ))}
                     summaryLabel="Total RDL Invoice Quantity and Value"
                     totalQuantity={data.result.rdlInvoiceResults.total_invoice_quantity}
@@ -156,11 +166,11 @@ const CommissionInvoicePDF = ({ data }: { data: GetPDFDataOutput }) => {
                                 quantity={item.invoice_quantity}
                                 value={item.invoice_value}
                                 description={
-                                    <>
+                                    <View style={{paddingVertical: 5}}>
                                         <Text>Factory Invoice No: {item.invoice_no}</Text>
                                         <Text style={{ marginTop: 2 }}>Date: {item.invoice_date}</Text>
                                         <Text style={{ marginTop: 2 }}>Factory Name: {item.factory_name}</Text>
-                                    </>
+                                    </View>
                                 }
                             />
                         ))}
