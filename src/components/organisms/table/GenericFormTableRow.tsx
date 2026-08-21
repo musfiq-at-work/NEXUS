@@ -76,14 +76,14 @@ const GenericFormTableRow = <T extends FieldValues, >(props: Props<T>) => {
                             }
 
                             case 'toggle': 
-                                    return (
-                                        <Toggle
-                                            {...register(fieldName)}
-                                            label={col.label}
-                                            checked={col.checked}
-                                            disabled={isDisabled}
-                                        />
-                                    )
+                                return (
+                                    <Toggle
+                                        {...register(fieldName)}
+                                        label={col.label}
+                                        checked={col.checked}
+                                        disabled={isDisabled}
+                                    />
+                                )
 
                             case 'button':
                                 return (
@@ -121,6 +121,28 @@ const GenericFormTableRow = <T extends FieldValues, >(props: Props<T>) => {
                                         control={control}
                                         render={({ field }) => (
                                             <p className="p-1 tracking-wide">{field.value}</p>
+                                        )}
+                                    />
+                                )
+
+                            case 'chip-primary':
+                                return (
+                                    <Controller
+                                        name={fieldName as Path<T>}
+                                        control={control}
+                                        render={({ field }) => (
+                                            <p className="rounded-full text-white w-fit py-[3px] px-4 max-w-40 text-[0.75rem] bg-secondary">{field.value}</p>
+                                        )}
+                                    />
+                                )
+                            
+                            case 'chip-error':
+                                return (
+                                    <Controller
+                                        name={fieldName as Path<T>}
+                                        control={control}
+                                        render={({ field }) => (
+                                            <p className="rounded-full text-white w-fit py-[3px] px-4 max-w-40 text-[0.75rem] bg-red">{field.value}</p>
                                         )}
                                     />
                                 )

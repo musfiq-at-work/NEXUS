@@ -73,13 +73,11 @@ export const activityReportRouter = createTRPCRouter({
                             COALESCE(FI_AGG.invoice_no, '-') AS factory_invoice,
                             COALESCE(FI_AGG.invoice_date, '-') AS factory_invoice_date,
                             CASE
-                                WHEN FI_AGG.invoice_no IS NULL 
-                                    THEN '-'
+                                WHEN FI_AGG.invoice_no IS NULL THEN '-'
                                 ELSE SUM(ES.delivery_quantity)::TEXT
                             END AS factory_invoice_quantity,
                             CASE
-                                WHEN FI_AGG.invoice_no IS NULL 
-                                    THEN '-'
+                                WHEN FI_AGG.invoice_no IS NULL THEN '-'
                                 WHEN COALESCE(FSD.transfer_rate, 0) > 0
                                     THEN (SUM(ES.delivery_quantity) * FSD.transfer_rate)::NUMERIC(18,2)::TEXT
                                 ELSE (SUM(ES.delivery_quantity) * FSD.factory_rate)::NUMERIC(18,2)::TEXT
@@ -210,13 +208,11 @@ export const activityReportRouter = createTRPCRouter({
                             FI.invoice_no AS factory_invoice,
                             TO_CHAR(FI.invoice_date, 'DD Mon YYYY') AS factory_invoice_date,
                             CASE
-                                WHEN FI.invoice_no IS NULL 
-                                    THEN '-'
+                                WHEN FI.invoice_no IS NULL THEN '-'
                                 ELSE SUM(ES.delivery_quantity)::TEXT
                             END AS factory_invoice_quantity,
                             CASE
-                                WHEN FI.invoice_no IS NULL
-                                    THEN '-'
+                                WHEN FI.invoice_no IS NULL THEN '-'
                                 ELSE SUM(
                                     ES.delivery_quantity *
                                     CASE

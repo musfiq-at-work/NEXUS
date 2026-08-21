@@ -44,7 +44,7 @@ export const crossPaymentFormFields = (isRegularized: boolean, can_update: boole
             name: 'regularized',
             label: 'Regularize',
             placeholder: 'Enter colors',
-            type: (isRegularized || !can_update) ? 'text' : 'button',
+            type: (isRegularized || !can_update) ? 'chip-primary' : 'button',
             disabled: isRegularized || !can_update,
         },
     ]

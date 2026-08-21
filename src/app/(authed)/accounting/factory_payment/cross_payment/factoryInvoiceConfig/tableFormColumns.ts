@@ -7,7 +7,6 @@ export const tableFormColumns = [
     { key: 'value', label: 'Paid Amount' },
     { key: 'factory_payment_no', label: 'Factory Payment No' },
     { key: 'payment_date', label: 'Payment Date' },
-    { key: 'regularized', label: 'Regularized' },
     { key: 'actions', label: '', type: 'action' }
 ];
 

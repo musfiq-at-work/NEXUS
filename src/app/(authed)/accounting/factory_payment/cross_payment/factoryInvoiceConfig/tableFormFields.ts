@@ -10,9 +10,11 @@ interface FormProps {
     }[];
 
     isEdit: boolean;
+    disabled: boolean;
+    isRegularized: boolean;
 }
 
-export const formFields = ({factoryInvoice, isEdit}: FormProps): Field<keyof CrossPaymentDetailsFormValues>[] => {
+export const formFields = ({factoryInvoice, isEdit, disabled, isRegularized}: FormProps): Field<keyof CrossPaymentDetailsFormValues>[] => {
     return [
         {
             name: "factory_invoice_id",
@@ -56,7 +58,8 @@ export const formFields = ({factoryInvoice, isEdit}: FormProps): Field<keyof Cro
             label: "Paid Amount",
             placeholder: "Enter paid amount",
             type: "number",
-            optional: true,
+            optional: disabled,
+            disabled: disabled,
         },
         {
             name: "factory_payment_no",
@@ -69,8 +72,6 @@ export const formFields = ({factoryInvoice, isEdit}: FormProps): Field<keyof Cro
             label: "Payment Date",
             placeholder: "Enter payment date",
             type: "date",
-            optional: isEdit,
-            disabled: isEdit,
         },
         {
             name: "regularized",
@@ -78,6 +79,7 @@ export const formFields = ({factoryInvoice, isEdit}: FormProps): Field<keyof Cro
             placeholder: "Enter regularized",
             optional: true,
             disabled: true,
+            type: isRegularized ? 'chip-primary' : 'chip-error'
         }
     ]
 }

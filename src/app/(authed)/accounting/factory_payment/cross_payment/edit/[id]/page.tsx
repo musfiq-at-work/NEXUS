@@ -141,9 +141,9 @@ const EditCrossPaymentPage = ({ params }: ParamsProp) => {
             />
 
             <MessageBox 
-                message="This Cross payment has be authorized, it can't be updated / deleted" 
+                message="This Cross payment has been authorized." 
                 active={!!isAuthorized} 
-                type="error" 
+                type="primary" 
             />
 
             <div className="w-full flex flex-row justify-end">

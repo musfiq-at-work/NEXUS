@@ -152,7 +152,7 @@ const CommissionInvoicePDF = ({ data }: { data: GetPDFDataOutput }) => {
 							}
 						</View>
                     ))}
-                    summaryLabel="Total RDL Invoice Quantity and Value"
+                    summaryLabel="Total RDL Invoice Net Quantity and Value"
                     totalQuantity={data.result.rdlInvoiceResults.total_invoice_quantity}
                     totalValue={data.result.rdlInvoiceResults.total_invoice_value}
                 />
@@ -193,7 +193,7 @@ const CommissionInvoicePDF = ({ data }: { data: GetPDFDataOutput }) => {
 						justifyContent: 'space-between',
 					}}>
 						<Text style={{ fontSize: 9, fontWeight: "bold", padding: 5, width: 780 }}>
-							Commission
+							Net Commission
 						</Text>
 						<Text style={{ 
 							fontSize: 9,
