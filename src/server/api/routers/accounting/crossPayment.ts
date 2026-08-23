@@ -303,8 +303,16 @@ export const crossPaymentsRouter = createTRPCRouter({
                             SELECT 1
                             FROM TEAM_MEMBERS AS TM 
                                 INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
+                                INNER JOIN USERS AS U ON U.ID = TM.USER_ID
                             WHERE T.BUYER_ID = B.id
                                 AND TM.USER_ID = ${ctx.user.id}
+                                AND (
+                                    U.DEPARTMENT_ID = 2
+                                    OR (
+                                        U.DEPARTMENT_ID = 3
+                                        AND CP.IS_AUTHORIZED = TRUE
+                                    )
+                                )
                         )
                         GROUP BY CP.ID, B.ID, T.ID
                     )
@@ -373,8 +381,16 @@ export const crossPaymentsRouter = createTRPCRouter({
                                 SELECT 1
                                 FROM TEAM_MEMBERS AS TM 
                                     INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
+                                    INNER JOIN USERS AS U ON U.ID = TM.USER_ID
                                 WHERE T.BUYER_ID = B.id
                                     AND TM.USER_ID = ${ctx.user.id}
+                                    AND (
+                                        U.DEPARTMENT_ID = 2 -- Commercial
+                                        OR ( -- Accounts
+                                            U.DEPARTMENT_ID = 3
+                                            AND CP.IS_AUTHORIZED = TRUE
+                                        )
+                                    )
                             )
                         )
                         AND (
