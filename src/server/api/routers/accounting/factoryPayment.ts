@@ -388,58 +388,44 @@ export const factoryPaymentRouter = createTRPCRouter({
             try {
                 await ctx.db.$transaction(async (tx) => {
                     for (const factoryInvoice of input.factoryInvoices ?? []) {
-                        if (factoryInvoice.db_id) {
-                            await tx.factory_payments.upsert({
-                                where: {
-                                    id: factoryInvoice.db_id,
-                                },
-                                update: {
-                                    paid_amount: factoryInvoice.paid_amount ?? null,
-                                    payment_date: factoryInvoice.payment_date ?? null,
-                                    is_cross_paid: factoryInvoice.is_cross_paid ?? null,
-                                    factory_payment_no: factoryInvoice.factory_payment_no ?? null,
-                                },
-                                create: {
-                                    id: factoryInvoice.db_id,
-                                    document_submission_id: input.db_id,
-                                    factory_invoice_id: factoryInvoice.factory_invoice_id,
-                                    paid_amount: factoryInvoice.paid_amount ?? null,
-                                    payment_date: factoryInvoice.payment_date ?? null,
-                                    is_cross_paid: factoryInvoice.is_cross_paid ?? null,
-                                    factory_payment_no: factoryInvoice.factory_payment_no ?? null,
-                                },
-                            });
-
-                            await tx.$executeRaw`
-                                UPDATE commercial_tna_planning_details AS CTPD
-                                    SET actual_date = FP.payment_date
-                                FROM commercial_tna_planning AS CTP,
-                                    factory_invoice AS FI,
-                                    commercial_tna_templates_actions AS CTTA,
-                                    tna_actions AS TA,
-                                    factory_payments AS FP
-                                WHERE CTP.id = CTPD.commercial_tna_planning_id
-                                    AND FI.id = CTP.factory_invoice_id
-                                    AND CTTA.id = CTPD.commercial_tna_templates_actions_id
-                                    AND TA.id = CTTA.tna_action_id
-                                    AND FP.factory_invoice_id = FI.id
-                                    AND TA.id = ${FACTORY_PAYMENT}
-                                    AND FP.id = ${factoryInvoice.db_id};
-                            `;
-                        } else {
-                            await tx.factory_payments.create({
-                                data: {
-                                    document_submission_id: input.db_id,
-                                    factory_invoice_id: factoryInvoice.factory_invoice_id,
-                                    paid_amount: factoryInvoice.paid_amount ?? null,
-                                    payment_date: factoryInvoice.payment_date ?? null,
-                                    is_cross_paid: factoryInvoice.is_cross_paid ?? null,
-                                    factory_payment_no: factoryInvoice.factory_payment_no ?? null,
-                                },
-                            });
-                        }
+                        await tx.factory_payments.upsert({
+                            where: {
+                                id: factoryInvoice.db_id,
+                            },
+                            update: {
+                                paid_amount: factoryInvoice.paid_amount ?? null,
+                                payment_date: factoryInvoice.payment_date ?? null,
+                                is_cross_paid: factoryInvoice.is_cross_paid ?? null,
+                                factory_payment_no: factoryInvoice.factory_payment_no ?? null,
+                            },
+                            create: {
+                                id: factoryInvoice.db_id,
+                                document_submission_id: input.db_id,
+                                factory_invoice_id: factoryInvoice.factory_invoice_id,
+                                paid_amount: factoryInvoice.paid_amount ?? null,
+                                payment_date: factoryInvoice.payment_date ?? null,
+                                is_cross_paid: factoryInvoice.is_cross_paid ?? null,
+                                factory_payment_no: factoryInvoice.factory_payment_no ?? null,
+                            },
+                        });
+                        
+                        await tx.$executeRaw`
+                            UPDATE commercial_tna_planning_details AS CTPD
+                                SET actual_date = FP.payment_date
+                            FROM commercial_tna_planning AS CTP,
+                                factory_invoice AS FI,
+                                commercial_tna_templates_actions AS CTTA,
+                                tna_actions AS TA,
+                                factory_payments AS FP
+                            WHERE CTP.id = CTPD.commercial_tna_planning_id
+                                AND FI.id = CTP.factory_invoice_id
+                                AND CTTA.id = CTPD.commercial_tna_templates_actions_id
+                                AND TA.id = CTTA.tna_action_id
+                                AND FP.factory_invoice_id = FI.id
+                                AND TA.id = ${FACTORY_PAYMENT}
+                                AND FP.id = ${factoryInvoice.db_id};
+                        `;
                     }
-                
                 });
             }
             catch (error) {
@@ -567,3 +553,95 @@ export const factoryPaymentRouter = createTRPCRouter({
 })
 
 
+/**
+
+WITH TT_PROCEED AS (
+   SELECT
+		PRD.rdl_invoice_id,
+		SUM(PRD.REALIZED_AMOUNT)::NUMERIC(18,2) AS REALIZED_AMOUNT
+	FROM proceed_realization_details AS PRD
+	GROUP BY PRD.rdl_invoice_id, PRD.realization_id
+),
+LC_PROCEED AS (
+    SELECT
+		PRD.realization_id AS PRD_ID,
+		SUM(PRD.REALIZED_AMOUNT)::NUMERIC(18,2) AS REALIZED_AMOUNT
+	FROM proceed_realization_details AS PRD
+	GROUP BY PRD.realization_id
+),
+TT_DETAILS AS (
+    SELECT
+        PRD.realization_id,
+        RI.ID AS RID,
+        RI.invoice_no
+    FROM proceed_realization_details AS PRD
+        INNER JOIN rdl_invoice AS RI ON RI.id = PRD.rdl_invoice_id
+),
+LC_DETAILS AS (
+    SELECT
+        DS.id,
+        DS.FDBC_NO
+    FROM document_submissions AS DS     
+),
+LC_INVOICE AS (
+    SELECT 
+        DSD.document_submissions_id,
+        SUM(RISD.INVOICE_QUANTITY * SD.fob_rate)::NUMERIC(18, 2) AS TOTAL_INVOICE_VALUE
+    FROM document_submissions_details AS DSD 
+        INNER JOIN rdl_invoice AS RI ON RI.id = DSD.rdl_invoice_id
+        INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
+        INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
+        INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
+    GROUP BY DSD.document_submissions_id
+),
+TT_INVOICE AS (
+    SELECT 
+        RI.id,
+        SUM(RISD.INVOICE_QUANTITY * SD.fob_rate)::NUMERIC(18, 2) AS TOTAL_INVOICE_VALUE
+    FROM rdl_invoice AS RI
+        INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
+        INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
+        INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
+    GROUP BY RI.id
+),
+FACTORY_PAYMENTS_LIST AS (
+    SELECT  
+        CASE
+            WHEN PR.term_id = 1 THEN TTD.RID
+            WHEN PR.term_id = 2 THEN LCD.id
+        END AS ID,
+        T.NAME AS TERM_NAME,
+        CASE
+            WHEN PR.term_id = 1 THEN TTD.invoice_no
+            WHEN PR.term_id = 2 THEN LCD.FDBC_NO
+        END AS INV_FDBC_NO,
+        PR.REALIZATION_DATE,
+        CASE
+            WHEN PR.term_id = 1 THEN TTI.TOTAL_INVOICE_VALUE
+            WHEN PR.term_id = 2 THEN LCI.TOTAL_INVOICE_VALUE
+        END AS RDL_VALUE,
+        CASE
+            WHEN PR.term_id = 1 THEN TTP.REALIZED_AMOUNT
+            WHEN PR.term_id = 2 THEN LCP.REALIZED_AMOUNT
+        END AS REALIZED_AMOUNT
+    FROM proceed_realization AS PR
+        INNER JOIN terms AS T ON T.id = PR.term_id
+        LEFT JOIN TT_DETAILS AS TTD ON PR.term_id = 1 AND TTD.realization_id = PR.id 
+        LEFT JOIN LC_DETAILS AS LCD ON PR.term_id = 2 AND LCD.id = PR.document_submission_id 
+        LEFT JOIN TT_PROCEED AS TTP ON PR.term_id = 1 AND TTP.rdl_invoice_id = TTD.RID
+        LEFT JOIN LC_PROCEED AS LCP ON PR.term_id = 2 AND LCP.PRD_ID = PR.ID
+        LEFT JOIN TT_INVOICE AS TTI ON PR.term_id = 1 AND TTI.id = TTD.RID
+        LEFT JOIN LC_INVOICE AS LCI ON PR.term_id = 2 AND LCI.document_submissions_id = LCD.id
+)
+SELECT *,
+    COUNT(*) OVER() AS TOTAL_COUNT
+FROM FACTORY_PAYMENTS_LIST AS PFL;
+-- ORDER BY PFL.REALIZATION_DATE DESC
+-- LIMIT 15
+-- OFFSET 0;
+
+SELECT * FROM document_submissions_details;
+SELECT * FROM terms; -- 1 TT, 2 LC
+
+
+ */

@@ -2449,6 +2449,8 @@ model rdl_invoice {
   contact_no                   String?                        @db.VarChar(100)
   commission_invoice           commission_invoice[]
   document_submissions_details document_submissions_details[]
+  factory_payment_header       factory_payment_header[]
+  factory_payments             factory_payments[]
   proceed_realization_details  proceed_realization_details[]
   buyers                       buyers                         @relation(fields: [buyer_id], references: [id], onUpdate: NoAction)
   lc_master                    lc_master?                     @relation(fields: [lc_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
@@ -2783,7 +2785,10 @@ model factory_payment_header {
   old_document_submission_id Int?
   remarks                    String?
   added_at                   DateTime?             @default(now()) @db.Timestamp(6)
+  rdl_invoice_id             String?               @db.Uuid
+  old_rdl_invoice_id         Int?
   document_submissions       document_submissions? @relation(fields: [document_submission_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  rdl_invoice                rdl_invoice?          @relation(fields: [rdl_invoice_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
 }
 
 model factory_payments {
@@ -2797,8 +2802,11 @@ model factory_payments {
   old_document_submission_id Int?
   is_cross_paid              Boolean?              @default(false)
   factory_payment_no         String?               @db.VarChar(100)
+  old_rdl_invoice_id         Int?
+  rdl_invoice_id             String?               @db.Uuid
   document_submissions       document_submissions? @relation(fields: [document_submission_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   factory_invoice            factory_invoice?      @relation(fields: [factory_invoice_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  rdl_invoice                rdl_invoice?          @relation(fields: [rdl_invoice_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
 
   @@unique([document_submission_id, factory_invoice_id], map: "unique_factory_invoice_per_document_submission")
 }

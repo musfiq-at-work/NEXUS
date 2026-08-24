@@ -4,7 +4,7 @@ import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma } from "@prisma/client";
-import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
+import { ACCOUNTING_DEPARTMENT_ID, ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID, COMMERCIAL_DEPARTMENT_ID } from "~/utils/config";
 import type { CrossPaymentDetails, CrossPaymentList } from './_types/crossPayment';
 
 export const crossPaymentsRouter = createTRPCRouter({
@@ -307,9 +307,9 @@ export const crossPaymentsRouter = createTRPCRouter({
                             WHERE T.BUYER_ID = B.id
                                 AND TM.USER_ID = ${ctx.user.id}
                                 AND (
-                                    U.DEPARTMENT_ID = 2
+                                    U.DEPARTMENT_ID = ${COMMERCIAL_DEPARTMENT_ID}
                                     OR (
-                                        U.DEPARTMENT_ID = 3
+                                        U.DEPARTMENT_ID = ${ACCOUNTING_DEPARTMENT_ID}
                                         AND CP.IS_AUTHORIZED = TRUE
                                     )
                                 )
@@ -385,9 +385,9 @@ export const crossPaymentsRouter = createTRPCRouter({
                                 WHERE T.BUYER_ID = B.id
                                     AND TM.USER_ID = ${ctx.user.id}
                                     AND (
-                                        U.DEPARTMENT_ID = 2 -- Commercial
+                                        U.DEPARTMENT_ID = ${COMMERCIAL_DEPARTMENT_ID} -- Commercial
                                         OR ( -- Accounts
-                                            U.DEPARTMENT_ID = 3
+                                            U.DEPARTMENT_ID = ${ACCOUNTING_DEPARTMENT_ID}
                                             AND CP.IS_AUTHORIZED = TRUE
                                         )
                                     )
