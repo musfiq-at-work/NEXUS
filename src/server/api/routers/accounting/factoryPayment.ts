@@ -111,8 +111,8 @@ export const factoryPaymentRouter = createTRPCRouter({
                     FACTORY_PAYMENTS_LIST AS (
                         SELECT  
                             CASE
-                                WHEN PR.term_id = ${TT_ID} THEN CONCAT('tt_', TTD.RID)
-                                WHEN PR.term_id = ${LC_ID} THEN CONCAT('lc_', LCD.id)
+                                WHEN PR.term_id = ${TT_ID} THEN CONCAT('tt.', TTD.RID)
+                                WHEN PR.term_id = ${LC_ID} THEN CONCAT('lc.', LCD.id)
                             END AS ID,
                             T.NAME AS TERM_NAME,
                             CASE
@@ -302,8 +302,8 @@ export const factoryPaymentRouter = createTRPCRouter({
                     FACTORY_PAYMENTS_LIST AS (
                         SELECT  
                             CASE
-                                WHEN PR.term_id = ${TT_ID} THEN CONCAT('tt_', TTD.RID)
-                                WHEN PR.term_id = ${LC_ID} THEN CONCAT('lc_', LCD.id)
+                                WHEN PR.term_id = ${TT_ID} THEN CONCAT('tt.', TTD.RID)
+                                WHEN PR.term_id = ${LC_ID} THEN CONCAT('lc.', LCD.id)
                             END AS ID,
                             T.NAME AS TERM_NAME,
                             CASE
@@ -425,8 +425,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                 });
             }
 
-            const term = input.id.split('_')[0];
-            const id = input.id.split('_')[1];
+            const [term, id] = input.id.split('.');
             
             try {
                 let result: FactoryPaymentDetailsById[];
@@ -621,6 +620,8 @@ export const factoryPaymentRouter = createTRPCRouter({
                     message: "You do not have permission to check cross payment for document submission.",
                 });
             }
+
+            const [term, id] = input.document_submission_id.split('.');
             
             try {
                 const crossPaymentDetails = await ctx.db.$queryRaw<GetCrossPaymentByIdTypes[]>`
@@ -639,7 +640,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                         INNER JOIN factory_invoice AS FI ON FI.id = DSFI.factory_invoice_id
                         INNER JOIN factories AS F ON F.id = FI.factory_id
                         INNER JOIN cross_payment_details AS CPD ON CPD.factory_invoice_id = FI.id
-                    WHERE DS.ID = ${input.document_submission_id};
+                    WHERE DS.ID = ${id};
                 `;
 
                 return { details: crossPaymentDetails };
@@ -664,6 +665,8 @@ export const factoryPaymentRouter = createTRPCRouter({
                     message: "You do not have permission to regularize cross payment.",
                 });
             }
+
+            const [term, id] = input.document_submission_id.split('.');
             
             try {
                 await ctx.db.$transaction(async (tx) => {
@@ -714,7 +717,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                                 AND TA.id = CTTA.tna_action_id
                                 AND FP.factory_invoice_id = FI.id
                                 AND TA.id = ${FACTORY_PAYMENT}
-                                AND FP.id = ${newPayment.id};
+                                AND FP.id = ${id};
                         `
                     ])
                 })
