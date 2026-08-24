@@ -1,6 +1,6 @@
 export const tableHeaders= [
     { key: 'term_name', label: 'Proceed Type' },
-    { key: 'fdbc_no', label: 'FDBC No' },
+    { key: 'fdbc_no', label: 'FDBC / RDL Invoice No' },
     { key: 'realization_date', label: 'Realization Date', type: 'date' },
     { key: 'rdl_invoice_value', label: 'RDL Invoice Value' },
     { key: 'realized_amount', label: 'Realized Amount' },

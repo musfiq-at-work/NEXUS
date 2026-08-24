@@ -21,6 +21,9 @@ export const QUALITY_DEPARTMENT_ID = 4;
 export const ADMIN_DEPARTMENT_ID = 5;
 export const COMPLIANCE_DEPARTMENT_ID = 6;
 
+// Term ID
+export const TT_ID = 1;
+export const LC_ID = 2;
 // export const DEV = '20a3ff7b-1abe-4010-9d44-0428a28ce450';
 // export const DEVELOPER_ID = 86;
 // export const ERROR_LOGS = 87;
