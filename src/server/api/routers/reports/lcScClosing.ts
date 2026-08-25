@@ -36,7 +36,12 @@ export const lcScClosingRouter = createTRPCRouter({
                             id: true,
                             lc_no: true
                         }
-                    }).then(results => results.map(item => ({ id: item.id, sc_lc_no: item.lc_no })))
+                    }).then(results => results.map(
+                        item => ({ 
+                            id: item.id, 
+                            sc_lc_no: item.lc_no 
+                        })
+                    ))
                 }
                 else {
                     scLcList = await ctx.db.sales_contracts.findMany({
@@ -47,7 +52,12 @@ export const lcScClosingRouter = createTRPCRouter({
                             id: true,
                             sales_contract_no: true
                         }
-                    }).then(results => results.map(item => ({ id: item.id, sc_lc_no: item.sales_contract_no})))
+                    }).then(results => results.map(
+                        item => ({ 
+                            id: item.id, 
+                            sc_lc_no: item.sales_contract_no
+                        })
+                    ))
                 }
 
                 return scLcList;
