@@ -426,109 +426,239 @@ export const factoryPaymentRouter = createTRPCRouter({
             }
 
             const [term, id] = input.id.split('.');
-            
+
             try {
                 let result: FactoryPaymentDetailsById[];
                 let factoryPayments: FactoryPaymentDetails[];
 
-                await Promise.all([
-                    result = await ctx.db.$queryRaw<FactoryPaymentDetailsById[]>`
-                        WITH RDL_INVOICE_IN_DOCUMENT_SUBMISSIONS AS (
-                            SELECT 
-                                DSD.DOCUMENT_SUBMISSIONS_ID AS DSDID,
-                                SUM(RISD.INVOICE_QUANTITY * SD.fob_rate)::NUMERIC(18, 2) AS TOTAL_INVOICE_VALUE
-                            FROM document_submissions_details AS DSD 
-                                INNER JOIN rdl_invoice AS RI ON RI.id = DSD.rdl_invoice_id
-                                INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
-                                INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
-                                INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
-                            GROUP BY DSD.DOCUMENT_SUBMISSIONS_ID
-                        ),
-                        TOTAL_REALIZATION AS (
-                            SELECT
-                                PRD.realization_id AS PRD_ID,
-                                SUM(PRD.REALIZED_AMOUNT)::NUMERIC(18,2) AS REALIZED_AMOUNT
-                            FROM proceed_realization_details AS PRD
-                            GROUP BY PRD.realization_id
-                        )
-                        SELECT DISTINCT
-                            T.NAME AS TERM_NAME,
-                            DS.FDBC_NO,
-                            PR.REALIZATION_DATE,
-                            RIDS.TOTAL_INVOICE_VALUE AS RDL_INVOICE_VALUE,
-                            TR.REALIZED_AMOUNT,
-                            COALESCE(SUM(FP.PAID_AMOUNT), 0) AS FACTORY_PAID_AMOUNT,
-                            FPH.REMARKS
-                        FROM document_submissions AS DS
-                            INNER JOIN RDL_INVOICE_IN_DOCUMENT_SUBMISSIONS AS RIDS ON RIDS.DSDID = DS.id
-                            INNER JOIN terms AS T ON T.id = DS.term_id
-                            INNER JOIN BUYERS AS B ON B.id = DS.buyer_id
-                            LEFT JOIN proceed_realization AS PR ON DS.id = PR.document_submission_id
-                            LEFT JOIN TOTAL_REALIZATION AS TR ON TR.PRD_ID = PR.ID
-                            LEFT JOIN factory_payments AS FP ON FP.document_submission_id = DS.id
-                            LEFT JOIN factory_payment_header AS FPH ON FPH.document_submission_id = DS.id
-                        WHERE (
-                            EXISTS (
-                                SELECT 1
-                                FROM USERS AS U
-                                WHERE U.ID = ${ctx.user.id}
-                                    AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
-                                    AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
+                if(term === 'lc') {
+                    await Promise.all([
+                        result = await ctx.db.$queryRaw<FactoryPaymentDetailsById[]>`
+                            WITH RDL_INVOICE_IN_DOCUMENT_SUBMISSIONS AS (
+                                SELECT 
+                                    DSD.DOCUMENT_SUBMISSIONS_ID AS DSDID,
+                                    SUM(RISD.INVOICE_QUANTITY * SD.fob_rate)::NUMERIC(18, 2) AS TOTAL_INVOICE_VALUE
+                                FROM document_submissions_details AS DSD 
+                                    INNER JOIN rdl_invoice AS RI ON RI.id = DSD.rdl_invoice_id
+                                    INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
+                                    INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
+                                    INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
+                                GROUP BY DSD.DOCUMENT_SUBMISSIONS_ID
+                            ),
+                            TOTAL_REALIZATION AS (
+                                SELECT
+                                    PRD.realization_id AS PRD_ID,
+                                    SUM(PRD.REALIZED_AMOUNT)::NUMERIC(18,2) AS REALIZED_AMOUNT
+                                FROM proceed_realization_details AS PRD
+                                GROUP BY PRD.realization_id
                             )
-                            OR EXISTS (
-                                SELECT 1
-                                FROM TEAM_MEMBERS AS TM 
-                                    INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
-                                WHERE T.BUYER_ID = B.ID
-                                    AND TM.USER_ID = ${ctx.user.id}
+                            SELECT DISTINCT
+                                T.NAME AS TERM_NAME,
+                                DS.FDBC_NO,
+                                PR.REALIZATION_DATE,
+                                RIDS.TOTAL_INVOICE_VALUE AS RDL_INVOICE_VALUE,
+                                TR.REALIZED_AMOUNT,
+                                COALESCE(SUM(FP.PAID_AMOUNT), 0) AS FACTORY_PAID_AMOUNT,
+                                FPH.REMARKS
+                            FROM document_submissions AS DS
+                                INNER JOIN RDL_INVOICE_IN_DOCUMENT_SUBMISSIONS AS RIDS ON RIDS.DSDID = DS.id
+                                INNER JOIN terms AS T ON T.id = DS.term_id
+                                INNER JOIN BUYERS AS B ON B.id = DS.buyer_id
+                                LEFT JOIN proceed_realization AS PR ON DS.id = PR.document_submission_id
+                                LEFT JOIN TOTAL_REALIZATION AS TR ON TR.PRD_ID = PR.ID
+                                LEFT JOIN factory_payments AS FP ON FP.document_submission_id = DS.id
+                                LEFT JOIN factory_payment_header AS FPH ON FPH.document_submission_id = DS.id
+                            WHERE (
+                                EXISTS (
+                                    SELECT 1
+                                    FROM USERS AS U
+                                    WHERE U.ID = ${ctx.user.id}
+                                        AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
+                                        AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
+                                )
+                                OR EXISTS (
+                                    SELECT 1
+                                    FROM TEAM_MEMBERS AS TM 
+                                        INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
+                                    WHERE T.BUYER_ID = B.ID
+                                        AND TM.USER_ID = ${ctx.user.id}
+                                )
                             )
-                        )
-                        AND DS.ID = ${id}
-                        GROUP BY PR.ID, DS.ID, RIDS.TOTAL_INVOICE_VALUE, T.ID, FPH.ID, TR.REALIZED_AMOUNT;
-                    `,
+                            AND DS.ID = ${id}
+                            GROUP BY PR.ID, DS.ID, RIDS.TOTAL_INVOICE_VALUE, T.ID, FPH.ID, TR.REALIZED_AMOUNT;
+                        `,
 
-                    factoryPayments = await ctx.db.$queryRaw<FactoryPaymentDetails[]>`
-                        WITH FOB_RATE AS (
-                            SELECT
-                                RISD.rdl_invoice_details_id AS RIDI,
-                                RISD.invoice_quantity AS QUANTITY,
-                                CASE 
-                                    WHEN FSD.TRANSFER_RATE <> 0
-                                        THEN RISD.invoice_quantity * FSD.TRANSFER_RATE
-                                    ELSE RISD.invoice_quantity * FSD.FACTORY_RATE
-                                END AS VALUE
-                            FROM rdl_invoice_shipment_details AS RISD
-                            INNER JOIN factory_invoice_details AS FID ON FID.id = RISD.factory_invoice_details_id
-                            INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = RISD.shipment_details_id
-                        )
-                        SELECT 
-                            FP.ID AS DB_ID,
-                            F.NAME AS FACTORY_NAME,
-                            FI.ID AS FACTORY_INVOICE_ID,
-                            FI.INVOICE_NO AS FACTORY_INVOICE_NO,
-                            DS.FDBC_NO,
-                            FI.INVOICE_DATE AS FACTORY_INVOICE_DATE,
-                            SUM(FR.QUANTITY)::NUMERIC(18, 2) AS INVOICE_QUANTITY,
-                            SUM(FR.VALUE)::NUMERIC(18, 2) AS INVOICE_VALUE,
-                            COALESCE(FP.PAID_AMOUNT, 0)::NUMERIC(18, 2) AS PAID_AMOUNT,
-                            FP.PAYMENT_DATE AS PAYMENT_DATE,
-                            COALESCE(FP.is_cross_paid, FALSE) AS is_cross_paid,
-                            FP.factory_payment_no
-                        FROM document_submissions AS DS 
-                            INNER JOIN document_submissions_details AS DSD ON DSD.document_submissions_id = DS.id
-                            INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = DSD.rdl_invoice_id
-                            INNER JOIN FOB_RATE AS FR ON FR.RIDI = RID.id
-                            INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
-                            INNER JOIN factories AS F ON F.id = FI.factory_id
-                            LEFT JOIN factory_payments AS FP ON FP.document_submission_id = DS.id AND FP.factory_invoice_id = FI.id
-                        WHERE DS.ID = ${id}
-                        GROUP BY FI.ID, FP.ID, F.ID, DS.ID;
-                    `,
-                ])
+                        factoryPayments = await ctx.db.$queryRaw<FactoryPaymentDetails[]>`
+                            WITH FOB_RATE AS (
+                                SELECT
+                                    RISD.rdl_invoice_details_id AS RIDI,
+                                    RISD.invoice_quantity AS QUANTITY,
+                                    CASE 
+                                        WHEN FSD.TRANSFER_RATE <> 0
+                                            THEN RISD.invoice_quantity * FSD.TRANSFER_RATE
+                                        ELSE RISD.invoice_quantity * FSD.FACTORY_RATE
+                                    END AS VALUE
+                                FROM rdl_invoice_shipment_details AS RISD
+                                INNER JOIN factory_invoice_details AS FID ON FID.id = RISD.factory_invoice_details_id
+                                INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = RISD.shipment_details_id
+                            )
+                            SELECT 
+                                FP.ID AS DB_ID,
+                                F.NAME AS FACTORY_NAME,
+                                FI.ID AS FACTORY_INVOICE_ID,
+                                FI.INVOICE_NO AS FACTORY_INVOICE_NO,
+                                DS.FDBC_NO,
+                                FI.INVOICE_DATE AS FACTORY_INVOICE_DATE,
+                                SUM(FR.QUANTITY)::NUMERIC(18, 2) AS INVOICE_QUANTITY,
+                                SUM(FR.VALUE)::NUMERIC(18, 2) AS INVOICE_VALUE,
+                                COALESCE(FP.PAID_AMOUNT, 0)::NUMERIC(18, 2) AS PAID_AMOUNT,
+                                FP.PAYMENT_DATE AS PAYMENT_DATE,
+                                COALESCE(FP.is_cross_paid, FALSE) AS is_cross_paid,
+                                FP.factory_payment_no
+                            FROM document_submissions AS DS 
+                                INNER JOIN document_submissions_details AS DSD ON DSD.document_submissions_id = DS.id
+                                INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = DSD.rdl_invoice_id
+                                INNER JOIN FOB_RATE AS FR ON FR.RIDI = RID.id
+                                INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
+                                INNER JOIN factories AS F ON F.id = FI.factory_id
+                                LEFT JOIN factory_payments AS FP ON FP.document_submission_id = DS.id AND FP.factory_invoice_id = FI.id
+                            WHERE (
+                                EXISTS (
+                                    SELECT 1
+                                    FROM USERS AS U
+                                    WHERE U.ID = ${ctx.user.id}
+                                        AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
+                                        AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
+                                )
+                                OR EXISTS (
+                                    SELECT 1
+                                    FROM TEAM_MEMBERS AS TM 
+                                        INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
+                                    WHERE T.BUYER_ID = DS.BUYER_ID
+                                        AND TM.USER_ID = ${ctx.user.id}
+                                )
+                            )
+                            AND DS.ID = ${id}
+                            GROUP BY FI.ID, FP.ID, F.ID, DS.ID;
+                        `,
+                    ])
+                }
+                else {
+                    await Promise.all([
+                        result = await ctx.db.$queryRaw<FactoryPaymentDetailsById[]>`
+                            WITH INVOICE_VALUE AS (
+                                SELECT 
+                                    RI.id,
+                                    SUM(RISD.INVOICE_QUANTITY * SD.fob_rate)::NUMERIC(18, 2) AS TOTAL_INVOICE_VALUE
+                                FROM rdl_invoice AS RI
+                                    INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
+                                    INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
+                                    INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
+                                GROUP BY RI.id
+                            ),
+                            TOTAL_REALIZATION AS (
+                                SELECT
+                                    PRD.rdl_invoice_id,
+                                    SUM(PRD.REALIZED_AMOUNT)::NUMERIC(18,2) AS REALIZED_AMOUNT,
+                                    PR.REALIZATION_DATE
+                                FROM proceed_realization_details AS PRD
+                                    INNER JOIN proceed_realization AS PR ON PR.id = PRD.realization_id
+                                GROUP BY PRD.rdl_invoice_id, PR.id
+                            )
+                            SELECT DISTINCT
+                                T.NAME AS TERM_NAME,
+                                RI.INVOICE_NO AS FDBC_NO,
+                                TR.REALIZATION_DATE,
+                                IV.TOTAL_INVOICE_VALUE AS RDL_INVOICE_VALUE,
+                                TR.REALIZED_AMOUNT,
+                                COALESCE(SUM(FP.PAID_AMOUNT), 0) AS FACTORY_PAID_AMOUNT,
+                                FPH.REMARKS
+                            FROM rdl_invoice AS RI
+                                INNER JOIN INVOICE_VALUE AS IV ON RI.id = IV.id
+                                INNER JOIN terms AS T ON T.id = RI.term_id
+                                INNER JOIN BUYERS AS B ON B.id = RI.buyer_id
+                                LEFT JOIN TOTAL_REALIZATION AS TR ON TR.rdl_invoice_id = RI.ID
+                                LEFT JOIN factory_payments AS FP ON FP.rdl_invoice_id = RI.id
+                                LEFT JOIN factory_payment_header AS FPH ON FPH.rdl_invoice_id = RI.id
+                            WHERE (
+                                EXISTS (
+                                    SELECT 1
+                                    FROM USERS AS U
+                                    WHERE U.ID = ${ctx.user.id}
+                                        AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
+                                        AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
+                                )
+                                OR EXISTS (
+                                    SELECT 1
+                                    FROM TEAM_MEMBERS AS TM 
+                                        INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
+                                    WHERE T.BUYER_ID = B.ID
+                                        AND TM.USER_ID = ${ctx.user.id}
+                                )
+                            )
+                            AND RI.ID = ${id}
+                            GROUP BY RI.ID, IV.TOTAL_INVOICE_VALUE, T.ID, FPH.ID, TR.REALIZATION_DATE, TR.REALIZED_AMOUNT;
+                        `,
+
+                        factoryPayments = await ctx.db.$queryRaw<FactoryPaymentDetails[]>`
+                            WITH FOB_RATE AS (
+                                SELECT
+                                    RISD.rdl_invoice_details_id AS RIDI,
+                                    RISD.invoice_quantity AS QUANTITY,
+                                    CASE 
+                                        WHEN FSD.TRANSFER_RATE <> 0
+                                            THEN RISD.invoice_quantity * FSD.TRANSFER_RATE
+                                        ELSE RISD.invoice_quantity * FSD.FACTORY_RATE
+                                    END AS VALUE
+                                FROM rdl_invoice_shipment_details AS RISD
+                                INNER JOIN factory_invoice_details AS FID ON FID.id = RISD.factory_invoice_details_id
+                                INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = RISD.shipment_details_id
+                            )
+                            SELECT 
+                                FP.ID AS DB_ID,
+                                F.NAME AS FACTORY_NAME,
+                                FI.ID AS FACTORY_INVOICE_ID,
+                                FI.INVOICE_NO AS FACTORY_INVOICE_NO,
+                                RI.INVOICE_NO AS FDBC_NO,
+                                FI.INVOICE_DATE AS FACTORY_INVOICE_DATE,
+                                SUM(FR.QUANTITY)::NUMERIC(18, 2) AS INVOICE_QUANTITY,
+                                SUM(FR.VALUE)::NUMERIC(18, 2) AS INVOICE_VALUE,
+                                COALESCE(FP.PAID_AMOUNT, 0)::NUMERIC(18, 2) AS PAID_AMOUNT,
+                                FP.PAYMENT_DATE AS PAYMENT_DATE,
+                                COALESCE(FP.is_cross_paid, FALSE) AS is_cross_paid,
+                                FP.factory_payment_no
+                            FROM rdl_invoice AS RI
+                                INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
+                                INNER JOIN FOB_RATE AS FR ON FR.RIDI = RID.id
+                                INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
+                                INNER JOIN factories AS F ON F.id = FI.factory_id
+                                LEFT JOIN factory_payments AS FP ON FP.rdl_invoice_id = RI.id AND FP.factory_invoice_id = FI.id
+                            WHERE (
+                                EXISTS (
+                                    SELECT 1
+                                    FROM USERS AS U
+                                    WHERE U.ID = ${ctx.user.id}
+                                        AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
+                                        AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
+                                )
+                                OR EXISTS (
+                                    SELECT 1
+                                    FROM TEAM_MEMBERS AS TM 
+                                        INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
+                                    WHERE T.BUYER_ID = RI.BUYER_ID
+                                        AND TM.USER_ID = ${ctx.user.id}
+                                )
+                            )
+                            AND RI.ID = ${id}
+                            GROUP BY FI.ID, FP.ID, F.ID, RI.ID;
+                        `,
+                    ])
+                }
 
                 const factoryPaymentHeader = result[0];
 
                 return {factoryPaymentHeader, factoryPayments};
+
             }
             catch (error) {
                 await logError(error, ctx, input);
@@ -557,30 +687,39 @@ export const factoryPaymentRouter = createTRPCRouter({
                     message: "You do not have permission to update factory payments.",
                 });
             }
+
+            console.log('update input', input);
+
+            const [term, id] = input.db_id.split('.');
             
             try {
                 await ctx.db.$transaction(async (tx) => {
                     for (const factoryInvoice of input.factoryInvoices ?? []) {
-                        await tx.factory_payments.upsert({
-                            where: {
-                                id: factoryInvoice.db_id,
-                            },
-                            update: {
-                                paid_amount: factoryInvoice.paid_amount ?? null,
-                                payment_date: factoryInvoice.payment_date ?? null,
-                                is_cross_paid: factoryInvoice.is_cross_paid ?? null,
-                                factory_payment_no: factoryInvoice.factory_payment_no ?? null,
-                            },
-                            create: {
-                                id: factoryInvoice.db_id,
-                                document_submission_id: input.db_id,
-                                factory_invoice_id: factoryInvoice.factory_invoice_id,
-                                paid_amount: factoryInvoice.paid_amount ?? null,
-                                payment_date: factoryInvoice.payment_date ?? null,
-                                is_cross_paid: factoryInvoice.is_cross_paid ?? null,
-                                factory_payment_no: factoryInvoice.factory_payment_no ?? null,
-                            },
-                        });
+                        if (factoryInvoice.db_id) {
+                            await tx.factory_payments.update({
+                                where: {
+                                    id: factoryInvoice.db_id,
+                                },
+                                data: {
+                                    paid_amount: factoryInvoice.paid_amount,
+                                    payment_date: factoryInvoice.payment_date,
+                                    is_cross_paid: factoryInvoice.is_cross_paid,
+                                    factory_payment_no: factoryInvoice.factory_payment_no,
+                                },
+                            });
+                        } else {
+                            await tx.factory_payments.create({
+                                data: {
+                                    document_submission_id: term === 'lc' ? id : null,
+                                    rdl_invoice_id: term === 'tt' ? id : null,
+                                    factory_invoice_id: factoryInvoice.factory_invoice_id,
+                                    paid_amount: factoryInvoice.paid_amount,
+                                    payment_date: factoryInvoice.payment_date,
+                                    is_cross_paid: factoryInvoice.is_cross_paid,
+                                    factory_payment_no: factoryInvoice.factory_payment_no,
+                                },
+                            });
+                        }
                         
                         await tx.$executeRaw`
                             UPDATE commercial_tna_planning_details AS CTPD
@@ -602,6 +741,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                 });
             }
             catch (error) {
+                console.log(error);
                 await logError(error, ctx, input);
                 handlePrismaError(error);
             }
@@ -609,7 +749,7 @@ export const factoryPaymentRouter = createTRPCRouter({
 
     checkCrossPaymentForDocumentSubmission: protectedProcedure
         .input(z.object({
-            document_submission_id: z.string(),
+            id: z.string(),
         }))
         .query(async ({ ctx, input }) => {
             const can_view = ctx.permissions[m.REGULAR_PAYMENT]?.can_view;
@@ -621,27 +761,50 @@ export const factoryPaymentRouter = createTRPCRouter({
                 });
             }
 
-            const [term, id] = input.document_submission_id.split('.');
+            const [term, id] = input.id.split('.');
             
             try {
-                const crossPaymentDetails = await ctx.db.$queryRaw<GetCrossPaymentByIdTypes[]>`
-                    SELECT 
-                        CPD.id AS factory_payment_detail_id,
-                        FI.ID AS factory_invoice_id,
-                        FI.invoice_no AS factory_invoice_no,
-                        F.name AS factory_name,
-                        CPD.factory_payment_no,
-                        CPD.factory_payment_date,
-                        CPD.value AS paid_amount,
-                        CPD.regularized AS regularized
-                    FROM document_submissions AS DS
-                        INNER JOIN document_submissions_details AS DSD ON DSD.document_submissions_id = DS.id
-                        INNER JOIN document_submission_factory_invoices AS DSFI ON DSFI.document_submissions_details_id = DSD.id
-                        INNER JOIN factory_invoice AS FI ON FI.id = DSFI.factory_invoice_id
-                        INNER JOIN factories AS F ON F.id = FI.factory_id
-                        INNER JOIN cross_payment_details AS CPD ON CPD.factory_invoice_id = FI.id
-                    WHERE DS.ID = ${id};
-                `;
+                let crossPaymentDetails: GetCrossPaymentByIdTypes[];
+
+                if(term === 'lc'){
+                    crossPaymentDetails = await ctx.db.$queryRaw<GetCrossPaymentByIdTypes[]>`
+                        SELECT 
+                            CPD.id AS factory_payment_detail_id,
+                            FI.ID AS factory_invoice_id,
+                            FI.invoice_no AS factory_invoice_no,
+                            F.name AS factory_name,
+                            CPD.factory_payment_no,
+                            CPD.factory_payment_date,
+                            CPD.value AS paid_amount,
+                            CPD.regularized AS regularized
+                        FROM document_submissions AS DS
+                            INNER JOIN document_submissions_details AS DSD ON DSD.document_submissions_id = DS.id
+                            INNER JOIN document_submission_factory_invoices AS DSFI ON DSFI.document_submissions_details_id = DSD.id
+                            INNER JOIN factory_invoice AS FI ON FI.id = DSFI.factory_invoice_id
+                            INNER JOIN factories AS F ON F.id = FI.factory_id
+                            INNER JOIN cross_payment_details AS CPD ON CPD.factory_invoice_id = FI.id
+                        WHERE DS.ID = ${id};
+                    `;
+                }
+                else {
+                    crossPaymentDetails = await ctx.db.$queryRaw<GetCrossPaymentByIdTypes[]>`
+                        SELECT 
+                            CPD.id AS factory_payment_detail_id,
+                            FI.ID AS factory_invoice_id,
+                            FI.invoice_no AS factory_invoice_no,
+                            F.name AS factory_name,
+                            CPD.factory_payment_no,
+                            CPD.factory_payment_date,
+                            CPD.value AS paid_amount,
+                            CPD.regularized AS regularized
+                        FROM rdl_invoice AS RI
+                            INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
+                            INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
+                            INNER JOIN factories AS F ON F.id = FI.factory_id
+                            INNER JOIN cross_payment_details AS CPD ON CPD.factory_invoice_id = FI.id
+                        WHERE RI.ID = ${id};
+                    `;
+                }
 
                 return { details: crossPaymentDetails };
             }
@@ -653,7 +816,7 @@ export const factoryPaymentRouter = createTRPCRouter({
 
     regularizeCrossPayment: protectedProcedure
         .input(z.object({
-            document_submission_id: z.string(),
+            id: z.string(),
             cross_payment_details_id: z.string()
         }))
         .mutation(async ({ ctx, input }) => {
@@ -666,7 +829,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                 });
             }
 
-            const [term, id] = input.document_submission_id.split('.');
+            const [term, id] = input.id.split('.');
             
             try {
                 await ctx.db.$transaction(async (tx) => {
@@ -685,7 +848,8 @@ export const factoryPaymentRouter = createTRPCRouter({
 
                     const newPayment = await tx.factory_payments.create({
                         data: {
-                            document_submission_id: input.document_submission_id,
+                            document_submission_id: term === 'lc' ? id : null,
+                            rdl_invoice_id: term === 'tt' ? id : null,
                             factory_invoice_id: crossPaymentDetail.factory_invoice_id,
                             paid_amount: crossPaymentDetail.value,
                             payment_date: crossPaymentDetail.factory_payment_date,
@@ -717,7 +881,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                                 AND TA.id = CTTA.tna_action_id
                                 AND FP.factory_invoice_id = FI.id
                                 AND TA.id = ${FACTORY_PAYMENT}
-                                AND FP.id = ${id};
+                                AND FP.id = ${newPayment.id};
                         `
                     ])
                 })

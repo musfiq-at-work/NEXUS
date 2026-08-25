@@ -15,7 +15,7 @@ export const useFormFields = (): Field<keyof FactoryPaymentFormValues>[] => {
         },
         {
             name: 'fdbc_no',
-            label: 'FDBC/TT No',
+            label: 'RDL invoice / FDBC No',
             disabled: true,
             optional: true,
         },

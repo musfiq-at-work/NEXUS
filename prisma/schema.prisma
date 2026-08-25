@@ -2809,6 +2809,7 @@ model factory_payments {
   rdl_invoice                rdl_invoice?          @relation(fields: [rdl_invoice_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
 
   @@unique([document_submission_id, factory_invoice_id], map: "unique_factory_invoice_per_document_submission")
+  @@unique([rdl_invoice_id, factory_invoice_id], map: "unique_factory_invoice_per_rdl_invoice")
 }
 
 model factory_payments_header_history {
