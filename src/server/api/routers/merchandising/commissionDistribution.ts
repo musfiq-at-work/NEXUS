@@ -284,6 +284,7 @@ export const commissionDistributionRouter = createTRPCRouter({
                 return orders;
             }
             catch (error) {
+                await logError(error, ctx);
                 handlePrismaError(error);
             }
         }),
@@ -343,11 +344,9 @@ export const commissionDistributionRouter = createTRPCRouter({
                                 CASE 
                                     WHEN (SD.fob_rate / COALESCE(NULLIF(BO.currency_rate, 0), 1)) = 0 
                                         THEN 0
-                                    ELSE (
-                                        (
+                                    ELSE ((
                                             (SD.fob_rate / COALESCE(NULLIF(BO.currency_rate, 0), 1)) - FSD.factory_rate
-                                        )
-                                        / (SD.fob_rate / COALESCE(NULLIF(BO.currency_rate, 0), 1))
+                                        ) / (SD.fob_rate / COALESCE(NULLIF(BO.currency_rate, 0), 1))
                                     ) * 100 - COALESCE(CP.overseas_percentage, 0) - COALESCE(CP.other_percentage, 0)
                                 END
                             FROM commission_distributions AS CD
@@ -488,14 +487,7 @@ export const commissionDistributionRouter = createTRPCRouter({
                         INNER JOIN destinations AS D ON D.id = SD.destination_id
                         INNER JOIN buyer_department_sizes AS BDS ON BDS.id = SD.size_id
                         WHERE CD.id = ${input.id}
-                        GROUP BY SD.BUYER_PO, 
-                            CDD.ID, 
-                            OS.STYLE, 
-                            D.NAME, 
-                            BDS.SIZE, 
-                            SD.FOB_RATE, 
-                            BO.CURRENCY_RATE, 
-                            FSD.FACTORY_RATE
+                        GROUP BY SD.BUYER_PO, CDD.ID, OS.STYLE, D.NAME, BDS.SIZE, SD.FOB_RATE, BO.CURRENCY_RATE, FSD.FACTORY_RATE
                     )
                     SELECT
                         DB_ID,
@@ -812,13 +804,7 @@ export const commissionDistributionRouter = createTRPCRouter({
                             JOIN order_styles AS OS ON OS.id = SD.order_style_id
                             JOIN buyer_orders AS BO ON BO.id = OS.order_id
                             JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = SD.id
-                        GROUP BY 
-                            SD.id,
-                            OS.style,
-                            SD.buyer_po,
-                            SD.fob_rate,
-                            BO.currency_rate,
-                            FSD.factory_rate
+                        GROUP BY SD.id, OS.style, SD.buyer_po, SD.fob_rate, BO.currency_rate, FSD.factory_rate
                     )
                     SELECT
                         SA.style AS style,

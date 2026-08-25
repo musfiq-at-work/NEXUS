@@ -143,12 +143,12 @@ export const lcScClosingRouter = createTRPCRouter({
                             GROUP BY DS.lc_id
                         ),
                         FACTORY_PAYMENTS AS (
-                            SELECT
-                                DS.lc_id AS DS_LC_ID,
+                            SELECT 
+                                RI.lc_id AS RDL_INV_LC,
                                 SUM(FP.paid_amount) AS FACTORY_PAID_AMOUNT
-                            FROM document_submissions AS DS  
-                                INNER JOIN factory_payments AS FP ON DS.id = FP.document_submission_id
-                            GROUP BY DS.lc_id
+                            FROM rdl_invoice AS RI
+                                INNER JOIN factory_payments AS FP ON FP.rdl_invoice_id = RI.id
+                            GROUP BY RI.lc_id
                         )
                         SELECT	
                             E.MIN_EXFACTORY_DATE,
@@ -164,7 +164,7 @@ export const lcScClosingRouter = createTRPCRouter({
                         FROM lc_master AS LC
                             INNER JOIN EXFACTORY AS E ON E.E_LC_ID = LC.ID
                             INNER JOIN PROCEED AS P ON P.DS_LC_ID = LC.ID
-                            INNER JOIN FACTORY_PAYMENTS AS F ON F.DS_LC_ID = LC.ID
+                            INNER JOIN FACTORY_PAYMENTS AS F ON F.RDL_INV_LC = LC.ID
                         WHERE LC.ID = ${input.lcScId}
                         GROUP BY LC.ID, 
                             E.MIN_EXFACTORY_DATE,

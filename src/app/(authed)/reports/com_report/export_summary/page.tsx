@@ -63,6 +63,7 @@ const OrderSummaryReportPage = () => {
 
 			<div className="w-full flex flex-row justify-end">
 				<Button type="button" 
+					disabled
 					leftIcon={excelIcon}
 					onClick={() => onSubmitAll()}
 					label={"Export Summary Report"} 

@@ -711,58 +711,6 @@ export const crossPaymentsRouter = createTRPCRouter({
             }
         }),
 
-    checkCrossPaymentStatus: protectedProcedure
-        .input(z.object({
-            cross_payment_id: z.string(),
-        }))
-        .query(async ({ ctx, input }) => {
-            const can_view = ctx.permissions[m.CROSS_PAYMENT]?.can_view;
-
-            if (!can_view) {
-                throw new TRPCError({
-                    code: "FORBIDDEN",
-                    message: "You do not have permission to view cross payment status.",
-                });
-            }
-            
-            try {
-                const crossPayment = await ctx.db.$queryRaw`
-                    SELECT
-                        CPD.id,
-                        FI.invoice_no,
-                        CASE
-                            WHEN NOT EXISTS (
-                                SELECT 1
-                                FROM document_submission_factory_invoices AS DSFI
-                                WHERE DSFI.factory_invoice_id = FI.id
-                            ) THEN -2
-                            WHEN NOT EXISTS (
-                                SELECT 1
-                                FROM rdl_invoice_details AS RID
-                                INNER JOIN proceed_realization_details AS PRD ON PRD.rdl_invoice_id = RID.rdl_invoice_id
-                                WHERE RID.factory_invoice_id = FI.id
-                            ) THEN -1
-                            WHEN EXISTS (
-                                SELECT 1
-                                FROM factory_payments AS FP
-                                WHERE FP.factory_invoice_id = FI.id
-                            ) THEN 1
-                            ELSE 0
-                        END AS STATUS
-                    FROM cross_payments AS CP
-                    INNER JOIN cross_payment_details AS CPD ON CPD.cross_payment_id = CP.id
-                    INNER JOIN factory_invoice AS FI ON FI.id = CPD.factory_invoice_id
-                    WHERE CP.id = ${input.cross_payment_id};
-                `;
-            
-                return crossPayment;
-            }
-            catch (error) {
-                await logError(error, ctx, input);
-                handlePrismaError(error);
-            }
-        }),
-
     getAuthorizations: protectedProcedure
         .input(z.object({
             id: z.string(),

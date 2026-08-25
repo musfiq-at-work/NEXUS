@@ -84,6 +84,7 @@ export const debitNotesRouter = createTRPCRouter({
                 return {debitNotes, total};
             }
             catch (error) {
+                await logError(error, ctx, input);
                 handlePrismaError(error);
             }
         }),
@@ -924,7 +925,6 @@ export const debitNotesRouter = createTRPCRouter({
                         WHERE DND.debit_note_header_id = ${input.debit_note_id};
                     `
                 ]);
-
 
                 const formattedTable = table.map(item => ({
                     buyer_po: item.buyer_po,
