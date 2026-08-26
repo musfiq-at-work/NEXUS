@@ -5,7 +5,7 @@ import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { Prisma } from "@prisma/client";
 import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
-import type { Charges, ClaimAdjustment, DebitNotes, LcScClosingHeader, LcScTableData } from "./_types/lcScClosing";
+import type { Charges, ClaimAdjustment, CommissionDistributions, DebitNotes, LcScClosingHeader, LcScTableData } from "./_types/lcScClosing";
 import { dividedByZeroSafe, safeNumber } from "~/utils/numbers";
 
 export const lcScClosingRouter = createTRPCRouter({
@@ -92,6 +92,7 @@ export const lcScClosingRouter = createTRPCRouter({
                 let charges: Charges[];
                 let claimAdjustment: ClaimAdjustment[];
                 let debitNotes: DebitNotes[];
+                let commissionDistributions: CommissionDistributions[];
 
                 // Parallel Query Processing
                 await Promise.all([
@@ -122,8 +123,8 @@ export const lcScClosingRouter = createTRPCRouter({
                                 MIN(E.exfactory_date) AS MIN_EXFACTORY_DATE,
                                 MAX(E.exfactory_date) AS MAX_EXFACTORY_DATE,
                                 SUM(ES.delivery_quantity) AS EXPORT_INVOICE_QUANTITY,
-                                SUM(ES.delivery_quantity * SD.fob_rate) AS RDL_EXPORT_VALUE,
-                                SUM(ES.delivery_quantity * SD.fob_rate / BO.currency_rate) AS RDL_EXPORT_VALUE_USD,
+                                SUM(ES.delivery_quantity * SD.fob_rate * (1 - COALESCE(ESD.early_settlement_charge, 0) / 100)) AS RDL_EXPORT_VALUE,
+                                SUM(ES.delivery_quantity * SD.fob_rate / BO.currency_rate * (1 - COALESCE(ESD.early_settlement_charge, 0) / 100)) AS RDL_EXPORT_VALUE_USD,
                                 SUM(CASE 
                                     WHEN COALESCE(FSD.transfer_rate, 0) <> 0
                                         THEN ES.delivery_quantity * FSD.transfer_rate / BO.currency_rate
@@ -134,6 +135,7 @@ export const lcScClosingRouter = createTRPCRouter({
                             FROM lc_orders AS LO
                             INNER JOIN lc_shipments AS LS ON LS.lc_order_id = LO.id
                             INNER JOIN shipment_details AS SD ON SD.id = LS.shipment_details_id
+                            LEFT JOIN early_settlement_details AS ESD ON ESD.shipment_details_id = SD.id
                             INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = SD.id
                             INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = SD.id
                             INNER JOIN exfactory_orders AS EO ON EO.id = ES.exfactory_orders_id
@@ -154,11 +156,11 @@ export const lcScClosingRouter = createTRPCRouter({
                         ),
                         FACTORY_PAYMENTS AS (
                             SELECT 
-                                RI.lc_id AS RDL_INV_LC,
+                                DS.lc_id AS DS_LC_ID,
                                 SUM(FP.paid_amount) AS FACTORY_PAID_AMOUNT
-                            FROM rdl_invoice AS RI
-                                INNER JOIN factory_payments AS FP ON FP.rdl_invoice_id = RI.id
-                            GROUP BY RI.lc_id
+                            FROM document_submissions AS DS  
+                                INNER JOIN factory_payments AS FP ON DS.id = FP.document_submission_id
+                            GROUP BY DS.lc_id
                         )
                         SELECT	
                             E.MIN_EXFACTORY_DATE,
@@ -174,7 +176,7 @@ export const lcScClosingRouter = createTRPCRouter({
                         FROM lc_master AS LC
                             INNER JOIN EXFACTORY AS E ON E.E_LC_ID = LC.ID
                             INNER JOIN PROCEED AS P ON P.DS_LC_ID = LC.ID
-                            INNER JOIN FACTORY_PAYMENTS AS F ON F.RDL_INV_LC = LC.ID
+                            INNER JOIN FACTORY_PAYMENTS AS F ON F.DS_LC_ID = LC.ID
                         WHERE LC.ID = ${input.lcScId}
                         GROUP BY LC.ID, 
                             E.MIN_EXFACTORY_DATE,
@@ -219,6 +221,84 @@ export const lcScClosingRouter = createTRPCRouter({
                             INNER JOIN factories AS F ON F.id = DN.factory_id
                         WHERE DN.lc_id = ${input.lcScId};
                         GROUP BY DN.id, F.id;
+                    `,
+
+                    commissionDistributions = await ctx.db.$queryRaw<CommissionDistributions[]>`
+                        WITH INV AS (
+                            SELECT
+                                RISD.rdl_invoice_details_id AS RIDID,
+                                ES.shipment_details_id AS SDID,
+                                SUM(RISD.invoice_quantity) AS INVOICE_QUANTITY
+                            FROM rdl_invoice_shipment_details RISD
+                                INNER JOIN factory_invoice_details FID ON FID.id = RISD.factory_invoice_details_id
+                                INNER JOIN exfactory_shipments ES ON ES.id = FID.exfactory_shipment_id
+                            GROUP BY RISD.rdl_invoice_details_id, ES.shipment_details_id
+                        ),
+                        SHIPMENT_CALC AS (
+                            SELECT
+                                SD.id AS shipment_detail_id,
+                                SD.FOB_RATE / COALESCE(BO.CURRENCY_RATE, 1) AS FOB_RATE,
+                                FSD.FACTORY_RATE,
+                                COALESCE(ESD.EARLY_SETTLEMENT_CHARGE, 0) AS EARLY_SETTLEMENT_CHARGE,
+                                COALESCE(CDD.DHAKA_COMMISSION_PERCENTAGE, 0) AS DHAKA_COMMISSION_PERCENTAGE,
+                                COALESCE(CDD.OTHERS_COMMISSION_PERCENTAGE, 0) AS OTHERS_COMMISSION_PERCENTAGE,
+                                COALESCE(CDD.OVERSEAS_COMMISSION_PERCENTAGE, 0) AS OVERSEAS_COMMISSION_PERCENTAGE,
+                                (SD.FOB_RATE / COALESCE(BO.CURRENCY_RATE, 1)) * (1 - COALESCE(ESD.EARLY_SETTLEMENT_CHARGE, 0) / 100) AS EFFECTIVE_FOB,
+                                (
+                                    (SD.FOB_RATE / COALESCE(BO.CURRENCY_RATE, 1)) * (1 - COALESCE(ESD.EARLY_SETTLEMENT_CHARGE, 0) / 100) - FSD.FACTORY_RATE
+                                ) * 100 / NULLIF(
+                                    (SD.FOB_RATE / COALESCE(BO.CURRENCY_RATE, 1)) * (1 - COALESCE(ESD.EARLY_SETTLEMENT_CHARGE, 0) / 100), 0
+                                ) AS EFFECTIVE_COMMISSION_PERCENTAGE
+                            FROM shipment_details SD
+                                INNER JOIN order_styles OS ON OS.id = SD.order_style_id
+                                INNER JOIN buyer_orders BO ON BO.id = OS.order_id
+                                INNER JOIN factory_shipment_details FSD ON FSD.shipment_detail_id = SD.id
+                                INNER JOIN commission_distributions_details CDD ON CDD.shipment_details_id = SD.id
+                                LEFT JOIN early_settlement_details ESD ON ESD.shipment_details_id = SD.id
+                        ),
+                        CI_FOR_LC AS (
+                            SELECT
+                                DS.id AS DS_ID,
+                                SUM(INV.INVOICE_QUANTITY * SC.FOB_RATE) AS TOTAL_RDL_VALUE,
+                                SUM(INV.INVOICE_QUANTITY * (SC.EFFECTIVE_FOB / BO.CURRENCY_RATE)) - SUM(INV.INVOICE_QUANTITY * FSD.FACTORY_RATE) AS TOTAL_CI,
+                                COALESCE(SUM(INV.INVOICE_QUANTITY * SC.EFFECTIVE_FOB *
+                                    (SC.EFFECTIVE_COMMISSION_PERCENTAGE - SC.OTHERS_COMMISSION_PERCENTAGE - SC.OVERSEAS_COMMISSION_PERCENTAGE) / 100
+                                ), 0) AS TOTAL_DHAKA_CI,
+                                COALESCE(SUM( INV.INVOICE_QUANTITY * SC.EFFECTIVE_FOB * SC.OTHERS_COMMISSION_PERCENTAGE / 100), 0) AS TOTAL_OTHER_CI,
+                                COALESCE(SUM(INV.INVOICE_QUANTITY * SC.EFFECTIVE_FOB * SC.OVERSEAS_COMMISSION_PERCENTAGE / 100), 0) AS TOTAL_OVERSEAS_CI,
+                                COALESCE(SUM(INV.INVOICE_QUANTITY * SC.FOB_RATE * SC.DHAKA_COMMISSION_PERCENTAGE / 100 ), 0) AS TOTAL_DHAKA_CI_ORIGINAL,
+                                COALESCE(SUM(INV.INVOICE_QUANTITY * SC.FOB_RATE * SC.OTHERS_COMMISSION_PERCENTAGE / 100), 0) AS TOTAL_OTHER_CI_ORIGINAL,
+                                COALESCE(SUM(INV.INVOICE_QUANTITY * SC.FOB_RATE * SC.OVERSEAS_COMMISSION_PERCENTAGE / 100 ), 0) AS TOTAL_OVERSEAS_CI_ORIGINAL
+                            FROM document_submissions DS
+                                INNER JOIN document_submissions_details DSD ON DSD.document_submissions_id = DS.id
+                                INNER JOIN rdl_invoice RI ON RI.id = DSD.rdl_invoice_id
+                                INNER JOIN rdl_invoice_details RID ON RID.rdl_invoice_id = RI.id
+                                INNER JOIN INV ON INV.RIDID = RID.id
+                                INNER JOIN shipment_details SD ON SD.id = INV.SDID
+                                INNER JOIN order_styles OS ON OS.id = SD.order_style_id
+                                INNER JOIN buyer_orders BO ON BO.id = OS.order_id
+                                INNER JOIN factory_orders FO ON FO.order_id = BO.id
+                                INNER JOIN factory_shipment_details FSD ON FSD.shipment_detail_id = SD.id
+                                INNER JOIN SHIPMENT_CALC SC ON SC.shipment_detail_id = SD.id
+                            GROUP BY DS.id
+                        )
+                        SELECT
+                            -- LC, CI Allocation
+                            SUM(CFL.TOTAL_CI * (CFL.TOTAL_DHAKA_CI / NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))) AS DHAKA_VALUE,
+                            SUM(CFL.TOTAL_CI * (CFL.TOTAL_OVERSEAS_CI / NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))) AS OVERSEAS_VALUE,
+                            SUM(CFL.TOTAL_CI * (CFL.TOTAL_OTHER_CI / NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))) AS OTHER_VALUE,
+                            SUM(
+                                CFL.TOTAL_CI *(CFL.TOTAL_DHAKA_CI /NULLIF(CFL.TOTAL_DHAKA_CI +CFL.TOTAL_OTHER_CI +CFL.TOTAL_OVERSEAS_CI,0))
+                            ) / NULLIF(SUM(CFL.TOTAL_RDL_VALUE), 0) * 100 AS DHAKA_PERCENTAGE,
+                            SUM(
+                                CFL.TOTAL_CI *(CFL.TOTAL_OVERSEAS_CI /NULLIF(CFL.TOTAL_DHAKA_CI +CFL.TOTAL_OTHER_CI +CFL.TOTAL_OVERSEAS_CI,0))
+                            ) / NULLIF(SUM(CFL.TOTAL_RDL_VALUE), 0) * 100 AS OVERSEAS_PERCENTAGE,
+                            SUM(
+                                CFL.TOTAL_CI *(CFL.TOTAL_OTHER_CI /NULLIF(CFL.TOTAL_DHAKA_CI +CFL.TOTAL_OTHER_CI +CFL.TOTAL_OVERSEAS_CI,0))
+                            ) / NULLIF(SUM(CFL.TOTAL_RDL_VALUE), 0) * 100 AS OTHER_PERCENTAGE
+                        FROM document_submissions AS DS
+                            LEFT JOIN CI_FOR_LC CFL ON CFL.DS_ID = DS.id
+                        WHERE DS.lc_id = ${input.lcScId};
                     `
                 ]);
 
@@ -314,3 +394,6 @@ export const lcScClosingRouter = createTRPCRouter({
             }
         }),
 })
+
+
+
