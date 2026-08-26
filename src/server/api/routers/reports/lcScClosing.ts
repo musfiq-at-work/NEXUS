@@ -7,6 +7,8 @@ import { Prisma } from "@prisma/client";
 import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
 import type { Charges, ClaimAdjustment, CommissionDistributions, DebitNotes, LcScClosingHeader, LcScTableData } from "./_types/lcScClosing";
 import { dividedByZeroSafe, safeNumber } from "~/utils/numbers";
+import { formatDate } from "~/utils/localDateString";
+import type { CommissionInvoices } from "./_types/commercialActivityReport";
 
 export const lcScClosingRouter = createTRPCRouter({
     getLCs: protectedProcedure
@@ -93,6 +95,7 @@ export const lcScClosingRouter = createTRPCRouter({
                 let claimAdjustment: ClaimAdjustment[];
                 let debitNotes: DebitNotes[];
                 let commissionDistributions: CommissionDistributions[];
+                let commissionInvoices: CommissionInvoices[];
 
                 // Parallel Query Processing
                 await Promise.all([
@@ -299,6 +302,58 @@ export const lcScClosingRouter = createTRPCRouter({
                         FROM document_submissions AS DS
                             LEFT JOIN CI_FOR_LC CFL ON CFL.DS_ID = DS.id
                         WHERE DS.lc_id = ${input.lcScId};
+                    `,
+
+                    commissionInvoices = await ctx.db.$queryRaw<CommissionInvoices[]>`
+                        WITH RI_FOR_LC AS (
+                            SELECT 
+                                SUM(RID.INVOICE_VALUE - COALESCE(RI.DISCOUNT, 0) - COALESCE(RID.CHARGE_VALUE, 0)) AS INVOICE_VALUE,
+                                DS.ID AS DS_ID
+                            FROM document_submissions AS DS
+                                INNER JOIN document_submissions_details AS DSD ON DSD.document_submissions_id = DS.id
+                                INNER JOIN rdl_invoice AS RI ON RI.id = DSD.rdl_invoice_id
+                                INNER JOIN (
+                                    SELECT
+                                        RID.RDL_INVOICE_ID AS RIID,
+                                        SUM(RISD.INVOICE_QUANTITY * SD.FOB_RATE) AS INVOICE_VALUE,
+                                        SUM(RISD.INVOICE_QUANTITY * SD.FOB_RATE * ESD.early_settlement_charge / 100) AS CHARGE_VALUE
+                                    FROM rdl_invoice_details AS RID
+                                        INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
+                                        INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
+                                        LEFT JOIN early_settlement_details AS ESD ON ESD.shipment_details_id = SD.id
+                                    GROUP BY RID.RDL_INVOICE_ID
+                                ) RID ON RID.RIID = RI.id 
+                            GROUP BY DS.ID
+                        ),
+                        FI_FOR_LC AS (
+                            SELECT 
+                                SUM(FAC_INV.INVOICE_VALUE - COALESCE(FI.DISCOUNT, 0)) AS INVOICE_VALUE,
+                                DS.ID AS DS_ID
+                            FROM document_submissions AS DS
+                                INNER JOIN document_submissions_details AS DSD ON DSD.document_submissions_id = DS.id
+                                INNER JOIN rdl_invoice AS RI ON RI.id = DSD.rdl_invoice_id
+                                INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
+                                INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
+                                INNER JOIN factories AS F ON F.id = FI.factory_id
+                                INNER JOIN (
+                                    SELECT
+                                        RISD.RDL_INVOICE_DETAILS_ID AS RIDID,
+                                        FSD.transfer_rate * SUM(RISD.INVOICE_QUANTITY) AS INVOICE_VALUE
+                                    FROM rdl_invoice_shipment_details AS RISD
+                                        INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = RISD.shipment_details_id
+                                    GROUP BY RISD.RDL_INVOICE_DETAILS_ID, FSD.factory_rate, FSD.transfer_rate
+                                ) FAC_INV ON FAC_INV.RIDID = RID.ID
+                            GROUP BY DS.ID
+                        )
+                        SELECT DISTINCT
+                            CI.ref_no,
+                            CI.invoice_date,
+                            RFL.INVOICE_VALUE - FFL.INVOICE_VALUE AS invoice_value
+                        FROM commission_invoice AS CI
+                            INNER JOIN TERMS AS T ON T.id = CI.term_id
+                            LEFT JOIN RI_FOR_LC AS RFL ON RFL.DS_ID = CI.document_submission_id
+                            LEFT JOIN FI_FOR_LC AS FFL ON FFL.DS_ID = CI.document_submission_id
+                        WHERE CI.lc_id = ${input.lcScId};
                     `
                 ]);
 
@@ -380,12 +435,36 @@ export const lcScClosingRouter = createTRPCRouter({
 
                 const difference_between_commissions = currencyFormatter(total_calculated_commission - total_commission_realized, '$');
 
+                const debitNotesTable = debitNotes.map((item) => ({
+                    ...item,
+                    debit_note_value: currencyFormatter(safeNumber(item.debit_note_value), '$'),
+                    debit_note_date: formatDate(item.debit_note_date)
+                }));
+
+                const commissionInvoiceTable = commissionInvoices.map((item) => ({
+                    ...item,
+                    invoice_date: formatDate(item.invoice_date),
+                    invoice_value: currencyFormatter(safeNumber(item.invoice_value), '$'),
+                }))
+
+                const commissionTable = {
+                    dhaka_value: currencyFormatter(safeNumber(commissionDistributions[0]?.dhaka_value), '$'),
+                    overseas_value: currencyFormatter(safeNumber(commissionDistributions[0]?.overseas_value), '$'),
+                    other_value: currencyFormatter(safeNumber(commissionDistributions[0]?.other_value), '$'),
+                    dhaka_percentage: `${quantityFormatter(safeNumber(commissionDistributions[0]?.dhaka_percentage))}%`,
+                    overseas_percentage: `${quantityFormatter(safeNumber(commissionDistributions[0]?.overseas_percentage))}%`,
+                    other_percentage: `${quantityFormatter(safeNumber(commissionDistributions[0]?.other_percentage))}%`,
+                }
+
                 return { 
                     header, 
                     table, 
                     table_summary, 
                     chargesTable,
-                    difference_between_commissions
+                    difference_between_commissions,
+                    debitNotesTable,
+                    commissionTable,
+                    commissionInvoiceTable
                 }
             }
             catch (error){

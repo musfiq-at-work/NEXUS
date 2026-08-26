@@ -48,3 +48,9 @@ export interface FactoryInvoiceData {
     factory_payment: number;
     FACTORY_PAYMENT_DATE: string;
 }
+
+export interface CommissionInvoices {
+    ref_no: string;
+    invoice_date: Date;
+    invoice_value: string;
+}
