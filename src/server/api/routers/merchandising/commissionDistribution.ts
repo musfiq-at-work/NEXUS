@@ -224,6 +224,20 @@ export const commissionDistributionRouter = createTRPCRouter({
                             action_by: ctx.user.id,
                         }
                     });
+
+                    await tx.early_settlement_details.deleteMany({
+                        where: {
+                            early_settlement: {
+                                order_id: deletedCommissionDistribution.order_id
+                            }
+                        }
+                    });
+
+                    await tx.early_settlement.deleteMany({
+                        where: {
+                            order_id: deletedCommissionDistribution.order_id
+                        }
+                    })
                 }, {timeout: 30000})
             }
             catch (error) {

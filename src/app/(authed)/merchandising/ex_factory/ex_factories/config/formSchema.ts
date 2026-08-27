@@ -85,7 +85,7 @@ export const createExFactoryFormSchema = (tolerance: number, isAdmin: boolean) =
                 ctx.addIssue({
                     code: z.ZodIssueCode.custom,
                     path: ["exfactory_date"],
-                    message: "Ex Factory Date cannot be more than 2 days behind today",
+                    message: "Ex Factory Date cannot be more than 3 days behind",
                 });
             }
         }),
