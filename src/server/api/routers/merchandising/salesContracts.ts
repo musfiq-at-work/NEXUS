@@ -1289,7 +1289,7 @@ export const salesContractsRouter = createTRPCRouter({
                                 JOIN (
                                     SELECT 
                                         PT.ID AS ID,
-                                        CONCAT(T.NAME, ' ', PT.TENOR, ' DAYS ', PT.TERM_DESCRIPTION) AS TERM
+                                        CONCAT(T.NAME, ' ', PT.TENOR, ' ', PT.TERM_DESCRIPTION) AS TERM
                                     FROM payment_terms AS PT
                                         INNER JOIN terms AS T ON T.id = PT.term_id
                                 ) P ON P.id = SD.payment_term_id

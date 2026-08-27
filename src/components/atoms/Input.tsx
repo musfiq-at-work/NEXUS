@@ -27,6 +27,7 @@ const Input = (props: InputPropsType) => {
 			name={name}
 			type={type}
 			ref={ref}
+			step={'any'}
 			placeholder={placeholder}
 			onChange={(e) => {
 				e.target.value = e.target.value.toUpperCase();

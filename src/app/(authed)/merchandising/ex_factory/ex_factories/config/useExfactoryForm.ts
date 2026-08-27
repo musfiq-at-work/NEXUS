@@ -7,6 +7,7 @@ import { useFormFields } from "./useFormFields";
 import { formatDateForInput } from "~/utils/localDateString";
 import type { GetExFactoryByIdTypes } from "~/types/merchandisingAPITypes";
 import { api } from "~/trpc/react";
+import { useDecodedUser } from "~/hooks";
 
 type Orders = NonNullable<GetExFactoryByIdTypes['orders']>[number];
 
@@ -50,11 +51,13 @@ export const useExfactoryForm = (initialData?: GetExFactoryByIdTypes) => {
     const isEdit = Boolean(initialData);
 
     // Tolerance state, default to 10% if not fetched, no buyer selected, or error occurs
-    const [tolerance, setTolerance] = useState<number>(10)
+    const [tolerance, setTolerance] = useState<number>(10);
+
+    const { isAdmin } = useDecodedUser();
 
     // Create Zod schema with current tolerance
     const exFactorySchema = useMemo(
-        () => createExFactoryFormSchema(tolerance ?? 0),
+        () => createExFactoryFormSchema(tolerance ?? 0, isAdmin),
         [tolerance]
     );
 

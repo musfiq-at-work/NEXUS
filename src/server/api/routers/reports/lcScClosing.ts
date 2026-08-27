@@ -70,7 +70,7 @@ export const lcScClosingRouter = createTRPCRouter({
             }
         }),
     
-    getPDFData: protectedProcedure
+    getPDFDataLC: protectedProcedure
         .input(z.object({
             lcScId: z.string(),
             from_date: z.date().optional(),
@@ -201,14 +201,42 @@ export const lcScClosingRouter = createTRPCRouter({
                             COALESCE(SUM(PR.document_charge), 0) AS document_charge
                         FROM document_submissions AS DS
                         INNER JOIN proceed_realization AS PR ON PR.document_submission_id = DS.id
-                        WHERE DS.lc_id = ${input.lcScId};
+                        WHERE DS.lc_id = ${input.lcScId}
+                        ${isPartial ? Prisma.sql`
+                            AND EXISTS (
+                                SELECT 1
+                                FROM proceed_realization_details AS PRD
+                                    INNER JOIN rdl_invoice AS RI ON RI.id = PRD.rdl_invoice_id
+                                    INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
+                                    INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
+                                    INNER JOIN factory_invoice_details AS FID ON FID.factory_invoice_id = FI.id
+                                    INNER JOIN exfactory_shipments AS ES ON ES.id = FID.exfactory_shipment_id
+                                    INNER JOIN exfactory_orders AS EO ON EO.id = ES.exfactory_orders_id
+                                    INNER JOIN exfactory AS E ON E.id = EO.exfactory_id
+                                WHERE PRD.realization_id = PR.id
+                                    AND E.exfactory_date BETWEEN ${input.from_date} AND ${input.to_date}
+                            )
+                        ` : Prisma.empty};
                     `,
 
                     claimAdjustment = await ctx.db.$queryRaw<ClaimAdjustment[]>`
                         SELECT 
-                            COALESCE(SUM(discount), 0) AS CLAIM_ADJUSTMENT
-                        FROM rdl_invoice
-                        WHERE lc_id = ${input.lcScId};
+                            COALESCE(SUM(RI.discount), 0) AS CLAIM_ADJUSTMENT
+                        FROM rdl_invoice AS RI
+                        WHERE RI.lc_id = ${input.lcScId}
+                        ${isPartial ? Prisma.sql`
+                            AND EXISTS (
+                                SELECT 1
+                                FROM rdl_invoice_details AS RID
+                                    INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
+                                    INNER JOIN factory_invoice_details AS FID ON FID.factory_invoice_id = FI.id
+                                    INNER JOIN exfactory_shipments AS ES ON ES.id = FID.exfactory_shipment_id
+                                    INNER JOIN exfactory_orders AS EO ON EO.id = ES.exfactory_orders_id
+                                    INNER JOIN exfactory AS E ON E.id = EO.exfactory_id
+                                WHERE RID.rdl_invoice_id = RI.id
+                                    AND E.exfactory_date BETWEEN ${input.from_date} AND ${input.to_date}
+                            )
+                        ` : Prisma.empty};
                     `,
 
                     debitNotes = await ctx.db.$queryRaw<DebitNotes[]>`
@@ -222,7 +250,16 @@ export const lcScClosingRouter = createTRPCRouter({
                             INNER JOIN exfactory_shipments AS ES ON ES.id = DND.exfactory_shipment_id
                             INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = ES.shipment_details_id
                             INNER JOIN factories AS F ON F.id = DN.factory_id
-                        WHERE DN.lc_id = ${input.lcScId};
+                        WHERE DN.lc_id = ${input.lcScId}
+                        ${isPartial ? Prisma.sql`
+                            AND EXISTS (
+                                SELECT 1
+                                FROM exfactory_orders AS EO ON
+                                    INNER JOIN exfactory AS E ON E.id = EO.exfactory_id
+                                WHERE EO.id = ES.exfactory_orders_id
+                                    AND E.exfactory_date BETWEEN ${input.from_date} AND ${input.to_date}
+                            )
+                        ` : Prisma.empty}
                         GROUP BY DN.id, F.id;
                     `,
 
@@ -235,6 +272,15 @@ export const lcScClosingRouter = createTRPCRouter({
                             FROM rdl_invoice_shipment_details RISD
                                 INNER JOIN factory_invoice_details FID ON FID.id = RISD.factory_invoice_details_id
                                 INNER JOIN exfactory_shipments ES ON ES.id = FID.exfactory_shipment_id
+                            ${isPartial ? Prisma.sql`
+                                WHERE EXISTS (
+                                    SELECT 1
+                                    FROM exfactory_orders AS EO
+                                        INNER JOIN exfactory AS E ON E.id = EO.exfactory_id
+                                    WHERE EO.id = ES.exfactory_orders_id
+                                        AND E.exfactory_date BETWEEN ${input.from_date} AND ${input.to_date}
+                                )
+                            ` : Prisma.empty}
                             GROUP BY RISD.rdl_invoice_details_id, ES.shipment_details_id
                         ),
                         SHIPMENT_CALC AS (
@@ -263,26 +309,21 @@ export const lcScClosingRouter = createTRPCRouter({
                             SELECT
                                 DS.id AS DS_ID,
                                 SUM(INV.INVOICE_QUANTITY * SC.FOB_RATE) AS TOTAL_RDL_VALUE,
-                                SUM(INV.INVOICE_QUANTITY * (SC.EFFECTIVE_FOB / BO.CURRENCY_RATE)) - SUM(INV.INVOICE_QUANTITY * FSD.FACTORY_RATE) AS TOTAL_CI,
-                                COALESCE(SUM(INV.INVOICE_QUANTITY * SC.EFFECTIVE_FOB *
+                                SUM(INV.INVOICE_QUANTITY * (SC.EFFECTIVE_FOB - SC.FACTORY_RATE)) AS TOTAL_CI,
+                                COALESCE(SUM(
+                                    INV.INVOICE_QUANTITY * SC.EFFECTIVE_FOB *
                                     (SC.EFFECTIVE_COMMISSION_PERCENTAGE - SC.OTHERS_COMMISSION_PERCENTAGE - SC.OVERSEAS_COMMISSION_PERCENTAGE) / 100
                                 ), 0) AS TOTAL_DHAKA_CI,
-                                COALESCE(SUM( INV.INVOICE_QUANTITY * SC.EFFECTIVE_FOB * SC.OTHERS_COMMISSION_PERCENTAGE / 100), 0) AS TOTAL_OTHER_CI,
+                                COALESCE(SUM(INV.INVOICE_QUANTITY * SC.EFFECTIVE_FOB * SC.OTHERS_COMMISSION_PERCENTAGE / 100), 0) AS TOTAL_OTHER_CI,
                                 COALESCE(SUM(INV.INVOICE_QUANTITY * SC.EFFECTIVE_FOB * SC.OVERSEAS_COMMISSION_PERCENTAGE / 100), 0) AS TOTAL_OVERSEAS_CI,
-                                COALESCE(SUM(INV.INVOICE_QUANTITY * SC.FOB_RATE * SC.DHAKA_COMMISSION_PERCENTAGE / 100 ), 0) AS TOTAL_DHAKA_CI_ORIGINAL,
+                                COALESCE(SUM(INV.INVOICE_QUANTITY * SC.FOB_RATE * SC.DHAKA_COMMISSION_PERCENTAGE / 100), 0) AS TOTAL_DHAKA_CI_ORIGINAL,
                                 COALESCE(SUM(INV.INVOICE_QUANTITY * SC.FOB_RATE * SC.OTHERS_COMMISSION_PERCENTAGE / 100), 0) AS TOTAL_OTHER_CI_ORIGINAL,
-                                COALESCE(SUM(INV.INVOICE_QUANTITY * SC.FOB_RATE * SC.OVERSEAS_COMMISSION_PERCENTAGE / 100 ), 0) AS TOTAL_OVERSEAS_CI_ORIGINAL
+                                COALESCE(SUM(INV.INVOICE_QUANTITY * SC.FOB_RATE * SC.OVERSEAS_COMMISSION_PERCENTAGE / 100), 0) AS TOTAL_OVERSEAS_CI_ORIGINAL
                             FROM document_submissions DS
-                                INNER JOIN document_submissions_details DSD ON DSD.document_submissions_id = DS.id
-                                INNER JOIN rdl_invoice RI ON RI.id = DSD.rdl_invoice_id
-                                INNER JOIN rdl_invoice_details RID ON RID.rdl_invoice_id = RI.id
-                                INNER JOIN INV ON INV.RIDID = RID.id
-                                INNER JOIN shipment_details SD ON SD.id = INV.SDID
-                                INNER JOIN order_styles OS ON OS.id = SD.order_style_id
-                                INNER JOIN buyer_orders BO ON BO.id = OS.order_id
-                                INNER JOIN factory_orders FO ON FO.order_id = BO.id
-                                INNER JOIN factory_shipment_details FSD ON FSD.shipment_detail_id = SD.id
-                                INNER JOIN SHIPMENT_CALC SC ON SC.shipment_detail_id = SD.id
+                            INNER JOIN document_submissions_details DSD ON DSD.document_submissions_id = DS.id
+                            INNER JOIN rdl_invoice_details RID ON RID.rdl_invoice_id = DSD.rdl_invoice_id
+                            INNER JOIN INV ON INV.RIDID = RID.id
+                            INNER JOIN SHIPMENT_CALC SC ON SC.shipment_detail_id = INV.SDID
                             GROUP BY DS.id
                         )
                         SELECT
@@ -291,13 +332,13 @@ export const lcScClosingRouter = createTRPCRouter({
                             SUM(CFL.TOTAL_CI * (CFL.TOTAL_OVERSEAS_CI / NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))) AS OVERSEAS_VALUE,
                             SUM(CFL.TOTAL_CI * (CFL.TOTAL_OTHER_CI / NULLIF(CFL.TOTAL_DHAKA_CI + CFL.TOTAL_OTHER_CI + CFL.TOTAL_OVERSEAS_CI, 0))) AS OTHER_VALUE,
                             SUM(
-                                CFL.TOTAL_CI *(CFL.TOTAL_DHAKA_CI /NULLIF(CFL.TOTAL_DHAKA_CI +CFL.TOTAL_OTHER_CI +CFL.TOTAL_OVERSEAS_CI,0))
+                                CFL.TOTAL_CI *(CFL.TOTAL_DHAKA_CI / NULLIF(CFL.TOTAL_DHAKA_CI +CFL.TOTAL_OTHER_CI +CFL.TOTAL_OVERSEAS_CI,0))
                             ) / NULLIF(SUM(CFL.TOTAL_RDL_VALUE), 0) * 100 AS DHAKA_PERCENTAGE,
                             SUM(
-                                CFL.TOTAL_CI *(CFL.TOTAL_OVERSEAS_CI /NULLIF(CFL.TOTAL_DHAKA_CI +CFL.TOTAL_OTHER_CI +CFL.TOTAL_OVERSEAS_CI,0))
+                                CFL.TOTAL_CI *(CFL.TOTAL_OVERSEAS_CI / NULLIF(CFL.TOTAL_DHAKA_CI +CFL.TOTAL_OTHER_CI +CFL.TOTAL_OVERSEAS_CI,0))
                             ) / NULLIF(SUM(CFL.TOTAL_RDL_VALUE), 0) * 100 AS OVERSEAS_PERCENTAGE,
                             SUM(
-                                CFL.TOTAL_CI *(CFL.TOTAL_OTHER_CI /NULLIF(CFL.TOTAL_DHAKA_CI +CFL.TOTAL_OTHER_CI +CFL.TOTAL_OVERSEAS_CI,0))
+                                CFL.TOTAL_CI *(CFL.TOTAL_OTHER_CI / NULLIF(CFL.TOTAL_DHAKA_CI +CFL.TOTAL_OTHER_CI +CFL.TOTAL_OVERSEAS_CI,0))
                             ) / NULLIF(SUM(CFL.TOTAL_RDL_VALUE), 0) * 100 AS OTHER_PERCENTAGE
                         FROM document_submissions AS DS
                             LEFT JOIN CI_FOR_LC CFL ON CFL.DS_ID = DS.id
@@ -473,6 +514,3 @@ export const lcScClosingRouter = createTRPCRouter({
             }
         }),
 })
-
-
-

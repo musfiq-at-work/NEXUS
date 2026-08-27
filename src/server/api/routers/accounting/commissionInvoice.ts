@@ -897,6 +897,8 @@ export const commissionInvoiceRouter = createTRPCRouter({
                                 SD.id AS shipment_detail_id,
                                 SD.FOB_RATE / COALESCE(BO.CURRENCY_RATE, 1) AS FOB_RATE,
                                 FSD.FACTORY_RATE,
+                                FSD.TRANSFER_RATE,
+                                FO.CURRENCY_RATE AS FACTORY_CURRENCY_RATE,
                                 COALESCE(ESD.EARLY_SETTLEMENT_CHARGE, 0) AS EARLY_SETTLEMENT_CHARGE,
                                 COALESCE(CDD.DHAKA_COMMISSION_PERCENTAGE, 0) AS DHAKA_COMMISSION_PERCENTAGE,
                                 COALESCE(CDD.OTHERS_COMMISSION_PERCENTAGE, 0) AS OTHERS_COMMISSION_PERCENTAGE,
@@ -910,6 +912,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
                             FROM shipment_details SD
                                 INNER JOIN order_styles OS ON OS.id = SD.order_style_id
                                 INNER JOIN buyer_orders BO ON BO.id = OS.order_id
+                                INNER JOIN factory_orders AS FO ON FO.order_id = BO.id
                                 INNER JOIN factory_shipment_details FSD ON FSD.shipment_detail_id = SD.id
                                 INNER JOIN commission_distributions_details CDD ON CDD.shipment_details_id = SD.id
                                 LEFT JOIN early_settlement_details ESD ON ESD.shipment_details_id = SD.id
@@ -923,15 +926,15 @@ export const commissionInvoiceRouter = createTRPCRouter({
 
                                 -- Effective CI after early settlement
                                 CASE
-                                    WHEN COALESCE(AVG(FSD.TRANSFER_RATE), 0) <> 0
-                                        THEN SUM(INV.INVOICE_QUANTITY * (SC.EFFECTIVE_FOB / BO.CURRENCY_RATE)) - SUM(INV.INVOICE_QUANTITY * FSD.TRANSFER_RATE)
-                                    ELSE SUM(INV.INVOICE_QUANTITY * (SC.EFFECTIVE_FOB / BO.CURRENCY_RATE)) - SUM(INV.INVOICE_QUANTITY * FSD.FACTORY_RATE)
+                                    WHEN COALESCE(AVG(SC.TRANSFER_RATE), 0) <> 0
+                                        THEN SUM(INV.INVOICE_QUANTITY * SC.EFFECTIVE_FOB) - SUM(INV.INVOICE_QUANTITY * SC.TRANSFER_RATE)
+                                    ELSE SUM(INV.INVOICE_QUANTITY * SC.EFFECTIVE_FOB) - SUM(INV.INVOICE_QUANTITY * SC.FACTORY_RATE)
                                 END AS TOTAL_CI,
 
                                 -- DN is NOT affected by early settlement
                                 CASE
-                                    WHEN COALESCE(AVG(FSD.TRANSFER_RATE), 0) <> 0
-                                        THEN COALESCE(SUM(INV.INVOICE_QUANTITY * (FSD.TRANSFER_RATE - FSD.FACTORY_RATE) / FO.CURRENCY_RATE), 0)
+                                    WHEN COALESCE(AVG(SC.TRANSFER_RATE), 0) <> 0
+                                        THEN COALESCE(SUM(INV.INVOICE_QUANTITY * (SC.TRANSFER_RATE - SC.FACTORY_RATE) / SC.FACTORY_CURRENCY_RATE), 0)
                                     ELSE 0
                                 END AS TOTAL_DN,
 
@@ -948,15 +951,9 @@ export const commissionInvoiceRouter = createTRPCRouter({
                                 COALESCE(SUM(INV.INVOICE_QUANTITY * SC.FOB_RATE * SC.OVERSEAS_COMMISSION_PERCENTAGE / 100 ), 0) AS TOTAL_OVERSEAS_CI_ORIGINAL
                             FROM document_submissions DS
                                 INNER JOIN document_submissions_details DSD ON DSD.document_submissions_id = DS.id
-                                INNER JOIN rdl_invoice RI ON RI.id = DSD.rdl_invoice_id
-                                INNER JOIN rdl_invoice_details RID ON RID.rdl_invoice_id = RI.id
+                                INNER JOIN rdl_invoice_details RID ON RID.rdl_invoice_id = DSD.rdl_invoice_id
                                 INNER JOIN INV ON INV.RIDID = RID.id
-                                INNER JOIN shipment_details SD ON SD.id = INV.SDID
-                                INNER JOIN order_styles OS ON OS.id = SD.order_style_id
-                                INNER JOIN buyer_orders BO ON BO.id = OS.order_id
-                                INNER JOIN factory_orders FO ON FO.order_id = BO.id
-                                INNER JOIN factory_shipment_details FSD ON FSD.shipment_detail_id = SD.id
-                                INNER JOIN SHIPMENT_CALC SC ON SC.shipment_detail_id = SD.id
+                                INNER JOIN SHIPMENT_CALC SC ON SC.shipment_detail_id = INV.SDID
                             GROUP BY DS.id
                         ),
                         CI_FOR_TT AS (
@@ -968,15 +965,15 @@ export const commissionInvoiceRouter = createTRPCRouter({
 
                                 -- Effective CI after early settlement
                                 CASE
-                                    WHEN COALESCE(AVG(FSD.TRANSFER_RATE), 0) <> 0
-                                        THEN SUM(INV.INVOICE_QUANTITY * (SC.EFFECTIVE_FOB / BO.CURRENCY_RATE)) - SUM(INV.INVOICE_QUANTITY * FSD.TRANSFER_RATE)
-                                    ELSE SUM(INV.INVOICE_QUANTITY * (SC.EFFECTIVE_FOB / BO.CURRENCY_RATE)) - SUM(INV.INVOICE_QUANTITY * FSD.FACTORY_RATE)
+                                    WHEN COALESCE(AVG(SC.TRANSFER_RATE), 0) <> 0
+                                        THEN SUM(INV.INVOICE_QUANTITY * SC.EFFECTIVE_FOB) - SUM(INV.INVOICE_QUANTITY * SC.TRANSFER_RATE)
+                                    ELSE SUM(INV.INVOICE_QUANTITY * SC.EFFECTIVE_FOB) - SUM(INV.INVOICE_QUANTITY * SC.FACTORY_RATE)
                                 END AS TOTAL_CI,
 
                                 -- DN is NOT affected by early settlement
                                 CASE
-                                    WHEN COALESCE(AVG(FSD.TRANSFER_RATE), 0) <> 0
-                                        THEN COALESCE(SUM(INV.INVOICE_QUANTITY * (FSD.TRANSFER_RATE - FSD.FACTORY_RATE) / FO.CURRENCY_RATE), 0)
+                                    WHEN COALESCE(AVG(SC.TRANSFER_RATE), 0) <> 0
+                                        THEN COALESCE(SUM(INV.INVOICE_QUANTITY * (SC.TRANSFER_RATE - SC.FACTORY_RATE) / SC.FACTORY_CURRENCY_RATE), 0)
                                     ELSE 0
                                 END AS TOTAL_DN,
 
@@ -994,12 +991,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
                             FROM rdl_invoice RI
                                 INNER JOIN rdl_invoice_details RID ON RID.rdl_invoice_id = RI.id
                                 INNER JOIN INV ON INV.RIDID = RID.id
-                                INNER JOIN shipment_details SD ON SD.id = INV.SDID
-                                INNER JOIN order_styles OS ON OS.id = SD.order_style_id
-                                INNER JOIN buyer_orders BO ON BO.id = OS.order_id
-                                INNER JOIN factory_orders FO ON FO.order_id = BO.id
-                                INNER JOIN factory_shipment_details FSD ON FSD.shipment_detail_id = SD.id
-                                INNER JOIN SHIPMENT_CALC SC ON SC.shipment_detail_id = SD.id
+                                INNER JOIN SHIPMENT_CALC SC ON SC.shipment_detail_id = INV.SDID
                             GROUP BY RI.id
                         )
                         SELECT
