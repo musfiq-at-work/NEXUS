@@ -712,7 +712,6 @@ export const commissionDistributionRouter = createTRPCRouter({
                     });
                 }
 
-
                 const can_approve = await ctx.db.$queryRaw<{ can_approve: boolean }[]>`
                     SELECT 
                         1 as can_approve

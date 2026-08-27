@@ -1260,7 +1260,7 @@ model buyer_orders {
   currencies                       currencies?                        @relation(fields: [secondary_currency_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   teams                            teams                              @relation(fields: [team_id], references: [id], onUpdate: NoAction)
   commission_distributions         commission_distributions?
-  early_settlement                 early_settlement[]
+  early_settlement                 early_settlement?
   exfactory_orders                 exfactory_orders[]
   factory_orders                   factory_orders?
   lc_amendment_orders              lc_amendment_orders[]
@@ -3133,7 +3133,7 @@ model error_logs {
 
 model early_settlement {
   id                       String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  order_id                 String                     @db.Uuid
+  order_id                 String                     @unique(map: "one_early_settlement_per_order") @db.Uuid
   remarks                  String?
   added_at                 DateTime?                  @default(now()) @db.Timestamp(6)
   buyer_id                 Int

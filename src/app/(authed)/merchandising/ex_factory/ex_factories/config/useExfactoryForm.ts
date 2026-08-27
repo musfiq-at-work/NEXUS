@@ -95,11 +95,6 @@ export const useExfactoryForm = (initialData?: GetExFactoryByIdTypes) => {
         }
     }, [tolerance_level]);
 
-    // Re-run validation when tolerance changes to ensure shipment quantity checks are updated
-    // useEffect(() => {
-    //     trigger(); 
-    // }, [tolerance, trigger]);
-
     return {
         methods,
         handleSubmit,

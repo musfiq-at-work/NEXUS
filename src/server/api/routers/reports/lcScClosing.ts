@@ -346,55 +346,68 @@ export const lcScClosingRouter = createTRPCRouter({
                     `,
 
                     commissionInvoices = await ctx.db.$queryRaw<CommissionInvoices[]>`
-                        WITH RI_FOR_LC AS (
-                            SELECT 
-                                SUM(RID.INVOICE_VALUE - COALESCE(RI.DISCOUNT, 0) - COALESCE(RID.CHARGE_VALUE, 0)) AS INVOICE_VALUE,
-                                DS.ID AS DS_ID
-                            FROM document_submissions AS DS
-                                INNER JOIN document_submissions_details AS DSD ON DSD.document_submissions_id = DS.id
-                                INNER JOIN rdl_invoice AS RI ON RI.id = DSD.rdl_invoice_id
-                                INNER JOIN (
-                                    SELECT
-                                        RID.RDL_INVOICE_ID AS RIID,
-                                        SUM(RISD.INVOICE_QUANTITY * SD.FOB_RATE) AS INVOICE_VALUE,
-                                        SUM(RISD.INVOICE_QUANTITY * SD.FOB_RATE * ESD.early_settlement_charge / 100) AS CHARGE_VALUE
-                                    FROM rdl_invoice_details AS RID
-                                        INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
-                                        INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
-                                        LEFT JOIN early_settlement_details AS ESD ON ESD.shipment_details_id = SD.id
-                                    GROUP BY RID.RDL_INVOICE_ID
-                                ) RID ON RID.RIID = RI.id 
-                            GROUP BY DS.ID
+                        WITH 
+                        ${isPartial ? Prisma.sql`
+                            EXFACTORY_FILTER AS (
+                                SELECT 
+                                    ES.SHIPMENT_DETAILS_ID
+                                FROM exfactory AS E
+                                    INNER JOIN exfactory_orders AS EO ON EO.exfactory_id = E.id
+                                    INNER JOIN exfactory_shipments AS ES ON ES.exfactory_orders_id = EO.id 
+                                WHERE E.EXFACTORY_DATE BETWEEN ${input.from_date} AND ${input.to_date}
+                            ),
+                        ` : Prisma.empty}
+                        RDL AS (
+                            SELECT
+                                DSD.document_submissions_id AS DS_ID,
+                                DSD.rdl_invoice_id AS RI_ID,
+                                SUM(RISD.invoice_quantity * SD.fob_rate) AS RDL_VALUE,
+                                SUM(RISD.invoice_quantity * SD.fob_rate * COALESCE(ESD.early_settlement_charge, 0) / 100) AS ESS_VALUE
+                            FROM document_submissions_details DSD
+                            INNER JOIN rdl_invoice_details RID ON RID.rdl_invoice_id = DSD.rdl_invoice_id
+                            INNER JOIN rdl_invoice_shipment_details RISD ON RISD.rdl_invoice_details_id = RID.id
+                            INNER JOIN shipment_details SD ON SD.id = RISD.shipment_details_id
+                            LEFT JOIN early_settlement_details ESD ON ESD.shipment_details_id = SD.id
+                            ${isPartial ? Prisma.sql`
+                                INNER JOIN EXFACTORY_FILTER AS EF ON EF.SHIPMENT_DETAILS_ID = RISD.shipment_details_id
+                            ` : Prisma.empty}
+                            GROUP BY DSD.document_submissions_id, DSD.rdl_invoice_id
                         ),
-                        FI_FOR_LC AS (
-                            SELECT 
-                                SUM(FAC_INV.INVOICE_VALUE - COALESCE(FI.DISCOUNT, 0)) AS INVOICE_VALUE,
-                                DS.ID AS DS_ID
-                            FROM document_submissions AS DS
-                                INNER JOIN document_submissions_details AS DSD ON DSD.document_submissions_id = DS.id
-                                INNER JOIN rdl_invoice AS RI ON RI.id = DSD.rdl_invoice_id
-                                INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
-                                INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
-                                INNER JOIN factories AS F ON F.id = FI.factory_id
-                                INNER JOIN (
-                                    SELECT
-                                        RISD.RDL_INVOICE_DETAILS_ID AS RIDID,
-                                        FSD.transfer_rate * SUM(RISD.INVOICE_QUANTITY) AS INVOICE_VALUE
-                                    FROM rdl_invoice_shipment_details AS RISD
-                                        INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = RISD.shipment_details_id
-                                    GROUP BY RISD.RDL_INVOICE_DETAILS_ID, FSD.factory_rate, FSD.transfer_rate
-                                ) FAC_INV ON FAC_INV.RIDID = RID.ID
-                            GROUP BY DS.ID
+                        FACTORY AS (
+                            SELECT
+                                DSD.document_submissions_id AS DS_ID,
+                                RID.rdl_invoice_id AS RI_ID,
+                                SUM(RISD.invoice_quantity * FSD.transfer_rate) AS FACTORY_VALUE
+                            FROM document_submissions_details DSD
+                            INNER JOIN rdl_invoice_details RID ON RID.rdl_invoice_id = DSD.rdl_invoice_id
+                            INNER JOIN rdl_invoice_shipment_details RISD ON RISD.rdl_invoice_details_id = RID.id
+                            INNER JOIN factory_shipment_details FSD ON FSD.shipment_detail_id = RISD.shipment_details_id
+                            ${isPartial ? Prisma.sql`
+                                INNER JOIN EXFACTORY_FILTER AS EF ON EF.SHIPMENT_DETAILS_ID = RISD.shipment_details_id
+                            ` : Prisma.empty}
+                            GROUP BY DSD.document_submissions_id, RID.rdl_invoice_id
+                        ),
+                        RI AS (
+                            SELECT
+                                RI.id AS RI_ID,
+                                RI.discount,
+                                RDL.DS_ID,
+                                RDL.RDL_VALUE,
+                                RDL.ESS_VALUE,
+                                FACTORY.FACTORY_VALUE
+                            FROM rdl_invoice RI
+                            INNER JOIN RDL ON RDL.RI_ID = RI.id
+                            LEFT JOIN FACTORY ON FACTORY.RI_ID = RI.id AND FACTORY.DS_ID = RDL.DS_ID
                         )
-                        SELECT DISTINCT
+                        SELECT
                             CI.ref_no,
                             CI.invoice_date,
-                            RFL.INVOICE_VALUE - FFL.INVOICE_VALUE AS invoice_value
-                        FROM commission_invoice AS CI
-                            INNER JOIN TERMS AS T ON T.id = CI.term_id
-                            LEFT JOIN RI_FOR_LC AS RFL ON RFL.DS_ID = CI.document_submission_id
-                            LEFT JOIN FI_FOR_LC AS FFL ON FFL.DS_ID = CI.document_submission_id
+                            SUM( RI.RDL_VALUE - RI.ESS_VALUE - COALESCE(RI.discount, 0) - COALESCE(RI.FACTORY_VALUE, 0)) AS invoice_value
+                        FROM commission_invoice CI
+                        INNER JOIN terms T ON T.id = CI.term_id
+                        INNER JOIN RI ON RI.DS_ID = CI.document_submission_id
                         WHERE CI.lc_id = ${input.lcScId};
+                        GROUP BY CI.ref_no, CI.invoice_date;
                     `
                 ]);
 
