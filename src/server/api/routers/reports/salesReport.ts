@@ -307,15 +307,33 @@ export const salesReportRouter = createTRPCRouter({
 
                 const salesReportData = result.map((row) => ({
                     buyer_name: row.buyer_name,
-                    ...(isFactoryDimension ? { factory_name: row.factory_name ?? "" } : {}),
-                    ...(isTeamDimension ? { team_name: row.team_name ?? "" } : {}),
-                    ...(isBrandDimension ? { brand: row.brand ?? "" } : {}),
-                    ...(isDepartmentDimension ? { department: row.department ?? "" } : {}),
-                    ...(input.productTypeIds ? { product_type: row.product_type ?? "" } : {}),
-                    ...(input.quantity ? { quantity: quantityFormatter(Number(row.quantity) ?? 0) } : {}),
-                    ...(input.rdlValue ? { rdl_value: currencyFormatter(Number(row.rdl_value) ?? 0, '$') } : {}),
-                    ...(input.factoryValue ? { factory_value: currencyFormatter(Number(row.factory_value) ?? 0, '$') } : {}),
-                    ...(input.commissionValue ? { commission_value: currencyFormatter(Number(row.commission_value) ?? 0, '$') } : {}),
+                    ...(isFactoryDimension ? 
+                        { factory_name: row.factory_name ?? "" } : {}
+                    ),
+                    ...(isTeamDimension ? 
+                        { team_name: row.team_name ?? "" } : {}
+                    ),
+                    ...(isBrandDimension ? 
+                        { brand: row.brand ?? "" } : {}
+                    ),
+                    ...(isDepartmentDimension ? 
+                        { department: row.department ?? "" } : {}
+                    ),
+                    ...(input.productTypeIds ? 
+                        { product_type: row.product_type ?? "" } : {}
+                    ),
+                    ...(input.quantity ? 
+                        { quantity: quantityFormatter(Number(row.quantity) ?? 0) } : {}
+                    ),
+                    ...(input.rdlValue ? 
+                        { rdl_value: currencyFormatter(Number(row.rdl_value) ?? 0, '$') } : {}
+                    ),
+                    ...(input.factoryValue ? 
+                        { factory_value: currencyFormatter(Number(row.factory_value) ?? 0, '$') } : {}
+                    ),
+                    ...(input.commissionValue ? 
+                        { commission_value: currencyFormatter(Number(row.commission_value) ?? 0, '$') } : {}
+                    ),
                 }));
 
                 const totalQuantity = result.reduce((sum, row) => sum + Number(row.quantity ?? 0), 0);
@@ -324,10 +342,18 @@ export const salesReportRouter = createTRPCRouter({
                 const totalCommissionValue = result.reduce((sum, row) => sum + Number(row.commission_value ?? 0), 0);
                 
                 const results = {
-                    ...(input.quantity ? { quantity: input.quantity ? quantityFormatter(totalQuantity) : undefined } : {}),
-                    ...(input.rdlValue ? { rdl_value: input.rdlValue ? currencyFormatter(totalRdlValue, '$') : undefined } : {}),
-                    ...(input.factoryValue ? { factory_value: input.factoryValue ? currencyFormatter(totalFactoryValue, '$') : undefined } : {}),
-                    ...(input.commissionValue ? { commission_value: input.commissionValue ? currencyFormatter(totalCommissionValue, '$') : undefined } : {}),
+                    ...(input.quantity ? 
+                        { quantity: input.quantity ? quantityFormatter(totalQuantity) : undefined } : {}
+                    ),
+                    ...(input.rdlValue ? 
+                        { rdl_value: input.rdlValue ? currencyFormatter(totalRdlValue, '$') : undefined } : {}
+                    ),
+                    ...(input.factoryValue ? 
+                        { factory_value: input.factoryValue ? currencyFormatter(totalFactoryValue, '$') : undefined } : {}
+                    ),
+                    ...(input.commissionValue ? 
+                        { commission_value: input.commissionValue ? currencyFormatter(totalCommissionValue, '$') : undefined } : {}
+                    ),
                 };
 
                 return {salesReportData, totals: results};

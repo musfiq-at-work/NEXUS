@@ -48,16 +48,36 @@ const SalesReportPDF = ({ data, base, fromDate, toDate, selectedFields }: SalesR
 	);
 
 	const tableColumns = [
-		...((selectedFields?.buyers) ? [{ key: 'buyer_name', label: 'Buyer', width: width * 2 }] : []),
-		...((selectedFields?.factory_name) ? [{ key: 'factory_name', label: 'Factory', width: width * 2 }] : []),
-		...((selectedFields?.teams) ? [{ key: 'team_name', label: 'Team', width: width * 1 }] : []),
-		...((selectedFields?.brand) ? [{ key: 'brand', label: 'Brand', width: width * 1 }] : []),
-		...((selectedFields?.department) ? [{ key: 'department', label: 'Department', width: width * 1 }] : []),
-		...((selectedFields?.productTypes) ? [{ key: 'product_type', label: 'Product Type', width: width * 1 }] : []),
-		...((selectedFields?.quantity) ? [{ key: 'quantity', label: 'Quantity', width: width }] : []),
-		...((selectedFields?.rdl_value) ? [{ key: 'rdl_value', label: 'RDL Value', width: width }] : []),
-		...((selectedFields?.factory_value) ? [{ key: 'factory_value', label: 'Factory Value', width: width }] : []),
-		...((selectedFields?.commission_value) ? [{ key: 'commission_value', label: 'Commission Value', width: width }] : []),
+		...((selectedFields?.buyers) ? 
+			[{ key: 'buyer_name', label: 'Buyer', width: width * 2 }] : []
+		),
+		...((selectedFields?.factory_name) ? 
+			[{ key: 'factory_name', label: 'Factory', width: width * 2 }] : []
+		),
+		...((selectedFields?.teams) ? 
+			[{ key: 'team_name', label: 'Team', width: width * 1 }] : []
+		),
+		...((selectedFields?.brand) ? 
+			[{ key: 'brand', label: 'Brand', width: width * 1 }] : []
+		),
+		...((selectedFields?.department) ? 
+			[{ key: 'department', label: 'Department', width: width * 1 }] : []
+		),
+		...((selectedFields?.productTypes) ? 
+			[{ key: 'product_type', label: 'Product Type', width: width * 1 }] : []
+		),
+		...((selectedFields?.quantity) ? 
+			[{ key: 'quantity', label: 'Quantity', width: width }] : []
+		),
+		...((selectedFields?.rdl_value) ? 
+			[{ key: 'rdl_value', label: 'RDL Value', width: width }] : []
+		),
+		...((selectedFields?.factory_value) ? 
+			[{ key: 'factory_value', label: 'Factory Value', width: width }] : []
+		),
+		...((selectedFields?.commission_value) ? 
+			[{ key: 'commission_value', label: 'Commission Value', width: width }] : []
+		),
 	]
 
 	const tableWidth = tableColumns.reduce((total, column) => total + (column.width ?? 1000 / tableColumns.length), 0);
