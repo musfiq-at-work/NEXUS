@@ -45,6 +45,7 @@ export interface FactoryInvoiceData {
     factory_invoice_quantity: number;
     factory_invoice_value: number;
     FDBC_NO: string;
+    rdl_invoice_no: string;
     factory_payment: number;
     FACTORY_PAYMENT_DATE: string;
 }

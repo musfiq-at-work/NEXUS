@@ -17,6 +17,7 @@ const factoryPaymentTableColumns = [
     { key: 'factory_invoice_quantity', width: 15 }, 
     { key: 'factory_invoice_value', width: 20 }, 
     { key: 'fdbc_no', width: 30 }, 
+    { key: 'rdl_invoice_no', width: 30 }, 
     { key: 'factory_payment', width: 25 }, 
     { key: 'factory_payment_date', width: 15 }, 
 ]
@@ -32,6 +33,7 @@ const factoryPaymentTableHeader = [
     'Factory Invoice Quantity',
     'Factory Invoice Value',
     'Document Submission',
+    'RDL Invoice',
     'Factory Payment',
     'Payment Date'
 ]

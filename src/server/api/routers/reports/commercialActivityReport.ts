@@ -222,7 +222,14 @@ export const activityReportRouter = createTRPCRouter({
                                     END
                                 )::NUMERIC(18,2)::TEXT
                             END AS factory_invoice_value,
-                            COALESCE(DS.FDBC_NO, '-') AS FDBC_NO,
+                            CASE 
+                                WHEN FI.term_id = 2 THEN COALESCE(DS.FDBC_NO, '-') 
+                                ELSE '-'
+                            END AS FDBC_NO,
+                            CASE 
+                                WHEN FI.term_id = 1 THEN COALESCE(STRING_AGG(DISTINCT RI.invoice_no, ', '), '-') 
+                                ELSE '-'
+                            END AS RDL_INVOICE_NO,
                             COALESCE(FP.PAID_AMOUNT::TEXT, '-') AS FACTORY_PAYMENT,
                             COALESCE(FP.PAYMENT_DATE::TEXT, '-') AS FACTORY_PAYMENT_DATE
                         FROM factory_invoice AS FI
@@ -236,6 +243,8 @@ export const activityReportRouter = createTRPCRouter({
                             INNER JOIN exfactory_orders EO ON EO.id = ES.exfactory_orders_id
                             INNER JOIN exfactory E ON E.id = EO.exfactory_id
                             INNER JOIN factories F ON F.id = BO.factory_id
+                            LEFT JOIN rdl_invoice_details AS RID ON RID.factory_invoice_id = FI.id
+                            LEFT JOIN rdl_invoice AS RI ON RI.id = RID.rdl_invoice_id
                             LEFT JOIN lc_shipments LCS ON LCS.shipment_details_id = SD.id
                             LEFT JOIN lc_orders LCO ON LCO.id = LCS.lc_order_id
                             LEFT JOIN lc_master LC ON LC.id = LCO.lc_master_id
