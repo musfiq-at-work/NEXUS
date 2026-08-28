@@ -45,9 +45,7 @@ const LcScClosingReportPage = () => {
         }
 	});
 
-	if(isLoading) {
-		return <Loader />;
-	}
+	if(isLoading) return <Loader />;
 
 	return (
 		<Wrapper heading='LC/SC Closing Report' >

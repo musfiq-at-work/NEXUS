@@ -224,6 +224,7 @@ const CommissionInvoicePDF = ({ data }: { data: GetPDFDataOutput }) => {
 				</View>
 
 				<View
+					wrap={false}
 					style={{
 						flexDirection: "row",
 						justifyContent: "space-between",
