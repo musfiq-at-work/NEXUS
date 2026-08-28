@@ -23,7 +23,7 @@ const LcScClosingReportPage = () => {
 			Object.entries({
 				base: exportSummaryReportData.base,
 				buyer: exportSummaryReportData.buyer_id,
-				lcId: exportSummaryReportData.lcId,
+				lcScId: exportSummaryReportData.lcId,
 				from_date: exportSummaryReportData.from_date,
 				to_date: exportSummaryReportData.to_date
 			}).forEach(([key, value]) => {
@@ -65,7 +65,6 @@ const LcScClosingReportPage = () => {
 				
 			<div className="w-full flex flex-row justify-end">
 				<Button type="button" 
-					disabled
 					onClick={() => onSubmitAll()}
 					label={"Generate Closing Report"} 
 					className="bg-secondary text-lg tracking-wide mt-6 max-w-80 m-8"
