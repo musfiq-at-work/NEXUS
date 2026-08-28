@@ -1360,7 +1360,7 @@ model shipment_details {
   cancel_status                    Boolean?                          @default(false)
   added_at                         DateTime?                         @default(now()) @db.Timestamp(6)
   commission_distributions_details commission_distributions_details?
-  early_settlement_details         early_settlement_details[]
+  early_settlement_details         early_settlement_details?
   exfactory_shipments              exfactory_shipments[]
   factory_shipment_details         factory_shipment_details[]
   lc_amendment_shipments           lc_amendment_shipments[]
@@ -3144,7 +3144,7 @@ model early_settlement {
 
 model early_settlement_details {
   id                      String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  shipment_details_id     String            @db.Uuid
+  shipment_details_id     String            @unique(map: "unique_shipments") @db.Uuid
   early_settlement_charge Float
   added_at                DateTime?         @default(now()) @db.Timestamp(6)
   early_settlement_id     String?           @db.Uuid
