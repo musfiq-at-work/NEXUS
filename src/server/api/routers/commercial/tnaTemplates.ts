@@ -161,18 +161,13 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
                                 buyer_name: true,
                             }                        
                         },
-                        buyer_payment_term: {
+                        payment_term: {
                             select: {
                                 id: true,
-                                payment_terms: {
-                                    select: { 
-                                        id: true,
-                                        term_description: true,
-                                        tenor: true,
-                                        terms: {
-                                            select: { id: true, name: true }
-                                        }
-                                    }
+                                term_description: true,
+                                tenor: true,
+                                terms: {
+                                    select: { id: true, name: true }
                                 }
                             }
                         },
@@ -196,8 +191,8 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
                     template_name: templateObj.template_name,
                     buyer_id: templateObj.buyers?.id,
                     buyer_name: templateObj.buyers?.buyer_name,
-                    term_id: templateObj.buyer_payment_term?.id,
-                    term: `${templateObj?.buyer_payment_term?.payment_terms?.terms?.name} - ${templateObj?.buyer_payment_term?.payment_terms?.tenor} ${templateObj?.buyer_payment_term?.payment_terms?.term_description}`,
+                    term_id: templateObj.payment_term?.id,
+                    term: `${templateObj?.payment_term?.terms?.name} - ${templateObj?.payment_term?.tenor} ${templateObj?.payment_term?.term_description}`,
                     actions: templateObj.commercial_tna_templates_actions.map(action => ({
                         id: action.id,
                         tna_action_id: action.tna_action_id,
