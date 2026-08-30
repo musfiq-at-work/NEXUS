@@ -182,3 +182,63 @@ docker build -t nexus .
 
 docker run -p 7000:7000 -e DATABASE_URL="postgresql://musfiq:Musfiquer%263468%23%23@192.168.33.4:5432/nexus_db" -e SHADOW_DATABASE_URL="postgresql://musfiq:Musfiquer%263468%23%23@192.168.33.4:5432/nexus_db" -e JWT_SECRET="xU7i7z9U4y8oVLSe0Pti00k9o2fb0phPWQuf4Dx8RumEC0K7lZOyCDUEHy6WubkS" nexus 
 ```
+
+# Data Migration Steps for first production push
+1. Point to production and run
+```bash
+npx prisma db pull
+
+npm prisma generate
+```
+
+2. Generate Baseline 
+```bash
+npx prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script > prisma/migrations/0_init/migration.sql
+```
+
+3. Mark as already applied
+```bash
+npx prisma migrate resolve --applied 0_init
+```
+
+4. Point to test server
+```bash
+npx prisma db pull
+
+npm prisma generate
+```
+
+5. Generate migrate diff
+```bash
+npx prisma migrate diff --from-migrations prisma/migrations --to-schema prisma/schema.prisma --script > prisma/migrations/20260830_production_changes/migration.sql
+```
+
+#### Then apply to production (cmd)
+```bash
+"C:\Program Files\PostgreSQL\13\bin\psql.exe" -f "F:\RDL NEXUS\nexus\prisma\migrations\2026_08_30_production_changes\migration.sql" "postgresql://rdlnexusdb:R%26DL394%25%25348Gm%23@192.168.21.253:5432/nexus_db"
+```
+
+#### check migration status
+```bash
+npx prisma migrate status
+```
+
+
+#### migrate
+```bash
+npx prisma migrate diff --from-migrations prisma/migrations --to-schema prisma/schema.prisma --script > prisma/migrations/2026_08_30_production_changes/migration.sql
+```
+
+
+#### From next time
+1. Create Migrations
+```bash
+npx prisma migrate dev --name add_something
+```
+2. Point to production
+
+3. Deploy Migration
+#### From next time
+```bash
+npx prisma migrate deploy
+```
