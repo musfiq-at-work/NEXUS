@@ -622,6 +622,18 @@ export const documentSubmissionRouter = createTRPCRouter({
             
             try {
                 return await ctx.db.$transaction(async (tx) => {
+                    const relatedFactoryInvoices = await tx.document_submission_factory_invoices.findMany({
+                        where: {
+                            document_submissions_details_id: input.db_id
+                        }
+                    });
+
+                    await tx.document_submission_factory_invoices.deleteMany({
+                        where: {
+                            document_submissions_details_id: input.db_id
+                        }
+                    });
+
                     const deletedRdlInvoice = await tx.document_submissions_details.delete({
                         where: {
                             id: input.db_id
@@ -639,22 +651,10 @@ export const documentSubmissionRouter = createTRPCRouter({
                         }
                     });
 
-                    const relatedFactoryInvoices = await tx.document_submission_factory_invoices.findMany({
-                        where: {
-                            document_submissions_details_id: input.db_id
-                        }
-                    });
-
-                    await tx.document_submission_factory_invoices.deleteMany({
-                        where: {
-                            document_submissions_details_id: input.db_id
-                        }
-                    });
-
                     await tx.document_submission_factory_invoices_history.createMany({
                         data: relatedFactoryInvoices.map(invoice => ({
                             document_submission_factory_invoices_id: invoice.id,
-                            document_submission_details_id: invoice.document_submissions_details_id,
+                            document_submissions_details_id: invoice.document_submissions_details_id,
                             factory_invoice_id: invoice.factory_invoice_id,
                             action_type: actions.DELETE,
                             action_by: ctx.user.id,
