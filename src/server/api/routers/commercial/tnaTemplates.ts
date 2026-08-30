@@ -161,7 +161,7 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
                                 buyer_name: true,
                             }                        
                         },
-                        payment_term: {
+                        payment_terms: {
                             select: {
                                 id: true,
                                 term_description: true,
@@ -191,8 +191,8 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
                     template_name: templateObj.template_name,
                     buyer_id: templateObj.buyers?.id,
                     buyer_name: templateObj.buyers?.buyer_name,
-                    term_id: templateObj.payment_term?.id,
-                    term: `${templateObj?.payment_term?.terms?.name} - ${templateObj?.payment_term?.tenor} ${templateObj?.payment_term?.term_description}`,
+                    term_id: templateObj.payment_terms?.id,
+                    term: `${templateObj?.payment_terms?.terms?.name} - ${templateObj?.payment_terms?.tenor} ${templateObj?.payment_terms?.term_description}`,
                     actions: templateObj.commercial_tna_templates_actions.map(action => ({
                         id: action.id,
                         tna_action_id: action.tna_action_id,
