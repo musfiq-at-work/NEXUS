@@ -461,23 +461,13 @@ export const proceedRealizationRouter = createTRPCRouter({
                 }
 
                 const rdlInvoiceDetails = await ctx.db.$queryRaw<RdlInvoiceDetailsResult[]>`
-                    WITH RDL_INVOICE_DETAILS AS (
-                        SELECT 
-                            RID.rdl_invoice_id AS RIDID,
-                            SUM(RISD.INVOICE_QUANTITY * SD.fob_rate) AS TOTAL_VALUE
-                        FROM rdl_invoice_details AS RID
-                            INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
-                            INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
-                        GROUP BY RID.rdl_invoice_id
-                    )
                     SELECT
                         RI.id AS rdl_invoice_id,
                         RI.invoice_no AS rdl_invoice_no,
-                        RD.TOTAL_VALUE::NUMERIC(18,2) AS invoice_value
+                        DSD.received_value AS invoice_value
                     FROM document_submissions AS DS
                         INNER JOIN document_submissions_details AS DSD ON DSD.document_submissions_id = DS.id
                         INNER JOIN rdl_invoice AS RI ON RI.id = DSD.rdl_invoice_id
-                        INNER JOIN RDL_INVOICE_DETAILS AS RD ON RD.RIDID = RI.id
                     WHERE DS.id = ${proceedRealizationObj.document_submissions.id};
                 `;
 
@@ -532,23 +522,13 @@ export const proceedRealizationRouter = createTRPCRouter({
             
             try {
                 const rdlInvoiceDetails = await ctx.db.$queryRaw<RdlInvoiceDetailsResult[]>`
-                    WITH RDL_INVOICE_DETAILS AS (
-                        SELECT 
-                            RID.rdl_invoice_id AS RIDID,
-                            SUM(RISD.INVOICE_QUANTITY * SD.fob_rate) AS TOTAL_VALUE
-                        FROM rdl_invoice_details AS RID
-                            INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
-                            INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
-                        GROUP BY RID.rdl_invoice_id
-                    )
                     SELECT
                         RI.id AS rdl_invoice_id,
                         RI.invoice_no AS rdl_invoice_no,
-                        RD.TOTAL_VALUE::NUMERIC(18,2) AS invoice_value
+                        DSD.received_value AS invoice_value
                     FROM document_submissions AS DS
                         INNER JOIN document_submissions_details AS DSD ON DSD.document_submissions_id = DS.id
                         INNER JOIN rdl_invoice AS RI ON RI.id = DSD.rdl_invoice_id
-                        INNER JOIN RDL_INVOICE_DETAILS AS RD ON RD.RIDID = RI.id
                     WHERE DS.id = ${input.document_submission_id};
                 `;
 
