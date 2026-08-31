@@ -30,7 +30,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                             PRD.rdl_invoice_id,
                             SUM(PRD.REALIZED_AMOUNT)::NUMERIC(18,2) AS REALIZED_AMOUNT
                         FROM proceed_realization_details AS PRD
-                        GROUP BY PRD.rdl_invoice_id, PRD.realization_id
+                        GROUP BY PRD.rdl_invoice_id
                     ),
                     LC_PROCEED AS (
                         SELECT
@@ -168,6 +168,24 @@ export const factoryPaymentRouter = createTRPCRouter({
                                     AND TM.USER_ID = ${ctx.user.id}
                             )
                         )
+                        GROUP BY 
+                            TTD.RID, 
+                            LCD.id, 
+                            PR.term_id, 
+                            T.NAME, 
+                            ttd.invoice_no, 
+                            lcd.fdbc_no, 
+                            pr.realization_date, 
+                            tti.total_invoice_value, 
+                            lci.total_invoice_value,
+                            tt_pay.factory_paid_amount,
+                            lc_pay.factory_paid_amount,
+                            tt_pay.paid_count,
+                            lc_pay.paid_count,
+                            tt_count.total_invoice_count,
+                            lc_count.total_invoice_count,
+                            lcp.realized_amount,
+                            ttp.realized_amount
                     )
                     SELECT *,
                         COUNT(*) OVER() AS TOTAL_COUNT
@@ -221,7 +239,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                             PRD.rdl_invoice_id,
                             SUM(PRD.REALIZED_AMOUNT)::NUMERIC(18,2) AS REALIZED_AMOUNT
                         FROM proceed_realization_details AS PRD
-                        GROUP BY PRD.rdl_invoice_id, PRD.realization_id
+                        GROUP BY PRD.rdl_invoice_id
                     ),
                     LC_PROCEED AS (
                         SELECT
@@ -343,7 +361,6 @@ export const factoryPaymentRouter = createTRPCRouter({
                             LEFT JOIN LC_PAYMENT AS LC_PAY ON PR.term_id = ${LC_ID} AND LC_PAY.document_submission_id = LCD.id
                             LEFT JOIN TT_INVOICE_COUNT AS TT_COUNT ON PR.term_id = ${TT_ID} AND TT_COUNT.rdl_invoice_id = TTD.RID
                             LEFT JOIN LC_INVOICE_COUNT AS LC_COUNT ON PR.term_id = ${LC_ID} AND LC_COUNT.document_submissions_id = LCD.id
-                            INNER JOIN BUYERS AS B ON B.id = PR.buyer_id
                         WHERE (
                             EXISTS (
                                 SELECT 1
@@ -381,6 +398,24 @@ export const factoryPaymentRouter = createTRPCRouter({
                                     AND FI.invoice_no ILIKE '%' || ${input.query} || '%'
                             )
                         )
+                    GROUP BY 
+                        TTD.RID, 
+                        LCD.id, 
+                        PR.term_id, 
+                        T.NAME, 
+                        ttd.invoice_no, 
+                        lcd.fdbc_no, 
+                        pr.realization_date, 
+                        tti.total_invoice_value, 
+                        lci.total_invoice_value,
+                        tt_pay.factory_paid_amount,
+                        lc_pay.factory_paid_amount,
+                        tt_pay.paid_count,
+                        lc_pay.paid_count,
+                        tt_count.total_invoice_count,
+                        lc_count.total_invoice_count,
+                        lcp.realized_amount,
+                        ttp.realized_amount
                     )
                     SELECT *,
                         COUNT(*) OVER() AS TOTAL_COUNT
@@ -560,10 +595,10 @@ export const factoryPaymentRouter = createTRPCRouter({
                                 SELECT
                                     PRD.rdl_invoice_id,
                                     SUM(PRD.REALIZED_AMOUNT)::NUMERIC(18,2) AS REALIZED_AMOUNT,
-                                    PR.REALIZATION_DATE
+                                    MIN(PR.REALIZATION_DATE) AS REALIZATION_DATE
                                 FROM proceed_realization_details AS PRD
                                     INNER JOIN proceed_realization AS PR ON PR.id = PRD.realization_id
-                                GROUP BY PRD.rdl_invoice_id, PR.id
+                                GROUP BY PRD.rdl_invoice_id
                             )
                             SELECT DISTINCT
                                 T.NAME AS TERM_NAME,
@@ -688,8 +723,6 @@ export const factoryPaymentRouter = createTRPCRouter({
                 });
             }
 
-            console.log('update input', input);
-
             const [term, id] = input.db_id.split('.');
             
             try {
@@ -741,7 +774,6 @@ export const factoryPaymentRouter = createTRPCRouter({
                 });
             }
             catch (error) {
-                console.log(error);
                 await logError(error, ctx, input);
                 handlePrismaError(error);
             }

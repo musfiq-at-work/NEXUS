@@ -529,7 +529,6 @@ export const lcScClosingRouter = createTRPCRouter({
                 }
             }
             catch (error){
-                console.log(error);
                 await logError(error, ctx, input);
                 handlePrismaError(error);
             }

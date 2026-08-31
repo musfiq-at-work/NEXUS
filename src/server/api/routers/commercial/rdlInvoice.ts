@@ -40,14 +40,14 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             C.SYMBOL,
                             RI.ADDED_AT
                         FROM rdl_invoice AS RI
-                            INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
-                            INNER JOIN FACTORY_INVOICE AS FI ON FI.id = RID.factory_invoice_id
-                            INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
-                            INNER JOIN SHIPMENT_DETAILS AS SD ON SD.ID = RISD.shipment_details_id
-                            INNER JOIN ORDER_STYLES AS OS ON OS.id = SD.order_style_id
-                            INNER JOIN BUYER_ORDERS AS BO ON BO.ID = OS.order_id
-                            INNER JOIN CURRENCIES AS C ON C.id = BO.secondary_currency_id
-                            INNER JOIN BUYERS AS B ON B.id = RI.buyer_id
+                            LEFT JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
+                            LEFT JOIN FACTORY_INVOICE AS FI ON FI.id = RID.factory_invoice_id
+                            LEFT JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
+                            LEFT JOIN SHIPMENT_DETAILS AS SD ON SD.ID = RISD.shipment_details_id
+                            LEFT JOIN ORDER_STYLES AS OS ON OS.id = SD.order_style_id
+                            LEFT JOIN BUYER_ORDERS AS BO ON BO.ID = OS.order_id
+                            LEFT JOIN CURRENCIES AS C ON C.id = BO.secondary_currency_id
+                            LEFT JOIN BUYERS AS B ON B.id = RI.buyer_id
                         WHERE (
                             EXISTS ( -- Admin
                                 SELECT 1
@@ -116,14 +116,14 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             C.SYMBOL,
                             RI.ADDED_AT
                         FROM rdl_invoice AS RI
-                            INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
-                            INNER JOIN FACTORY_INVOICE AS FI ON FI.id = RID.factory_invoice_id
-                            INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
-                            INNER JOIN SHIPMENT_DETAILS AS SD ON SD.ID = RISD.shipment_details_id
-                            INNER JOIN ORDER_STYLES AS OS ON OS.id = SD.order_style_id
-                            INNER JOIN BUYER_ORDERS AS BO ON BO.ID = OS.order_id
-                            INNER JOIN CURRENCIES AS C ON C.id = BO.secondary_currency_id
-                            INNER JOIN BUYERS AS B ON B.id = RI.buyer_id
+                            LEFT JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
+                            LEFT JOIN FACTORY_INVOICE AS FI ON FI.id = RID.factory_invoice_id
+                            LEFT JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
+                            LEFT JOIN SHIPMENT_DETAILS AS SD ON SD.ID = RISD.shipment_details_id
+                            LEFT JOIN ORDER_STYLES AS OS ON OS.id = SD.order_style_id
+                            LEFT JOIN BUYER_ORDERS AS BO ON BO.ID = OS.order_id
+                            LEFT JOIN CURRENCIES AS C ON C.id = BO.secondary_currency_id
+                            LEFT JOIN BUYERS AS B ON B.id = RI.buyer_id
                         WHERE (
                             EXISTS ( -- Admin
                                 SELECT 1
