@@ -40,7 +40,6 @@ const LcScClosingPDF = ({ data, base }: SalesReportPDFProps) => {
 
 				{/* <Table columns={tableColumns} data={data.table}/> */}
 
-
 				<Text
 					style={styles.pageNumber}
 					render={({ pageNumber, totalPages }) =>	`${pageNumber} / ${totalPages}`}

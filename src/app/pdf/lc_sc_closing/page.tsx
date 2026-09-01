@@ -19,20 +19,18 @@ const PDF = () => {
     const lcScId = searchParams.get("lcScId");
 
     const { data, isLoading } = api.lcScClosingReport.getPDFData.useQuery(
-        !!lcScId && !!fromDate && !!toDate ? {
+        !!lcScId ? {
             base,
             lcScId,
-            from_date: new Date(fromDate),
-            to_date: new Date(toDate),
+            from_date: new Date(fromDate).toDateString() === "Invalid Date" ? undefined : new Date(fromDate),
+            to_date: new Date(toDate).toDateString() === "Invalid Date" ? undefined : new Date(toDate),
         } : skipToken
     );
 
     if (isLoading) return <Loader />;
 
-    if (!data) {
-        return null;
-    }
-    
+    if (!data) return null;
+
     return (
         <PDFViewer style={{ minHeight: "100vh", minWidth: "100vw" }} showToolbar={true}>
             <LcScClosingPDF 
