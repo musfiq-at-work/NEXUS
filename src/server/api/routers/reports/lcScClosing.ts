@@ -431,8 +431,8 @@ export const lcScClosingRouter = createTRPCRouter({
                     })
                 } : null;
 
-                const minYear = tableData[0]?.min_exfactory_date.toDateString().split('-')[0];
-                const maxYear = tableData[0]?.max_exfactory_date.toDateString().split('-')[0];
+                const minYear = tableData[0]?.min_exfactory_date.toDateString().split(' ')[3];
+                const maxYear = tableData[0]?.max_exfactory_date.toDateString().split(' ')[3];
 
                 const invoicePeriod = minYear === maxYear ? minYear : `${minYear} - ${maxYear}`;
 
@@ -440,15 +440,15 @@ export const lcScClosingRouter = createTRPCRouter({
                 const commission_percentage = dividedByZeroSafe(commission, safeNumber(tableData[0]?.rdl_export_value_usd)) * 100;
 
                 const commission_realized = safeNumber(tableData[0]?.realized_amount) - safeNumber(tableData[0]?.factory_paid_amount);
-                const commission_realized_percentage = dividedByZeroSafe(commission_realized, safeNumber(tableData[0]?.factory_paid_amount)) * 100;
+                const commission_realized_percentage = dividedByZeroSafe(commission_realized, safeNumber(tableData[0]?.rdl_export_value_usd)) * 100;
 
                 const debit_note = safeNumber(tableData[0]?.debit_note);
 
                 const total_calculated_commission = commission + debit_note; 
-                const total_calculated_commission_percentage = dividedByZeroSafe(commission, total_calculated_commission) * 100;
+                const total_calculated_commission_percentage = dividedByZeroSafe(total_calculated_commission, safeNumber(tableData[0]?.rdl_export_value_usd)) * 100;
 
                 const total_commission_realized = commission_realized + debit_note;  
-                const total_commission_realized_percentage = dividedByZeroSafe(commission_realized, total_commission_realized) * 100;
+                const total_commission_realized_percentage = dividedByZeroSafe(total_commission_realized, safeNumber(tableData[0]?.rdl_export_value_usd)) * 100;
 
                 const table = tableData.length > 0 ? {
                     invoice_period: invoicePeriod,

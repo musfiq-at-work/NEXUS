@@ -31,11 +31,14 @@ const PDF = () => {
 
     if (!data) return null;
 
+    const isPartial = !!fromDate && !!toDate;
+
     return (
         <PDFViewer style={{ minHeight: "100vh", minWidth: "100vw" }} showToolbar={true}>
             <LcScClosingPDF 
                 data={data} 
                 base={base}
+                isPartial={isPartial}
             />
         </PDFViewer>
     );

@@ -20,6 +20,9 @@ const Table = <T extends Record<string, unknown>>({ columns, data }: TableProps<
                 {columns.map((column, index) => (
                     <Text key={`h-${index}`} 
                         style={[styles.headerCell, column.width ? { width: `${column.width}px` } : colWidth]}
+                        hyphenationCallback={
+                            (word) => word.split(' ').flatMap((part, i, arr) => i < arr.length - 1 ? [part, ' '] : [part])
+                        }
                     >
                         {column.label}
                     </Text>
