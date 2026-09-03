@@ -20,6 +20,9 @@ interface LcScClosingReportPDFProps {
 	isPartial?: boolean;
 }
 
+const chargeColor = (index: number, value: string) => 
+	index === 6 ? safeNumber(value) < 0 ? 'red' : 'black'	: index === 5 ? 'black' : 'red';
+
 const LcScClosingPDF = ({ data, base, isPartial }: LcScClosingReportPDFProps) => {
 	const title = `STATEMENT OF ${base === 'LC' ? 'LC' : 'SC'} CLOSING`;
 
@@ -271,7 +274,8 @@ const LcScClosingPDF = ({ data, base, isPartial }: LcScClosingReportPDFProps) =>
 									</Text>
 									<Text style={{
 										...lcStyles.chargeTableValueCell,
-										color: index === 5 ? 'black' : 'red',
+										color: chargeColor(index, charge.value),
+										fontWeight: index === 6 ? 'semibold' : 'normal',
 									}}>{charge.value}</Text>
 								</View>
 							))}

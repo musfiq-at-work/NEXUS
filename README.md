@@ -242,3 +242,19 @@ npx prisma migrate dev --name add_something
 ```bash
 npx prisma migrate deploy
 ```
+
+UPDATE shipment_details AS sd
+JOIN order_details AS od ON od.id = sd.order_detail_id
+JOIN orders AS o ON o.id = od.order_id
+JOIN exfactory_order_details AS eod ON eod.order_id = o.id
+JOIN exfactory_headers AS eh ON eh.id = eod.exfactory_header_id
+SET sd.payment_term_id = 51
+WHERE eh.exfactory_date between '2026-01-01' AND '2026-12-31' 
+	AND (
+		(sd.payment_term_id = 11 and o.buyer_id = 26) --
+		OR (sd.payment_term_id = 7 and o.buyer_id = 26) --
+		OR (sd.payment_term_id = 7 and o.buyer_id = 8) --
+		OR (sd.payment_term_id = 29 and o.buyer_id = 8)  --
+		OR (sd.payment_term_id = 31 and o.buyer_id = 8) --
+		OR (sd.payment_term_id = 8 and o.buyer_id = 8)
+    );
