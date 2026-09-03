@@ -21,19 +21,71 @@ const SalesReportPDF = ({ data, base }: SalesReportPDFProps) => {
 	const {user} = useDecodedUser();
 
 	const tableColumns = [
-		{ key: 'buyer_name', label: 'Buyer Name', width: 80},
-		{ key: 'lc_sc_no', label: `${base === 'LC' ? 'Master LC No' : 'Sales Contract'}`, width: 80 },
-		{ key: 'total_order_value', label: `${base === 'LC' ? 'Total Master LC Value' : 'Total Sales Contract Value'}`, width: 80 },
-		{ key: 'latest_shipment_date', label: 'Last Ship Date', width: 80 },
-		{ key: 'latest_exfactory_date', label: 'Last Ex-factory Date', width: 80 },
-		{ key: 'expire_date', label: 'Expire Date', width: 80 },
-		{ key: 'total_order_quantity', label: 'Total Order Quantity', width: 80 },
-		{ key: 'total_shipped_quantity', label: 'Total Shipped Quantity', width: 80 },
-		{ key: 'balance_quantity', label: 'Balance Quantity', width: 80 },
-		{ key: 'total_ship_value', label: `${base === 'LC' ? 'Ship Value' : 'Factory Ship Value'}`, width: 90 },
-		{ key: 'balance_value', label: 'Balance Shipment Value', width: 80 },
-		{ key: 'proceed_amount', label: 'Proceed Amount', width: 80 },
-		{ key: 'factory_fdd_value', label: 'Factory FDD Value', width: 80 },
+		{ 
+			key: 'buyer_name', 
+			label: 'Buyer Name', 
+			width: 80
+		},
+		{ 
+			key: 'lc_sc_no', 
+			label: `${base === 'LC' ? 'Master LC No' : 'Sales Contract'}`, 
+			width: 80
+		},
+		{ 
+			key: 'total_order_value', 
+			label: `${base === 'LC' ? 'Total Master LC Value' : 'Total Sales Contract Value'}`, 
+			width: 80
+		},
+		{ 
+			key: 'latest_shipment_date', 
+			label: 'Last Ship Date', 
+			width: 80
+		},
+		{ 
+			key: 'latest_exfactory_date', 
+			label: 'Last Ex-factory Date', 
+			width: 80
+		},
+		{ 
+			key: 'expire_date', 
+			label: 'Expire Date', 
+			width: 80
+		},
+		{ 
+			key: 'total_order_quantity', 
+			label: 'Total Order Quantity', 
+			width: 80
+		},
+		{ 
+			key: 'total_shipped_quantity', 
+			label: 'Total Shipped Quantity', 
+			width: 80
+		},
+		{ 
+			key: 'balance_quantity', 
+			label: 'Balance Quantity', 
+			width: 80
+		},
+		{ 
+			key: 'total_ship_value', 
+			label: `${base === 'LC' ? 'Ship Value' : 'Factory Ship Value'}`, 
+			width: 90
+		},
+		{ 
+			key: 'balance_value', 
+			label: 'Balance Shipment Value', 
+			width: 80
+		},
+		{ 
+			key: 'proceed_amount', 
+			label: 'Proceed Amount', 
+			width: 80
+		},
+		{ 
+			key: 'factory_fdd_value', 
+			label: 'Factory FDD Value', 
+			width: 80
+		},
 	];
 
 	if(base === 'SC') { 

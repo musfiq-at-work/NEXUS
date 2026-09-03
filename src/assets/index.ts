@@ -33,6 +33,7 @@ export { default as excelIcon } from './icons/excel.png';
 export { default as settingIcon } from './icons/settings.png';
 export { default as codeIcon } from './icons/code.png';
 export { default as pdfIcon } from './icons/pdf-file.png'
+export { default as checkMarkIcon } from './icons/check-mark.png';
 
 // images
 export { default as unauthorizedImage } from "./img/denied.jpg";

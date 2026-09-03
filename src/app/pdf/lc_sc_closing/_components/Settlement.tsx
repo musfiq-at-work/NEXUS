@@ -1,6 +1,6 @@
 import { Image, StyleSheet, Text, View } from "@react-pdf/renderer";
 import { tableBorderColor } from "../../components/pdfConfig";
-import checkMarkLogo from "./check-mark.png";
+import { checkMarkIcon } from "~/assets";
 
 const SettlementType = ({isPartial}: { isPartial: boolean }) => {
     return (
@@ -10,7 +10,7 @@ const SettlementType = ({isPartial}: { isPartial: boolean }) => {
                 <Text style={styles.checkBoxText}> Full </Text>
                 <View style={styles.checkBox}>
                     {!isPartial 
-                        ? <Image style={{ height: 10, width: 10 }} src={checkMarkLogo.src} 
+                        ? <Image style={{ height: 10, width: 10 }} src={checkMarkIcon.src} 
                     /> : ''}
                 </View>
             </View>
@@ -18,7 +18,7 @@ const SettlementType = ({isPartial}: { isPartial: boolean }) => {
                 <Text style={styles.checkBoxText}> Partial </Text>
                 <View style={styles.checkBox}>
                     {isPartial 
-                        ? <Image style={{ height: 10, width: 10 }} src={checkMarkLogo.src} 
+                        ? <Image style={{ height: 10, width: 10 }} src={checkMarkIcon.src} 
                     /> : ''}
                 </View>
             </View>

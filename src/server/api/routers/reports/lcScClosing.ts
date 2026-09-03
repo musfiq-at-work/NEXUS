@@ -468,10 +468,10 @@ export const lcScClosingRouter = createTRPCRouter({
                 } : null;
 
                 const table_summary = {
-                    total_calculated_commission,
-                    total_calculated_commission_percentage,
-                    total_commission_realized,
-                    total_commission_realized_percentage
+                    total_calculated_commission: currencyFormatter(total_calculated_commission, '$'),
+                    total_calculated_commission_percentage: `${quantityFormatter(total_calculated_commission_percentage)}%`,
+                    total_commission_realized: currencyFormatter(total_commission_realized, '$'),
+                    total_commission_realized_percentage: `${quantityFormatter(total_commission_realized_percentage)}%`
                 }
 
                 const gain_lose = ( - (
@@ -491,10 +491,18 @@ export const lcScClosingRouter = createTRPCRouter({
                     discount_charge: currencyFormatter(safeNumber(charges[0]?.discount_charge), '$'),
                     claim_adjustment: currencyFormatter(safeNumber(claimAdjustment[0]?.claim_adjustment), '$'),
                     gain_lose: currencyFormatter(gain_lose, '$'),
-                    reduction_in_factory_payment: currencyFormatter(reduction_in_factory_payment, '$')
+                    reduction_in_factory_payment: currencyFormatter(reduction_in_factory_payment, '$'),
+                    total: currencyFormatter(
+                        reduction_in_factory_payment - gain_lose -
+                        safeNumber(charges[0]?.bank_charge) -
+                        safeNumber(charges[0]?.document_charge) -
+                        safeNumber(charges[0]?.discount_charge) -
+                        safeNumber(claimAdjustment[0]?.claim_adjustment), 
+                        '$'
+                    )
                 }
 
-                const difference_between_commissions = currencyFormatter(total_calculated_commission - total_commission_realized, '$');
+                const difference_between_commissions = currencyFormatter(Math.abs(total_calculated_commission - total_commission_realized), '$');
 
                 const debitNotesTable = debitNotes.map((item) => ({
                     ...item,
