@@ -22,6 +22,10 @@ This code follows the [Atomic Design Methodology](https://atomicdesign.bradfrost
 ##### SSH to the server
 ```bash
 ssh rdlerpadmin@192.168.21.253 -p 60011
+
+
+
+docker run -p 7000:7000 -e DATABASE_URL="postgresql://rdlnexusdb:R%26DL394%25%25348Gm%23@192.168.21.253:5432/nexus_db" -e SHADOW_DATABASE_URL="postgresql://musfiq:Musfiquer%263468%23%23@192.168.33.2:5400/nexus_shadow_db" -e JWT_SECRET="xU7i7z9U4y8oVLSe0Pti00k9o2fb0phPWQuf4Dx8RumEC0K7lZOyCDUEHy6WubkS" nexus 
 ```
 
 ###### Login to psql
@@ -180,7 +184,7 @@ docker compose up -d
 
 docker build -t nexus .
 
-docker run -p 7000:7000 -e DATABASE_URL="postgresql://musfiq:Musfiquer%263468%23%23@192.168.33.4:5432/nexus_db" -e SHADOW_DATABASE_URL="postgresql://musfiq:Musfiquer%263468%23%23@192.168.33.4:5432/nexus_db" -e JWT_SECRET="xU7i7z9U4y8oVLSe0Pti00k9o2fb0phPWQuf4Dx8RumEC0K7lZOyCDUEHy6WubkS" nexus 
+docker run -p 60005:60005 -e DATABASE_URL="postgresql://musfiq:Musfiquer%263468%23%23@192.168.33.4:5432/nexus_db" -e SHADOW_DATABASE_URL="postgresql://musfiq:Musfiquer%263468%23%23@192.168.33.4:5432/nexus_db" -e JWT_SECRET="xU7i7z9U4y8oVLSe0Pti00k9o2fb0phPWQuf4Dx8RumEC0K7lZOyCDUEHy6WubkS" nexus 
 ```
 
 # Data Migration Steps for first production push
@@ -243,18 +247,208 @@ npx prisma migrate dev --name add_something
 npx prisma migrate deploy
 ```
 
+```sql
 UPDATE shipment_details AS sd
 JOIN order_details AS od ON od.id = sd.order_detail_id
 JOIN orders AS o ON o.id = od.order_id
-JOIN exfactory_order_details AS eod ON eod.order_id = o.id
-JOIN exfactory_headers AS eh ON eh.id = eod.exfactory_header_id
-SET sd.payment_term_id = 51
-WHERE eh.exfactory_date between '2026-01-01' AND '2026-12-31' 
-	AND (
-		(sd.payment_term_id = 11 and o.buyer_id = 26) --
-		OR (sd.payment_term_id = 7 and o.buyer_id = 26) --
-		OR (sd.payment_term_id = 7 and o.buyer_id = 8) --
-		OR (sd.payment_term_id = 29 and o.buyer_id = 8)  --
-		OR (sd.payment_term_id = 31 and o.buyer_id = 8) --
-		OR (sd.payment_term_id = 8 and o.buyer_id = 8)
-    );
+JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
+SET sd.payment_term_id = 7
+WHERE fsd.ex_factory_date >= '2026-01-01'
+    AND sd.payment_term_id = 11
+    AND o.buyer_id IN (26, 14);
+
+
+UPDATE shipment_details AS sd
+JOIN order_details AS od ON od.id = sd.order_detail_id
+JOIN orders AS o ON o.id = od.order_id
+JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
+SET sd.payment_term_id = 7
+WHERE fsd.ex_factory_date >= '2026-01-01'
+    AND sd.payment_term_id = 42
+    AND o.buyer_id = 8;
+
+
+UPDATE shipment_details AS sd
+JOIN order_details AS od ON od.id = sd.order_detail_id
+JOIN orders AS o ON o.id = od.order_id
+JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
+SET sd.payment_term_id = 7
+WHERE fsd.ex_factory_date >= '2026-01-01'
+    AND sd.payment_term_id = 29
+    AND o.buyer_id = 8;
+
+
+UPDATE shipment_details AS sd
+JOIN order_details AS od ON od.id = sd.order_detail_id
+JOIN orders AS o ON o.id = od.order_id
+JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
+SET sd.payment_term_id = 7
+WHERE fsd.ex_factory_date >= '2026-01-01'
+    AND sd.payment_term_id = 19
+    AND o.buyer_id IN (25, 15, 14);
+
+
+
+UPDATE shipment_details AS sd
+JOIN order_details AS od ON od.id = sd.order_detail_id
+JOIN orders AS o ON o.id = od.order_id
+JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
+SET sd.payment_term_id = 7
+WHERE fsd.ex_factory_date >= '2026-01-01'
+    AND sd.payment_term_id = 31
+    AND o.buyer_id IN (8, 33, 23, 29, 39, 34);
+
+
+UPDATE shipment_details AS sd
+JOIN order_details AS od ON od.id = sd.order_detail_id
+JOIN orders AS o ON o.id = od.order_id
+JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
+SET sd.payment_term_id = 7
+WHERE fsd.ex_factory_date >= '2026-01-01'
+    AND sd.payment_term_id = 34
+    AND o.buyer_id IN (35);
+
+
+UPDATE shipment_details AS sd
+JOIN order_details AS od ON od.id = sd.order_detail_id
+JOIN orders AS o ON o.id = od.order_id
+JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
+SET sd.payment_term_id = 7
+WHERE fsd.ex_factory_date >= '2026-01-01'
+    AND sd.payment_term_id = 45
+    AND o.buyer_id = 38;
+
+
+UPDATE shipment_details AS sd
+JOIN order_details AS od ON od.id = sd.order_detail_id
+JOIN orders AS o ON o.id = od.order_id
+JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
+SET sd.payment_term_id = 42
+WHERE fsd.ex_factory_date >= '2026-01-01'
+    AND sd.payment_term_id = 18
+    AND o.buyer_id = 13;
+
+
+
+UPDATE shipment_details AS sd
+JOIN order_details AS od ON od.id = sd.order_detail_id
+JOIN orders AS o ON o.id = od.order_id
+JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
+SET sd.payment_term_id = 27
+WHERE fsd.ex_factory_date >= '2026-01-01'
+    AND sd.payment_term_id = 18
+    AND o.buyer_id = 10;
+
+
+
+UPDATE shipment_details AS sd
+JOIN order_details AS od ON od.id = sd.order_detail_id
+JOIN orders AS o ON o.id = od.order_id
+JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
+SET sd.payment_term_id = 52
+WHERE fsd.ex_factory_date >= '2026-01-01'
+    AND sd.payment_term_id = 36
+    AND o.buyer_id = 4;
+
+
+UPDATE shipment_details AS sd
+JOIN order_details AS od ON od.id = sd.order_detail_id
+JOIN orders AS o ON o.id = od.order_id
+JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
+SET sd.payment_term_id = 47
+WHERE fsd.ex_factory_date >= '2026-01-01'
+    AND sd.payment_term_id = 44
+    AND o.buyer_id = 21;
+
+
+UPDATE shipment_details AS sd
+JOIN order_details AS od ON od.id = sd.order_detail_id
+JOIN orders AS o ON o.id = od.order_id
+JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
+SET sd.payment_term_id = 34
+WHERE fsd.ex_factory_date >= '2026-01-01'
+    AND sd.payment_term_id = 7
+    AND o.buyer_id IN (40, 27);
+
+
+UPDATE shipment_details AS sd
+JOIN order_details AS od ON od.id = sd.order_detail_id
+JOIN orders AS o ON o.id = od.order_id
+JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
+SET sd.payment_term_id = 28
+WHERE fsd.ex_factory_date >= '2026-01-01'
+    AND sd.payment_term_id = 7
+    AND o.buyer_id = 41;
+
+
+UPDATE shipment_details AS sd
+JOIN order_details AS od ON od.id = sd.order_detail_id
+JOIN orders AS o ON o.id = od.order_id
+JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
+SET sd.payment_term_id = 33
+WHERE fsd.ex_factory_date >= '2026-01-01'
+    AND sd.payment_term_id = 41
+    AND o.buyer_id = 10;
+
+
+UPDATE shipment_details AS sd
+JOIN order_details AS od ON od.id = sd.order_detail_id
+JOIN orders AS o ON o.id = od.order_id
+JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
+SET sd.payment_term_id = 33
+WHERE fsd.ex_factory_date >= '2026-01-01'
+    AND sd.payment_term_id = 26
+    AND o.buyer_id = 10;
+
+
+
+UPDATE shipment_details AS sd
+JOIN order_details AS od ON od.id = sd.order_detail_id
+JOIN orders AS o ON o.id = od.order_id
+JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
+SET sd.payment_term_id = 33
+WHERE fsd.ex_factory_date >= '2026-01-01'
+    AND sd.payment_term_id = 46
+    AND o.buyer_id = 10;
+
+
+
+UPDATE shipment_details AS sd
+JOIN order_details AS od ON od.id = sd.order_detail_id
+JOIN orders AS o ON o.id = od.order_id
+JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
+SET sd.payment_term_id = 52
+WHERE fsd.ex_factory_date >= '2026-01-01'
+    AND sd.payment_term_id = 22
+    AND o.buyer_id = 4;
+
+
+UPDATE shipment_details AS sd
+JOIN order_details AS od ON od.id = sd.order_detail_id
+JOIN orders AS o ON o.id = od.order_id
+JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
+SET sd.payment_term_id = 47
+WHERE fsd.ex_factory_date >= '2026-01-01'
+    AND sd.payment_term_id = 43
+    AND o.buyer_id = 21;
+
+
+UPDATE shipment_details AS sd
+JOIN order_details AS od ON od.id = sd.order_detail_id
+JOIN orders AS o ON o.id = od.order_id
+JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
+SET sd.payment_term_id = 33
+WHERE fsd.ex_factory_date >= '2026-01-01'
+    AND sd.payment_term_id = 34
+    AND o.buyer_id = 10;
+
+
+
+SELECT * FROM sales_contract_headers where sales_contract_no in (
+	'RDL/SC/MARIS/AL /24/031',
+	'RDL/SC/RCHLO/KIM/24/391',
+	'RDL/SC/COG/SIL/25/096',
+	'RDL/SC/KMD/REN/25/275'
+);
+```
+
