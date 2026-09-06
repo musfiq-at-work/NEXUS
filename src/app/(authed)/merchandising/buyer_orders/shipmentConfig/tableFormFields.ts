@@ -12,15 +12,18 @@ type Props = {
 
 export const formFields = ({buyerId, departmentId}: Props) => {
     const { data: destinations = [] } = api.buyers.getBuyerDestinations.useQuery(
-        !!buyerId ? buyerId : skipToken
+        !!buyerId ? buyerId : skipToken,
+        { staleTime: 900 * 1000 }
     );
 
     const { data: paymentTerms = [] } = api.buyers.getBuyerPaymentTerms.useQuery(
-        !!buyerId ? buyerId : skipToken
+        !!buyerId ? buyerId : skipToken,
+        { staleTime: 900 * 1000 }
     );
 
     const { data: sizes = [] } = api.buyers.getSizeByDepartment.useQuery(
-        !!departmentId ? departmentId : skipToken
+        !!departmentId ? departmentId : skipToken,
+        { staleTime: 900 * 1000 }
     );
 
     return [

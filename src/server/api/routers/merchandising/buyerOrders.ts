@@ -1287,7 +1287,7 @@ export const buyerOrdersRouter = createTRPCRouter({
             color_id: z.string().uuid(),
         }))
         .mutation(async ({ ctx, input }) => {
-            const can_delete = ctx.permissions[m.BUYER_ORDERS]?.can_delete;
+            const can_delete = ctx.permissions[m.BUYER_ORDERS]?.can_update;
 
             if (!can_delete) {
                 throw new TRPCError({ 

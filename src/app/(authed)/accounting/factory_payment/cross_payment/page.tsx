@@ -35,6 +35,7 @@ const FactoryPaymentPage = () => {
             await Promise.all([
                 utils.crossPayments.getCrossPaymentList.invalidate(),
                 utils.crossPayments.searchCrossPayments.invalidate(),
+                utils.crossPayments.getFactoryInvoicesByBuyer.invalidate(),
             ]);
         }
     });

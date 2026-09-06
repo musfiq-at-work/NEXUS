@@ -40,6 +40,7 @@ const FactoryOrders = () => {
             await Promise.all([
                 utils.factoryOrder.getFactoryOrders.invalidate(),
                 utils.factoryOrder.searchFactoryOrders.invalidate(),
+                utils.factoryOrder.getBuyerOrderDetailsByFactoryOrderId.invalidate(),
             ]);
         },
     });

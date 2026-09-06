@@ -48,7 +48,10 @@ const EditFactoryOrderPage = ({ params }: ParamsProp) => {
         onSuccess: async () => {
             setError(null);
             toast.success("Factory Order updated successfully!");
-            await utils.factoryOrder.getFactoryOrders.invalidate();
+            await Promise.all([
+                utils.factoryOrder.getBuyerOrderDetailsByFactoryOrderId.invalidate(),
+                utils.factoryOrder.getFactoryOrders.invalidate()
+            ])
             // utils.factoryOrder.getFactoryOrderById.invalidate({ factoryOrderId: id });
         },
     });

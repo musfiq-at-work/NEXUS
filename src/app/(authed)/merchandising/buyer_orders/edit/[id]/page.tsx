@@ -19,7 +19,7 @@ const EditBuyerOrderPage = ({ params }: ParamsProp) => {
     
     const [isLoadingSubmit, setIsLoadingSubmit] = useState(false);
 
-    const { data: buyerOrderData, isLoading } = api.buyerOrders.getBuyerOrderById.useQuery({ id: id });
+    const { data: buyerOrderData, isLoading } = api.buyerOrders.getBuyerOrderById.useQuery({ id: id }, { staleTime: 900 * 1000 });
 
     // Form setup
     const { methods, handleSubmit, formFields, validationError, control } = useBuyerOrderForm(

@@ -36,6 +36,7 @@ const ProceedRealizationPage = () => {
             await Promise.all([
                 utils.proceedRealization.getProceedRealization.invalidate(),
                 utils.proceedRealization.searchProceedRealization.invalidate(),
+                utils.proceedRealization.getDocumentSubmissionForProceedRealization.invalidate(),
             ]);
         }
     });

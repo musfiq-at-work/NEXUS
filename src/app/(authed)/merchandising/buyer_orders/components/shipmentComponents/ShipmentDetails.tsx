@@ -75,6 +75,7 @@ const ShipmentDetails = (props: props) => {
 
     const handoverDateBuffer = api.handoverDates.getHandoverDateBufferByBuyerId.useQuery(
         !!buyerId ? { buyer_id: parseInt(buyerId) } : skipToken,
+        { staleTime: 900 * 1000 }
     ).data?.buffer ?? 7;
 
     

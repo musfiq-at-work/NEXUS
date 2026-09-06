@@ -39,6 +39,7 @@ const CommissionDistribution = () => {
             await Promise.all([
                 utils.commissionDistribution.getCommissionDistribution.invalidate(),
                 utils.commissionDistribution.searchCommissionDistribution.invalidate(),
+                utils.commissionDistribution.getOrderIdForCommissionDistribution.invalidate()
             ]);
         },
     });

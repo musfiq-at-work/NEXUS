@@ -28,7 +28,9 @@ const NewFactoryInvoicePage = () => {
             toast.success("Factory Invoice added successfully!");
             await Promise.all([
                 utils.factoryInvoice.getFactoryInvoiceList.invalidate(),
-                utils.exFactory.checkCommercialProcedure.invalidate()
+                utils.exFactory.checkCommercialProcedure.invalidate(),
+                utils.factoryInvoice.getExfactoryDetailsForShipment.invalidate(),
+                utils.factoryInvoice.getScLcForFactoryInvoice.invalidate(),
             ]);
         }   
     });

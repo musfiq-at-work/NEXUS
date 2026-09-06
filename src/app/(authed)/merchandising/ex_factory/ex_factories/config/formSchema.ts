@@ -70,6 +70,8 @@ export const createExFactoryFormSchema = (tolerance: number, isAdmin: boolean) =
             remarks: z.string().optional(),
             orders: z.array(createExFactoryOrderSchema(tolerance)).min(1, "At least one order is required"),
         }).superRefine((data, ctx) => {
+			console.log("isAdmin", isAdmin);
+
             if (isAdmin) return;
 
             const today = new Date();

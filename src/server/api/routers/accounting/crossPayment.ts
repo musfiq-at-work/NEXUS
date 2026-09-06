@@ -289,7 +289,7 @@ export const crossPaymentsRouter = createTRPCRouter({
                             CP.IS_AUTHORIZED,
                             CP.ADDED_AT
                         FROM CROSS_PAYMENTS AS CP
-                            INNER JOIN CROSS_PAYMENT_DETAILS AS CPD ON CPD.cross_payment_id = CP.id
+                            LEFT JOIN CROSS_PAYMENT_DETAILS AS CPD ON CPD.cross_payment_id = CP.id
                             INNER JOIN BUYERS AS B ON B.id = CP.buyer_id
                             INNER JOIN TERMS AS T ON T.id = CP.term_id
                         WHERE EXISTS ( -- Admin
@@ -365,7 +365,7 @@ export const crossPaymentsRouter = createTRPCRouter({
                             CP.IS_AUTHORIZED,
                             CP.ADDED_AT
                         FROM CROSS_PAYMENTS AS CP
-                            INNER JOIN CROSS_PAYMENT_DETAILS AS CPD ON CPD.cross_payment_id = CP.id
+                            LEFT JOIN CROSS_PAYMENT_DETAILS AS CPD ON CPD.cross_payment_id = CP.id
                             INNER JOIN BUYERS AS B ON B.id = CP.buyer_id
                             INNER JOIN TERMS AS T ON T.id = CP.term_id
                             INNER JOIN FACTORY_INVOICE AS FI ON FI.id = CPD.factory_invoice_id

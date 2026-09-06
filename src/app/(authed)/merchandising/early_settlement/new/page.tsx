@@ -25,7 +25,9 @@ const NewEarlySettlementPage = () => {
             toast.success("Early Settlement added successfully!");
             await Promise.all([
                 utils.earlySettlement.getEarlySettlements.invalidate(),
-                utils.earlySettlement.searchEarlySettlements.invalidate()
+                utils.earlySettlement.searchEarlySettlements.invalidate(),
+                utils.earlySettlement.getPoDetails.invalidate(),
+                utils.earlySettlement.getOrderForEarlySettlement.invalidate(),
             ]);
         }
     });

@@ -628,15 +628,15 @@ export const rdlInvoiceRouter = createTRPCRouter({
                     `
                     : Prisma.empty;
 
-                const invoiceFilter = input.rdl_invoice_id
-                    ? Prisma.sql`
-                        AND (
-                            CRID.ID IS NOT NULL
-                            OR PI.FACTORY_INVOICE_ID IS NULL
-                            OR COALESCE(PI.PREVIOUS_QUANTITY, 0)::NUMERIC(18,2) < I.TOTAL_QUANTITY::NUMERIC(18,2)
-                        )
-                    `
-                    : Prisma.empty;
+                // const invoiceFilter = input.rdl_invoice_id
+                //     ? Prisma.sql`
+                //         AND (
+                //             CRID.ID IS NULL
+                //             OR PI.FACTORY_INVOICE_ID IS NULL
+                //             OR COALESCE(PI.PREVIOUS_QUANTITY, 0)::NUMERIC(18,2) < I.TOTAL_QUANTITY::NUMERIC(18,2)
+                //         )
+                //     `
+                //     : Prisma.empty;
 
                 const havingClause = input.rdl_invoice_id
                     ? Prisma.empty
@@ -689,10 +689,12 @@ export const rdlInvoiceRouter = createTRPCRouter({
                     WHERE
                         FI.factory_id = ${input.factory_id}
                         AND ${whereClause}
-                        ${invoiceFilter}
+                        -- {invoiceFilter}
                     GROUP BY FI.ID, FI.INVOICE_NO, PI.FACTORY_INVOICE_ID, PI.PREVIOUS_QUANTITY
                     ${havingClause}
                 `;
+
+                // -- ${invoiceFilter}
 
                 const factoryInvoice = factoryInvoiceList.map(invoice => ({
                     ...invoice,
@@ -791,13 +793,13 @@ export const rdlInvoiceRouter = createTRPCRouter({
                 const shipmentDetailsObj = await ctx.db.$queryRaw<ShipmentDetailForFactoryInvoice[]>`
                     WITH PREVIOUS_INVOICE AS (
                         SELECT
-                            RID.factory_invoice_id AS FACTORY_INVOICE_ID,
+                            RISD.factory_invoice_details_id AS FACTORY_INVOICE_DETAILS_ID,
                             SUM(RISD.INVOICE_QUANTITY) AS PREVIOUS_QUANTITY
                         FROM RDL_INVOICE RI
                             INNER JOIN rdl_invoice_details RID ON RID.rdl_invoice_id = RI.ID
                             INNER JOIN RDL_INVOICE_SHIPMENT_DETAILS RISD ON RISD.rdl_invoice_details_id = RID.ID
                             ${excludeCurrentInvoiceClause}
-                        GROUP BY RISD.factory_invoice_details_id, RID.factory_invoice_id
+                        GROUP BY RISD.factory_invoice_details_id
                     )
                     SELECT 
                         FID.id AS id,
@@ -816,7 +818,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         INNER JOIN ORDER_STYLES AS OS ON OS.id = SD.order_style_id
                         INNER JOIN BUYER_ORDERS AS BO ON BO.id = OS.order_id
                         INNER JOIN DESTINATIONS AS D ON D.id = SD.destination_id
-                        LEFT JOIN PREVIOUS_INVOICE PI ON PI.FACTORY_INVOICE_ID = FI.ID
+                        LEFT JOIN PREVIOUS_INVOICE PI ON PI.FACTORY_INVOICE_DETAILS_ID = FID.ID
                     WHERE FI.ID = ${input.factory_invoice_id}
                     GROUP BY BO.ID, OS.ID, SD.ID, FID.ID, D.ID, PI.PREVIOUS_QUANTITY, ES.ID;
                 `;

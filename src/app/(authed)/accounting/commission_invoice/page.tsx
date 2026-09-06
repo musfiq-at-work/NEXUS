@@ -36,7 +36,7 @@ const CommissionInvoicePage = () => {
             toast.success("Commission Invoice deleted successfully");
             await Promise.all([
                 utils.commissionInvoice.getCommissionInvoiceList.invalidate(),
-                utils.commissionInvoice.searchCommissionInvoice.invalidate()
+                utils.commissionInvoice.searchCommissionInvoice.invalidate(),
             ])
         },
     });

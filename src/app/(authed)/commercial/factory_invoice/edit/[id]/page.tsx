@@ -41,7 +41,9 @@ const EditFactoryInvoicePage = ({ params }: ParamsProp) => {
                 utils.factoryInvoice.getFactoryInvoiceById.invalidate({ id }),
                 utils.factoryInvoice.getFactoryInvoiceList.invalidate(),
                 utils.factoryInvoice.getShipmentDetailsForTagShipments.invalidate(),
-                utils.exFactory.checkCommercialProcedure.invalidate()
+                utils.exFactory.checkCommercialProcedure.invalidate(),
+                utils.factoryInvoice.getExfactoryDetailsForShipment.invalidate(),
+                utils.factoryInvoice.getScLcForFactoryInvoice.invalidate(),
             ]);
         }
     });

@@ -27,7 +27,7 @@ const BuyerOrders = () => {
     // Search query (enabled only when there's a search term)
     const searchQuery = api.buyerOrders.searchBuyerOrders.useQuery(
         { query: debouncedSearch, limit, offset: page * limit },
-        { enabled: debouncedSearch.length > 0 }
+        { enabled: debouncedSearch.length > 0 },
     );
 
     const editURL = '/merchandising/buyer_orders/edit/';

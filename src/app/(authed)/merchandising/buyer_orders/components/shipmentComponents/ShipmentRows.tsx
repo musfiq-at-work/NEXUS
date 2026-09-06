@@ -34,7 +34,7 @@ const ShipmentRows = (props: Props) => {
         setSelectedShipmentIndex(shipmentIndex);
     }, []);
 
-    const colors = api.colors.getAll.useQuery().data ?? [];
+    const colors = api.colors.getAll.useQuery(undefined, { staleTime: 900 * 1000 }).data ?? [];
 
     const { can_delete } = useModulePermissions();
 

@@ -37,7 +37,9 @@ const RdlInvoicePage = () => {
             toast.success("RDL Invoice deleted successfully");
             await Promise.all([
                 utils.rdlInvoice.getRdlInvoice.invalidate(),
-                utils.rdlInvoice.searchRdlInvoices.invalidate()
+                utils.rdlInvoice.searchRdlInvoices.invalidate(),
+                utils.rdlInvoice.getFactoryInvoiceForRDLInvoice.invalidate(),
+                utils.rdlInvoice.getScLcForRDLInvoice.invalidate(),
             ]);
         },
     });

@@ -45,8 +45,11 @@ const EditCommissionDistributionPage = ({ params }: ParamsProp) => {
         onSuccess: async () => {
             setError(null);
             toast.success("Commission Distribution updated successfully!");
-            await utils.commissionDistribution.getCommissionDistribution.invalidate();
-            await utils.commissionDistribution.getCommissionDistributionById.invalidate({ id: id });
+            await Promise.all([
+                utils.commissionDistribution.getOrderIdForCommissionDistribution.invalidate(),
+                utils.commissionDistribution.getCommissionDistribution.invalidate(),
+                utils.commissionDistribution.getCommissionDistributionById.invalidate({ id: id })
+            ]);
         },
     });
 

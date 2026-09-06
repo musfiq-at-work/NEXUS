@@ -36,7 +36,8 @@ const EditEarlySettlementPage = ({ params }: ParamsProp) => {
                 utils.earlySettlement.getEarlySettlementById.invalidate({ id }),
                 utils.earlySettlement.getEarlySettlements.invalidate(),
                 utils.earlySettlement.searchEarlySettlements.invalidate(),
-                utils.earlySettlement.getPoDetails.invalidate()
+                utils.earlySettlement.getPoDetails.invalidate(),
+                utils.earlySettlement.getOrderForEarlySettlement.invalidate(),
             ]);
         }
     });

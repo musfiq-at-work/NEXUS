@@ -34,6 +34,9 @@ const DocumentSubmissionPage = () => {
             await Promise.all([
                 utils.documentSubmission.getDocumentSubmission.invalidate(),
                 utils.documentSubmission.searchDocumentSubmissions.invalidate(),
+                utils.documentSubmission.getScLcForDocumentSubmission.invalidate(),
+                utils.documentSubmission.getRdlInvoiceDetails.invalidate(),
+                utils.documentSubmission.getRdlInvoiceForDocumentSubmission.invalidate(),
             ]);
         },
     });

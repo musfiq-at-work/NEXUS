@@ -45,6 +45,9 @@ const EditRDLInvoicePage = ({ params }: ParamsProp) => {
             await Promise.all([
                 utils.rdlInvoice.getRdlInvoiceById.invalidate({ id }),
                 utils.rdlInvoice.getRdlInvoice.invalidate(),
+                utils.rdlInvoice.getFactoryInvoiceForRDLInvoice.invalidate(),
+                utils.rdlInvoice.getShipmentDetailsForFactoryInvoice.invalidate(),
+                utils.rdlInvoice.getScLcForRDLInvoice.invalidate(),
             ]);
         }
 

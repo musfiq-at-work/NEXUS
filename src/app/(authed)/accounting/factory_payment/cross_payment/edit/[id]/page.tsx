@@ -36,7 +36,8 @@ const EditCrossPaymentPage = ({ params }: ParamsProp) => {
             await Promise.all([
                 utils.crossPayments.getCrossPaymentById.invalidate({ cross_payment_id: id }),
                 utils.crossPayments.getCrossPaymentList.invalidate(),
-                utils.crossPayments.searchCrossPayments.invalidate()
+                utils.crossPayments.searchCrossPayments.invalidate(),
+                utils.crossPayments.getFactoryInvoicesByBuyer.invalidate(),
             ]);
         }
     });

@@ -55,6 +55,8 @@ export const useExfactoryForm = (initialData?: GetExFactoryByIdTypes) => {
 
     const { isAdmin } = useDecodedUser();
 
+    console.log("isAdmin E", isAdmin);    
+
     // Create Zod schema with current tolerance
     const exFactorySchema = useMemo(
         () => createExFactoryFormSchema(tolerance ?? 0, isAdmin),

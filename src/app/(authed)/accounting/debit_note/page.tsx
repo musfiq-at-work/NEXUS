@@ -6,7 +6,6 @@ import { api } from "~/trpc/react";
 import { toast } from "sonner";
 import { tableHeaders } from "./config/columns";
 import { useSearchablePagination, useModulePermissions, useDeleteConfirmation } from "~/hooks";
-import { useEffect } from "react";
 
 const DebitNotePage = () => {
     const router = useRouter();
@@ -36,6 +35,7 @@ const DebitNotePage = () => {
             await Promise.all([
                 utils.debitNotes.getAllDebitNotes.invalidate(),
                 utils.debitNotes.searchDebitNotes.invalidate(),
+                utils.debitNotes.getShipmentDetailsForDebitNote.invalidate(),
             ]);
             toast.success('Debit Note deleted successfully');
         }

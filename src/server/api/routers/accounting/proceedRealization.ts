@@ -129,7 +129,6 @@ export const proceedRealizationRouter = createTRPCRouter({
                                 WHERE T.BUYER_ID = B.ID
                                     AND TM.USER_ID = ${ctx.user.id}
                             )
-                            GROUP BY PR.ID, B.ID, T.ID, DS.ID
                         )
                         AND (
                             B.buyer_name ILIKE '%' || ${input.query} || '%'
@@ -137,6 +136,7 @@ export const proceedRealizationRouter = createTRPCRouter({
                             OR T.NAME ILIKE '%' || ${input.query} || '%'
                             OR RI.INVOICE_NO ILIKE '%' || ${input.query} || '%'
                         )
+                        GROUP BY PR.ID, B.ID, T.ID, DS.ID
                     )
                     SELECT *,
                         COUNT(*) OVER() AS TOTAL_COUNT
@@ -240,7 +240,7 @@ export const proceedRealizationRouter = createTRPCRouter({
 
                     await tx.factory_payments_history.createMany({
                         data: factoryPayments.map((payment) => ({
-                            factory_payment_id: payment.id,
+                            factory_payments_id: payment.id,
                             document_submission_id: payment.document_submission_id,
                             payment_date: payment.payment_date,
                             paid_amount: payment.paid_amount,

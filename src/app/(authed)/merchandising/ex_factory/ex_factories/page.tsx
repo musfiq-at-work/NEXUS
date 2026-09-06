@@ -38,6 +38,9 @@ const ExFactories = () => {
             await Promise.all([
                 utils.exFactory.getExFactories.invalidate(),
                 utils.exFactory.searchExFactories.invalidate(),
+                utils.exFactory.getOrdersForExFactory.invalidate(),
+                utils.exFactory.getShipmentsForExFactoryOrder.invalidate(),
+                utils.exFactory.checkCommercialProcedure.invalidate(),
             ]);
         }
     });

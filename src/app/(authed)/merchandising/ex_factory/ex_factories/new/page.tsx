@@ -25,7 +25,14 @@ const NewExFactoryPage = () => {
         onSuccess: async () => {
             setError(null);
             toast.success("Ex Factory added successfully!");
-            await utils.exFactory.getExFactories.invalidate();
+
+            await Promise.all ([ 
+                utils.exFactory.getExFactories.invalidate(),
+                utils.exFactory.getOrdersForExFactory.invalidate(),
+                utils.exFactory.getShipmentsForExFactoryOrder.invalidate(),
+                utils.exFactory.checkCommercialProcedure.invalidate(),
+            ]);
+            
         }
     });
 
