@@ -36,8 +36,8 @@ export const proceedRealizationRouter = createTRPCRouter({
                             SUM(PRD.REALIZED_AMOUNT)::NUMERIC(18,2) AS REALIZED_AMOUNT,
                             PR.ADDED_AT
                         FROM proceed_realization AS PR
-                            INNER JOIN proceed_realization_details AS PRD ON PRD.realization_id = PR.id
-                            INNER JOIN document_submissions AS DS ON DS.id = PR.document_submission_id
+                            LEFT JOIN proceed_realization_details AS PRD ON PRD.realization_id = PR.id
+                            LEFT JOIN document_submissions AS DS ON DS.id = PR.document_submission_id
                             INNER JOIN buyers AS B ON B.id = PR.buyer_id
                             INNER JOIN terms AS T ON T.id = PR.term_id
                         WHERE (
@@ -108,11 +108,10 @@ export const proceedRealizationRouter = createTRPCRouter({
                             SUM(PRD.REALIZED_AMOUNT)::NUMERIC(18,2) AS REALIZED_AMOUNT,
                             PR.ADDED_AT
                         FROM proceed_realization AS PR
-                            INNER JOIN proceed_realization_details AS PRD ON PRD.realization_id = PR.id
-                            INNER JOIN document_submissions AS DS ON DS.id = PR.document_submission_id
+                            LEFT JOIN PROCEED_REALIZATION_DETAILS AS PRD ON PRD.realization_id = PR.id
+                            LEFT JOIN document_submissions AS DS ON DS.id = PR.document_submission_id
                             INNER JOIN buyers AS B ON B.id = PR.buyer_id
                             INNER JOIN terms AS T ON T.id = PR.term_id
-                            LEFT JOIN PROCEED_REALIZATION_DETAILS AS PRD ON PRD.realization_id = PR.id
                             LEFT JOIN rdl_invoice AS RI ON RI.id = PRD.rdl_invoice_id
                         WHERE (
                             EXISTS ( -- Admin

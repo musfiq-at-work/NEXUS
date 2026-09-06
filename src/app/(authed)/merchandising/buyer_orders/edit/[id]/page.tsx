@@ -74,25 +74,28 @@ const EditBuyerOrderPage = ({ params }: ParamsProp) => {
                     supplier_id: Number(style.supplier_id),
                     order_quantity: style.order_quantity ?? undefined,
                     shipments: style?.shipments?.map((shipment, shipmentIndex) => ({
-                          db_id: shipment?.db_id,
-                          delivery_no: shipmentIndex + 1,
-                          buyer_po: shipment.buyer_po,
-                          etd_date: new Date(shipment.etd_date),
-                          handover_date: new Date(shipment.handover_date),
-                          destination_id: Number(shipment.destination_id),
-                          shipment_mode: shipment.shipment_mode as shipment_modes,
-                          size_id: Number(shipment.size_id),
-                          fob_rate: shipment.fob_rate,
-                          payment_term_id: Number(shipment.payment_term_id),
-                          colors: shipment.colors.map((color) => ({
-                              db_id: color?.db_id,
-                              color_id: Number(color.color_id),
-                              quantity: color.quantity,
-                          }))
-                    })),
+                        db_id: shipment?.db_id,
+                        delivery_no: shipmentIndex + 1,
+                        buyer_po: shipment.buyer_po,
+                        etd_date: new Date(shipment.etd_date),
+                        handover_date: new Date(shipment.handover_date),
+                        destination_id: Number(shipment.destination_id),
+                        shipment_mode: shipment.shipment_mode as shipment_modes,
+                        size_id: Number(shipment.size_id),
+                        fob_rate: shipment.fob_rate,
+                        payment_term_id: Number(shipment.payment_term_id),
+                        colors: shipment.colors.map((color) => ({
+                            db_id: color?.db_id,
+                            color_id: Number(color.color_id),
+                            quantity: color.quantity,
+                        }))
+                    })).filter(item => item.buyer_po !== undefined),
+                    // buyer_po -> has exfactory and the shipment is disabled
                 })),
                 ref_no: buyerOrderData.order.ref_no,
             };
+
+            console.log('payload', payload);
 
             await updateBuyerOrder.mutateAsync(payload);
 

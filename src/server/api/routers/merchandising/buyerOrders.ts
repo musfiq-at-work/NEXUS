@@ -977,6 +977,8 @@ export const buyerOrdersRouter = createTRPCRouter({
             try {
                 const can_edit = ctx.permissions[m.BUYER_ORDERS]?.can_update;
 
+                console.log('input', input);
+
                 if (!can_edit) {
                     throw new TRPCError({
                         code: 'FORBIDDEN',
@@ -1244,6 +1246,7 @@ export const buyerOrdersRouter = createTRPCRouter({
                     };
                 }, {timeout: 60000});
             } catch (error) {
+                console.log(error);
                 await logError(error, ctx, input);
                 handlePrismaError(error);
             }

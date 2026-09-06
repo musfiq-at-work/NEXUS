@@ -60,7 +60,7 @@ export const useExfactoryForm = (initialData?: GetExFactoryByIdTypes) => {
     // Create Zod schema with current tolerance
     const exFactorySchema = useMemo(
         () => createExFactoryFormSchema(tolerance ?? 0, isAdmin),
-        [tolerance]
+        [tolerance, isAdmin]
     );
 
     // Initialize form with Zod resolver and default values
