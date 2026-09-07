@@ -247,208 +247,35 @@ npx prisma migrate dev --name add_something
 npx prisma migrate deploy
 ```
 
-```sql
-UPDATE shipment_details AS sd
-JOIN order_details AS od ON od.id = sd.order_detail_id
-JOIN orders AS o ON o.id = od.order_id
-JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
-SET sd.payment_term_id = 7
-WHERE fsd.ex_factory_date >= '2026-01-01'
-    AND sd.payment_term_id = 11
-    AND o.buyer_id IN (26, 14);
+#### Backup and Restore DB
+```bash
+set "PGPASSWORD=R&DL394%%348Gm#"
+
+// SQL Format (in use)
+"G:\RUN\PostgresSQL\pgAdmin 4\runtime\pg_dump.exe" --file "E:\Downloads\pg_dump\pg_backup_07_09_2026.sql" --host "192.168.21.253" --port "5432" --username "rdlnexusdb" --section=pre-data --section=data --section=post-data --verbose "nexus_db"
 
 
-UPDATE shipment_details AS sd
-JOIN order_details AS od ON od.id = sd.order_detail_id
-JOIN orders AS o ON o.id = od.order_id
-JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
-SET sd.payment_term_id = 7
-WHERE fsd.ex_factory_date >= '2026-01-01'
-    AND sd.payment_term_id = 42
-    AND o.buyer_id = 8;
+// DUMP format
+"G:\RUN\PostgresSQL\pgAdmin 4\runtime\pg_dump.exe" --file "E:\Downloads\pg_dump\pg_backup_07_09_2026.dump" --host "192.168.21.253" --port "5432" --username "rdlnexusdb" --format=c --large-objects --section=pre-data --section=data --section=post-data --verbose "nexus_db"
 
 
-UPDATE shipment_details AS sd
-JOIN order_details AS od ON od.id = sd.order_detail_id
-JOIN orders AS o ON o.id = od.order_id
-JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
-SET sd.payment_term_id = 7
-WHERE fsd.ex_factory_date >= '2026-01-01'
-    AND sd.payment_term_id = 29
-    AND o.buyer_id = 8;
+// Restore To local server
+"C:\Program Files\PostgreSQL\13\bin\psql.exe" -h 192.168.33.2 -p 5432 -U musfiq -d nexus_db -f "E:\Downloads\pg_dump\pg_backup_07_09_2026.sql"
 
 
-UPDATE shipment_details AS sd
-JOIN order_details AS od ON od.id = sd.order_detail_id
-JOIN orders AS o ON o.id = od.order_id
-JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
-SET sd.payment_term_id = 7
-WHERE fsd.ex_factory_date >= '2026-01-01'
-    AND sd.payment_term_id = 19
-    AND o.buyer_id IN (25, 15, 14);
-
-
-
-UPDATE shipment_details AS sd
-JOIN order_details AS od ON od.id = sd.order_detail_id
-JOIN orders AS o ON o.id = od.order_id
-JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
-SET sd.payment_term_id = 7
-WHERE fsd.ex_factory_date >= '2026-01-01'
-    AND sd.payment_term_id = 31
-    AND o.buyer_id IN (8, 33, 23, 29, 39, 34);
-
-
-UPDATE shipment_details AS sd
-JOIN order_details AS od ON od.id = sd.order_detail_id
-JOIN orders AS o ON o.id = od.order_id
-JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
-SET sd.payment_term_id = 7
-WHERE fsd.ex_factory_date >= '2026-01-01'
-    AND sd.payment_term_id = 34
-    AND o.buyer_id IN (35);
-
-
-UPDATE shipment_details AS sd
-JOIN order_details AS od ON od.id = sd.order_detail_id
-JOIN orders AS o ON o.id = od.order_id
-JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
-SET sd.payment_term_id = 7
-WHERE fsd.ex_factory_date >= '2026-01-01'
-    AND sd.payment_term_id = 45
-    AND o.buyer_id = 38;
-
-
-UPDATE shipment_details AS sd
-JOIN order_details AS od ON od.id = sd.order_detail_id
-JOIN orders AS o ON o.id = od.order_id
-JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
-SET sd.payment_term_id = 42
-WHERE fsd.ex_factory_date >= '2026-01-01'
-    AND sd.payment_term_id = 18
-    AND o.buyer_id = 13;
-
-
-
-UPDATE shipment_details AS sd
-JOIN order_details AS od ON od.id = sd.order_detail_id
-JOIN orders AS o ON o.id = od.order_id
-JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
-SET sd.payment_term_id = 27
-WHERE fsd.ex_factory_date >= '2026-01-01'
-    AND sd.payment_term_id = 18
-    AND o.buyer_id = 10;
-
-
-
-UPDATE shipment_details AS sd
-JOIN order_details AS od ON od.id = sd.order_detail_id
-JOIN orders AS o ON o.id = od.order_id
-JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
-SET sd.payment_term_id = 52
-WHERE fsd.ex_factory_date >= '2026-01-01'
-    AND sd.payment_term_id = 36
-    AND o.buyer_id = 4;
-
-
-UPDATE shipment_details AS sd
-JOIN order_details AS od ON od.id = sd.order_detail_id
-JOIN orders AS o ON o.id = od.order_id
-JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
-SET sd.payment_term_id = 47
-WHERE fsd.ex_factory_date >= '2026-01-01'
-    AND sd.payment_term_id = 44
-    AND o.buyer_id = 21;
-
-
-UPDATE shipment_details AS sd
-JOIN order_details AS od ON od.id = sd.order_detail_id
-JOIN orders AS o ON o.id = od.order_id
-JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
-SET sd.payment_term_id = 34
-WHERE fsd.ex_factory_date >= '2026-01-01'
-    AND sd.payment_term_id = 7
-    AND o.buyer_id IN (40, 27);
-
-
-UPDATE shipment_details AS sd
-JOIN order_details AS od ON od.id = sd.order_detail_id
-JOIN orders AS o ON o.id = od.order_id
-JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
-SET sd.payment_term_id = 28
-WHERE fsd.ex_factory_date >= '2026-01-01'
-    AND sd.payment_term_id = 7
-    AND o.buyer_id = 41;
-
-
-UPDATE shipment_details AS sd
-JOIN order_details AS od ON od.id = sd.order_detail_id
-JOIN orders AS o ON o.id = od.order_id
-JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
-SET sd.payment_term_id = 33
-WHERE fsd.ex_factory_date >= '2026-01-01'
-    AND sd.payment_term_id = 41
-    AND o.buyer_id = 10;
-
-
-UPDATE shipment_details AS sd
-JOIN order_details AS od ON od.id = sd.order_detail_id
-JOIN orders AS o ON o.id = od.order_id
-JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
-SET sd.payment_term_id = 33
-WHERE fsd.ex_factory_date >= '2026-01-01'
-    AND sd.payment_term_id = 26
-    AND o.buyer_id = 10;
-
-
-
-UPDATE shipment_details AS sd
-JOIN order_details AS od ON od.id = sd.order_detail_id
-JOIN orders AS o ON o.id = od.order_id
-JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
-SET sd.payment_term_id = 33
-WHERE fsd.ex_factory_date >= '2026-01-01'
-    AND sd.payment_term_id = 46
-    AND o.buyer_id = 10;
-
-
-
-UPDATE shipment_details AS sd
-JOIN order_details AS od ON od.id = sd.order_detail_id
-JOIN orders AS o ON o.id = od.order_id
-JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
-SET sd.payment_term_id = 52
-WHERE fsd.ex_factory_date >= '2026-01-01'
-    AND sd.payment_term_id = 22
-    AND o.buyer_id = 4;
-
-
-UPDATE shipment_details AS sd
-JOIN order_details AS od ON od.id = sd.order_detail_id
-JOIN orders AS o ON o.id = od.order_id
-JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
-SET sd.payment_term_id = 47
-WHERE fsd.ex_factory_date >= '2026-01-01'
-    AND sd.payment_term_id = 43
-    AND o.buyer_id = 21;
-
-
-UPDATE shipment_details AS sd
-JOIN order_details AS od ON od.id = sd.order_detail_id
-JOIN orders AS o ON o.id = od.order_id
-JOIN factory_shipment_details AS fsd ON fsd.shipment_detail_id = sd.id
-SET sd.payment_term_id = 33
-WHERE fsd.ex_factory_date >= '2026-01-01'
-    AND sd.payment_term_id = 34
-    AND o.buyer_id = 10;
-
-
-
-SELECT * FROM sales_contract_headers where sales_contract_no in (
-	'RDL/SC/MARIS/AL /24/031',
-	'RDL/SC/RCHLO/KIM/24/391',
-	'RDL/SC/COG/SIL/25/096',
-	'RDL/SC/KMD/REN/25/275'
-);
+// Restore To live server
+"C:\Program Files\PostgreSQL\13\bin\psql.exe" -h 192.168.21.253 -p 5432 -U rdlnexusdb -d nexus_db -f "E:\Downloads\pg_dump\pg_backup_07_09_2026.sql"
 ```
 
+```sql
+UPDATE shipment_details AS sd
+SET payment_term_id = 61
+FROM order_styles AS os
+INNER JOIN buyer_orders AS bo ON bo.id = os.order_id
+INNER JOIN exfactory_orders AS EO ON EO.order_id = bo.id
+INNER JOIN exfactory AS E ON E.id = EO.exfactory_id
+WHERE os.id = sd.order_style_id
+  AND sd.payment_term_id = 49
+  AND bo.buyer_id = 75
+  AND E.exfactory_date >= '2026-01-01';
+```

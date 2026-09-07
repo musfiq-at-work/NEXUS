@@ -828,7 +828,12 @@ export const commissionInvoiceRouter = createTRPCRouter({
                                     SELECT
                                         RISD.RDL_INVOICE_DETAILS_ID AS RIDID,
                                         SUM(RISD.INVOICE_QUANTITY) AS INVOICE_QUANTITY,
-                                        FSD.factory_rate * SUM(RISD.INVOICE_QUANTITY) AS INVOICE_VALUE
+                                        -- FSD.factory_rate * SUM(RISD.INVOICE_QUANTITY) AS INVOICE_VALUE
+                                        CASE 
+                                            WHEN COALESCE(FSD.transfer_rate, 0) <> 0
+                                                THEN FSD.transfer_rate * SUM(RISD.INVOICE_QUANTITY)
+                                            ELSE FSD.factory_rate * SUM(RISD.INVOICE_QUANTITY)
+                                        END AS INVOICE_VALUE
                                     FROM rdl_invoice_shipment_details AS RISD
                                         INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = RISD.shipment_details_id
                                     GROUP BY RISD.RDL_INVOICE_DETAILS_ID, FSD.factory_rate, FSD.transfer_rate
