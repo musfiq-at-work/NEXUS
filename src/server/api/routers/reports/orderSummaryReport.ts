@@ -120,10 +120,11 @@ export const orderSummaryReportRouter = createTRPCRouter({
                     EXFAC_SHIPMENT AS (
                         SELECT 
                             ES.shipment_details_id AS ESSDI,
+                            ES.exfactory_orders_id AS ESEOD,
                             SUM(ES.delivery_quantity) AS delivery_quantity,
                             BOOL_AND(ES.PO_CLOSE) AS PO_CLOSE
                         FROM exfactory_shipments AS ES 
-                        GROUP BY ES.shipment_details_id
+                        GROUP BY ES.shipment_details_id, ES.exfactory_orders_id
                     )
                     SELECT
                         BO.ref_no AS "ORDER_NO",
@@ -149,7 +150,10 @@ export const orderSummaryReportRouter = createTRPCRouter({
                         ES.delivery_quantity AS "DELIVERY_QUANTITY",
                         SD.FOB_RATE / COALESCE(BO.currency_rate, 1) AS "FOB_RATE",
                         FSD.FACTORY_RATE / COALESCE(FO.currency_rate, 1) AS "FACTORY_RATE",
-                        ES.PO_CLOSE AS "PO_CLOSE",
+                        CASE 
+                            WHEN ES.PO_CLOSE THEN 'CLOSED'
+                            ELSE 'OPEN'
+                        END AS "PO_CLOSE",
                         IID.IID_QUANTITY * SD.FOB_RATE / COALESCE(BO.currency_rate, 1) AS "ORDER_RDL_VALUE",
                         ES.delivery_quantity * SD.FOB_RATE / COALESCE(BO.currency_rate, 1) AS "DELIVERED_RDL_VALUE",
                         IID.IID_QUANTITY * FSD.FACTORY_RATE / COALESCE(FO.currency_rate, 1) AS "FACTORY_ORDER_VALUE",
@@ -173,7 +177,7 @@ export const orderSummaryReportRouter = createTRPCRouter({
                         INNER JOIN factory_shipment_details AS FSD ON FSD.shipment_detail_id = SD.id
                         INNER JOIN TEAMS AS T ON T.ID = BO.team_id
                         ${joinTypeRaw} JOIN EXFAC_SHIPMENT AS ES ON ES.ESSDI = SD.id
-                        ${joinTypeRaw} JOIN exfactory_orders AS EO ON EO.order_id = BO.id
+                        ${joinTypeRaw} JOIN exfactory_orders AS EO ON EO.id = ES.ESEOD
                         ${joinTypeRaw} JOIN exfactory AS E ON E.id = EO.exfactory_id
                     WHERE ${dateFilter}
                     AND ${filterClause}

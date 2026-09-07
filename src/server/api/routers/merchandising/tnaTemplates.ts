@@ -578,7 +578,8 @@ export const tnaTemplatesRouter = createTRPCRouter({
                         INNER JOIN BUYER_ORDERS AS BO 
                             ON BO.BUYER_ID = TT.BUYER_ID
                             AND BO.TEAM_ID = TT.TEAM_ID
-                    WHERE BO.ID = ${input.order_id};
+                    WHERE BO.ID = ${input.order_id}
+                    AND TT.added_at >= '2026-05-07';
                 `;
 
                 return templates;
