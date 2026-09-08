@@ -54,7 +54,10 @@ const SalesContractPDF = ({ data }: { data: GetPDFDataOutput }) => {
                 </View>
 
                 {!data.hasAmendment && (
-                    <SalesContractCommissionTable data={data.nonAmendData ?? []} />
+                    <SalesContractCommissionTable
+                        data={data.nonAmendData ?? []}
+                        grandTotal={data.grandTotal}
+                    />
                 )}
 
                 {data.hasAmendment && (
@@ -68,6 +71,7 @@ const SalesContractPDF = ({ data }: { data: GetPDFDataOutput }) => {
                         return (
                             <SalesContractCommissionTable key={index} 
                                 data={[row]} 
+                                grandTotal={amendment.grandTotal}
                                 amendment_no={amendment.amendment_no ?? undefined} 
                                 amendment_date={amendment.amendment_date} 
                             />

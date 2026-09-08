@@ -1613,6 +1613,16 @@ export const salesContractsRouter = createTRPCRouter({
 
                 let nonAmendData = null;
                 let amendData = null;
+                let grandTotal = {
+                    qty: 0,
+                    rdl: 0,
+                    factory: 0,
+                    comm: 0,
+                    dhaka: 0,
+                    overseas: 0,
+                    others: 0,
+                };
+                let grandTotalResults = null;
 
                 if(!hasAmendment) {
                     const orderDataObj = await ctx.db.sales_contracts.findUnique({
@@ -1677,8 +1687,8 @@ export const salesContractsRouter = createTRPCRouter({
                     });
 
                         
-                    const currencySymbol =
-                        orderDataObj?.sales_contract_details?.[0]?.buyer_orders?.order_styles?.[0]?.shipment_details?.[0]?.factory_shipment_details?.[0]?.factory_orders?.currencies?.symbol ??
+                    const currencySymbol = orderDataObj?.sales_contract_details?.[0]?.buyer_orders?.order_styles?.[0]
+                        ?.shipment_details?.[0]?.factory_shipment_details?.[0]?.factory_orders?.currencies?.symbol ??
                         '$';
 
                     nonAmendData = orderDataObj?.sales_contract_details?.map(detail => {
@@ -1730,35 +1740,51 @@ export const salesContractsRouter = createTRPCRouter({
                             }) || []
                         ) || [];
 
-                    const totals = shipmentRows.reduce(
-                        (acc, item) => {
-                            acc.qty += item.raw.totalQty;
-                            acc.rdl += item.raw.rdlVal;
-                            acc.factory += item.raw.factoryVal;
-                            acc.comm += item.raw.commVal;
-                            acc.dhaka += item.raw.dhakaComm;
-                            acc.overseas += item.raw.overseasComm;
-                            acc.others += item.raw.othersComm;
-                            return acc;
-                        },
-                        {
-                            qty: 0,
-                            rdl: 0,
-                            factory: 0,
-                            comm: 0,
-                            dhaka: 0,
-                            overseas: 0,
-                            others: 0,
-                        }
-                    );
+                        const totals = shipmentRows.reduce(
+                            (acc, item) => {
+                                acc.qty += item.raw.totalQty;
+                                acc.rdl += item.raw.rdlVal;
+                                acc.factory += item.raw.factoryVal;
+                                acc.comm += item.raw.commVal;
+                                acc.dhaka += item.raw.dhakaComm;
+                                acc.overseas += item.raw.overseasComm;
+                                acc.others += item.raw.othersComm;
+                                return acc;
+                            },
+                            {
+                                qty: 0,
+                                rdl: 0,
+                                factory: 0,
+                                comm: 0,
+                                dhaka: 0,
+                                overseas: 0,
+                                others: 0,
+                            }
+                        );
 
-                    return {
-                        ref_no: detail.buyer_orders?.ref_no,
-
-                        shipment_details: shipmentRows.map(item => item.row),
-
-                        results: {
+                        const grandTotal = {
                             totalQuantity: quantityFormatter(totals.qty),
+                            totalRdlValue: currencyFormatter(totals.rdl, currencySymbol),
+                            totalFactoryValue: currencyFormatter(totals.factory, currencySymbol),
+                            commissionPercentage: `${totals.rdl ? ((totals.comm / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
+                            totalCommissionValue: currencyFormatter(totals.comm, currencySymbol),
+                            totalDhakaCommission: currencyFormatter(totals.dhaka, currencySymbol),
+                            totalDhakaCommissionPercentage: `${totals.rdl ? ((totals.dhaka / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
+                            totalOverseasCommission: currencyFormatter(totals.overseas, currencySymbol),
+                            totalOverseasCommissionPercentage: `${totals.rdl ? ((totals.overseas / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
+                            totalOthersCommission: currencyFormatter(totals.others, currencySymbol),
+                            totalOthersCommissionPercentage: `${totals.rdl ? ((totals.others / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
+                        };
+
+                        return {
+                            ref_no: detail.buyer_orders?.ref_no,
+
+                            shipment_details: shipmentRows.map(item => item.row),
+
+                            totals: totals,
+
+                            results: {
+                                totalQuantity: quantityFormatter(totals.qty),
                                 totalRdlValue: currencyFormatter(totals.rdl,currencySymbol),
                                 totalFactoryValue: currencyFormatter(totals.factory,currencySymbol),
                                 commissionPercentage: `${totals.rdl? ((totals.comm / totals.rdl) * 100).toFixed(2) : '0.00'}%`,
@@ -1772,6 +1798,34 @@ export const salesContractsRouter = createTRPCRouter({
                             },
                         };
                     }) || [];
+
+                    grandTotal = nonAmendData.reduce(
+                        (acc, detail) => {
+                            acc.qty += detail.totals.qty;
+                            acc.rdl += detail.totals.rdl;
+                            acc.factory += detail.totals.factory;
+                            acc.comm += detail.totals.comm;
+                            acc.dhaka += detail.totals.dhaka;
+                            acc.overseas += detail.totals.overseas;
+                            acc.others += detail.totals.others;
+                            return acc;
+                        },
+                        grandTotal
+                    );
+
+                    grandTotalResults = {
+                        totalQuantity: quantityFormatter(grandTotal.qty),
+                        totalRdlValue: currencyFormatter(grandTotal.rdl, currencySymbol),
+                        totalFactoryValue: currencyFormatter(grandTotal.factory, currencySymbol),
+                        commissionPercentage: `${grandTotal.rdl ? ((grandTotal.comm / grandTotal.rdl) * 100).toFixed(2) : "0.00"}%`,
+                        totalCommissionValue: currencyFormatter(grandTotal.comm, currencySymbol),
+                        totalDhakaCommission: currencyFormatter(grandTotal.dhaka, currencySymbol),
+                        totalDhakaCommissionPercentage: `${grandTotal.rdl ? ((grandTotal.dhaka / grandTotal.rdl) * 100).toFixed(2) : "0.00"}%`,
+                        totalOverseasCommission: currencyFormatter(grandTotal.overseas, currencySymbol),
+                        totalOverseasCommissionPercentage: `${grandTotal.rdl ? ((grandTotal.overseas / grandTotal.rdl) * 100).toFixed(2) : "0.00"}%`,
+                        totalOthersCommission: currencyFormatter(grandTotal.others, currencySymbol),
+                        totalOthersCommissionPercentage: `${grandTotal.rdl ? ((grandTotal.others / grandTotal.rdl) * 100).toFixed(2) : "0.00"}%`,
+                    };
                 }
                 else {
                     const orderDataObj = await ctx.db.sales_contract_amendment.findMany({
@@ -1905,11 +1959,27 @@ export const salesContractsRouter = createTRPCRouter({
                             }
                         );
 
+                        const amendmentGrandTotal = {
+                            totalQuantity: quantityFormatter(totals.qty),
+                            totalRdlValue: currencyFormatter(totals.rdl, currencySymbol),
+                            totalFactoryValue: currencyFormatter(totals.factory, currencySymbol),
+                            commissionPercentage: `${totals.rdl ? ((totals.comm / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
+                            totalCommissionValue: currencyFormatter(totals.comm, currencySymbol),
+                            totalDhakaCommission: currencyFormatter(totals.dhaka, currencySymbol),
+                            totalDhakaCommissionPercentage: `${totals.rdl ? ((totals.dhaka / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
+                            totalOverseasCommission: currencyFormatter(totals.overseas, currencySymbol),
+                            totalOverseasCommissionPercentage: `${totals.rdl ? ((totals.overseas / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
+                            totalOthersCommission: currencyFormatter(totals.others, currencySymbol),
+                            totalOthersCommissionPercentage: `${totals.rdl ? ((totals.others / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
+                        };
+
                         return {
                             amendment_no: amendment.amendment_no,
                             amendment_date: amendment.amendment_date,
                             ref_no: amendment.sales_contract_amendment_details?.[0]?.buyer_orders?.ref_no,
                             shipment_details: shipmentRows.map(item => item.row),
+                            totals: totals,
+                            grandTotal: amendmentGrandTotal,
                             results: {
                                 totalQuantity: quantityFormatter(totals.qty),
                                 totalRdlValue: currencyFormatter( totals.rdl, currencySymbol),
@@ -1927,7 +1997,7 @@ export const salesContractsRouter = createTRPCRouter({
                     });
                 }
 
-                return { pdfHeader, hasAmendment: !!hasAmendment, amendData, nonAmendData };
+                return { pdfHeader, hasAmendment: !!hasAmendment, amendData, nonAmendData, grandTotal: grandTotalResults };
             }
             catch (error) {
                 await logError(error, ctx, input);

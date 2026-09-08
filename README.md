@@ -23,9 +23,7 @@ This code follows the [Atomic Design Methodology](https://atomicdesign.bradfrost
 ```bash
 ssh rdlerpadmin@192.168.21.253 -p 60011
 
-
-
-docker run -p 7000:7000 -e DATABASE_URL="postgresql://rdlnexusdb:R%26DL394%25%25348Gm%23@192.168.21.253:5432/nexus_db" -e SHADOW_DATABASE_URL="postgresql://musfiq:Musfiquer%263468%23%23@192.168.33.2:5400/nexus_shadow_db" -e JWT_SECRET="xU7i7z9U4y8oVLSe0Pti00k9o2fb0phPWQuf4Dx8RumEC0K7lZOyCDUEHy6WubkS" nexus 
+docker run -p 7000:7000 -e DATABASE_URL="postgresql://rdlnexusdb:<USER>:<PASSWORD>@192.168.21.253:5432/nexus_db" -e SHADOW_DATABASE_URL="postgresql://<USER>:<PASSWORD>@192.168.33.2:5400/nexus_shadow_db" -e JWT_SECRET="<SECRET>" nexus 
 ```
 
 ###### Login to psql
@@ -184,7 +182,7 @@ docker compose up -d
 
 docker build -t nexus .
 
-docker run -p 60005:60005 -e DATABASE_URL="postgresql://musfiq:Musfiquer%263468%23%23@192.168.33.4:5432/nexus_db" -e SHADOW_DATABASE_URL="postgresql://musfiq:Musfiquer%263468%23%23@192.168.33.4:5432/nexus_db" -e JWT_SECRET="xU7i7z9U4y8oVLSe0Pti00k9o2fb0phPWQuf4Dx8RumEC0K7lZOyCDUEHy6WubkS" nexus 
+docker run -p 60005:60005 -e DATABASE_URL="postgresql://musfiq:<USER>:<PASSWORD>@192.168.33.4:5432/nexus_db" -e SHADOW_DATABASE_URL="postgresql://<USER>:<PASSWORD>/nexus_db" -e JWT_SECRET="<SECRET>" nexus 
 ```
 
 # Data Migration Steps for first production push
@@ -219,7 +217,7 @@ npx prisma migrate diff --from-migrations prisma/migrations --to-schema prisma/s
 
 #### Then apply to production (cmd)
 ```bash
-"C:\Program Files\PostgreSQL\13\bin\psql.exe" -f "F:\RDL NEXUS\nexus\prisma\migrations\2026_08_30_production_changes\migration.sql" "postgresql://rdlnexusdb:R%26DL394%25%25348Gm%23@192.168.21.253:5432/nexus_db"
+"C:\Program Files\PostgreSQL\13\bin\psql.exe" -f "F:\RDL NEXUS\nexus\prisma\migrations\2026_08_30_production_changes\migration.sql" "postgresql://<USER>:<PASSWORD>@192.168.21.253:5432/nexus_db"
 ```
 
 #### check migration status
@@ -249,8 +247,6 @@ npx prisma migrate deploy
 
 #### Backup and Restore DB
 ```bash
-set "PGPASSWORD=R&DL394%%348Gm#"
-
 // SQL Format (in use)
 "G:\RUN\PostgresSQL\pgAdmin 4\runtime\pg_dump.exe" --file "E:\Downloads\pg_dump\pg_backup_07_09_2026.sql" --host "192.168.21.253" --port "5432" --username "rdlnexusdb" --section=pre-data --section=data --section=post-data --verbose "nexus_db"
 
