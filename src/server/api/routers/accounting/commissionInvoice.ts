@@ -692,34 +692,33 @@ export const commissionInvoiceRouter = createTRPCRouter({
 
                 await Promise.all([
                     headerData = await ctx.db.$queryRaw<PDFHeaderData[]>`
-                        WITH LC AS (
+                        WITH DS AS (
                             SELECT 
-                                LC.ID,
-                                LC.LC_NO AS LC_NO,
+                                DS.FDBC_NO,
+                                DS.ID AS DEID,
                                 MAX(E.EXFACTORY_DATE) AS EXFACTORY_DATE
-                            FROM LC_MASTER AS LC
-                                INNER JOIN lc_orders AS LO ON LO.lc_master_id = LC.id
-                                INNER JOIN lc_shipments AS LCS ON LCS.lc_order_id = LO.id
-                                INNER JOIN shipment_details AS SD ON SD.id = LCS.shipment_details_id
-                                INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = SD.id
+                            FROM document_submissions AS DS
+                                INNER JOIN document_submissions_details AS DSD ON DSD.document_submissions_id = DS.id
+                                INNER JOIN document_submission_factory_invoices AS DSFD ON DSFD.document_submissions_details_id = DSD.id
+                                INNER JOIN factory_invoice AS FI ON FI.id = DSFD.factory_invoice_id
+                                INNER JOIN factory_invoice_details AS FID ON FID.factory_invoice_id = FI.id
+                                INNER JOIN exfactory_shipments AS ES ON ES.id = FID.exfactory_shipment_id
                                 INNER JOIN exfactory_orders AS EO ON EO.id = ES.exfactory_orders_id
                                 INNER JOIN exfactory AS E ON E.id = EO.exfactory_id
-                            GROUP BY LC.ID
+                            GROUP BY DS.ID
                         ),
-                        SC AS (
-                            SELECT
-                                SC.ID,
-                                SC.SALES_CONTRACT_NO AS SALES_CONTRACT_NO,
-                                MAX(E.EXFACTORY_DATE) AS EXFACTORY_DATE
-                            FROM SALES_CONTRACTS AS SC
-                                INNER JOIN sales_contract_details AS SCD ON SCD.sales_contract_id = SC.id
-                                INNER JOIN buyer_orders AS BO ON BO.id = SCD.order_id
-                                INNER JOIN order_styles AS OS ON OS.order_id = SCD.order_id
-                                INNER JOIN shipment_details AS SD ON SD.order_style_id = OS.id
-                                INNER JOIN exfactory_shipments AS ES ON ES.shipment_details_id = SD.id
+                        RDL_INV AS (
+                            SELECT 
+                                RI.ID AS RIID,
+                                MAX(E.EXFACTORY_DATE) AS EXFACTORY_DATE 
+                            FROM rdl_invoice AS RI
+                                INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
+                                INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
+                                INNER JOIN factory_invoice_details AS FID ON FID.factory_invoice_id = FI.id
+                                INNER JOIN exfactory_shipments AS ES ON ES.id = FID.exfactory_shipment_id
                                 INNER JOIN exfactory_orders AS EO ON EO.id = ES.exfactory_orders_id
                                 INNER JOIN exfactory AS E ON E.id = EO.exfactory_id
-                            GROUP BY SC.ID
+                            GROUP BY RI.ID
                         )
                         SELECT
                             T.name AS TERM_NAME,
@@ -729,17 +728,18 @@ export const commissionInvoiceRouter = createTRPCRouter({
                             B.NAME AS BANK_NAME,
                             LC.LC_NO,
                             SC.SALES_CONTRACT_NO,
-                            LC.EXFACTORY_DATE AS lc_exfactory_date,
-                            SC.EXFACTORY_DATE AS sc_exfactory_date,
+                            DS.EXFACTORY_DATE AS lc_exfactory_date,
+                            RI.EXFACTORY_DATE AS sc_exfactory_date,
                             DS.FDBC_NO
                         FROM commission_invoice AS CI
                             INNER JOIN company_banks AS CB ON CB.id = CI.company_bank_id
                             INNER JOIN banks AS B ON B.id = CB.bank_id
                             INNER JOIN TERMS AS T ON T.id = CI.term_id
                             INNER JOIN BUYERS AS BU ON BU.id = CI.buyer_id
-                            LEFT JOIN LC ON LC.ID = CI.LC_ID AND T.NAME = 'LC'
-                            LEFT JOIN SC ON SC.ID = CI.sales_contract_id AND T.NAME = 'TT'
-                            LEFT JOIN document_submissions AS DS ON DS.id = CI.document_submission_id AND T.NAME = 'LC'
+                            LEFT JOIN LC_MASTER AS LC ON LC.ID = CI.LC_ID AND T.NAME = 'LC'
+                            LEFT JOIN SALES_CONTRACTS AS SC ON SC.ID = CI.sales_contract_id AND T.NAME = 'TT'
+                            LEFT JOIN DS ON DS.DEID = CI.document_submission_id AND T.NAME = 'LC'
+                            LEFT JOIN RDL_INV AS RI ON RI.RIID = CI.rdl_invoice_id AND T.NAME = 'TT'
                         WHERE CI.id = ${input.id};
                     `,
 

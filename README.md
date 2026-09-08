@@ -265,7 +265,16 @@ set "PGPASSWORD=R&DL394%%348Gm#"
 
 // Restore To live server
 "C:\Program Files\PostgreSQL\13\bin\psql.exe" -h 192.168.21.253 -p 5432 -U rdlnexusdb -d nexus_db -f "E:\Downloads\pg_dump\pg_backup_07_09_2026.sql"
+
+
+// Copy photos to a backup folder in the server
+docker cp f774b3399547:/app/public/uploads/style_photos ~/backup/
+
+// copy it to the local pc
+scp -P 60011 -r rdlerpadmin@192.168.21.253:~/backup/style_photos "E:\backup\04_09_2026"
 ```
+
+
 
 ```sql
 UPDATE shipment_details AS sd

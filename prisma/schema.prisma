@@ -280,9 +280,9 @@ model user_sessions {
   ip            String?   @db.Inet
   browser       String?
   login_time    DateTime? @default(now()) @db.Timestamptz(6)
+  device_id     String?
   expire_date   DateTime? @default(dbgenerated("(CURRENT_TIMESTAMP + '18:00:00'::interval)")) @db.Timestamptz(6)
   logout_at     DateTime? @db.Timestamptz(6)
-  device_id     String?
   users         users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
@@ -1584,15 +1584,15 @@ model tna_templates {
   id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   old_pk               Int?
   template_name        String
-  buyer_id             Int
+  buyer_id             Int?
   old_buyer_id         Int?
   added_at             DateTime?              @default(now()) @db.Timestamp(6)
-  team_id              Int
+  team_id              Int?
   old_team_id          Int?
   tna_plans            tna_plans[]
   tna_template_actions tna_template_actions[]
-  teams                teams                  @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_foreign_key")
-  buyers               buyers                 @relation(fields: [buyer_id], references: [id], onUpdate: NoAction)
+  teams                teams?                 @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_foreign_key")
+  buyers               buyers?                @relation(fields: [buyer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
 }
 
 model tna_templates_history {
@@ -1786,9 +1786,9 @@ model sales_contracts {
   sales_contract_date                                              DateTime                              @db.Date
   sales_contract_no                                                String                                @unique(map: "unique_sales_contract_no") @db.VarChar(50)
   old_currency_id                                                  Int?
-  buyer_bank_id                                                    Int
+  buyer_bank_id                                                    Int?
   old_buyer_bank_id                                                Int?
-  supplier_bank_id                                                 Int
+  supplier_bank_id                                                 Int?
   old_supplier_bank_id                                             Int?
   rdl_bank_id                                                      Int
   old_rdl_bank_id                                                  Int?
@@ -1815,7 +1815,7 @@ model sales_contracts {
   sales_contract_amendment_no_metadata                             sales_contract_amendment_no_metadata?
   sales_contract_consignees                                        sales_contract_consignees[]
   sales_contract_details                                           sales_contract_details[]
-  buyer_banks                                                      buyer_banks                           @relation(fields: [buyer_bank_id], references: [id], onUpdate: NoAction)
+  buyer_banks                                                      buyer_banks?                          @relation(fields: [buyer_bank_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   buyers                                                           buyers                                @relation(fields: [buyer_id], references: [id], onUpdate: NoAction)
   companies                                                        companies?                            @relation(fields: [company_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   sales_contract_contact_person                                    sales_contract_contact_person?        @relation(fields: [contact_person_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
@@ -1824,7 +1824,7 @@ model sales_contracts {
   company_banks_sales_contracts_negotiation_bank_idTocompany_banks company_banks                         @relation("sales_contracts_negotiation_bank_idTocompany_banks", fields: [negotiation_bank_id], references: [id], onUpdate: NoAction)
   destinations                                                     destinations?                         @relation(fields: [port_of_loading_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   company_banks_sales_contracts_rdl_bank_idTocompany_banks         company_banks                         @relation("sales_contracts_rdl_bank_idTocompany_banks", fields: [rdl_bank_id], references: [id], onUpdate: NoAction)
-  factory_bank                                                     factory_bank                          @relation(fields: [supplier_bank_id], references: [id], onUpdate: NoAction)
+  factory_bank                                                     factory_bank?                         @relation(fields: [supplier_bank_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
 }
 
 model sales_contracts_history {
@@ -2310,7 +2310,7 @@ model factory_invoice {
   id                                   String                                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   factory_id                           Int
   old_factory_id                       Int?
-  invoice_no                           String                                 @db.VarChar(50)
+  invoice_no                           String                                 @unique(map: "unique_factory_invoice_no") @db.VarChar(50)
   invoice_date                         DateTime?                              @default(dbgenerated("CURRENT_DATE")) @db.Date
   term_id                              Int
   sales_contract_id                    String?                                @db.Uuid
@@ -2785,8 +2785,8 @@ model factory_payment_header {
   old_document_submission_id Int?
   remarks                    String?
   added_at                   DateTime?             @default(now()) @db.Timestamp(6)
-  rdl_invoice_id             String?               @db.Uuid
   old_rdl_invoice_id         Int?
+  rdl_invoice_id             String?               @db.Uuid
   document_submissions       document_submissions? @relation(fields: [document_submission_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   rdl_invoice                rdl_invoice?          @relation(fields: [rdl_invoice_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
 }
