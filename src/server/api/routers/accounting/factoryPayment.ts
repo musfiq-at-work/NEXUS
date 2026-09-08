@@ -361,7 +361,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                             LEFT JOIN LC_PAYMENT AS LC_PAY ON PR.term_id = ${LC_ID} AND LC_PAY.document_submission_id = LCD.id
                             LEFT JOIN TT_INVOICE_COUNT AS TT_COUNT ON PR.term_id = ${TT_ID} AND TT_COUNT.rdl_invoice_id = TTD.RID
                             LEFT JOIN LC_INVOICE_COUNT AS LC_COUNT ON PR.term_id = ${LC_ID} AND LC_COUNT.document_submissions_id = LCD.id
-                            INNER JOIN buyers as B on B.id = proceed_realization.buyer_id
+                            INNER JOIN buyers as B on B.id = PR.buyer_id
                         WHERE (
                             EXISTS (
                                 SELECT 1

@@ -274,13 +274,15 @@ scp -P 60011 -r rdlerpadmin@192.168.21.253:~/backup/style_photos "E:\backup\04_0
 
 ```sql
 UPDATE shipment_details AS sd
-SET payment_term_id = 61
-FROM order_styles AS os
-INNER JOIN buyer_orders AS bo ON bo.id = os.order_id
-INNER JOIN exfactory_orders AS EO ON EO.order_id = bo.id
-INNER JOIN exfactory AS E ON E.id = EO.exfactory_id
+SET payment_term_id = 30
+FROM 
+    order_styles AS os, 
+    buyer_orders AS bo, 
+    factory_shipment_details AS fsd
 WHERE os.id = sd.order_style_id
-  AND sd.payment_term_id = 49
-  AND bo.buyer_id = 75
-  AND E.exfactory_date >= '2026-01-01';
+    AND bo.id = os.order_id
+    AND fsd.shipment_detail_id = sd.id
+    AND sd.payment_term_id = 47
+    AND bo.buyer_id = 100
+    AND fsd.exfactory_date >= '2025-01-01';
 ```
