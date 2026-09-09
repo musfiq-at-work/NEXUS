@@ -1,4 +1,4 @@
-import { useFieldArray, useForm } from "react-hook-form";
+import { Controller, useFieldArray, useForm } from "react-hook-form";
 import type { OrderFormValues } from "../config/formSchema";
 import type { useBuyerOrderForm } from "../config/useBuyerOrderForm";
 import { api } from "~/trpc/react";
@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { parseTRPCError } from "~/utils/parseTRPCError";
 import clsx from "clsx";
 import React from "react";
+import SelectField from "~/components/atoms/SelectField";
 
 type ColorForm = {
   color_id: string;
@@ -38,16 +39,24 @@ const ColorPopup = ({ onClose, colorOptions, methods, styleIndex, selectedShipme
       });
   
 
-  const { register, handleSubmit, reset } = useForm<ColorForm>({
+  const { register, handleSubmit, reset, control, setValue, watch } = useForm<ColorForm>({
     defaultValues: {
       color_id: "",
       quantity: 0,
     },
   });
 
+  const selectedColorId = watch("color_id") ?? "";
+
   const submitHandler = (data: ColorForm) => {
+    if (!data.color_id) {
+      toast.error("Please select a color first.");
+      return;
+    }
+
     addColors(data); // straight into RHF field array
     reset();
+    setValue("color_id", "", { shouldValidate: true });
   };
 
   const utils = api.useUtils();
@@ -76,7 +85,7 @@ const ColorPopup = ({ onClose, colorOptions, methods, styleIndex, selectedShipme
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white p-4 rounded-lg w-[420px] space-y-4">
+      <div className="p-4 rounded-lg w-[420px] space-y-4 bg-background">
         <h3 className="text-lg font-semibold">Colors</h3>
 
         {/* Existing colors */}
@@ -114,12 +123,25 @@ const ColorPopup = ({ onClose, colorOptions, methods, styleIndex, selectedShipme
           onSubmit={handleSubmit(submitHandler)}
           className="space-y-2 border-t pt-3 flex flex-col"
         >
-          <select disabled={disabled} {...register("color_id", { required: true })} className="px-4 py-2 border border-gray-accent rounded-lg flex-1">
-            <option value="">Select Color</option>
-            {colorOptions.map(color => (
-              <option key={color.id} value={color.id}>{color.name}</option>
-            ))}
-          </select>
+          <Controller
+            name="color_id"
+            control={control}
+            rules={{ required: true }}
+            render={({ field }) => (
+              <SelectField
+                options={colorOptions.map((color) => ({
+                  label: color.name,
+                  value: String(color.id),
+                }))}
+                value={field.value || null}
+                onChange={(value) => {
+                  field.onChange(value == null ? "" : String(value));
+                }}
+                disabled={disabled}
+                error={false}
+              />
+            )}
+          />
 
           <div className="flex flex-row gap-4 items-center">
             <label htmlFor="quantity">Quantity</label>
@@ -137,10 +159,11 @@ const ColorPopup = ({ onClose, colorOptions, methods, styleIndex, selectedShipme
             <button type="button" onClick={onClose} className="bg-red text-white px-4 py-2 rounded-lg">
               Close
             </button>
-            <button type="button" 
-              onClick={handleSubmit(submitHandler)} 
-              className={clsx("text-white px-4 py-2 rounded-lg", disabled ? "cursor-not-allowed bg-gray-accent" : "hover:cursor-pointer hover:bg-primary-dark bg-primary")} 
-              disabled={disabled}>
+            <button
+              type="submit"
+              className={clsx("text-white px-4 py-2 rounded-lg", disabled ? "cursor-not-allowed bg-gray-accent" : "hover:cursor-pointer hover:bg-primary-dark bg-primary")}
+              disabled={disabled}
+            >
               Add Color
             </button>
           </div>

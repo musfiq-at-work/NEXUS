@@ -407,6 +407,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                                     ON FI.id = DSFI.factory_invoice_id
                                 WHERE DSD2.document_submissions_id = PR.document_submission_id
                                     AND FI.invoice_no ILIKE '%' || ${input.query} || '%'
+                                    AND PR.term_id = ${LC_ID}
                             )
                             OR EXISTS (
                                 SELECT 1
@@ -415,6 +416,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                                     ON FI.id = RID.factory_invoice_id
                                 WHERE RID.rdl_invoice_id = TTD.RID
                                     AND FI.invoice_no ILIKE '%' || ${input.query} || '%'
+                                    AND PR.term_id = ${TT_ID}
                             )
                         )
                     ),

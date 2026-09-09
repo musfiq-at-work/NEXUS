@@ -33,6 +33,7 @@ export const orderSummaryReportRouter = createTRPCRouter({
             brandIds: z.array(z.number()).optional(),
             departmentIds: z.array(z.number()).optional(),
             seasonIds: z.array(z.number()).optional(),
+            teamIds: z.array(z.number()).optional(),
         }))
         .mutation(async ({ ctx, input }) => {
             const can_view = ctx.permissions[m.ORDER_SUMMARY_REPORT]?.can_view;
@@ -50,16 +51,19 @@ export const orderSummaryReportRouter = createTRPCRouter({
                 const brandIds = input.brandIds ?? [];
                 const departmentIds = input.departmentIds ?? [];
                 const seasonIds = input.seasonIds ?? [];
+                const teamIds = input.teamIds ?? [];
 
                 const isFactoryAll = factoryIds.includes(-1);
                 const isBrandAll = brandIds.includes(-1);
                 const isDepartmentAll = departmentIds.includes(-1);
                 const isSeasonAll = seasonIds.includes(-1);
+                const isTeamAll = teamIds.includes(-1);
 
                 const isFactorySelected = factoryIds.length > 0 && !isFactoryAll;
                 const isBrandSelected =  brandIds.length > 0 && !isBrandAll;
                 const isDepartmentSelected = departmentIds.length > 0 && !isDepartmentAll;
                 const isSeasonSelected = seasonIds.length > 0 && !isSeasonAll;
+                const isTeamSelected = teamIds.length > 0 && !isTeamAll;
 
                 const filters: Prisma.Sql[] = [];
                 let dateFilter: Prisma.Sql = Prisma.empty;
@@ -82,6 +86,10 @@ export const orderSummaryReportRouter = createTRPCRouter({
 
                 if (isSeasonSelected) {
                     filters.push(Prisma.sql`BO.season_id IN (${Prisma.join(seasonIds)})`);
+                }
+
+                if (isTeamSelected) {
+                    filters.push(Prisma.sql`T.ID IN (${Prisma.join(teamIds)})`);
                 }
 
                 const filterClause = filters.length > 0 ? Prisma.join(filters, " AND ") : Prisma.sql`1=1`;
@@ -192,7 +200,7 @@ export const orderSummaryReportRouter = createTRPCRouter({
                         OR EXISTS ( -- Team Member
                             SELECT 1
                             FROM TEAM_MEMBERS AS TM 
-                                INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
+                                INNER JOIN TEAMS AS T ON T.id = TM.team_id AND T.ID = BO.team_id 
                             WHERE T.BUYER_ID = B.id
                                 AND TM.USER_ID = ${ctx.user.id}
                         )

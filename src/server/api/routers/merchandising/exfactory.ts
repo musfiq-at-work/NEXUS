@@ -315,6 +315,19 @@ export const exFactoryRouter = createTRPCRouter({
                     message: "You do not have permission to add exfactory",
                 });
             }
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const minimumDate = new Date(today);
+            minimumDate.setDate(minimumDate.getDate() - 2);
+
+            if (input.exfactory_date < minimumDate) {
+                throw new TRPCError({
+                    code: "BAD_REQUEST",
+                    message: "Exfactory date cannot be more than 2 days behind today",
+                });
+            }
             
             try {
                 return await ctx.db.$transaction(async (tx) => {

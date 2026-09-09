@@ -174,7 +174,35 @@ export const proceedRealizationRouter = createTRPCRouter({
             }
             
             try {
+                // Order of action is very very important
                 await ctx.db.$transaction(async (tx) => {
+                    const realization = await tx.proceed_realization.findUnique({
+                        where: {
+                            id: input.id
+                        }
+                    });
+
+                    let factoryPayments: factory_payments[];
+
+                    // Get payment info before deleting the proceed details, otherwise broken relation return empty rows.
+                    if(realization?.term_id === 2) { // LC
+                        factoryPayments = await tx.factory_payments.findMany({
+                            where: {
+                                document_submission_id: realization.document_submission_id,
+                            }
+                        });
+                    }
+                    else { // TT
+                        factoryPayments = await tx.$queryRaw<factory_payments[]>`
+                            SELECT DISTINCT 
+                                fp.* 
+                            FROM factory_payments as fp
+                                INNER JOIN proceed_realization_details AS prd ON prd.rdl_invoice_id = fp.rdl_invoice_id
+                                INNER JOIN proceed_realization AS pr ON pr.id = prd.realization_id
+                            WHERE pr.id = ${input.id}
+                        `;
+                    }
+
                     const deletedDetails = await tx.proceed_realization_details.findMany({
                         where: {
                             realization_id: input.id,
@@ -205,30 +233,9 @@ export const proceedRealizationRouter = createTRPCRouter({
                         },
                     });
 
-                    let factoryPayments: factory_payments[];
-
-                    if(deletedRealization.term_id === 2) { // LC
-                        factoryPayments = await tx.factory_payments.findMany({
-                            where: {
-                                document_submission_id: deletedRealization.document_submission_id,
-                            }
-                        });
-                    }
-                    else { // TT
-                        factoryPayments = await tx.$queryRaw<factory_payments[]>`
-                            SELECT DISTINCT 
-                                fp.* 
-                            FROM factory_payments as fp
-                                INNER JOIN proceed_realization_details AS prd ON prd.rdl_invoice_id = fp.rdl_invoice_id
-                                INNER JOIN proceed_realization AS pr ON pr.id = prd.realization_id
-                            WHERE pr.id = ${deletedRealization.id}
-                        `;
-                    }
-
                     const rdlInvoiceIds = [
                         ...new Set(
-                            factoryPayments
-                                .map((payment) => payment.rdl_invoice_id)
+                            factoryPayments.map((payment) => payment.rdl_invoice_id)
                                 .filter((id): id is string => id !== null)
                         ),
                     ];

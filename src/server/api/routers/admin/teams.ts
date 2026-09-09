@@ -442,7 +442,16 @@ export const teamsRouter = createTRPCRouter({
             z.array(z.number().min(1))
         ).query(async ({ input, ctx }) => {
             const teams = await ctx.db.teams.findMany({
-                where: { buyer_id: { in: input } },
+                where: { 
+                    buyer_id: { 
+                        in: input 
+                    },
+                    team_members: {
+                        some: {
+                            user_id: ctx.user.id
+                        }
+                    }
+                },
                 select: {
                     id: true,
                     team_name: true,

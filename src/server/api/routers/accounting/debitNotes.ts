@@ -393,6 +393,7 @@ export const debitNotesRouter = createTRPCRouter({
                     },
                     create: {
                         year: currentYear,
+                        buyer_id: input.buyer_id,
                         last_ref: 1,
                     },
                 });

@@ -530,7 +530,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
                     create: {
                         year: currentYear,
                         buyer_id: input.buyer_id,
-                        last_ref: 0,
+                        last_ref: 1,
                     },
                 });
 
