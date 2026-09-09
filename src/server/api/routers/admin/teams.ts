@@ -4,6 +4,7 @@ import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions } from "@prisma/client";
+import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 
 export const teamsRouter = createTRPCRouter({
     getTeams: protectedProcedure
@@ -441,16 +442,23 @@ export const teamsRouter = createTRPCRouter({
         .input(
             z.array(z.number().min(1))
         ).query(async ({ input, ctx }) => {
+            const userLevel = ctx.user.level_id;
+            const userDepartment = ctx.user.department_id;
+
+            const isAdmin = (userLevel === ADMIN_LEVEL_ID && userDepartment === ADMIN_DEPARTMENT_ID);
+
             const teams = await ctx.db.teams.findMany({
                 where: { 
                     buyer_id: { 
                         in: input 
                     },
-                    team_members: {
-                        some: {
-                            user_id: ctx.user.id
+                    ...(!isAdmin && {
+                        team_members: {
+                            some: {
+                                user_id: ctx.user.id
+                            }
                         }
-                    }
+                    }),
                 },
                 select: {
                     id: true,
