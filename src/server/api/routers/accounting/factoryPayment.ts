@@ -237,14 +237,14 @@ export const factoryPaymentRouter = createTRPCRouter({
                     WITH TT_PROCEED AS (
                         SELECT
                             PRD.rdl_invoice_id,
-                            SUM(PRD.REALIZED_AMOUNT)::NUMERIC(18,2) AS REALIZED_AMOUNT
+                            SUM(PRD.REALIZED_AMOUNT)::NUMERIC(18, 2) AS REALIZED_AMOUNT
                         FROM proceed_realization_details AS PRD
                         GROUP BY PRD.rdl_invoice_id
                     ),
                     LC_PROCEED AS (
                         SELECT
                             PRD.realization_id AS PRD_ID,
-                            SUM(PRD.REALIZED_AMOUNT)::NUMERIC(18,2) AS REALIZED_AMOUNT
+                            SUM(PRD.REALIZED_AMOUNT)::NUMERIC(18, 2) AS REALIZED_AMOUNT
                         FROM proceed_realization_details AS PRD
                         GROUP BY PRD.realization_id
                     ),
@@ -254,33 +254,33 @@ export const factoryPaymentRouter = createTRPCRouter({
                             RI.ID AS RID,
                             RI.invoice_no
                         FROM proceed_realization_details AS PRD
-                            INNER JOIN rdl_invoice AS RI ON RI.id = PRD.rdl_invoice_id
+                        INNER JOIN rdl_invoice AS RI ON RI.id = PRD.rdl_invoice_id
                     ),
                     LC_DETAILS AS (
                         SELECT
                             DS.id,
                             DS.FDBC_NO
-                        FROM document_submissions AS DS     
+                        FROM document_submissions AS DS
                     ),
                     LC_INVOICE AS (
-                        SELECT 
+                        SELECT
                             DSD.document_submissions_id,
                             SUM(RISD.INVOICE_QUANTITY * SD.fob_rate)::NUMERIC(18, 2) AS TOTAL_INVOICE_VALUE
-                        FROM document_submissions_details AS DSD 
-                            INNER JOIN rdl_invoice AS RI ON RI.id = DSD.rdl_invoice_id
-                            INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
-                            INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
-                            INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
+                        FROM document_submissions_details AS DSD
+                        INNER JOIN rdl_invoice AS RI ON RI.id = DSD.rdl_invoice_id
+                        INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
+                        INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
+                        INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
                         GROUP BY DSD.document_submissions_id
                     ),
                     TT_INVOICE AS (
-                        SELECT 
+                        SELECT
                             RI.id,
                             SUM(RISD.INVOICE_QUANTITY * SD.fob_rate)::NUMERIC(18, 2) AS TOTAL_INVOICE_VALUE
                         FROM rdl_invoice AS RI
-                            INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
-                            INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
-                            INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
+                        INNER JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
+                        INNER JOIN rdl_invoice_shipment_details AS RISD ON RISD.rdl_invoice_details_id = RID.id
+                        INNER JOIN shipment_details AS SD ON SD.id = RISD.shipment_details_id
                         GROUP BY RI.id
                     ),
                     LC_PAYMENT AS (
@@ -292,67 +292,82 @@ export const factoryPaymentRouter = createTRPCRouter({
                         GROUP BY FP.document_submission_id
                     ),
                     TT_PAYMENT AS (
-                        SELECT  
+                        SELECT
                             RID.rdl_invoice_id,
                             COALESCE(SUM(FP.PAID_AMOUNT), 0) AS FACTORY_PAID_AMOUNT,
                             COUNT(FP.ID) AS PAID_COUNT
                         FROM rdl_invoice_details AS RID
-                            INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
-                            INNER JOIN factory_payments AS FP ON FP.factory_invoice_id = FI.id
+                        INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
+                        INNER JOIN factory_payments AS FP ON FP.factory_invoice_id = FI.id
                         GROUP BY RID.rdl_invoice_id
                     ),
                     LC_INVOICE_COUNT AS (
                         SELECT
                             DSD.document_submissions_id,
                             COUNT(DISTINCT DSFI.FACTORY_INVOICE_ID) AS TOTAL_INVOICE_COUNT
-                        FROM document_submissions_details AS DSD 
-                            INNER JOIN document_submission_factory_invoices AS DSFI ON DSFI.document_submissions_details_id = DSD.id
+                        FROM document_submissions_details AS DSD
+                        INNER JOIN document_submission_factory_invoices AS DSFI ON DSFI.document_submissions_details_id = DSD.id
                         GROUP BY DSD.document_submissions_id
                     ),
                     TT_INVOICE_COUNT AS (
-                        SELECT  
+                        SELECT
                             RID.rdl_invoice_id,
                             COUNT(DISTINCT FI.ID) AS TOTAL_INVOICE_COUNT
                         FROM rdl_invoice_details AS RID
-                            INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
+                        INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
                         GROUP BY RID.rdl_invoice_id
                     ),
-                    FACTORY_PAYMENTS_LIST AS (
-                        SELECT  
+                    FACTORY_PAYMENTS_BASE AS (
+                        SELECT
                             CASE
                                 WHEN PR.term_id = ${TT_ID} THEN CONCAT('tt.', TTD.RID)
                                 WHEN PR.term_id = ${LC_ID} THEN CONCAT('lc.', LCD.id)
                             END AS ID,
+
                             T.NAME AS TERM_NAME,
+
                             CASE
                                 WHEN PR.term_id = ${TT_ID} THEN TTD.invoice_no
                                 WHEN PR.term_id = ${LC_ID} THEN LCD.FDBC_NO
                             END AS FDBC_NO,
+
                             PR.REALIZATION_DATE,
+
                             CASE
                                 WHEN PR.term_id = ${TT_ID} THEN TTI.TOTAL_INVOICE_VALUE
                                 WHEN PR.term_id = ${LC_ID} THEN LCI.TOTAL_INVOICE_VALUE
                             END AS RDL_INVOICE_VALUE,
+
                             CASE
                                 WHEN PR.term_id = ${TT_ID} THEN TTP.REALIZED_AMOUNT
                                 WHEN PR.term_id = ${LC_ID} THEN LCP.REALIZED_AMOUNT
                             END AS REALIZED_AMOUNT,
+
                             CASE
                                 WHEN PR.term_id = ${TT_ID} THEN COALESCE(TT_PAY.FACTORY_PAID_AMOUNT, 0)
                                 WHEN PR.term_id = ${LC_ID} THEN COALESCE(LC_PAY.FACTORY_PAID_AMOUNT, 0)
                             END AS FACTORY_PAID_AMOUNT,
+
                             CASE
                                 WHEN PR.term_id = ${TT_ID} THEN COALESCE(TT_PAY.PAID_COUNT, 0)
                                 WHEN PR.term_id = ${LC_ID} THEN COALESCE(LC_PAY.PAID_COUNT, 0)
                             END AS PAID_COUNT,
+
                             CASE
                                 WHEN PR.term_id = ${TT_ID} THEN COALESCE(TT_COUNT.TOTAL_INVOICE_COUNT, 0) - COALESCE(TT_PAY.PAID_COUNT, 0)
                                 WHEN PR.term_id = ${LC_ID} THEN COALESCE(LC_COUNT.TOTAL_INVOICE_COUNT, 0) - COALESCE(LC_PAY.PAID_COUNT, 0)
-                            END AS PENDING_COUNT
+                            END AS PENDING_COUNT,
+
+                            PR.TERM_ID,
+                            PR.DOCUMENT_SUBMISSION_ID,
+                            TTD.RID AS RDL_INVOICE_ID,
+                            TTD.INVOICE_NO,
+                            LCD.FDBC_NO AS LC_FDBC_NO,
+                            B.BUYER_NAME
                         FROM proceed_realization AS PR
                             INNER JOIN terms AS T ON T.id = PR.term_id
-                            LEFT JOIN TT_DETAILS AS TTD ON PR.term_id = ${TT_ID} AND TTD.realization_id = PR.id 
-                            LEFT JOIN LC_DETAILS AS LCD ON PR.term_id = ${LC_ID} AND LCD.id = PR.document_submission_id 
+                            LEFT JOIN TT_DETAILS AS TTD ON PR.term_id = ${TT_ID} AND TTD.realization_id = PR.id
+                            LEFT JOIN LC_DETAILS AS LCD ON PR.term_id = ${LC_ID} AND LCD.id = PR.document_submission_id
                             LEFT JOIN TT_PROCEED AS TTP ON PR.term_id = ${TT_ID} AND TTP.rdl_invoice_id = TTD.RID
                             LEFT JOIN LC_PROCEED AS LCP ON PR.term_id = ${LC_ID} AND LCP.PRD_ID = PR.ID
                             LEFT JOIN TT_INVOICE AS TTI ON PR.term_id = ${TT_ID} AND TTI.id = TTD.RID
@@ -361,7 +376,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                             LEFT JOIN LC_PAYMENT AS LC_PAY ON PR.term_id = ${LC_ID} AND LC_PAY.document_submission_id = LCD.id
                             LEFT JOIN TT_INVOICE_COUNT AS TT_COUNT ON PR.term_id = ${TT_ID} AND TT_COUNT.rdl_invoice_id = TTD.RID
                             LEFT JOIN LC_INVOICE_COUNT AS LC_COUNT ON PR.term_id = ${LC_ID} AND LC_COUNT.document_submissions_id = LCD.id
-                            INNER JOIN buyers as B on B.id = PR.buyer_id
+                            INNER JOIN buyers AS B ON B.id = PR.buyer_id
                         WHERE (
                             EXISTS (
                                 SELECT 1
@@ -372,9 +387,9 @@ export const factoryPaymentRouter = createTRPCRouter({
                             )
                             OR EXISTS (
                                 SELECT 1
-                                FROM TEAM_MEMBERS AS TM 
-                                    INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
-                                WHERE T.BUYER_ID = PR.buyer_id
+                                FROM TEAM_MEMBERS AS TM
+                                INNER JOIN TEAMS AS TEAM ON TEAM.ID = TM.TEAM_ID
+                                WHERE TEAM.BUYER_ID = PR.buyer_id
                                     AND TM.USER_ID = ${ctx.user.id}
                             )
                         )
@@ -385,43 +400,126 @@ export const factoryPaymentRouter = createTRPCRouter({
                             OR B.BUYER_NAME ILIKE '%' || ${input.query} || '%'
                             OR EXISTS (
                                 SELECT 1
-                                FROM document_submissions_details DSD2
-                                INNER JOIN document_submission_factory_invoices DSFI ON DSFI.document_submissions_details_id = DSD2.id
-                                INNER JOIN factory_invoice FI ON FI.id = DSFI.factory_invoice_id
-                                WHERE DSD2.document_submissions_id = PR.document_submission_id 
+                                FROM document_submissions_details AS DSD2
+                                INNER JOIN document_submission_factory_invoices AS DSFI
+                                    ON DSFI.document_submissions_details_id = DSD2.id
+                                INNER JOIN factory_invoice AS FI
+                                    ON FI.id = DSFI.factory_invoice_id
+                                WHERE DSD2.document_submissions_id = PR.document_submission_id
                                     AND FI.invoice_no ILIKE '%' || ${input.query} || '%'
                             )
                             OR EXISTS (
                                 SELECT 1
                                 FROM rdl_invoice_details AS RID
-                                INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
+                                INNER JOIN factory_invoice AS FI
+                                    ON FI.id = RID.factory_invoice_id
                                 WHERE RID.rdl_invoice_id = TTD.RID
                                     AND FI.invoice_no ILIKE '%' || ${input.query} || '%'
                             )
                         )
-                    GROUP BY 
-                        TTD.RID, 
-                        LCD.id, 
-                        PR.term_id, 
-                        T.NAME, 
-                        ttd.invoice_no, 
-                        lcd.fdbc_no, 
-                        pr.realization_date, 
-                        tti.total_invoice_value, 
-                        lci.total_invoice_value,
-                        tt_pay.factory_paid_amount,
-                        lc_pay.factory_paid_amount,
-                        tt_pay.paid_count,
-                        lc_pay.paid_count,
-                        tt_count.total_invoice_count,
-                        lc_count.total_invoice_count,
-                        lcp.realized_amount,
-                        ttp.realized_amount
+                    ),
+                    FACTORY_PAYMENTS_LIST AS (
+                        SELECT
+                            FPB.ID,
+                            FPB.TERM_NAME,
+                            FPB.FDBC_NO,
+                            FPB.REALIZATION_DATE,
+                            FPB.RDL_INVOICE_VALUE,
+                            FPB.REALIZED_AMOUNT,
+                            FPB.FACTORY_PAID_AMOUNT,
+                            FPB.PAID_COUNT,
+                            FPB.PENDING_COUNT,
+                            CASE
+                                WHEN FPB.TERM_ID = ${TT_ID}
+                                    AND FPB.INVOICE_NO = ${input.query}
+                                    THEN 0
+
+                                WHEN FPB.TERM_ID = ${LC_ID}
+                                    AND FPB.LC_FDBC_NO = ${input.query}
+                                    THEN 0
+
+                                WHEN FPB.TERM_ID = ${TT_ID}
+                                    AND FPB.INVOICE_NO ILIKE ${input.query} || '%'
+                                    THEN 1
+
+                                WHEN FPB.TERM_ID = ${LC_ID}
+                                    AND FPB.LC_FDBC_NO ILIKE ${input.query} || '%'
+                                    THEN 1
+
+                                WHEN FPB.TERM_ID = ${TT_ID}
+                                    AND FPB.INVOICE_NO ILIKE '%' || ${input.query} || '%'
+                                    THEN 2
+
+                                WHEN FPB.TERM_ID = ${LC_ID}
+                                    AND FPB.LC_FDBC_NO ILIKE '%' || ${input.query} || '%'
+                                    THEN 2
+
+                                WHEN FPB.TERM_ID = ${TT_ID}
+                                    AND EXISTS (
+                                        SELECT 1
+                                        FROM rdl_invoice_details AS RID
+                                        INNER JOIN factory_invoice AS FI
+                                            ON FI.id = RID.factory_invoice_id
+                                        WHERE RID.rdl_invoice_id = FPB.RDL_INVOICE_ID
+                                            AND FI.invoice_no = ${input.query}
+                                    )
+                                    THEN 3
+
+                                WHEN FPB.TERM_ID = ${LC_ID}
+                                    AND EXISTS (
+                                        SELECT 1
+                                        FROM document_submissions_details AS DSD2
+                                        INNER JOIN document_submission_factory_invoices AS DSFI
+                                            ON DSFI.document_submissions_details_id = DSD2.id
+                                        INNER JOIN factory_invoice AS FI
+                                            ON FI.id = DSFI.factory_invoice_id
+                                        WHERE DSD2.document_submissions_id = FPB.DOCUMENT_SUBMISSION_ID
+                                            AND FI.invoice_no = ${input.query}
+                                    )
+                                    THEN 3
+
+                                WHEN FPB.TERM_ID = ${TT_ID}
+                                    AND EXISTS (
+                                        SELECT 1
+                                        FROM rdl_invoice_details AS RID
+                                        INNER JOIN factory_invoice AS FI
+                                            ON FI.id = RID.factory_invoice_id
+                                        WHERE RID.rdl_invoice_id = FPB.RDL_INVOICE_ID
+                                            AND FI.invoice_no ILIKE '%' || ${input.query} || '%'
+                                    )
+                                    THEN 4
+
+                                WHEN FPB.TERM_ID = ${LC_ID}
+                                    AND EXISTS (
+                                        SELECT 1
+                                        FROM document_submissions_details AS DSD2
+                                        INNER JOIN document_submission_factory_invoices AS DSFI
+                                            ON DSFI.document_submissions_details_id = DSD2.id
+                                        INNER JOIN factory_invoice AS FI
+                                            ON FI.id = DSFI.factory_invoice_id
+                                        WHERE DSD2.document_submissions_id = FPB.DOCUMENT_SUBMISSION_ID
+                                            AND FI.invoice_no ILIKE '%' || ${input.query} || '%'
+                                    )
+                                    THEN 4
+
+                                WHEN FPB.TERM_NAME ILIKE '%' || ${input.query} || '%'
+                                    THEN 5
+
+                                WHEN FPB.BUYER_NAME ILIKE '%' || ${input.query} || '%'
+                                    THEN 6
+
+                                ELSE 7
+                            END AS SEARCH_RANK
+
+                        FROM FACTORY_PAYMENTS_BASE AS FPB
                     )
-                    SELECT *,
+                    SELECT
+                        *,
                         COUNT(*) OVER() AS TOTAL_COUNT
                     FROM FACTORY_PAYMENTS_LIST AS PFL
-                    ORDER BY REALIZATION_DATE DESC
+                    ORDER BY
+                        SEARCH_RANK ASC,
+                        REALIZATION_DATE DESC
                     LIMIT ${input.limit}
                     OFFSET ${input.offset};
                 `;

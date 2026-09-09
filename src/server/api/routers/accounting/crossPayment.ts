@@ -445,7 +445,9 @@ export const crossPaymentsRouter = createTRPCRouter({
                 }
             });
 
-            if(!getAuthorization?.is_authorized) {
+            console.log(getAuthorization);
+
+            if(getAuthorization?.is_authorized) {
                 throw new TRPCError({
                     code: 'CONFLICT',
                     message: "This Cross Payment has been approved and can't be deleted"
@@ -456,10 +458,6 @@ export const crossPaymentsRouter = createTRPCRouter({
                 return await ctx.db.$transaction(async (tx) => {
                     const crossPaymentDetails = await tx.cross_payment_details.findMany({
                         where: { cross_payment_id: input.cross_payment_id },
-                    });
-
-                    const deletedCrossPayment = await tx.cross_payments.delete({
-                        where: { id: input.cross_payment_id },
                     });
                     
                     await Promise.all([
@@ -479,18 +477,22 @@ export const crossPaymentsRouter = createTRPCRouter({
                                 action_by: ctx.user.id,
                             })),
                         }),
-    
-                        await tx.cross_payments_history.create({
-                            data: {
-                                cross_payments_id: deletedCrossPayment.id,
-                                buyer_id: deletedCrossPayment.buyer_id,
-                                cross_payment_date: deletedCrossPayment.cross_payment_date,
-                                cross_payment_ref: deletedCrossPayment.cross_payment_ref,
-                                action_type: actions.DELETE,
-                                action_by: ctx.user.id,
-                            },
-                        }),
                     ]);
+
+                    const deletedCrossPayment = await tx.cross_payments.delete({
+                        where: { id: input.cross_payment_id },
+                    });
+
+                    await tx.cross_payments_history.create({
+                        data: {
+                            cross_payments_id: deletedCrossPayment.id,
+                            buyer_id: deletedCrossPayment.buyer_id,
+                            cross_payment_date: deletedCrossPayment.cross_payment_date,
+                            cross_payment_ref: deletedCrossPayment.cross_payment_ref,
+                            action_type: actions.DELETE,
+                            action_by: ctx.user.id,
+                        },
+                    });
                 })
             }
             catch (error) {

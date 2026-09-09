@@ -3,7 +3,7 @@ import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { actions } from "@prisma/client";
+import { actions, type factory_payments } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID, PROCEED_DATE } from "~/utils/config";
 import { currencyFormatter } from "~/utils/localNumberStrings";
 import type { ProceedRealizationResult, RdlInvoiceDetailsResult } from './_types/proceedRealization'
@@ -205,37 +205,76 @@ export const proceedRealizationRouter = createTRPCRouter({
                         },
                     });
 
-                    const factoryPayments = await tx.factory_payments.findMany({
-                        where: {
-                            document_submission_id: deletedRealization.document_submission_id,
-                        }
-                    });
+                    let factoryPayments: factory_payments[];
 
-                    await Promise.all([
+                    if(deletedRealization.term_id === 2) { // LC
+                        factoryPayments = await tx.factory_payments.findMany({
+                            where: {
+                                document_submission_id: deletedRealization.document_submission_id,
+                            }
+                        });
+                    }
+                    else { // TT
+                        factoryPayments = await tx.$queryRaw<factory_payments[]>`
+                            SELECT DISTINCT 
+                                fp.* 
+                            FROM factory_payments as fp
+                                INNER JOIN proceed_realization_details AS prd ON prd.rdl_invoice_id = fp.rdl_invoice_id
+                                INNER JOIN proceed_realization AS pr ON pr.id = prd.realization_id
+                            WHERE pr.id = ${deletedRealization.id}
+                        `;
+                    }
+
+                    const rdlInvoiceIds = [
+                        ...new Set(
+                            factoryPayments
+                                .map((payment) => payment.rdl_invoice_id)
+                                .filter((id): id is string => id !== null)
+                        ),
+                    ];
+
+                    if(deletedRealization.term_id === 2) { // LC
                         await tx.factory_payments.deleteMany({
                             where: {
                                 document_submission_id: deletedRealization.document_submission_id,
                             }
-                        }),
+                        })
 
                         await tx.factory_payment_header.deleteMany({
                             where: {
                                 document_submission_id: deletedRealization.document_submission_id,
                             }
-                        }),
-
-                        await tx.proceed_realization_history.create({
-                            data: {
-                                proceed_realization_id: deletedRealization.id,
-                                buyer_id: deletedRealization.buyer_id,
-                                document_submission_id: deletedRealization.document_submission_id,
-                                term_id: deletedRealization.term_id,
-                                realization_date: deletedRealization.realization_date,
-                                action_type: actions.DELETE,
-                                action_by: ctx.user.id,
+                        })
+                    }
+                    else { // TT
+                        await tx.factory_payments.deleteMany({
+                            where: {
+                                rdl_invoice_id: {
+                                    in: rdlInvoiceIds,
+                                },
                             },
                         })
-                    ]);
+
+                        await tx.factory_payment_header.deleteMany({
+                            where: {
+                                rdl_invoice_id: {
+                                    in: rdlInvoiceIds
+                                }
+                            }
+                        })
+                    }
+
+                    await tx.proceed_realization_history.create({
+                        data: {
+                            proceed_realization_id: deletedRealization.id,
+                            buyer_id: deletedRealization.buyer_id,
+                            document_submission_id: deletedRealization.document_submission_id,
+                            term_id: deletedRealization.term_id,
+                            realization_date: deletedRealization.realization_date,
+                            action_type: actions.DELETE,
+                            action_by: ctx.user.id,
+                        },
+                    });
 
                     await tx.factory_payments_history.createMany({
                         data: factoryPayments.map((payment) => ({
@@ -323,6 +362,9 @@ export const proceedRealizationRouter = createTRPCRouter({
                             document_submission_id: input.document_submission_id,
                             term_id: input.term_id,
                             realization_date: input.realization_date,
+                            bank_charge: input.bank_charge,
+                            discount_charge: input.discount_charge,
+                            document_charge: input.document_charge
                         },
                     });
 
@@ -334,6 +376,9 @@ export const proceedRealizationRouter = createTRPCRouter({
                                 document_submission_id: newProceedRealization.document_submission_id,
                                 term_id: newProceedRealization.term_id,
                                 realization_date: newProceedRealization.realization_date,
+                                discount_charge: newProceedRealization.discount_charge,
+                                document_charge: newProceedRealization.document_charge,
+                                bank_charge: newProceedRealization.bank_charge,
                                 action_type: actions.ADDED,
                                 action_by: ctx.user.id,
                             },

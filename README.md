@@ -269,20 +269,3 @@ docker cp f774b3399547:/app/public/uploads/style_photos ~/backup/
 // copy it to the local pc
 scp -P 60011 -r rdlerpadmin@192.168.21.253:~/backup/style_photos "E:\backup\04_09_2026"
 ```
-
-
-
-```sql
-UPDATE shipment_details AS sd
-SET payment_term_id = 30
-FROM 
-    order_styles AS os, 
-    buyer_orders AS bo, 
-    factory_shipment_details AS fsd
-WHERE os.id = sd.order_style_id
-    AND bo.id = os.order_id
-    AND fsd.shipment_detail_id = sd.id
-    AND sd.payment_term_id = 47
-    AND bo.buyer_id = 100
-    AND fsd.exfactory_date >= '2025-01-01';
-```
