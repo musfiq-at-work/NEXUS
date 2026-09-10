@@ -579,7 +579,7 @@ export const tnaTemplatesRouter = createTRPCRouter({
                             ON BO.BUYER_ID = TT.BUYER_ID
                             AND BO.TEAM_ID = TT.TEAM_ID
                     WHERE BO.ID = ${input.order_id}
-                    AND TT.added_at >= '2026-05-07';
+                    AND TT.added_at >= '2026-07-04';
                 `;
 
                 return templates;

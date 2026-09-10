@@ -164,12 +164,13 @@ export const activityReportRouter = createTRPCRouter({
                     ci_and_realization_data = await ctx.db.$queryRaw<CiAndRealizationData[]>`
                         SELECT
                             B.buyer_name,
+                            STRING_AGG(DISTINCT TO_CHAR(E.exfactory_date, 'DD Mon YYYY'), ', ') AS exfactory_dates,
                             RI.invoice_no AS rdl_invoice,
                             TO_CHAR(RI.invoice_date, 'DD Mon YYYY') AS rdl_invoice_date,
-                            STRING_AGG(DISTINCT E.exfactory_no, ', ') AS exfactory_nos,
-                            STRING_AGG(DISTINCT TO_CHAR(E.exfactory_date, 'DD Mon YYYY'), ', ') AS exfactory_dates,
                             SUM(RISD.invoice_quantity) AS rdl_invoice_quantity,
                             SUM(RISD.invoice_quantity * SD.fob_rate / BO.currency_rate)::NUMERIC(18, 2) AS rdl_invoice_value,
+                            COALESCE(LC.lc_no, '-') AS LC_NO,
+                            COALESCE(SC.sales_contract_no, '-') AS SC_NO,
                             COALESCE(DS.FDBC_NO, '-') AS FDBC_NO,
                             COALESCE(DS.SUBMISSION_DATE::TEXT, '-') AS DOCUMENT_SUBMISSION_DATE,
                             COALESCE(CI.REF_NO, '-') AS CI_NO,
@@ -187,6 +188,11 @@ export const activityReportRouter = createTRPCRouter({
                             INNER JOIN buyers B ON B.id = BO.buyer_id
                             INNER JOIN exfactory_orders EO ON EO.id = ES.exfactory_orders_id
                             INNER JOIN exfactory E ON E.id = EO.exfactory_id
+                            LEFT JOIN lc_shipments LCS ON LCS.shipment_details_id = SD.id
+                            LEFT JOIN lc_orders LCO ON LCO.id = LCS.lc_order_id
+                            LEFT JOIN lc_master LC ON LC.id = LCO.lc_master_id
+                            LEFT JOIN sales_contract_details SCD ON SCD.order_id = BO.id
+                            LEFT JOIN sales_contracts SC ON SC.id = SCD.sales_contract_id
                             LEFT JOIN document_submissions_details AS DSD ON DSD.rdl_invoice_id = RI.id
                             LEFT JOIN document_submissions AS DS ON DS.id = DSD.document_submissions_id
                             LEFT JOIN commission_invoice AS CI ON CI.document_submission_id = DS.id OR CI.rdl_invoice_id = RI.id
@@ -195,7 +201,7 @@ export const activityReportRouter = createTRPCRouter({
                         WHERE E.exfactory_date BETWEEN ${input.fromDate} AND ${input.toDate}
                             AND COALESCE(ES.delivery_quantity, 0) > 0
                             ${buyerSelectClause}
-                        GROUP BY RI.id, RI.invoice_no, RI.invoice_date, B.id, DS.ID, CI.ID, PR.ID, PRD.ID;
+                        GROUP BY RI.id, RI.invoice_no, RI.invoice_date, B.id, DS.ID, CI.ID, PR.ID, PRD.ID, LC.ID, SC.ID;
                     `,
 
                     factoryInvoiceData = await ctx.db.$queryRaw<FactoryInvoiceData[]>`
@@ -226,8 +232,8 @@ export const activityReportRouter = createTRPCRouter({
                                 WHEN FI.term_id = 2 THEN COALESCE(DS.FDBC_NO, '-') 
                                 ELSE '-'
                             END AS FDBC_NO,
-                            CASE 
-                                WHEN FI.term_id = 1 THEN COALESCE(STRING_AGG(DISTINCT RI.invoice_no, ', '), '-') 
+                            CASE
+                                WHEN FI.term_id = 1 THEN COALESCE(RDL.rdl_invoice_no, '-')
                                 ELSE '-'
                             END AS RDL_INVOICE_NO,
                             COALESCE(FP.PAID_AMOUNT::TEXT, '-') AS FACTORY_PAYMENT,
@@ -235,17 +241,21 @@ export const activityReportRouter = createTRPCRouter({
                         FROM factory_invoice AS FI
                             INNER JOIN factory_invoice_details FID ON FID.factory_invoice_id = FI.id
                             INNER JOIN exfactory_shipments ES ON ES.id = FID.exfactory_shipment_id
-                            INNER JOIN shipment_details SD ON SD.id = ES.shipment_details_id
-                            INNER JOIN factory_shipment_details FSD ON FSD.shipment_detail_id = SD.id
-                            INNER JOIN order_styles OS ON OS.id = SD.order_style_id
-                            INNER JOIN buyer_orders BO ON BO.id = OS.order_id
-                            INNER JOIN buyers B ON B.id = BO.buyer_id
+                            INNER JOIN factory_shipment_details FSD ON FSD.shipment_detail_id = ES.shipment_details_id
                             INNER JOIN exfactory_orders EO ON EO.id = ES.exfactory_orders_id
+                            INNER JOIN buyer_orders BO ON BO.id = EO.order_id
                             INNER JOIN exfactory E ON E.id = EO.exfactory_id
                             INNER JOIN factories F ON F.id = BO.factory_id
-                            LEFT JOIN rdl_invoice_details AS RID ON RID.factory_invoice_id = FI.id
-                            LEFT JOIN rdl_invoice AS RI ON RI.id = RID.rdl_invoice_id
-                            LEFT JOIN lc_shipments LCS ON LCS.shipment_details_id = SD.id
+                            INNER JOIN buyers B ON B.id = BO.buyer_id
+                            LEFT JOIN (
+                                SELECT
+                                    RID.factory_invoice_id,
+                                    STRING_AGG(DISTINCT RI.invoice_no, ', ') AS rdl_invoice_no
+                                FROM rdl_invoice_details RID
+                                INNER JOIN rdl_invoice RI ON RI.id = RID.rdl_invoice_id
+                                GROUP BY RID.factory_invoice_id
+                            ) RDL ON RDL.factory_invoice_id = FI.id
+                            LEFT JOIN lc_shipments LCS ON LCS.shipment_details_id = ES.shipment_details_id
                             LEFT JOIN lc_orders LCO ON LCO.id = LCS.lc_order_id
                             LEFT JOIN lc_master LC ON LC.id = LCO.lc_master_id
                             LEFT JOIN sales_contract_details SCD ON SCD.order_id = BO.id
@@ -255,7 +265,7 @@ export const activityReportRouter = createTRPCRouter({
                         WHERE E.exfactory_date BETWEEN ${input.fromDate} AND ${input.toDate}
                             AND COALESCE(ES.delivery_quantity, 0) > 0
                             ${buyerSelectClause}
-                        GROUP BY FI.id, B.id, F.id, SC.id, DS.ID, FP.ID;
+                        GROUP BY FI.id, B.id, F.id, SC.id, LC.id, DS.ID, FP.ID, rdl.rdl_invoice_no;
                     `,
                 ]);
 

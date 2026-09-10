@@ -26,6 +26,8 @@ export interface CiAndRealizationData {
     rdl_invoice_date: string;
     rdl_invoice_quantity: number;
     rdl_invoice_value: number;
+    lc_no: string;
+    sc_no: string;
     fdbc_no: string;
     document_submission_date: string;
     ci_no: string;

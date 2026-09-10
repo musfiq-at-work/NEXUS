@@ -115,11 +115,7 @@ export const salesReportRouter = createTRPCRouter({
 
                 if(input.commissionValue) {
                     selectFields.push(Prisma.sql`
-                        SUM(SID.quantity * SD.FOB_RATE / BO.currency_rate * (
-                            COALESCE(CDD.dhaka_commission_percentage, 0) + 
-                            COALESCE(CDD.others_commission_percentage, 0) + 
-                            COALESCE(CDD.overseas_commission_percentage, 0)
-                        ) / 100 ) AS commission_value
+                        SUM(SID.quantity * SD.FOB_RATE / BO.currency_rate) - SUM(SID.quantity * COALESCE(FSD.FACTORY_RATE, 1) / FO.CURRENCY_RATE) AS commission_value
                     `);
                 }
 
