@@ -9,6 +9,7 @@ import TableHeader, { type TableHeaderType} from "~/components/organisms/table/T
 import Image from "next/image";
 import type { DocumentSubmissionFormValues } from "../../config/formSchema";
 import FactoryInvoiceRows from "./RDLInvoiceRows";
+import { safeNumber } from "~/utils/numbers";
 
 type RdlInvoiceArrayPath = "rdlInvoices";
 type RdlInvoiceRowValues = FieldArrayWithId<DocumentSubmissionFormValues, RdlInvoiceArrayPath>;
@@ -40,6 +41,27 @@ const TableForm = (props: Props) => {
         validationError, 
     } =  props;
 
+    const rdlInvoices = useWatch({ control: methods.control, name: `rdlInvoices`}) ?? [];
+
+    // const rdlInvoices = methods.watch("rdlInvoices") ?? [];
+
+    const totalQuantity = rdlInvoices.reduce(
+        (total, rdlInvoice) => total + safeNumber(rdlInvoice.quantity),
+        0,
+    );
+    const totalRdlValue = rdlInvoices.reduce(
+        (total, rdlInvoice) => total + safeNumber(rdlInvoice.rdl_value),
+        0,
+    );
+    const totalPreviouslyReceivedValue = rdlInvoices.reduce(
+        (total, rdlInvoice) => total + safeNumber(rdlInvoice.previously_received_rdl_value),
+        0,
+    );
+    const totalReceivedValue = rdlInvoices.reduce(
+        (total, rdlInvoice) => total + safeNumber(rdlInvoice.received_rdl_value),
+        0,
+    );
+
     return (
         <>
             <Heading as ='h2' className="mx-8">
@@ -64,6 +86,16 @@ const TableForm = (props: Props) => {
                                 />
                             ))}
                         </TableBody>
+                        <tfoot>
+                            <tr className="font-bold text-sm border-2 border-gray/20">
+                                <td colSpan={2} className="border-r-2 border-gray/20 p-2 text-right">Total</td>
+                                <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{totalQuantity.toFixed(2)}</td>
+                                <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{totalRdlValue.toFixed(2)}</td>
+                                <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{totalPreviouslyReceivedValue.toFixed(2)}</td>
+                                <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{totalReceivedValue.toFixed(2)}</td>
+                                <td className="border-r-2 border-gray/20 p-2" />
+                            </tr>
+                        </tfoot>
                     </TableWrapper>
                 </div>
                 {!disabled && 
