@@ -48,6 +48,20 @@ const ShipmentDetails = (props: props) => {
         });
     }, [addShipment]);
 
+    const copyShipmentRow = useCallback((index: number) => {
+        const shipment = methods.getValues(`order.styles.${styleIndex}.shipments.${index}`);
+        if (!shipment) return;
+
+        addShipment({
+            ...shipment,
+            db_id: undefined,
+            colors: shipment.colors.map((color) => ({
+                ...color,
+                db_id: undefined,
+            })),
+        });
+    }, [addShipment, methods, styleIndex]);
+
     const utils = api.useUtils();
 
     const deleteShipmentMutation = api.buyerOrders.deleteShipment.useMutation({
@@ -223,6 +237,7 @@ const ShipmentDetails = (props: props) => {
             register={methods.register}
             addRow={addShipmentRow}
             removeRow={removeShipmentRow}
+            copyRow={copyShipmentRow}
             disabled={disabled}
             methods={methods}
             validationError={validationError}

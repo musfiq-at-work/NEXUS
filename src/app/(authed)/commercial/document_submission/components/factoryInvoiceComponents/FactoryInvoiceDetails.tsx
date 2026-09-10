@@ -111,7 +111,7 @@ const FactoryInvoiceDetails = (props: props) => {
                             </colgroup>
                             <tfoot>
                                 <tr className="font-bold text-sm">
-                                    <td colSpan={4} className="border-r-2 border-gray/20 p-2 text-right">Grand Total</td>
+                                    <td colSpan={4} className="border-r-2 border-gray/20 p-2 text-right">Factory Invoice Grand Total</td>
                                     <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{grandTotalQuantity} </td>
                                     <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{grandTotalValue.toFixed(2)}</td>
                                 </tr>

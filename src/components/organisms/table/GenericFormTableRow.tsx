@@ -2,8 +2,8 @@ import clsx from "clsx";
 import Image from "next/image";
 import React from "react";
 import { Controller } from "react-hook-form";
-import type { Control, UseFormRegister, FieldValues, Path, FieldErrors } from "react-hook-form";
-import { deleteIcon } from "~/assets";
+import type { Control, UseFormRegister, FieldValues, Path } from "react-hook-form";
+import { copyIcon, deleteIcon } from "~/assets";
 import { CheckBox, SelectField, TableCell, TableRow, TextField, Toggle } from "~/components";
 import type { BaseField } from "~/types/form";
 
@@ -17,12 +17,13 @@ type Props<T extends FieldValues> = {
     register: UseFormRegister<any>;
     control?: Control<any>;
     handleAction?: (index: number) => void;
+    copyRow?: (index: number) => void;
     className?: string;
     canDelete?: boolean;
 }
 
 const GenericFormTableRow = <T extends FieldValues, >(props: Props<T>) => {
-    const {fields, register, removeRow, disabled = false, validationError, name, control, index, handleAction, className, canDelete = true} =  props;
+    const {fields, register, removeRow, disabled = false, validationError, name, control, index, handleAction, copyRow, className, canDelete = true} =  props;
 
     return (
         <TableRow key={index} className={className}>
@@ -173,12 +174,25 @@ const GenericFormTableRow = <T extends FieldValues, >(props: Props<T>) => {
                     })()}
                 </TableCell>
             ))}
-            {canDelete && !disabled && removeRow && (
+            {!disabled && (copyRow || (canDelete && removeRow)) && (
                 <td className="w-fit">
                     <div className="flex flex-row justify-between items-center h-full text-[0.9rem] border-gray/20 w-fit p-2">
-                        <button type="button" className="ml-2 w-4 h-full hover:cursor-pointer" onClick={() => removeRow(index)}>
-                            <Image  width={20} height={20} src={deleteIcon.src} alt="Delete" />
-                        </button>
+                        {copyRow && (
+                            <button
+                                type="button"
+                                className="mr-2 w-4 h-full hover:cursor-pointer"
+                                onClick={() => copyRow(index)}
+                                aria-label="Copy shipment row"
+                                title="Copy shipment row"
+                            >
+                                <Image  width={20} height={20} src={copyIcon.src} alt="copy" />
+                            </button>
+                        )}
+                        {canDelete && removeRow && (
+                            <button type="button" className="ml-2 w-4 h-full hover:cursor-pointer" onClick={() => removeRow(index)}>
+                                <Image  width={20} height={20} src={deleteIcon.src} alt="Delete" />
+                            </button>
+                        )}
                     </div>
                 </td>
             )}

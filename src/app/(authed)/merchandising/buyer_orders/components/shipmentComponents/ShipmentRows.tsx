@@ -17,10 +17,11 @@ type Props = {
     methods: ReturnType<typeof useBuyerOrderForm>['methods'];
     validationError: FieldErrors<OrderFormValues['order']>;
     styleIndex: number ;
+    copyRow: (index: number) => void;
 }
 
 const ShipmentRows = (props: Props) => {
-    const { removeRow, disabled = false, name, index,  methods, validationError, styleIndex } =  props;
+    const { removeRow, disabled = false, name, index, methods, validationError, styleIndex, copyRow } =  props;
 
     const buyerId = useWatch({ control: methods.control, name: `order.buyer_id` });
     const departmentId = useWatch({ control: methods.control, name: `order.department_id` });
@@ -51,6 +52,7 @@ const ShipmentRows = (props: Props) => {
                 index={index}
                 canDelete={can_delete}
                 handleAction={handleAction}
+                copyRow={copyRow}
             />
 
             {openColorModal && 

@@ -841,7 +841,7 @@ export const factoryOrderRouter = createTRPCRouter({
                 // Check if the factory order is complete and get its approval status
                 const authorizations = await ctx.db.$queryRaw<{is_complete: boolean, approval_status: number}[]>`
                     SELECT
-                        os_sum.total_order_qty = sid_sum.total_shipment_qty AS is_complete,
+                        os_sum.total_order_qty <= sid_sum.total_shipment_qty AS is_complete,
                         fo.approval_status
                     FROM factory_orders fo
                     JOIN (

@@ -48,8 +48,10 @@ const TableForm = (props: Props) => {
                                     index={index}
                                 />
                             ))}
-                            <ShipmentSummaryRow totals={totals}/>
                         </TableBody>
+                        <tfoot>
+                            <ShipmentSummaryRow totals={totals}/>
+                        </tfoot>
                     </TableWrapper>
                 </div>
             </form>

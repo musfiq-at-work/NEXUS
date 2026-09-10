@@ -151,6 +151,7 @@ const ColorPopup = ({ onClose, colorOptions, methods, styleIndex, selectedShipme
                 className="px-4 py-2 border border-gray-accent rounded-lg flex-1"
                 placeholder="Quantity"
                 disabled={disabled}
+                min={1}
                 {...register("quantity", { valueAsNumber: true })}
             />
           </div>

@@ -17,7 +17,6 @@ interface TRPCContextOptions {
         userAgent: string | null;
         referer: string | null;
         origin: string | null;
-        startTime: number;
 	}
 }
 

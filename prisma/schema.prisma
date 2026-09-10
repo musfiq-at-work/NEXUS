@@ -2626,6 +2626,8 @@ model document_submissions_details {
   document_submission_factory_invoices document_submission_factory_invoices[]
   document_submissions                 document_submissions                   @relation(fields: [document_submissions_id], references: [id], onUpdate: NoAction)
   rdl_invoice                          rdl_invoice                            @relation(fields: [rdl_invoice_id], references: [id], onUpdate: NoAction)
+
+  @@unique([rdl_invoice_id, document_submissions_id], map: "unique_rdl_invoice_per_document_submission")
 }
 
 model document_submissions_details_history {
