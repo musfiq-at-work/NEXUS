@@ -417,12 +417,12 @@ export const salesContractsRouter = createTRPCRouter({
                     ]);
 
                     const buyerPrefix = buyer?.short_name ?? buyer?.buyer_name ?? "UNKNOWN";
-5
-                    const factoryPrefix = factory?.prefix ?? factory?.name ?? "UNKNOWN";
+
+                    const factoryPrefix = (factory?.prefix === '' ? null : factory?.prefix) ?? factory?.name ?? "UNKNOWN";
 
                     const serial = String(metadata.last_serial).padStart(4, "0");
 
-                    const sales_contract_no = `RDL/SC/${buyerPrefix}/${factoryPrefix}/${currentYear}/${serial}`;
+                    const sales_contract_no = `RDL/SC/${buyerPrefix.trim()}/${factoryPrefix.trim()}/${currentYear}/${serial}`;
 
                     // Create SC
                     const newSalesContract = await tx.sales_contracts.create({
@@ -1408,8 +1408,11 @@ export const salesContractsRouter = createTRPCRouter({
                     }
                 });
 
-                const currencySymbol = orderDataObj?.sales_contract_details?.[0]?.buyer_orders?.order_styles?.[0]?.shipment_details?.[0]?.factory_shipment_details?.[0]?.factory_orders?.currencies?.symbol ?? '$';
-                const currencyName = orderDataObj?.sales_contract_details?.[0]?.buyer_orders?.order_styles?.[0]?.shipment_details?.[0]?.factory_shipment_details?.[0]?.factory_orders?.currencies?.name ?? 'USD';
+                const currencySymbol = orderDataObj?.sales_contract_details?.[0]?.buyer_orders?.order_styles?.[0]
+                    ?.shipment_details?.[0]?.factory_shipment_details?.[0]?.factory_orders?.currencies?.symbol ?? '$';
+
+                const currencyName = orderDataObj?.sales_contract_details?.[0]?.buyer_orders?.order_styles?.[0]
+                    ?.shipment_details?.[0]?.factory_shipment_details?.[0]?.factory_orders?.currencies?.name ?? 'USD';
 
                 const orderData = orderDataObj?.sales_contract_details.map(detail => ({
                     ref_no: detail.buyer_orders?.ref_no,
@@ -1891,11 +1894,14 @@ export const salesContractsRouter = createTRPCRouter({
                         }
                     });
 
-                    const currencySymbol = orderDataObj?.[0]?.sales_contract_amendment_details?.[0]?.buyer_orders?.order_styles?.[0]?.shipment_details?.[0]?.factory_shipment_details?.[0]?.factory_orders?.currencies?.symbol ?? '$';
+                    const currencySymbol = orderDataObj?.[0]?.sales_contract_amendment_details?.[0]?.buyer_orders?.order_styles?.[0]
+                        ?.shipment_details?.[0]?.factory_shipment_details?.[0]?.factory_orders?.currencies?.symbol ?? '$';
 
-                    amendData = orderDataObj.map(amendment => {
-                        const shipmentRows = amendment.sales_contract_amendment_details.flatMap(detail =>
-                            detail.buyer_orders?.order_styles.flatMap(os =>
+                    amendData = [...orderDataObj]
+                        .sort((first, second) => Number(second.amendment_no ?? 0) - Number(first.amendment_no ?? 0))
+                        .map(amendment => {
+                        const amendmentOrders = amendment.sales_contract_amendment_details.map(detail => {
+                            const shipmentRows = detail.buyer_orders?.order_styles.flatMap(os =>
                                 os.shipment_details.map(sd => {
                                     const totalQty = sd.shipment_item_details.reduce(
                                         (sum, item) => sum + (item.quantity ?? 0), 0
@@ -1933,8 +1939,7 @@ export const salesContractsRouter = createTRPCRouter({
                                         raw: { totalQty, rdlVal, factoryVal, commVal, dhakaComm, overseasComm, othersComm },
                                     };
                                 })
-                            ) || []
-                        );
+                            ) || [];
 
                         const totals = shipmentRows.reduce(
                             (acc, item) => {
@@ -1959,27 +1964,10 @@ export const salesContractsRouter = createTRPCRouter({
                             }
                         );
 
-                        const amendmentGrandTotal = {
-                            totalQuantity: quantityFormatter(totals.qty),
-                            totalRdlValue: currencyFormatter(totals.rdl, currencySymbol),
-                            totalFactoryValue: currencyFormatter(totals.factory, currencySymbol),
-                            commissionPercentage: `${totals.rdl ? ((totals.comm / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
-                            totalCommissionValue: currencyFormatter(totals.comm, currencySymbol),
-                            totalDhakaCommission: currencyFormatter(totals.dhaka, currencySymbol),
-                            totalDhakaCommissionPercentage: `${totals.rdl ? ((totals.dhaka / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
-                            totalOverseasCommission: currencyFormatter(totals.overseas, currencySymbol),
-                            totalOverseasCommissionPercentage: `${totals.rdl ? ((totals.overseas / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
-                            totalOthersCommission: currencyFormatter(totals.others, currencySymbol),
-                            totalOthersCommissionPercentage: `${totals.rdl ? ((totals.others / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
-                        };
-
                         return {
-                            amendment_no: amendment.amendment_no,
-                            amendment_date: amendment.amendment_date,
-                            ref_no: amendment.sales_contract_amendment_details?.[0]?.buyer_orders?.ref_no,
+                            ref_no: detail.buyer_orders?.ref_no,
                             shipment_details: shipmentRows.map(item => item.row),
                             totals: totals,
-                            grandTotal: amendmentGrandTotal,
                             results: {
                                 totalQuantity: quantityFormatter(totals.qty),
                                 totalRdlValue: currencyFormatter( totals.rdl, currencySymbol),
@@ -1993,6 +1981,50 @@ export const salesContractsRouter = createTRPCRouter({
                                 totalOthersCommission: currencyFormatter(totals.others,currencySymbol),
                                 totalOthersCommissionPercentage: `${ totals.rdl ? ((totals.others / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
                             },
+                        };
+                    });
+
+                        const amendmentTotals = amendmentOrders.reduce(
+                            (acc, order) => {
+                                acc.qty += order.totals.qty;
+                                acc.rdl += order.totals.rdl;
+                                acc.factory += order.totals.factory;
+                                acc.comm += order.totals.comm;
+                                acc.dhaka += order.totals.dhaka;
+                                acc.overseas += order.totals.overseas;
+                                acc.others += order.totals.others;
+                                return acc;
+                            },
+                            {
+                                qty: 0,
+                                rdl: 0,
+                                factory: 0,
+                                comm: 0,
+                                dhaka: 0,
+                                overseas: 0,
+                                others: 0,
+                            }
+                        );
+
+                        const amendmentGrandTotal = {
+                            totalQuantity: quantityFormatter(amendmentTotals.qty),
+                            totalRdlValue: currencyFormatter(amendmentTotals.rdl, currencySymbol),
+                            totalFactoryValue: currencyFormatter(amendmentTotals.factory, currencySymbol),
+                            commissionPercentage: `${amendmentTotals.rdl ? ((amendmentTotals.comm / amendmentTotals.rdl) * 100).toFixed(2) : "0.00"}%`,
+                            totalCommissionValue: currencyFormatter(amendmentTotals.comm, currencySymbol),
+                            totalDhakaCommission: currencyFormatter(amendmentTotals.dhaka, currencySymbol),
+                            totalDhakaCommissionPercentage: `${amendmentTotals.rdl ? ((amendmentTotals.dhaka / amendmentTotals.rdl) * 100).toFixed(2) : "0.00"}%`,
+                            totalOverseasCommission: currencyFormatter(amendmentTotals.overseas, currencySymbol),
+                            totalOverseasCommissionPercentage: `${amendmentTotals.rdl ? ((amendmentTotals.overseas / amendmentTotals.rdl) * 100).toFixed(2) : "0.00"}%`,
+                            totalOthersCommission: currencyFormatter(amendmentTotals.others, currencySymbol),
+                            totalOthersCommissionPercentage: `${amendmentTotals.rdl ? ((amendmentTotals.others / amendmentTotals.rdl) * 100).toFixed(2) : "0.00"}%`,
+                        };
+
+                        return {
+                            amendment_no: amendment.amendment_no,
+                            amendment_date: amendment.amendment_date,
+                            orders: amendmentOrders,
+                            grandTotal: amendmentGrandTotal,
                         };
                     });
                 }

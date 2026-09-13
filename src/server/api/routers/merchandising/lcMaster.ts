@@ -341,8 +341,7 @@ export const lcMasterRouter = createTRPCRouter({
             if (!can_add) {
                 throw new TRPCError({
                     code: "FORBIDDEN",
-                    message:
-                        "You do not have permission to create a new LC.",
+                    message: "You do not have permission to create a new LC.",
                 });
             }
 
@@ -436,14 +435,12 @@ export const lcMasterRouter = createTRPCRouter({
                 status: z.boolean(),
                 remarks: z.string().optional(),
                 company_id: z.number(),
-                orders: z
-                    .array(
-                        z.object({
-                            order_id: z.string(),
-                            dm_pi_no: z.string().optional(),
-                        })
-                    )
-                    .optional(),
+                orders: z.array(
+                    z.object({
+                        order_id: z.string(),
+                        dm_pi_no: z.string().optional(),
+                    })
+                ).optional(),
             })
         )
         .mutation(async ({ ctx, input }) => {
@@ -469,8 +466,7 @@ export const lcMasterRouter = createTRPCRouter({
                             lc_open_date: input.lc_open_date,
                             lc_received_date: input.lc_received_date,
                             lc_expire_date: input.lc_expire_date,
-                            latest_shipment_date:
-                                input.latest_shipment_date,
+                            latest_shipment_date: input.latest_shipment_date,
                             currency_id: input.currency_id,
                             rdl_bank_id: input.rdl_bank_id,
                             buyer_bank_id: input.buyer_bank_id,

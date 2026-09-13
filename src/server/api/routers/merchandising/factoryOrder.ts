@@ -242,7 +242,7 @@ export const factoryOrderRouter = createTRPCRouter({
                 return buyerOrders;
             }
             catch (error) {
-                            handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 

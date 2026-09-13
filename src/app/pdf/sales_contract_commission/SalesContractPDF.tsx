@@ -62,15 +62,9 @@ const SalesContractPDF = ({ data }: { data: GetPDFDataOutput }) => {
 
                 {data.hasAmendment && (
                     data.amendData?.map((amendment, index) => {
-                        const shipment_details = Array.isArray(amendment.shipment_details)
-                            ? ([] as any[]).concat(...amendment.shipment_details)
-                            : amendment.shipment_details ?? [];
-
-                        const row = { ...amendment, ref_no: amendment.ref_no ?? "", shipment_details };
-
                         return (
                             <SalesContractCommissionTable key={index} 
-                                data={[row]} 
+                                data={amendment.orders}
                                 grandTotal={amendment.grandTotal}
                                 amendment_no={amendment.amendment_no ?? undefined} 
                                 amendment_date={amendment.amendment_date} 

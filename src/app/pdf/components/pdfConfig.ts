@@ -44,13 +44,14 @@ export const styles = StyleSheet.create({
         position: 'relative',
     },
     pageNumber: {
+        fontFamily: 'Amasis',
         position: "absolute",
         fontSize: 8,
         bottom: 30,
         left: 0,
         right: 0,
         textAlign: "center",
-        color: "grey",
+        color: "#666666",
     },
     tableContainer: {
         width: "100%",

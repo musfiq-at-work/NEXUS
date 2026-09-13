@@ -516,13 +516,37 @@ export const lcScClosingRouter = createTRPCRouter({
                     invoice_value: currencyFormatter(safeNumber(item.invoice_value), '$'),
                 }))
 
+                const totalPercentageOfCommission = safeNumber(commissionDistributions[0]?.dhaka_percentage)
+                    + safeNumber(commissionDistributions[0]?.overseas_percentage)
+                    + safeNumber(commissionDistributions[0]?.other_percentage);
+
+                const percentageOfDhakaCommission = safeNumber(commissionDistributions[0]?.dhaka_percentage) / totalPercentageOfCommission;
+                const percentageOfOverseasCommission = safeNumber(commissionDistributions[0]?.overseas_percentage) / totalPercentageOfCommission;
+
+                const actualDhakaCommission = total_commission_realized 
+                    - safeNumber(commissionDistributions[0]?.overseas_value) 
+                    - safeNumber(commissionDistributions[0]?.other_value);
+
                 const commissionTable = {
                     dhaka_value: currencyFormatter(safeNumber(commissionDistributions[0]?.dhaka_value), '$'),
                     overseas_value: currencyFormatter(safeNumber(commissionDistributions[0]?.overseas_value), '$'),
                     other_value: currencyFormatter(safeNumber(commissionDistributions[0]?.other_value), '$'),
+
                     dhaka_percentage: `${quantityFormatter(safeNumber(commissionDistributions[0]?.dhaka_percentage))}%`,
                     overseas_percentage: `${quantityFormatter(safeNumber(commissionDistributions[0]?.overseas_percentage))}%`,
                     other_percentage: `${quantityFormatter(safeNumber(commissionDistributions[0]?.other_percentage))}%`,
+
+                    percentage_of_dhaka_commission: `${quantityFormatter(percentageOfDhakaCommission * 100)}%`,
+                    percentage_of_overseas_commission: `${quantityFormatter(percentageOfOverseasCommission * 100)}%`,
+                    percentage_of_other_commission: `${quantityFormatter(safeNumber(commissionDistributions[0]?.other_percentage) * 100 / totalPercentageOfCommission)}%`,
+
+                    dhaka_actual_commission: currencyFormatter(actualDhakaCommission, '$'),
+                    overseas_actual_commission: currencyFormatter(safeNumber(commissionDistributions[0]?.overseas_value), '$'),
+                    other_actual_commission: currencyFormatter(safeNumber(commissionDistributions[0]?.other_value), '$'),
+                    
+                    actual_dhaka_commission_percentage: `${quantityFormatter(actualDhakaCommission * 100 / safeNumber(tableData[0]?.rdl_export_value_usd))}%`, 
+                    actual_overseas_commission_percentage: `${quantityFormatter(safeNumber(commissionDistributions[0]?.overseas_value) * 100 / safeNumber(tableData[0]?.rdl_export_value_usd))}%`, 
+                    actual_other_commission_percentage: `${quantityFormatter(safeNumber(commissionDistributions[0]?.other_value) * 100 / safeNumber(tableData[0]?.rdl_export_value_usd))}%`, 
                 }
 
                 return { 

@@ -80,7 +80,7 @@ async function deleteShipment(tx: Prisma.TransactionClient, shipmentId: string, 
 
     await tx.commission_distribution_details_history.createMany({
         data: existingCommissionDistributionDetails.map(detail => ({
-            commission_distributions_details_id: detail.id,
+            commission_distribution_details_id: detail.id,
             shipment_details_id: detail.shipment_details_id,
             dhaka_commission_percentage: detail.dhaka_commission_percentage ?? 0,
             overseas_commission_percentage: detail.overseas_commission_percentage ?? 0,
@@ -1246,7 +1246,6 @@ export const buyerOrdersRouter = createTRPCRouter({
                     };
                 }, {timeout: 60000});
             } catch (error) {
-                console.log(error);
                 await logError(error, ctx, input);
                 handlePrismaError(error);
             }
@@ -1265,7 +1264,13 @@ export const buyerOrdersRouter = createTRPCRouter({
                 });
             }
 
-            return ctx.db.$transaction(tx => deleteStyle(tx, input.style_id, ctx.user.id), {timeout: 30000});
+            try {
+                return ctx.db.$transaction(tx => deleteStyle(tx, input.style_id, ctx.user.id), {timeout: 30000});
+            }
+            catch (error){
+                await logError(error, ctx, input);
+                handlePrismaError(error);
+            }
         }),
 
 
@@ -1281,7 +1286,14 @@ export const buyerOrdersRouter = createTRPCRouter({
                 });
             }
 
-            return ctx.db.$transaction(tx => deleteShipment(tx, input.shipment_id, ctx.user.id), {timeout: 30000});
+            try {
+                return ctx.db.$transaction(tx => deleteShipment(tx, input.shipment_id, ctx.user.id), {timeout: 30000});
+            }
+            catch (error){
+                await logError(error, ctx, input);
+                handlePrismaError(error);
+            }
+
         }),
 
 

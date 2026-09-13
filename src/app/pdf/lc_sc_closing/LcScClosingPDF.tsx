@@ -1,6 +1,6 @@
 import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
-import { registerPdfFonts, styles, tableBorderColor, tableHeaderColor } from "../components/pdfConfig";
-import { HeaderPart, PrintByAndDate, RenaissanceLogo, ReportTitle, Table, TableSummary } from "../components";
+import { registerPdfFonts, secondaryTableHeaderColor, styles, tableBorderColor, tableHeaderColor } from "../components/pdfConfig";
+import { HeaderPart, PrintByAndDate, RenaissanceLogo, ReportTitle, Signature, Table, TableSummary } from "../components";
 import { useDecodedUser } from "~/hooks";
 import type { inferRouterOutputs } from '@trpc/server';
 import type { lcScClosingRouter } from '~/server/api/routers/reports/lcScClosing'
@@ -8,6 +8,7 @@ import type { HeaderData } from "~/types/pdf";
 import { formatDate } from "~/utils/localDateString";
 import SettlementType from "./_components/Settlement";
 import { safeNumber } from "~/utils/numbers";
+import { currencyFormatter } from "~/utils/localNumberStrings";
 
 type LcScClosingReportOutput = inferRouterOutputs<typeof lcScClosingRouter>;
 type GetPDFDataOutput = LcScClosingReportOutput['getPDFData'];
@@ -189,6 +190,116 @@ const LcScClosingPDF = ({ data, base, isPartial }: LcScClosingReportPDFProps) =>
 		{ label: 'Total', value: data.chargesTable.total },
 	];
 
+	const commissionDistributionColumns = [
+		{ key: 'name', label: 'Name Of Office', width: 90.9 },
+		{ key: 'calculated', label: 'Calculate Commission', width: 90.9 },
+		{ key: 'percentage', label: 'Percentage', width: 90.9 },
+		{ key: 'percentageOfCommission', label: '% of Commission', width: 90.9 },
+		{ key: 'actual', label: 'Actual Commission', width: 90.9 },
+		{ key: 'actualPercentage', label: 'Actual Commission%', width: 90.9 },
+	];
+
+	const commissionDistributionData = [
+		{
+			name: 'Dhaka',
+			calculated: data.commissionTable.dhaka_value,
+			percentage: data.commissionTable.dhaka_percentage,
+			percentageOfCommission: data.commissionTable.percentage_of_dhaka_commission,
+			actual: data.commissionTable.dhaka_actual_commission,
+			actualPercentage: data.commissionTable.actual_dhaka_commission_percentage,
+		},
+		{
+			name: 'Overseas',
+			calculated: data.commissionTable.overseas_value,
+			percentage: data.commissionTable.overseas_percentage,
+			percentageOfCommission: data.commissionTable.percentage_of_overseas_commission,
+			actual: data.commissionTable.overseas_actual_commission,
+			actualPercentage: data.commissionTable.actual_overseas_commission_percentage,
+		},
+		{
+			name: 'Others',
+			calculated: data.commissionTable.other_value,
+			percentage: data.commissionTable.other_percentage,
+			percentageOfCommission: data.commissionTable.percentage_of_other_commission,
+			actual: data.commissionTable.other_actual_commission,
+			actualPercentage: data.commissionTable.actual_other_commission_percentage,
+		},
+	];
+
+	const totalCommissionColumns = [
+		{ key: 'mode', label: 'Mode Of Payment', width: 181.8 },
+		{ key: 'calculated', label: 'Calculated Commission', width: 90.9 },
+		{ key: 'actual', label: 'Actual Commission', width: 90.9 },
+	];
+
+	const totalCommissionData = [
+		{
+			mode: 'Through Commission Invoice',
+			calculated: data.table?.calculated_commission ?? '',
+			actual: data.table?.commission_realized ?? '',
+		},
+		{
+			mode: 'Through Debit Note',
+			calculated: data.table?.debit_note ?? '',
+			actual: data.table?.debit_note ?? '',
+		},
+	];
+
+	const commissionDistributionTotal = {
+		name: 'Total',
+		calculated: data.table_summary?.total_calculated_commission ?? '',
+		percentage: data.table_summary?.total_calculated_commission_percentage ?? '',
+		percentageOfCommission: '100.00%',
+		actual: data.table_summary?.total_commission_realized ?? '',
+		actualPercentage: data.table_summary?.total_commission_realized_percentage ?? '',
+	};
+
+	const totalCommissionTotal = {
+		mode: 'Total',
+		calculated: data.table_summary?.total_calculated_commission ?? '',
+		actual: data.table_summary?.total_commission_realized ?? '',
+	};
+
+	const debitNoteColumns = [
+		{ key: 'sl_no', label: 'SL No', width: 54.5 },
+		{ key: 'debit_note_ref', label: 'DN No', width: 163.6 },
+		{ key: 'debit_note_date', label: 'Date', width: 109.1 },
+		{ key: 'factory_name', label: 'Factory Name', width: 227.3 },
+		{ key: 'debit_note_value', label: 'Value', width: 90.9 },
+	];
+
+	const debitNoteData = (data.debitNotesTable ?? []).map((item, index) => ({
+		sl_no: String(index + 1),
+		...item,
+	}));
+
+	const commissionInvoiceColumns = [
+		{ key: 'sl_no', label: 'SL No', width: 54.5 },
+		{ key: 'ref_no', label: 'CI No', width: 181.8 },
+		{ key: 'invoice_date', label: 'Date', width: 109.1 },
+		{ key: 'invoice_value', label: 'Value', width: 90.9 },
+	];
+
+	const commissionInvoiceData = (data.commissionInvoiceTable ?? []).map((item, index) => ({
+		sl_no: String(index + 1),
+		...item,
+	}));
+
+	const parseCurrencyValue = (value: string) => safeNumber(value.replace(/[^0-9.-]/g, ''));
+	const debitNotesTotal = currencyFormatter(
+		debitNoteData.reduce((total, item) => total + parseCurrencyValue(item.debit_note_value), 0),
+		'$',
+	);
+	const commissionInvoicesTotal = currencyFormatter(
+		commissionInvoiceData.reduce((total, item) => total + parseCurrencyValue(item.invoice_value), 0),
+		'$',
+	);
+	const commissionInvoicesAndDebitNotesTotal = currencyFormatter(
+		parseCurrencyValue(debitNotesTotal) + parseCurrencyValue(commissionInvoicesTotal),
+		'$',
+	);
+
+
     return (
 		<Document
             title={title}
@@ -300,6 +411,59 @@ const LcScClosingPDF = ({ data, base, isPartial }: LcScClosingReportPDFProps) =>
 					</View>
 				</View>
 
+				<View style={lcStyles.tablePair} wrap={false}>
+					<View style={lcStyles.tableTwoThird}>
+						<Text style={lcStyles.sectionTitle}>Commission Distribution</Text>
+						<Table columns={commissionDistributionColumns} data={commissionDistributionData} />
+						<View style={lcStyles.totalRow}>
+							{commissionDistributionColumns.map((column) => (
+								<Text key={column.key} style={{ ...lcStyles.totalCell, width: `${column.width}px` }}>
+									{String(commissionDistributionTotal[column.key as keyof typeof commissionDistributionTotal] ?? '')}
+								</Text>
+							))}
+						</View>
+					</View>
+					<View style={lcStyles.tableHalf}>
+						<Text style={lcStyles.sectionTitle}>Total Commission</Text>
+						<Table columns={totalCommissionColumns} data={totalCommissionData} />
+						<View style={lcStyles.totalRow}>
+							{totalCommissionColumns.map((column) => (
+								<Text key={column.key} style={{ ...lcStyles.totalCell, width: `${column.width}px` }}>
+									{String(totalCommissionTotal[column.key as keyof typeof totalCommissionTotal] ?? '')}
+								</Text>
+							))}
+						</View>
+					</View>
+				</View>
+
+				<View style={lcStyles.tablePair} wrap={false}>
+					<View style={lcStyles.tableTwoThird}>
+						<Text style={lcStyles.sectionTitle}>Debit Notes</Text>
+						<Table columns={debitNoteColumns} data={debitNoteData} />
+						<View style={lcStyles.detailTotalRow}>
+							<Text style={lcStyles.detailTotalLabel}>Total</Text>
+							<Text style={{...lcStyles.detailTotalValue, width: 65.9}}>{debitNotesTotal}</Text>
+						</View>
+					</View>
+					<View style={lcStyles.tableHalf}>
+						<Text style={lcStyles.sectionTitle}>Commission Invoices</Text>
+						<Table columns={commissionInvoiceColumns} data={commissionInvoiceData} />
+						<View style={lcStyles.detailTotalRow}>
+							<Text style={lcStyles.detailTotalLabel}>Total</Text>
+							<Text style={{...lcStyles.detailTotalValue, width: 65.9}}>{commissionInvoicesTotal}</Text>
+						</View>
+					</View>
+				</View>
+
+				<View style={lcStyles.grandDetailTotalRow} wrap={false}>
+					<Text style={lcStyles.detailTotalLabel}>CI + DN Total</Text>
+					<Text style={{...lcStyles.detailTotalValue, width: 100}}>{commissionInvoicesAndDebitNotesTotal}</Text>
+				</View>
+
+				<Signature signatures={[
+					"Concern Commercial", "Concern Merchandiser", "Authorized Signature", "Authorized Signature"
+				]}/>
+
 				<Text
 					style={styles.pageNumber}
 					render={({ pageNumber, totalPages }) =>	`${pageNumber} / ${totalPages}`}
@@ -312,24 +476,77 @@ const LcScClosingPDF = ({ data, base, isPartial }: LcScClosingReportPDFProps) =>
 
 export default LcScClosingPDF;
 
+
 const lcStyles = StyleSheet.create({
-	debitNoteCommissionContainer: {
-		flexDirection: "row",
-		width: "100%",
-		borderBottomWidth: 0.5,
+	tablePair: {
+		display: 'flex',
+		flexDirection: 'row',
+		gap: 18,
+		width: '100%',
+		marginTop: 10,
+	},
+	tableHalf: {
+		flex: 2,
+	},
+	tableTwoThird: {
+		flex: 3
+	},
+	sectionTitle: {
+		backgroundColor: secondaryTableHeaderColor,
+		borderWidth: 0.5,
+		borderColor: tableBorderColor,
+		fontSize: 8,
+		fontWeight: 'semibold',
+		padding: 4,
+		textAlign: 'center',
+	},
+	totalRow: {
+		display: 'flex',
+		flexDirection: 'row',
+		borderWidth: 0.5,
+		borderColor: tableBorderColor,
+		marginTop: 10,
+		fontWeight: 'semibold',
+	},
+	totalCell: {
+		padding: 4,
+		fontSize: 8,
+		textAlign: 'center',
 		borderRightWidth: 0.5,
-		borderBottomColor: tableBorderColor,
 		borderRightColor: tableBorderColor,
 	},
-	debitNoteCommissionCells: {
+	detailTotalRow: {
+		display: 'flex',
+		flexDirection: 'row',
+		borderWidth: 0.5,
+		borderColor: tableBorderColor,
+		marginTop: 10,
+	},
+	grandDetailTotalRow: {
+		display: 'flex',
+		flexDirection: 'row',
+		width: '58.5%',
+		borderWidth: 0.5,
+		borderColor: tableBorderColor,
+		marginTop: 10,
+	},
+	detailTotalLabel: {
+		flex: 1,
+		padding: 4,
+		fontSize: 8,
+		fontWeight: 'semibold',
+		textAlign: 'center',
+	},
+	detailTotalValue: {
+		padding: 4,
+		fontSize: 8,
+		fontWeight: 'semibold',
+		textAlign: 'center',
 		borderLeftWidth: 0.5,
 		borderLeftColor: tableBorderColor,
-		padding: "4px",
-		fontSize: 8, 
-		fontFamily: 'Roboto',
 	},
-	chargeTableContainer: { 
-		maxWidth: 400, 
+	chargeTableContainer: {
+		maxWidth: 400,
 		borderTopWidth: 0.5,
 		borderLeftWidth: 0.5,
 		borderRightWidth: 0.5,
@@ -338,7 +555,7 @@ const lcStyles = StyleSheet.create({
 		borderRightColor: tableBorderColor,
 	},
 	chargeTableRows: {
-		display: 'flex', 
+		display: 'flex',
 		flexDirection: 'row', 
 		justifyContent: 'space-between',
 		alignItems: 'center',
@@ -373,5 +590,20 @@ const lcStyles = StyleSheet.create({
 		fontWeight: 'semibold',
 		paddingVertical: 2,
 		paddingHorizontal: 4,
-	}
+	},
+	debitNoteCommissionContainer: {
+		flexDirection: "row",
+		width: "100%",
+		borderBottomWidth: 0.5,
+		borderRightWidth: 0.5,
+		borderBottomColor: tableBorderColor,
+		borderRightColor: tableBorderColor,
+	},
+	debitNoteCommissionCells: {
+		borderLeftWidth: 0.5,
+		borderLeftColor: tableBorderColor,
+		padding: "4px",
+		fontSize: 8, 
+		fontFamily: 'Roboto',
+	},
 });
