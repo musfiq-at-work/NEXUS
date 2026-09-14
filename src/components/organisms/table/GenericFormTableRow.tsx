@@ -149,17 +149,15 @@ const GenericFormTableRow = <T extends FieldValues, >(props: Props<T>) => {
                             default:
                                 return (
                                     <>
-                                        <textarea className={clsx(
+                                        <textarea rows={1}
+                                            className={clsx(
                                                 "w-full min-w-[200px] overflow-hidden rounded-lg p-2 outline-none focus:border-secondary-accent", 
                                                 validationMessage ? "border-2 border-red-500" : "",
                                                 (col?.disabled || disabled) ? "text-gray-600" : "border-gray-300 emboss-inner"
                                             )}
-                                            rows={1}
                                             readOnly={disabled || col?.disabled}
                                             placeholder={col.placeholder}
-                                            {...register(fieldName, {
-                                                disabled: disabled || col?.disabled,
-                                            })} 
+                                            {...register(fieldName, { disabled: disabled || col?.disabled })} 
                                         />
                                         {validationMessage && (
                                             <p className="text-red-500 text-sm mt-1">

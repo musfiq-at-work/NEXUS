@@ -96,7 +96,6 @@ textarea {
   border-radius: 0.5rem !important;
 }
 
-
 @keyframes fadeSlideIn {
   from {
     opacity: 0;
@@ -174,6 +173,8 @@ textarea {
     background: linear-gradient(currentColor 0 0) 0 100%/0% 3px no-repeat;
     animation: l2 2s linear infinite;
   }
+
+  @keyframes l2 {to{background-size: 100% 3px}}
   
   .loader-text:before {
     content:"Loading"
@@ -197,15 +198,15 @@ textarea {
   }
 
   .freeze-col:nth-child(2) {
-    left: 175px;
+    left: 210px;
   }
 
   .freeze-col:nth-child(3) {
-    left: 350px;
+    left: 420px;
   }
 
   .freeze-col:nth-child(4) {
-    left: 525px;
+    left: 630px;
   }
 
   .freeze-head:nth-child(1) {
@@ -213,18 +214,14 @@ textarea {
   }
 
   .freeze-head:nth-child(2) {
-    left: 175px;
+    left: 210px;
   }
 
   .freeze-head:nth-child(3) {
-    left: 350px;
+    left: 420px;
   }
 
   .freeze-head:nth-child(4) {
-    left: 525px;
+    left: 630px;
   }
-
-
-  @keyframes l2 {to{background-size: 100% 3px}}
 }
-

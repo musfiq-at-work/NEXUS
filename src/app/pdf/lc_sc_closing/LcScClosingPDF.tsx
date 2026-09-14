@@ -413,7 +413,6 @@ const LcScClosingPDF = ({ data, base, isPartial }: LcScClosingReportPDFProps) =>
 
 				<View style={lcStyles.tablePair} wrap={false}>
 					<View style={lcStyles.tableTwoThird}>
-						<Text style={lcStyles.sectionTitle}>Commission Distribution</Text>
 						<Table columns={commissionDistributionColumns} data={commissionDistributionData} />
 						<View style={lcStyles.totalRow}>
 							{commissionDistributionColumns.map((column) => (
@@ -436,15 +435,7 @@ const LcScClosingPDF = ({ data, base, isPartial }: LcScClosingReportPDFProps) =>
 					</View>
 				</View>
 
-				<View style={lcStyles.tablePair} wrap={false}>
-					<View style={lcStyles.tableTwoThird}>
-						<Text style={lcStyles.sectionTitle}>Debit Notes</Text>
-						<Table columns={debitNoteColumns} data={debitNoteData} />
-						<View style={lcStyles.detailTotalRow}>
-							<Text style={lcStyles.detailTotalLabel}>Total</Text>
-							<Text style={{...lcStyles.detailTotalValue, width: 65.9}}>{debitNotesTotal}</Text>
-						</View>
-					</View>
+				<View break style={lcStyles.tablePair}>
 					<View style={lcStyles.tableHalf}>
 						<Text style={lcStyles.sectionTitle}>Commission Invoices</Text>
 						<Table columns={commissionInvoiceColumns} data={commissionInvoiceData} />
@@ -453,11 +444,19 @@ const LcScClosingPDF = ({ data, base, isPartial }: LcScClosingReportPDFProps) =>
 							<Text style={{...lcStyles.detailTotalValue, width: 65.9}}>{commissionInvoicesTotal}</Text>
 						</View>
 					</View>
+					{debitNoteData.length > 0 && <View style={lcStyles.tableTwoThird}>
+						<Text style={lcStyles.sectionTitle}>Debit Notes</Text>
+						<Table columns={debitNoteColumns} data={debitNoteData} />
+						<View style={lcStyles.detailTotalRow}>
+							<Text style={lcStyles.detailTotalLabel}>Total</Text>
+							<Text style={{...lcStyles.detailTotalValue, width: 65.9}}>{debitNotesTotal}</Text>
+						</View>
+					</View>}
 				</View>
 
 				<View style={lcStyles.grandDetailTotalRow} wrap={false}>
-					<Text style={lcStyles.detailTotalLabel}>CI + DN Total</Text>
-					<Text style={{...lcStyles.detailTotalValue, width: 100}}>{commissionInvoicesAndDebitNotesTotal}</Text>
+					<Text style={lcStyles.detailTotalLabel}>Total (Commission Invoices + Debit Notes)</Text>
+					<Text style={{...lcStyles.detailTotalValue, width: 150}}>{commissionInvoicesAndDebitNotesTotal}</Text>
 				</View>
 
 				<Signature signatures={[
@@ -486,10 +485,10 @@ const lcStyles = StyleSheet.create({
 		marginTop: 10,
 	},
 	tableHalf: {
-		flex: 2,
+		width: '40%'
 	},
 	tableTwoThird: {
-		flex: 3
+		width: '60%'
 	},
 	sectionTitle: {
 		backgroundColor: secondaryTableHeaderColor,
@@ -497,7 +496,7 @@ const lcStyles = StyleSheet.create({
 		borderColor: tableBorderColor,
 		fontSize: 8,
 		fontWeight: 'semibold',
-		padding: 4,
+		padding: 2,
 		textAlign: 'center',
 	},
 	totalRow: {
@@ -525,10 +524,11 @@ const lcStyles = StyleSheet.create({
 	grandDetailTotalRow: {
 		display: 'flex',
 		flexDirection: 'row',
-		width: '58.5%',
+		marginLeft: '25%',
+		width: '50%',
 		borderWidth: 0.5,
 		borderColor: tableBorderColor,
-		marginTop: 10,
+		marginTop: 20,
 	},
 	detailTotalLabel: {
 		flex: 1,

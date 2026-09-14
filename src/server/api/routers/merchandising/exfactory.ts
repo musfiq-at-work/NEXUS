@@ -322,7 +322,11 @@ export const exFactoryRouter = createTRPCRouter({
             const minimumDate = new Date(today);
             minimumDate.setDate(minimumDate.getDate() - 2);
 
-            if (input.exfactory_date < minimumDate) {
+            const userLevel = ctx.user.level_id;
+            const userDepartment = ctx.user.department_id;
+            const isAdmin = userLevel === ADMIN_LEVEL_ID && userDepartment === ADMIN_DEPARTMENT_ID;
+
+            if ((input.exfactory_date < minimumDate) && !isAdmin) {
                 throw new TRPCError({
                     code: "BAD_REQUEST",
                     message: "Exfactory date cannot be more than 2 days behind today",
@@ -884,8 +888,24 @@ export const exFactoryRouter = createTRPCRouter({
             if (!can_edit) {
                 throw new TRPCError({
                     code: "FORBIDDEN",
-                    message:
-                        "You do not have permission to update ex-factory records.",
+                    message: "You do not have permission to update ex-factory records.",
+                });
+            }
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const minimumDate = new Date(today);
+            minimumDate.setDate(minimumDate.getDate() - 2);
+
+            const userLevel = ctx.user.level_id;
+            const userDepartment = ctx.user.department_id;
+            const isAdmin = userLevel === ADMIN_LEVEL_ID && userDepartment === ADMIN_DEPARTMENT_ID;
+
+            if ((input.exfactory_date < minimumDate) && !isAdmin) {
+                throw new TRPCError({
+                    code: "BAD_REQUEST",
+                    message: "Exfactory date cannot be more than 2 days behind today",
                 });
             }
 

@@ -357,6 +357,7 @@ export const lcScClosingRouter = createTRPCRouter({
                                         INNER JOIN exfactory_orders AS EO ON EO.exfactory_id = E.id
                                         INNER JOIN exfactory_shipments AS ES ON ES.exfactory_orders_id = EO.id 
                                     WHERE E.EXFACTORY_DATE BETWEEN ${input.from_date} AND ${input.to_date}
+                                    GROUP BY ES.SHIPMENT_DETAILS_ID
                                 ),
                             ` : Prisma.empty}
                             RDL AS (
@@ -485,7 +486,7 @@ export const lcScClosingRouter = createTRPCRouter({
 
                 const gain_lose = ( - (
                     safeNumber(tableData[0]?.rdl_export_value_usd) - safeNumber(tableData[0]?.realized_amount)
-                ) - (
+                ) + (
                     safeNumber(charges[0]?.bank_charge) + 
                     safeNumber(charges[0]?.document_charge) + 
                     safeNumber(charges[0]?.discount_charge) +
