@@ -18,6 +18,9 @@ export const shipmentSchema = z.object({
     ex_factory_exists: z.boolean().optional(),
     rdl_value_usd: z.any().optional(),
     colors: z.array(colorSchema),
+}).refine((data) => data.handover_date < data.etd_date, {
+    message: "Handover date must be before ETD date",
+    path: ["handover_date"],
 });
 
 export type ShipmentFormValues = z.infer<typeof shipmentSchema>;

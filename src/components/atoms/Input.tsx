@@ -19,7 +19,7 @@ const Input = (props: InputPropsType) => {
 	const variantClasses = {
 		error: 'border-2 border-red-accent',
 		default: 'border-2 border-transparent'
-	}[isErrored ? 'error' : 'default']
+	}[isErrored ? 'error' : 'default'];
 	
 	return (
 		<input
@@ -29,9 +29,7 @@ const Input = (props: InputPropsType) => {
 			ref={ref}
 			step={'any'}
 			placeholder={placeholder}
-			onChange={(e) => {
-				e.target.value = e.target.value.toUpperCase();
-			}}
+			onChange={(e) => {e.target.value = e.target.value.toUpperCase()}}
 			min={minDateValue}  
 			className={clsx("mb-1 py-2 px-3 rounded-lg focus:outline-none emboss-inner w-full", 
 				variantClasses,

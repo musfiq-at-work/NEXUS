@@ -51,7 +51,7 @@ export const styles = StyleSheet.create({
         left: 0,
         right: 0,
         textAlign: "center",
-        color: "#666666",
+        color: "#555555",
     },
     tableContainer: {
         width: "100%",

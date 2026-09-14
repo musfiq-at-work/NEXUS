@@ -440,15 +440,24 @@ export const lcScClosingRouter = createTRPCRouter({
                 const commission_percentage = dividedByZeroSafe(commission, safeNumber(tableData[0]?.rdl_export_value_usd)) * 100;
 
                 const commission_realized = safeNumber(tableData[0]?.realized_amount) - safeNumber(tableData[0]?.factory_paid_amount);
-                const commission_realized_percentage = dividedByZeroSafe(commission_realized, safeNumber(tableData[0]?.rdl_export_value_usd)) * 100;
+                
+                const commission_realized_percentage = dividedByZeroSafe(
+                    commission_realized, safeNumber(tableData[0]?.rdl_export_value_usd)
+                ) * 100;
 
                 const debit_note = safeNumber(tableData[0]?.debit_note);
 
                 const total_calculated_commission = commission + debit_note; 
-                const total_calculated_commission_percentage = dividedByZeroSafe(total_calculated_commission, safeNumber(tableData[0]?.rdl_export_value_usd)) * 100;
+
+                const total_calculated_commission_percentage = dividedByZeroSafe(
+                    total_calculated_commission, safeNumber(tableData[0]?.rdl_export_value_usd)
+                ) * 100;
 
                 const total_commission_realized = commission_realized + debit_note;  
-                const total_commission_realized_percentage = dividedByZeroSafe(total_commission_realized, safeNumber(tableData[0]?.rdl_export_value_usd)) * 100;
+
+                const total_commission_realized_percentage = dividedByZeroSafe(
+                    total_commission_realized, safeNumber(tableData[0]?.rdl_export_value_usd)
+                ) * 100;
 
                 const table = tableData.length > 0 ? {
                     invoice_period: invoicePeriod,
@@ -538,15 +547,25 @@ export const lcScClosingRouter = createTRPCRouter({
 
                     percentage_of_dhaka_commission: `${quantityFormatter(percentageOfDhakaCommission * 100)}%`,
                     percentage_of_overseas_commission: `${quantityFormatter(percentageOfOverseasCommission * 100)}%`,
-                    percentage_of_other_commission: `${quantityFormatter(safeNumber(commissionDistributions[0]?.other_percentage) * 100 / totalPercentageOfCommission)}%`,
+                    percentage_of_other_commission: `${quantityFormatter(
+                        safeNumber(commissionDistributions[0]?.other_percentage) * 100 / totalPercentageOfCommission
+                    )}%`,
 
                     dhaka_actual_commission: currencyFormatter(actualDhakaCommission, '$'),
                     overseas_actual_commission: currencyFormatter(safeNumber(commissionDistributions[0]?.overseas_value), '$'),
                     other_actual_commission: currencyFormatter(safeNumber(commissionDistributions[0]?.other_value), '$'),
                     
-                    actual_dhaka_commission_percentage: `${quantityFormatter(actualDhakaCommission * 100 / safeNumber(tableData[0]?.rdl_export_value_usd))}%`, 
-                    actual_overseas_commission_percentage: `${quantityFormatter(safeNumber(commissionDistributions[0]?.overseas_value) * 100 / safeNumber(tableData[0]?.rdl_export_value_usd))}%`, 
-                    actual_other_commission_percentage: `${quantityFormatter(safeNumber(commissionDistributions[0]?.other_value) * 100 / safeNumber(tableData[0]?.rdl_export_value_usd))}%`, 
+                    actual_dhaka_commission_percentage: `${quantityFormatter(
+                        actualDhakaCommission * 100 / safeNumber(tableData[0]?.rdl_export_value_usd)
+                    )}%`, 
+
+                    actual_overseas_commission_percentage: `${quantityFormatter(
+                        safeNumber(commissionDistributions[0]?.overseas_value) * 100 / safeNumber(tableData[0]?.rdl_export_value_usd)
+                    )}%`, 
+
+                    actual_other_commission_percentage: `${quantityFormatter(
+                        safeNumber(commissionDistributions[0]?.other_value) * 100 / safeNumber(tableData[0]?.rdl_export_value_usd)
+                    )}%`, 
                 }
 
                 return { 

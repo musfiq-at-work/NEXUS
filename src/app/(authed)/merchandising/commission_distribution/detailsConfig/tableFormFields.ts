@@ -10,12 +10,14 @@ export const formFields = () => {
             label: 'Style',
             placeholder: 'Enter style',
             disabled: true,
+            freeze: true,
         },
         {
             name: 'po',
             label: 'PO',
             placeholder: 'Enter PO',
             disabled: true,
+            freeze: true,
         },
         {
             name: 'destination',

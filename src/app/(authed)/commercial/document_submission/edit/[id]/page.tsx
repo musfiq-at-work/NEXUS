@@ -50,6 +50,7 @@ const EditDocumentSubmissionPage = ({ params }: ParamsProp) => {
             const payload = {
                 id,
                 submission_date: new Date(documentSubmissionData.submission_date ?? new Date()),
+                fdbc_no: documentSubmissionData.fdbc_no,
                 fdbc_value: safeNumber(documentSubmissionData.fdbc_value),
                 awb_no: documentSubmissionData.awb_no,
                 awb_date: documentSubmissionData.awb_date 
@@ -94,6 +95,7 @@ const EditDocumentSubmissionPage = ({ params }: ParamsProp) => {
                 validationError={validationError ?? {}}
                 error={error}
                 control={control}
+                disabled={!can_update || hasProceedRealization}
             />
 
             <RDLInvoiceDetails 

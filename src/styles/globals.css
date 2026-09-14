@@ -179,6 +179,52 @@ textarea {
     content:"Loading"
   }
 
+  .freeze-col {
+    position: sticky;
+    z-index: 1;        /* Keeps it layered above scrolling cells */
+    background-color: #FFFFEF60; /* Crucial! Prevents text behind it from showing through */
+    backdrop-filter: blur(10px);
+  }
+
+  .freeze-head {
+    position: sticky;
+    z-index: 1;        /* Keeps it layered above scrolling cells */
+    background-color: var(--color-primary-dark); /* Crucial! Prevents text behind it from showing through */
+  }
+
+  .freeze-col:nth-child(1) {
+    left: 0;
+  }
+
+  .freeze-col:nth-child(2) {
+    left: 175px;
+  }
+
+  .freeze-col:nth-child(3) {
+    left: 350px;
+  }
+
+  .freeze-col:nth-child(4) {
+    left: 525px;
+  }
+
+  .freeze-head:nth-child(1) {
+    left: 0;
+  }
+
+  .freeze-head:nth-child(2) {
+    left: 175px;
+  }
+
+  .freeze-head:nth-child(3) {
+    left: 350px;
+  }
+
+  .freeze-head:nth-child(4) {
+    left: 525px;
+  }
+
+
   @keyframes l2 {to{background-size: 100% 3px}}
 }
 

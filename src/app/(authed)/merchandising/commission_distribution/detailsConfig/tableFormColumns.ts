@@ -1,6 +1,6 @@
 export const tableFormColumns = [
-    { key: 'style', label: 'Style' },
-    { key: 'po', label: 'PO' },
+    { key: 'style', label: 'Style', freeze: true, },
+    { key: 'po', label: 'PO', freeze: true, },
     { key: 'destination', label: 'Destination' },
     { key: 'size', label: 'Size' },
     { key: 'order_quantity', label: 'Order Quantity' },

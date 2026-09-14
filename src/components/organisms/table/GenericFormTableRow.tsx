@@ -28,7 +28,7 @@ const GenericFormTableRow = <T extends FieldValues, >(props: Props<T>) => {
     return (
         <TableRow key={index} className={className}>
             {fields.map((col, colIndex) => (
-                <TableCell key={colIndex} fixedLength={col.type !== 'checkbox'}>
+                <TableCell key={colIndex} fixedLength={col.type !== 'checkbox'} className={col.freeze ? 'freeze-col' : ''}>
                     {(() => {
                         const fieldName = `${name}.${index}.${col.name}`;
                         const validationMessage = validationError?.[index]?.[col.name]?.message;
@@ -92,9 +92,7 @@ const GenericFormTableRow = <T extends FieldValues, >(props: Props<T>) => {
                                         className={clsx("px-4 py-2 text-white rounded-lg  focus:outline-none focus:ring-2 focus:ring-primary-focus focus:ring-offset-2",
                                             !handleAction ? "opacity-50 cursor-not-allowed bg-gray-accent" : "hover:cursor-pointer bg-secondary hover:bg-primary-dark"
                                         )}
-                                        // disabled={isDisabled}
                                         onClick={() => handleAction ? handleAction(index) : null}
-                                        // disabled={disabled}
                                     >
                                         {col.label}
                                     </button>

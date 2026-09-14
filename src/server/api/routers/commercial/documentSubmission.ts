@@ -262,7 +262,7 @@ export const documentSubmissionRouter = createTRPCRouter({
             term_id: z.number(),
             buyer_id: z.number(),
             submission_date: z.date(),
-            fdbc_no: z.string().optional(),
+            fdbc_no: z.string().min(1, 'FDBC No is mandatory'),
             fdbc_value: z.number().optional(),
             fdbc_date: z.date().optional(),
             lc_sc_id: z.string().optional(),
@@ -864,6 +864,7 @@ export const documentSubmissionRouter = createTRPCRouter({
         .input(z.object({
             id: z.string(),
             submission_date: z.date().optional(),
+            fdbc_no: z.string().min(1, 'FDBC No is mandatory'),
             fdbc_value: z.number().optional(),
             awb_no: z.string().optional(),
             awb_date: z.date().optional(),
@@ -895,6 +896,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                         where: { id: input.id },
                         data: {
                             submission_date: input.submission_date,
+                            fdbc_no: input.fdbc_no,
                             fdbc_value: input.fdbc_value,
                             awb_no: input.awb_no,
                             awb_date: input.awb_date,

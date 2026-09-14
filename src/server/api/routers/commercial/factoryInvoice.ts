@@ -674,8 +674,8 @@ export const factoryInvoiceRouter = createTRPCRouter({
                             END AS FACTORY_FOB,
                             CASE
                                 WHEN COALESCE(FSD.TRANSFER_RATE, 0) <> 0	
-                                    THEN FSD.TRANSFER_RATE * SUM(SID.QUANTITY)
-                                ELSE FSD.FACTORY_RATE * SUM(SID.QUANTITY)
+                                    THEN FSD.TRANSFER_RATE * EFSD.DELIVERY_QUANTITY
+                                ELSE FSD.FACTORY_RATE * EFSD.DELIVERY_QUANTITY
                             END AS FACTORY_VALUE
                         FROM exfactory AS ES
                             INNER JOIN exfactory_orders AS EO ON EO.exfactory_id = ES.id
