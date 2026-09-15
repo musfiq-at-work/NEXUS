@@ -270,7 +270,7 @@ export const commercialTnaPlanRouter = createTRPCRouter({
             }
             
             try {
-                return ctx.db.$transaction(async (tx) => {
+                return await ctx.db.$transaction(async (tx) => {
                     await Promise.all(
                         input.details.map(async (items) => {
                             await tx.commercial_tna_planning_details.update({

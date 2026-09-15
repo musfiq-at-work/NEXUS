@@ -70,6 +70,12 @@ async function deleteShipment(tx: Prisma.TransactionClient, shipmentId: string, 
     // delete associated colors
     await deleteColorsByShipmentId(tx, shipmentId, userId);
 
+    await tx.lc_amendment_shipments.deleteMany({
+        where: {
+            shipment_details_id: shipmentId
+        }
+    })
+
     const existingCommissionDistributionDetails = await tx.commission_distributions_details.findMany({
         where: { shipment_details_id: shipmentId },
     });
@@ -1265,7 +1271,7 @@ export const buyerOrdersRouter = createTRPCRouter({
             }
 
             try {
-                return ctx.db.$transaction(tx => deleteStyle(tx, input.style_id, ctx.user.id), {timeout: 30000});
+                return await ctx.db.$transaction(tx => deleteStyle(tx, input.style_id, ctx.user.id), {timeout: 30000});
             }
             catch (error){
                 await logError(error, ctx, input);
@@ -1287,9 +1293,10 @@ export const buyerOrdersRouter = createTRPCRouter({
             }
 
             try {
-                return ctx.db.$transaction(tx => deleteShipment(tx, input.shipment_id, ctx.user.id), {timeout: 30000});
+                return await ctx.db.$transaction(tx => deleteShipment(tx, input.shipment_id, ctx.user.id), {timeout: 30000});
             }
             catch (error){
+                console.log('In buyer order', error)
                 await logError(error, ctx, input);
                 handlePrismaError(error);
             }

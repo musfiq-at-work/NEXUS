@@ -95,12 +95,12 @@ export const permissionRouter = createTRPCRouter({
 				Object.entries(input.permissions).map(async ([id, permission]) => {
 
 				if (permission.can_view !== true) {
-					return ctx.db.level_permission.deleteMany({
+					return await ctx.db.level_permission.deleteMany({
 						where: { id: id }
 					});
 				}
 
-				return ctx.db.level_permission.update({
+				return await ctx.db.level_permission.update({
 					where: { id: id },
 					data: {
 						can_view: true,

@@ -20,7 +20,7 @@ export const useEarlySettlementForm = (settlement?: GetEarlySettlementByIdTypes)
 
     const { handleSubmit, formState: { errors: validationError }, setFocus, control, reset } = methods;
 
-    // Effect to reset form when percentage changes
+    // Refresh the settlement fields without clearing PO rows being hydrated separately.
     useEffect(() => {
         if (settlement) {
             methods.reset({
@@ -28,7 +28,7 @@ export const useEarlySettlementForm = (settlement?: GetEarlySettlementByIdTypes)
                 order_id: settlement.order_id,
                 buyer_id: settlement.buyer_id,
                 remarks: settlement.remarks ?? undefined,
-                pos: []
+                pos: methods.getValues('pos') ?? [],
             });
         }
     }, [settlement, methods]);

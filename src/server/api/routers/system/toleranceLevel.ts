@@ -136,7 +136,7 @@ export const toleranceLevelRouter = createTRPCRouter({
             }
 
             try {
-                return ctx.db.$transaction(async (tx) => {
+                return await ctx.db.$transaction(async (tx) => {
                     await tx.shipment_tolerance_level.create({
                         data: {
                             buyer_id: input.buyer_id,
@@ -178,7 +178,7 @@ export const toleranceLevelRouter = createTRPCRouter({
             }
 
             try {
-                return ctx.db.$transaction(async (tx) => {
+                return await ctx.db.$transaction(async (tx) => {
                     await tx.shipment_tolerance_level.update({
                         where: { id: input.id },
                         data: {
@@ -216,7 +216,7 @@ export const toleranceLevelRouter = createTRPCRouter({
             }
 
             try {
-                return ctx.db.$transaction(async (tx) => {
+                return await ctx.db.$transaction(async (tx) => {
                     const deletedTolerance = await tx.shipment_tolerance_level.delete({
                         where: { id: input.id },
                     });

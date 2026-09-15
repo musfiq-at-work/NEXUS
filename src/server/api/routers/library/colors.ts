@@ -131,7 +131,7 @@ export const colorsRouter = createTRPCRouter({
         }
 
         try {
-            return ctx.db.$transaction(async (tx) => {
+            return await ctx.db.$transaction(async (tx) => {
                 const color = await tx.colors.delete({
                     where: { id: input.id },
                 });
@@ -177,7 +177,7 @@ export const colorsRouter = createTRPCRouter({
             }
 
             try {
-                return ctx.db.$transaction(async (tx) => {
+                return await ctx.db.$transaction(async (tx) => {
                     await tx.color_history.create({
                         data: {
                             color_id: input.id,

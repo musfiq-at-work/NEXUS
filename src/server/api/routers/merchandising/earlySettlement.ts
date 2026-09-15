@@ -148,7 +148,7 @@ export const earlySettlementRouter = createTRPCRouter({
             }
             
             try {
-                return ctx.db.$transaction(async (tx) => {
+                return await ctx.db.$transaction(async (tx) => {
                     const earlySettlementDetails = await ctx.db.early_settlement_details.findMany({
                         where: {
                             early_settlement_id: input.id
@@ -265,19 +265,19 @@ export const earlySettlementRouter = createTRPCRouter({
                         C.effective_commission_percentage,
                         C.commission_value,
                         C.effective_commission,
-                        D.dhaka_commission AS dhaka_commission_percentage,
-                        (C.effective_commission_percentage - D.mandatory_commission) AS effective_dhaka_commission_percentage,
-                        C.order_quantity * C.fob_rate * D.dhaka_commission / 100 AS dhaka_value,
-                        C.order_quantity * C.effective_fob * (C.effective_commission_percentage - D.mandatory_commission) / 100 AS effective_dhaka_value,
-                        D.overseas_commission AS overseas_commission_percentage,
-                        C.order_quantity * C.fob_rate * D.overseas_commission / 100 AS overseas_value,
-                        C.order_quantity * C.effective_fob * D.overseas_commission / 100 AS effective_overseas_value,
-                        D.others_commission AS other_commission_percentage,
-                        C.order_quantity * C.fob_rate * D.others_commission / 100 AS other_value,
-                        C.order_quantity * C.effective_fob * D.others_commission / 100 AS effective_other_value,
+                        COALESCE(D.dhaka_commission, 0) AS dhaka_commission_percentage,
+                        (C.effective_commission_percentage - COALESCE(D.mandatory_commission, 0)) AS effective_dhaka_commission_percentage,
+                        C.order_quantity * C.fob_rate * COALESCE(D.dhaka_commission, 0) / 100 AS dhaka_value,
+                        C.order_quantity * C.effective_fob * (C.effective_commission_percentage - COALESCE(D.mandatory_commission, 0)) / 100 AS effective_dhaka_value,
+                        COALESCE(D.overseas_commission, 0) AS overseas_commission_percentage,
+                        C.order_quantity * C.fob_rate * COALESCE(D.overseas_commission, 0) / 100 AS overseas_value,
+                        C.order_quantity * C.effective_fob * COALESCE(D.overseas_commission, 0) / 100 AS effective_overseas_value,
+                        COALESCE(D.others_commission, 0) AS other_commission_percentage,
+                        C.order_quantity * C.fob_rate * COALESCE(D.others_commission, 0) / 100 AS other_value,
+                        C.order_quantity * C.effective_fob * COALESCE(D.others_commission, 0) / 100 AS effective_other_value,
                         C.symbol
                     FROM CALC AS C
-                    JOIN DISTRIBUTIONS AS D ON D.shipment_details_id = C.shipment_detail_id
+                                LEFT JOIN DISTRIBUTIONS AS D ON D.shipment_details_id = C.shipment_detail_id
                     JOIN early_settlement_details AS ESD ON ESD.shipment_details_id = C.shipment_detail_id
                     where ESD.early_settlement_id = ${input.id};
                 `;
@@ -562,7 +562,7 @@ export const earlySettlementRouter = createTRPCRouter({
                 })
             }
 
-            return ctx.db.$transaction(async (tx) => {
+            return await ctx.db.$transaction(async (tx) => {
                 const existingDetails = await tx.early_settlement_details.findMany({
                     where: {
                         early_settlement_id: input.id
