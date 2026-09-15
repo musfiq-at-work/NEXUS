@@ -167,15 +167,15 @@ export const lcMasterRouter = createTRPCRouter({
                             OR B.BUYER_NAME ILIKE '%' || ${input.query} || '%'
                             OR EXISTS (
                                 SELECT 1
-                                FROM lc_orders AS LCD2
-                                    LEFT JOIN order_styles AS OS ON OS.order_id = LCD2.order_id
-                                    LEFT JOIN shipment_details AS SD ON SD.order_style_id = OS.id
-                                    LEFT JOIN buyer_orders AS BO ON BO.ID = LCD.order_id 
-                                WHERE LCD2.lc_master_id = LC.id
+                                FROM lc_shipments AS LCS
+                                INNER JOIN shipment_details AS SD ON SD.id = LCS.shipment_details_id
+                                INNER JOIN order_styles AS OS ON OS.id = SD.order_style_id
+                                INNER JOIN buyer_orders AS BO ON BO.id = OS.order_id
+                                WHERE LCS.lc_master_id = LC.id
                                     AND (
                                         OS.style ILIKE '%' || ${input.query} || '%'
                                         OR SD.buyer_po ILIKE '%' || ${input.query} || '%'
-                                        OR BO.REF_NO ILIKE '%' || ${input.query} || '%'
+                                        OR BO.ref_no ILIKE '%' || ${input.query} || '%'
                                     )
                             )
                         )

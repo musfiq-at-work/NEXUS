@@ -699,13 +699,13 @@ export const commissionDistributionRouter = createTRPCRouter({
                 const userDepartment = ctx.user.department_id;
                 const isAdmin = userLevel === ADMIN_LEVEL_ID && userDepartment === ADMIN_DEPARTMENT_ID;
 
-                const isCommissionDistributionAuthorized = await ctx.db.$queryRaw<{approval_status: boolean}[]>`
+                const isFactoryOrderAuthorized = await ctx.db.$queryRaw<{approval_status: boolean}[]>`
                     SELECT FO.approval_status = 2 AS approval_status FROM commission_distributions AS CD
                         INNER JOIN factory_orders AS FO ON FO.order_id = CD.order_id
                     WHERE CD.id = ${input.id};
                 `;
 
-                if(isCommissionDistributionAuthorized[0]?.approval_status ?? 0 > 0) {
+                if(!isFactoryOrderAuthorized[0]?.approval_status && input.approval_status === true) {
                     throw new TRPCError({
                         code: "BAD_REQUEST",
                         message: "Authorize factory order first.",

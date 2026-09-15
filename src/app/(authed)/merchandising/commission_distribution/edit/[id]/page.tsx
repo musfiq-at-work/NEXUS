@@ -168,7 +168,7 @@ const EditCommissionDistributionPage = ({ params }: ParamsProp) => {
             />
 
             <MessageBox 
-                message="The associated factory order is unauthorized, the following commission distribution can't be updated / authorized / unauthorized." 
+                message="The associated factory order is unauthorized, the following commission distribution can't be updated / authorized." 
                 active={!!isFactoryOrderUnauthorized} 
                 type="error" 
             />
