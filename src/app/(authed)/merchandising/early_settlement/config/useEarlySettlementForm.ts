@@ -45,5 +45,16 @@ export const useEarlySettlementForm = (settlement?: GetEarlySettlementByIdTypes)
 
     const isEdit = !!settlement;
 
-    return { methods, handleSubmit, formFields: useFormFields({isEdit, buyer_id, early_settlement_id}), validationError, control, reset };
+    return { 
+        methods, 
+        handleSubmit, 
+        formFields: useFormFields({
+            isEdit, 
+            buyer_id, 
+            early_settlement_id
+        }), 
+        validationError, 
+        control, 
+        reset 
+    };
 }

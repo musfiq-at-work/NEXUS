@@ -705,9 +705,9 @@ export const commissionDistributionRouter = createTRPCRouter({
                     WHERE CD.id = ${input.id};
                 `;
 
-                if(!isCommissionDistributionAuthorized[0]?.approval_status) {
+                if(isCommissionDistributionAuthorized[0]?.approval_status ?? 0 > 0) {
                     throw new TRPCError({
-                        code: "FORBIDDEN",
+                        code: "BAD_REQUEST",
                         message: "Authorize factory order first.",
                     });
                 }

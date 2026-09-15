@@ -10,9 +10,9 @@ import { formatDate } from "~/utils/localDateString";
 import { excelIcon } from "~/assets";
 
 const currentTime = new Date().toLocaleTimeString('en-US', {
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: true
+	hour: '2-digit',
+	minute: '2-digit',
+	hour12: true
 }).replace(':', '-');
 
 const OrderSummaryReportPage = () => {

@@ -111,6 +111,7 @@ const sideBarConfig: Record<number, {href: string;}> = {
     [m.EXPORT_SUMMARY]: { href: "/reports/com_report/export_summary" },
     [m.LC_SC_CLOSING]: { href: "/reports/com_report/lc_sc_closing" },
     [m.COMMERCIAL_ACTIVITY_REPORT]: { href: "/reports/com_report/activity_report" },
+    [m.COMMISSION_REPORT]: { href: "/reports/com_report/commission_report" },
 
     // Maintenance
     [m.ERROR_LOGS]: { href: "/maintenance/error_logs" },

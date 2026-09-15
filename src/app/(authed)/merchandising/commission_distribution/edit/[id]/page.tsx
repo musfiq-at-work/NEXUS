@@ -197,7 +197,7 @@ const EditCommissionDistributionPage = ({ params }: ParamsProp) => {
                             onClick={() => onSetAuthorization(false)}
                             label="Unauthorize Commission Distribution"
                             className="text-lg tracking-wide mt-6 max-w-80"
-                            disabled={!canAuthorize || isFactoryOrderUnauthorized || isSalesContractApproved}
+                            disabled={!canAuthorize || isSalesContractApproved}
                         />
                     </div>
                 ) : (
