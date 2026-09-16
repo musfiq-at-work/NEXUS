@@ -40,7 +40,7 @@ const Button = (props: ButtonProps) => {
             type={ type} 
         >
             <span className="flex gap-3 items-center">
-                {leftIcon && <Image width={30} height={30} src={leftIcon} alt="" className={clsx("inline-block py-1", variant === 'accordion' ? "w-5" : "w-4")} />}
+                {leftIcon && <Image width={25} height={30} src={leftIcon} alt="" className={clsx("inline-block py-1", variant === 'accordion' ? "w-5" : "w-4")} />}
                 {label}
             </span>
             {rightIcon && <Image width={25} height={25} src={rightIcon} alt="" className={clsx("inline-block w-3 py-1 ml-3")} />}

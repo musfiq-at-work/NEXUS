@@ -10,7 +10,7 @@ import { useNavigationStore, usePermissionStore } from "~/store";
 import { useDecodedUser, useModulePath } from "~/hooks";
 import ScDetails from "../../components/ScDetails";
 import type { ParamsProp } from "~/types/params";
-import { printingWhiteIcon } from "~/assets";
+import { printingWhiteIcon, commissionWhiteIcon } from "~/assets";
 
 const EditSalesContractPage = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
@@ -159,13 +159,23 @@ const EditSalesContractPage = ({ params }: ParamsProp) => {
             heading="Update Sales Contract"
             subSectionRight={
                 can_view ? (
-                    <div className="w-50 mb-3">
-                        <Button
-                            variant="secondary"
-                            label="Print (PDF)"
-                            leftIcon={printingWhiteIcon}
-                            onClick={() => window.open(`/pdf/sales_contract/${id}`, "_blank")}
-                        />
+                    <div className='flex flex-row gap-4'>
+                        <div className="w-70 mb-3">
+                            <Button
+                                variant="secondary"
+                                label="Sales Contract (PDF)"
+                                leftIcon={printingWhiteIcon}
+                                onClick={() => window.open(`/pdf/sales_contract/${id}`, "_blank")}
+                            />
+                        </div>
+                        <div className="w-60 mb-3">
+                            <Button
+                                variant="secondary"
+                                label="Commission (PDF)"
+                                leftIcon={commissionWhiteIcon}
+                                onClick={() => window.open(`/pdf/sales_contract_commission/${id}`, "_blank")}
+                            />
+                        </div>
                     </div>
                 ) : null
             } 

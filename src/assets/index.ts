@@ -35,6 +35,7 @@ export { default as codeIcon } from './icons/code.png';
 export { default as pdfIcon } from './icons/pdf-file.png'
 export { default as checkMarkIcon } from './icons/check-mark.png';
 export { default as copyIcon } from './icons/copy.png';
+export { default as commissionWhiteIcon } from './icons/commission_white.png';
 
 // images
 export { default as unauthorizedImage } from "./img/denied.jpg";

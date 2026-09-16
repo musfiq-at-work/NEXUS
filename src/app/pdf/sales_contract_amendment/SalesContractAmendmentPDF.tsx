@@ -26,17 +26,45 @@ const rowStyle = {
 };
 
 const SalesContractAmendmentPDF = ({ data }: { data: GetPDFDataOutput }) => {
-    const tableColumns = useMemo(() => [
-        { key: 'style', label: 'Style', width: 145 },
-        { key: 'description', label: 'Description', width: 120 },
-        { key: 'buyer_po', label: 'PO', width: 145 },
-        { key: 'colors', label: 'Color', width: 108 },
-        { key: 'quantity', label: 'Qty / Unit', width: 88 },
-        { key: 'transfer_rate', label: 'Price / Unit', width: 78 },
-        { key: 'price', label: 'Total Price Per Order Quantity', width: 118 },
-        { key: 'destination', label: 'Destination', width: 98 },
-        { key: 'exfactory_date', label: 'Delivery Date (Ex- Factory)', width: 98 }
-    ], []);
+    const tableColumns = useMemo(() => {
+        const baseColumns = [
+            { key: 'style', label: 'Style', width: 145 },
+            { key: 'description', label: 'Description', width: 120 },
+            { key: 'buyer_po', label: 'PO', width: 145 },
+            { key: 'colors', label: 'Color', width: 108 },
+            { key: 'quantity', label: 'Qty / Unit', width: 88 },
+            { key: 'transfer_rate', label: 'Price / Unit', width: 78 },
+            { key: 'price', label: 'Total Price Per Order Quantity', width: 118 },
+            { key: 'destination', label: 'Destination', width: 98 },
+            { key: 'exfactory_date', label: 'Delivery Date (Ex- Factory)', width: 98 }
+        ];
+
+        if (data.pdfHeaderData?.buyer_name === 'LLC DM') {
+            const extraWidth = 98 / 3;
+
+            return [
+                { key: 'style', label: 'Style', width: 145 + extraWidth },
+                { key: 'description', label: 'Description', width: 120 + extraWidth },
+                { key: 'buyer_po', label: 'PO', width: 145 + extraWidth },
+                { key: 'colors', label: 'Color', width: 108 },
+                { key: 'quantity', label: 'Qty / Unit', width: 88 },
+                { key: 'transfer_rate', label: 'Price / Unit', width: 78 },
+                { key: 'price', label: 'Total Price Per Order Quantity', width: 118 },
+                { key: 'exfactory_date', label: 'Delivery Date (Ex- Factory)', width: 98 }
+            ];
+        }
+
+        return baseColumns;
+    }, [data.pdfHeaderData?.buyer_name]);
+
+    const subtotalFirstCellWidth = useMemo(
+        () => tableColumns.slice(0, 4).reduce((total, column) => total + column.width, 0),
+        [tableColumns],
+    );
+    const subtotalLastCellWidth = useMemo(
+        () => tableColumns.slice(4).reduce((total, column) => total + column.width, 0),
+        [tableColumns],
+    );
 
     const useFlattenedRows = (orderData: GetPDFDataOutput['orderData']) => {
         return useMemo(() => {
@@ -227,7 +255,7 @@ const SalesContractAmendmentPDF = ({ data }: { data: GetPDFDataOutput }) => {
                         <View style={{flex: 3, display: 'flex', flexDirection: 'column', gap: 2}}>
                             <Text style={styles.textBold}>BUYER NOMINATED AGENT NAME:</Text>
                             <Text style={styles.text}>{data.pdfHeaderData?.company_name}</Text>
-                            <Text style={styles.text}>{data.pdfHeaderData?.company_address}</Text>
+                            <Text style={styles.text}>{data.pdfHeaderData?.company_address.trim()}</Text>
                         </View>
                         <View style={{flex: 2, display: 'flex', flexDirection: 'column'}}>
                             <Text style={styles.textBold}>BANK DETAILS:</Text>
@@ -367,7 +395,7 @@ const SalesContractAmendmentPDF = ({ data }: { data: GetPDFDataOutput }) => {
                                         style={[styles.row, { fontWeight: "bold", fontFamily: "Amasis" }]}
                                         wrap={false}
                                     >
-                                        <View style={{ ...styles.cell, padding: 4, width: 518 }}>
+                                        <View style={{ ...styles.cell, padding: 4, width: subtotalFirstCellWidth }}>
                                             <Text>SUB TOTAL</Text>
                                         </View>
 
@@ -383,7 +411,7 @@ const SalesContractAmendmentPDF = ({ data }: { data: GetPDFDataOutput }) => {
                                             <Text>{row.results.totalValue}</Text>
                                         </View>
 
-                                        <View style={{ ...styles.cell, padding: 4, width: 196 }}>
+                                        <View style={{ ...styles.cell, padding: 4, width: subtotalLastCellWidth - 88 - 78 - 118 }}>
                                             <Text />
                                         </View>
                                     </View>
@@ -397,7 +425,7 @@ const SalesContractAmendmentPDF = ({ data }: { data: GetPDFDataOutput }) => {
                         style={[styles.row, { fontWeight: "bold", fontFamily: "Amasis" }]}
                         wrap={false}
                     >
-                        <View style={{ ...styles.cell, padding: 4, width: 518 }}>
+                        <View style={{ ...styles.cell, padding: 4, width: subtotalFirstCellWidth }}>
                             <Text>TOTAL</Text>
                         </View>
                         <View style={{ ...styles.cell, padding: 4, width: 88 }}>
@@ -409,7 +437,7 @@ const SalesContractAmendmentPDF = ({ data }: { data: GetPDFDataOutput }) => {
                         <View style={{ ...styles.cell, padding: 4, width: 118 }}>
                             <Text>{data.totals.totalValue}</Text>
                         </View>
-                        <View style={{ ...styles.cell, padding: 4, width: 196 }}>
+                        <View style={{ ...styles.cell, padding: 4, width: subtotalLastCellWidth - 88 - 78 - 118 }}>
                             <Text />
                         </View>
                     </View>

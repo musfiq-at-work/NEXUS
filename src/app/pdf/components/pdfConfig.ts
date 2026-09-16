@@ -3,6 +3,7 @@ import { StyleSheet, Font } from "@react-pdf/renderer";
 export const tableBorderColor = "#ADADAD";
 export const tableHeaderColor = "#C0F0F7";
 export const secondaryTableHeaderColor = "#FFFF99";
+export const tablePageNumberColors = '#6F6F6F'
 
 Font.registerHyphenationCallback((word: string) => {
   if (!word) return [word];
@@ -57,7 +58,7 @@ export const styles = StyleSheet.create({
         left: 0,
         right: 0,
         textAlign: "center",
-        color: "#555555",
+        color: tablePageNumberColors,
     },
     tableContainer: {
         width: "100%",
