@@ -182,9 +182,10 @@ const SalesContractCommissionTable = ({data, grandTotal, amendment_no, amendment
                         <View key={`ship-${index}`} style={styles.row} wrap={false}>
                         {tableColumns.map((column, i) => (
                             <View key={column.key} style={{...columnStyles[i], flexWrap: "wrap"}}>
-                                {row.data[column.key]?.split("").map((s: string, idx: number) => {
-                                    return <Text key={idx}>{s}</Text>
-                                })}
+                                {/* {row.data[column.key]} */}
+                                <Text>
+                                    {String(row.data[column.key] ?? '')}
+                                </Text>
                             </View>
                         ))}
                         </View>

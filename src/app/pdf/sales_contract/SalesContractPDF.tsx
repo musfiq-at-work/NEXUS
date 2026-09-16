@@ -352,9 +352,7 @@ const SalesContractPDF = ({ data }: { data: GetPDFDataOutput }) => {
                                     {tableColumns.map((column, i) => (
                                         <View key={column.key} style={{...columnStyles[i], flexWrap: "wrap"}}>
                                             {/* {row.data[column.key]} */}
-                                            <Text hyphenationCallback={
-                                                (word) => word.split('/').flatMap((part, i, arr) => i < arr.length - 1 ? [part, '/'] : [part])
-                                            }>
+                                            <Text>
                                                 {String(row.data[column.key] ?? '')}
                                             </Text>
                                         </View>
