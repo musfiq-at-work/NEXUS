@@ -20,6 +20,8 @@ type TableProps<T extends Record<string, unknown>> = {
     allowPrint2?: boolean;
     printURL2?: string;
     view?: boolean;
+    allowAdd?: boolean;
+    addURL?: string | ((row: T) => string);
 };
 
 // Table component to render data in tabular format with pagination
@@ -41,7 +43,9 @@ const Table = <T extends Record<string, unknown>>( props: TableProps<T>) => {
         allowPrint2, 
         printURL2, 
         allowEdit, 
-        view 
+        view ,
+        allowAdd,
+        addURL
     } = props;
 
     if (isLoading) return <Loader />;
@@ -51,11 +55,14 @@ const Table = <T extends Record<string, unknown>>( props: TableProps<T>) => {
     }
 
     const renderedColumns = React.useMemo(() => {
-        if (!allowDelete && !allowEdit && !view) {
+        const hasActionControls = allowDelete || allowEdit || view || allowPrint || allowPrint2 || allowAdd;
+
+        if (!hasActionControls) {
             return columns.filter(col => col.type !== "action");
         }
+
         return columns;
-    }, [columns, allowDelete, allowEdit, view]);
+    }, [columns, allowDelete, allowEdit, view, allowPrint, allowPrint2, allowAdd]);
 
     return (
         <div>
@@ -75,6 +82,8 @@ const Table = <T extends Record<string, unknown>>( props: TableProps<T>) => {
                             allowPrint2={allowPrint2}
                             printURL2={printURL2}
                             allowEdit={allowEdit}
+                            allowAdd={allowAdd}
+                            addURL={addURL}
                         />
                     ))}
                 </TableBody>

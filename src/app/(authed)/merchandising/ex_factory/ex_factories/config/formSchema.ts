@@ -46,7 +46,6 @@ export const createExFactoryOrderSchema = (tolerance: number) => z.object({
 	);
 
 	if (!hasShipmentQty) {
-		toast.error("At least one shipment quantity must be greater than 0");
 		ctx.addIssue({
 			code: z.ZodIssueCode.custom,
 			path: ["shipments", 0, "shipment_quantity"],

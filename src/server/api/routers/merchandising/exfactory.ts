@@ -1222,11 +1222,15 @@ export const exFactoryRouter = createTRPCRouter({
                         )
                         SELECT
                             BO.ID AS ORDER_ID,
+                            B.ID AS BUYER_ID,
                             B.BUYER_NAME AS BUYER_NAME,
+                            F.ID AS FACTORY_ID,
                             F.NAME AS FACTORY_NAME,
                             BO.REF_NO AS ORDER_REF,
                             OS.STYLE AS STYLE,
+                            SD.ID AS PO_ID,
                             SD.BUYER_PO AS PO,
+                            PT.term_id AS PAYMENT_TERM_ID,
                             FSD.exfactory_date AS EXFACTORY_DATE,
                             COALESCE(SQ.total_sid_qty, 0) AS TOTAL_QUANTITY,
                             COALESCE(EQ.total_es_qty, 0)AS TOTAL_DELIVERY_QUANTITY
@@ -1236,6 +1240,7 @@ export const exFactoryRouter = createTRPCRouter({
                         INNER JOIN FACTORY_SHIPMENT_DETAILS AS FSD ON FSD.shipment_detail_id = SD.id
                         INNER JOIN BUYERS AS B ON B.ID = BO.buyer_id
                         INNER JOIN FACTORIES AS F ON F.id = BO.factory_id
+                        INNER JOIN payment_terms AS PT ON PT.id = SD.payment_term_id
                         LEFT JOIN shipment_qty AS SQ ON SQ.shipment_detail_id = SD.id
                         LEFT JOIN exfactory_qty AS EQ ON EQ.shipment_details_id = SD.id
                         LEFT JOIN shipment_tolerance_level as STL on STL.buyer_id = BO.buyer_id
@@ -1245,7 +1250,7 @@ export const exFactoryRouter = createTRPCRouter({
                             AND COALESCE(EQ.total_es_qty, 0)::NUMERIC(18,2) < COALESCE(SQ.total_sid_qty * (1 + COALESCE(STL.tolerance_level, 10) / 100), 0)::NUMERIC(18,2)
                             AND COALESCE(EQ.po_close, false) = false
                             AND FSD.exfactory_date BETWEEN ${input.from_date} AND ${input.to_date}
-                        GROUP BY BO.ID, B.ID, F.ID, OS.ID, SD.id, SQ.total_sid_qty, EQ.total_es_qty, FSD.exfactory_date
+                        GROUP BY BO.ID, B.ID, F.ID, OS.ID, SD.id, SQ.total_sid_qty, EQ.total_es_qty, FSD.exfactory_date, PT.term_id
                     )
                     SELECT *,
                         COUNT(*) OVER() AS TOTAL_COUNT
@@ -1302,11 +1307,15 @@ export const exFactoryRouter = createTRPCRouter({
                         )
                         SELECT
                             BO.ID AS ORDER_ID,
+                            B.ID AS BUYER_ID,
                             B.BUYER_NAME AS BUYER_NAME,
+                            F.ID AS FACTORY_ID,
                             F.NAME AS FACTORY_NAME,
                             BO.REF_NO AS ORDER_REF,
                             OS.STYLE AS STYLE,
+                            SD.ID AS PO_ID,
                             SD.BUYER_PO AS PO,
+                            PT.term_id AS PAYMENT_TERM_ID,
                             FSD.exfactory_date AS EXFACTORY_DATE,
                             COALESCE(SQ.total_sid_qty, 0) AS TOTAL_QUANTITY,
                             COALESCE(EQ.total_es_qty, 0)AS TOTAL_DELIVERY_QUANTITY
@@ -1316,6 +1325,7 @@ export const exFactoryRouter = createTRPCRouter({
                         INNER JOIN FACTORY_SHIPMENT_DETAILS AS FSD ON FSD.shipment_detail_id = SD.id
                         INNER JOIN BUYERS AS B ON B.ID = BO.buyer_id
                         INNER JOIN FACTORIES AS F ON F.id = BO.factory_id
+                        INNER JOIN payment_terms AS PT ON PT.id = SD.payment_term_id
                         LEFT JOIN shipment_qty AS SQ ON SQ.shipment_detail_id = SD.id
                         LEFT JOIN exfactory_qty AS EQ ON EQ.shipment_details_id = SD.id
                         LEFT JOIN shipment_tolerance_level as STL on STL.buyer_id = BO.buyer_id
@@ -1329,7 +1339,7 @@ export const exFactoryRouter = createTRPCRouter({
                                 OS.STYLE ILIKE '%' || ${input.search_term} || '%' OR
                                 SD.BUYER_PO ILIKE '%' || ${input.search_term} || '%'
                             )
-                        GROUP BY BO.ID, B.ID, F.ID, OS.ID, SD.id, SQ.total_sid_qty, EQ.total_es_qty, FSD.exfactory_date
+                        GROUP BY BO.ID, B.ID, F.ID, OS.ID, SD.id, SQ.total_sid_qty, EQ.total_es_qty, FSD.exfactory_date, PT.term_id
                     )
                     SELECT *,
                         COUNT(*) OVER() AS total_count

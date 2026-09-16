@@ -933,7 +933,6 @@ export const lcAmendmentRouter = createTRPCRouter({
 						data: {
 							amend_quantity: input.amend_quantity,
 							amend_value: input.amend_value,
-							lc_status: input.lc_status,
 							remarks: input.remarks,
 						},
 					});
@@ -945,7 +944,7 @@ export const lcAmendmentRouter = createTRPCRouter({
 						data: {
 							lc_value: updatedLcAmendment.amend_value ?? undefined,
 							quantity: updatedLcAmendment.amend_quantity ?? undefined,
-							lc_status: input.lc_status,
+							status: input.lc_status,
 						},
 					});
 

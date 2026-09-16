@@ -139,8 +139,8 @@ const TNAEventsPage = () => {
 
             <div className="flex flex-col ml-8 mb-4">
                 <SearchField
-                    placeholder="Search Pending Ex Factories..."
-                    infoText="Exfactory No, Buyer Name, Factory Name, PO, Styles, Order References."
+                    placeholder="Search Pending TNA Events..."
+                    infoText="Search Order References, Style, PO, Buyer Name and Factory Name"
                     handleSearchChange={handleSearchChange}
                 />
             </div>

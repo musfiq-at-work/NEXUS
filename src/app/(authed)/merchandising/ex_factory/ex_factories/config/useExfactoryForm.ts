@@ -11,18 +11,23 @@ import { useDecodedUser } from "~/hooks";
 
 type Orders = NonNullable<GetExFactoryByIdTypes['orders']>[number];
 
-export const useExfactoryForm = (initialData?: GetExFactoryByIdTypes) => {
+type PrefillValues = Partial<ExFactoryFormValues['exfactory']>;
+
+export const useExfactoryForm = (
+    initialData?: GetExFactoryByIdTypes,
+    prefillValues?: PrefillValues,
+) => {
     const getDefaultValues = useCallback((): ExFactoryFormValues => {
         if (!initialData) {
             return {
                 exfactory: {
-                    buyer_id: '',
-                    factory_id: '',
+                    buyer_id: String(prefillValues?.buyer_id ?? ''),
+                    factory_id: String(prefillValues?.factory_id ?? ''),
                     exfactory_date: formatDateForInput(new Date()),
                     exfactory_no: '',
                     remarks: "",
-                    payment_type: '',
-                    orders: [],
+                    payment_type: String(prefillValues?.payment_type ?? ''),
+                    orders: prefillValues?.orders ?? [],
                 },
             };
         }
@@ -46,7 +51,7 @@ export const useExfactoryForm = (initialData?: GetExFactoryByIdTypes) => {
                 })) ?? [],
             },
         };
-    }, [initialData]);
+    }, [initialData, prefillValues]);
 
     const isEdit = Boolean(initialData);
 
@@ -54,8 +59,6 @@ export const useExfactoryForm = (initialData?: GetExFactoryByIdTypes) => {
     const [tolerance, setTolerance] = useState<number>(10);
 
     const { isAdmin } = useDecodedUser();
-
-    console.log("isAdmin E", isAdmin);    
 
     // Create Zod schema with current tolerance
     const exFactorySchema = useMemo(
