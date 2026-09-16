@@ -698,6 +698,84 @@ export const tnaPlanRouter = createTRPCRouter({
             }
         }),
 
+    searchTnaPlansForEventUpdate: protectedProcedure
+        .input(z.object({
+            search_term: z.string()
+        }))
+    .query(async ({ ctx, input }) => {
+            const can_update = ctx.permissions[m.TNA_EVENTS]?.can_update;
+
+            if (!can_update) {
+                throw new TRPCError({ 
+                    code: "FORBIDDEN", 
+                    message: "You do not have permission to view TNA events." 
+                });
+            }
+
+            try {
+                const events = await ctx.db.$queryRaw<EventsType[]>`
+                    SELECT 
+                        TPD.id AS id,
+                        BO.ref_no AS order_ref,
+                        OS.style AS style,
+                        SD.BUYER_PO AS po,
+                        TT.TEMPLATE_NAME AS tna_templates,
+                        TA.NAME AS action_name,
+                        CASE 
+                            WHEN COALESCE(TBA.action_id, 0) = ${ETD_DATE_DB_ID}
+                                THEN SD.ETD_DATE - TTA.DAYS
+                            ELSE SD.HANDOVER_DATE - TTA.DAYS
+                        END AS PLAN_DATE,
+                        TPD.REVISE_DATE AS revise_date,
+                        TPD.ACTUAL_DATE AS actual_date,
+                        B.BUYER_NAME AS buyer_name,
+                        F.NAME AS factory_name,
+                        D.NAME AS destination_name
+                    FROM tna_plan_details AS TPD 
+                        INNER JOIN shipment_details AS SD ON SD.id = TPD.shipment_id
+                        INNER JOIN order_styles AS OS ON OS.id = SD.order_style_id
+                        INNER JOIN buyer_orders AS BO ON BO.id = OS.order_id
+                        INNER JOIN destinations AS D ON D.id = SD.destination_id
+                        INNER JOIN tna_plans AS TP ON TP.id = TPD.tna_plan_id
+                        INNER JOIN tna_templates AS TT ON TT.ID = TP.tna_template_id
+                        INNER JOIN tna_template_actions AS TTA ON TTA.ID = TPD.tna_template_action_id
+                        INNER JOIN tna_actions AS TA ON TA.ID = TTA.tna_action_id
+                        INNER JOIN FACTORIES AS F ON F.ID = BO.FACTORY_ID
+                        INNER JOIN BUYERS AS B ON B.ID = BO.buyer_id
+                        LEFT JOIN tna_base_actions AS TBA ON TBA.buyer_id = BO.buyer_id
+                    WHERE (
+                        EXISTS (
+                            SELECT 1
+                            FROM USERS AS U
+                            WHERE U.ID = ${ctx.user.id}
+                            AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
+                            AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
+                        )
+                        OR EXISTS (
+                            SELECT 1
+                            FROM TEAM_MEMBERS AS TM
+                            WHERE TM.TEAM_ID = BO.TEAM_ID
+                            AND TM.USER_ID = ${ctx.user.id}
+                        )
+                    )
+                    AND TPD.ACTUAL_DATE IS NULL
+                    AND (
+                        BO.ref_no ILIKE '%' || ${input.search_term} || '%' OR
+                        OS.style ILIKE '%' || ${input.search_term} || '%' OR
+                        SD.BUYER_PO ILIKE '%' || ${input.search_term} || '%' OR
+                        B.BUYER_NAME ILIKE '%' || ${input.search_term} || '%' OR
+                        F.NAME ILIKE '%' || ${input.search_term} || '%'
+                    )
+                    ORDER BY PLAN_DATE ASC;
+                `;
+                return events;
+            }
+            catch (error) {
+                await logError(error, ctx, input);
+                handlePrismaError(error);
+            }
+        }),
+
     updateTnaEvents: protectedProcedure
         .input(z.array(z.object({
             id: z.string(),

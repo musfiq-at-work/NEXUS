@@ -1,30 +1,20 @@
 'use client';
 
-import { Button, Form, Info, SearchField, Table, Wrapper } from "~/components";
-import React, { useCallback, useEffect, useState } from "react";
+import { Form, SearchField, Table, Wrapper } from "~/components";
+import React, { useCallback, useState } from "react";
 import { api } from "~/trpc/react";
-import { toast } from 'sonner';
-import { parseTRPCError } from "~/utils/parseTRPCError";
 import { useNavigationStore, usePermissionStore } from "~/store";
 import { useDebouncedValue, useModulePath, useTablePagination } from "~/hooks";
-// import OrderDetails from "../../components/orderComponents/OrderDetails";
-import type { shipment_modes } from "@prisma/client";
 import { usePendingExFactoryForm } from "./config/usePendingExFactoryForm";
 import { skipToken } from "@tanstack/react-query";
 import { tableHeaders } from "./config/columns";
-
 
 const PendingExFactories = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
     const { methods, formFields, validationError, control } = usePendingExFactoryForm();
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     const { page, limit, nextPage, prevPage, setPage } = useTablePagination();
-
-    // TRPC utils    
-    const utils = api.useUtils();
 
     // Debounced search term
     const debouncedSearch = useDebouncedValue(searchTerm);
@@ -82,9 +72,7 @@ const PendingExFactories = () => {
                 fields={formFields} 
                 buttonLabel="Add New Ex Factory" 
                 register={methods.register}
-                isLoading={isLoading}
                 validationError={validationError ?? {}}
-                error={error}
                 control={control}
             />
 
@@ -99,7 +87,7 @@ const PendingExFactories = () => {
            <div className="w-full">
                 <Table
                     data={debouncedSearch.length > 0 ? searchTableData : tableData}
-                    isLoading={isLoading || isSearchLoading || isPendingExFactoriesLoading}
+                    isLoading={isSearchLoading || isPendingExFactoriesLoading}
                     columns={tableHeaders}
                     nextPage={nextPage}
                     prevPage={prevPage}

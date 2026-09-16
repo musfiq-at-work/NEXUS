@@ -1,8 +1,8 @@
 'use client';
 
-import { Button, Form, Wrapper } from "~/components";
+import { Button, Form, SearchField, Wrapper } from "~/components";
 import { useTnaEventsForm } from "./config/useTnaEventsForm";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFieldArray, useWatch } from "react-hook-form";
 import type { FormValues } from "./config/formSchema";
 import TableForm from "~/components/organisms/table/TableForm";
@@ -13,11 +13,16 @@ import { useFormFields } from "./config/useTableFormFields";
 import { formatDate, formatDateForInput } from "~/utils/localDateString";
 import { toast } from "sonner";
 import { parseTRPCError } from "~/utils/parseTRPCError";
+import { useDebouncedValue } from "~/hooks";
 
 const TNAEventsPage = () => {
+    const [searchTerm, setSearchTerm] = useState('');
+
     const { methods, formFields, validationError, control } = useTnaEventsForm();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    const debouncedSearch = useDebouncedValue(searchTerm);
 
     const utils = api.useUtils();
 
@@ -39,27 +44,53 @@ const TNAEventsPage = () => {
         } : skipToken,
     );
 
+    const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(event.target.value.trim());
+    }, []);
+
+    // Search query (enabled only when there's a search term)
+    const {data: searchQuery, isLoading: isSearchLoading} = api.tnaPlan.searchTnaPlansForEventUpdate.useQuery(
+        { search_term: debouncedSearch },
+        { enabled: debouncedSearch.length > 0 }
+    );
+
+    const tableEvents = useMemo(() => {
+        if (debouncedSearch.trim().length > 0) {
+            return searchQuery ?? [];
+        }
+
+        return events ?? [];
+    }, [debouncedSearch, events, searchQuery]);
+
+    const mappedTableEvents = useMemo(
+        () => tableEvents.map((event: typeof tableEvents[number]) => ({
+            id: event.id,
+            action_name: event.action_name,
+            order_ref: event.order_ref,
+            style: event.style,
+            po: event.po,
+            template_name: event.tna_templates,
+            plan_date: event.plan_date
+                ? formatDate(new Date(event.plan_date))
+                : '',
+            revise_date: event.revise_date?.toISOString(),
+            actual_date: formatDateForInput(new Date()),
+            buyer_name: event.buyer_name,
+            factory_name: event.factory_name,
+            destination_name: event.destination_name,
+        })),
+        [tableEvents],
+    );
+
+    const { setValue } = methods;
+
     useEffect(() => {
-        methods.reset({
-            ...methods.getValues(),
-            actions: events?.map((event: typeof events[number]) => ({
-                id: event.id,
-                action_name: event.action_name,
-                order_ref: event.order_ref,
-                style: event.style,
-                po: event.po,
-                template_name: event.tna_templates,
-                plan_date: event.plan_date
-                    ? formatDate(new Date(event.plan_date))
-                    : '',
-                revise_date: event.revise_date?.toISOString(),
-                actual_date: formatDateForInput(new Date()),
-                buyer_name: event.buyer_name,
-                factory_name: event.factory_name,
-                destination_name: event.destination_name,
-            })) ?? [],
+        setValue('actions', mappedTableEvents, {
+            shouldDirty: false,
+            shouldTouch: false,
+            shouldValidate: false,
         });
-    }, [events, methods]);
+    }, [mappedTableEvents, setValue]);
 
     const updateMutation = api.tnaPlan.updateTnaEvents.useMutation({
         onSuccess: async () => {
@@ -100,11 +131,19 @@ const TNAEventsPage = () => {
                 fields={formFields} 
                 buttonLabel="Update TNA Events" 
                 register={methods.register}
-                isLoading={isLoading}
+                isLoading={isLoading || isSearchLoading}
                 validationError={validationError ?? {}}
                 error={error}
                 control={control}
             />
+
+            <div className="flex flex-col ml-8 mb-4">
+                <SearchField
+                    placeholder="Search Pending Ex Factories..."
+                    infoText="Exfactory No, Buyer Name, Factory Name, PO, Styles, Order References."
+                    handleSearchChange={handleSearchChange}
+                />
+            </div>
 
             <TableForm 
                 name='actions'
@@ -113,7 +152,7 @@ const TNAEventsPage = () => {
                 rows={actionFields}
                 columns={tableHeaders}
                 register={methods.register}
-                disabled={isLoading}
+                disabled={isLoading || isSearchLoading}
                 control={methods.control}
             />
 
@@ -122,7 +161,7 @@ const TNAEventsPage = () => {
                     onClick={() => onSubmit()}
                     label={"Update TNA Events"} 
                     className="text-lg tracking-wide mt-6 max-w-80 m-8"
-                    disabled={isLoading}
+                    disabled={isLoading || isSearchLoading}
                 />
             </div>
         </Wrapper>

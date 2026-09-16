@@ -64,6 +64,7 @@ const EditLCAmendmentPage = ({ params }: ParamsProp) => {
                 id,
                 amend_quantity: amendmentData.lc_quantity,
                 amend_value: amendmentData.lc_value,
+                lc_status: amendmentData.lc_status,
                 remarks: amendmentData.remarks,
                 orders: (amendmentData.details ?? []).map((detail) => ({
                     id: detail.db_id,

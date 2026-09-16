@@ -387,7 +387,7 @@ export const lcAmendmentRouter = createTRPCRouter({
 				}
 
 				const lc = await ctx.db.$queryRaw<{id: string, lc_no: string}[]>`
-					SELECT 
+					SELECT DISTINCT
 						LC.id, 
 						LC.lc_no 
 					FROM lc_master AS LC
@@ -856,6 +856,7 @@ export const lcAmendmentRouter = createTRPCRouter({
 				id: z.string(),
 				amend_quantity: z.number().optional(),
 				amend_value: z.number().optional(),
+				lc_status: z.boolean().optional(),
 				remarks: z.string().optional(),
 				orders: z.array(
 					z.object({
@@ -932,6 +933,7 @@ export const lcAmendmentRouter = createTRPCRouter({
 						data: {
 							amend_quantity: input.amend_quantity,
 							amend_value: input.amend_value,
+							lc_status: input.lc_status,
 							remarks: input.remarks,
 						},
 					});
@@ -943,6 +945,7 @@ export const lcAmendmentRouter = createTRPCRouter({
 						data: {
 							lc_value: updatedLcAmendment.amend_value ?? undefined,
 							quantity: updatedLcAmendment.amend_quantity ?? undefined,
+							lc_status: input.lc_status,
 						},
 					});
 
