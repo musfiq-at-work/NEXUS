@@ -136,9 +136,7 @@ const DebitNotes = ({ data }: { data: GetPDFDataOutput }) => {
 										key={`${rowIndex}-${colIndex}`} 
 										style={[styles.cell, column.width ? { width: `${column.width}px` } : colWidth]} 
 									>
-										<Text hyphenationCallback={
-											(word) => word.split('/').flatMap((part, i, arr) => i < arr.length - 1 ? [part, '/'] : [part])
-										}>
+										<Text>
 											{String(row[column.key] ?? '')}
 										</Text>
 									</View>

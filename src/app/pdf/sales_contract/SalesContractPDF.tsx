@@ -27,15 +27,15 @@ const rowStyle = {
 
 const SalesContractPDF = ({ data }: { data: GetPDFDataOutput }) => {
     const tableColumns = useMemo(() => [
-        { key: 'style', label: 'Style', width: 145 },
+        { key: 'style', label: 'Style', width: 160 },
         { key: 'description', label: 'Description', width: 120 },
-        { key: 'buyer_po', label: 'PO', width: 145 },
+        { key: 'buyer_po', label: 'PO', width: 150 },
         { key: 'colors', label: 'Color', width: 108 },
-        { key: 'quantity', label: 'Qty/Unit', width: 88 },
-        { key: 'transfer_rate', label: 'Price/Unit', width: 78 },
+        { key: 'quantity', label: 'Qty / Unit', width: 68 },
+        { key: 'transfer_rate', label: 'Price / Unit', width: 68 },
         { key: 'price', label: 'Total Price Per Order Quantity', width: 118 },
-        { key: 'destination', label: 'Destination', width: 98 },
-        { key: 'exfactory_date', label: 'Delivery Date (Ex-Factory)', width: 98 }
+        { key: 'destination', label: 'Destination', width: 108 },
+        { key: 'exfactory_date', label: 'Delivery Date (Ex- Factory)', width: 100 }
     ], []);
 
     const useFlattenedRows = (orderData: GetPDFDataOutput['orderData']) => {
@@ -351,10 +351,12 @@ const SalesContractPDF = ({ data }: { data: GetPDFDataOutput }) => {
                                     <View key={`ship-${index}`} style={styles.row} wrap={false}>
                                     {tableColumns.map((column, i) => (
                                         <View key={column.key} style={{...columnStyles[i], flexWrap: "wrap"}}>
-                                            {/* <Text>{row.data[column.key]}</Text> */}
-                                            {row.data[column.key]?.split("").map((s: string, idx: number) => {
-                                                return <Text key={idx}>{s}</Text>
-                                            })}
+                                            {/* {row.data[column.key]} */}
+                                            <Text hyphenationCallback={
+                                                (word) => word.split('/').flatMap((part, i, arr) => i < arr.length - 1 ? [part, '/'] : [part])
+                                            }>
+                                                {String(row.data[column.key] ?? '')}
+                                            </Text>
                                         </View>
                                     ))}
                                     </View>
@@ -369,15 +371,15 @@ const SalesContractPDF = ({ data }: { data: GetPDFDataOutput }) => {
                                         style={[styles.row, { fontWeight: "bold", fontFamily: "Amasis" }]}
                                         wrap={false}
                                     >
-                                        <View style={{ ...styles.cell, padding: 4, width: 518 }}>
+                                        <View style={{ ...styles.cell, padding: 4, width: 538 }}>
                                             <Text>SUB TOTAL</Text>
                                         </View>
 
-                                        <View style={{ ...styles.cell, padding: 4, width: 88 }}>
+                                        <View style={{ ...styles.cell, padding: 4, width: 68 }}>
                                             <Text>{row.results.totalQuantity}</Text>
                                         </View>
 
-                                        <View style={{ ...styles.cell, padding: 4, width: 78 }}>
+                                        <View style={{ ...styles.cell, padding: 4, width: 68 }}>
                                             <Text />
                                         </View>
 
@@ -385,7 +387,7 @@ const SalesContractPDF = ({ data }: { data: GetPDFDataOutput }) => {
                                             <Text>{row.results.totalValue}</Text>
                                         </View>
 
-                                        <View style={{ ...styles.cell, padding: 4, width: 196 }}>
+                                        <View style={{ ...styles.cell, padding: 4, width: 208 }}>
                                             <Text />
                                         </View>
                                     </View>
@@ -399,19 +401,19 @@ const SalesContractPDF = ({ data }: { data: GetPDFDataOutput }) => {
                         style={[styles.row, { fontWeight: "bold", fontFamily: "Amasis" }]}
                         wrap={false}
                     >
-                        <View style={{ ...styles.cell, padding: 4, width: 518 }}>
+                        <View style={{ ...styles.cell, padding: 4, width: 538 }}>
                             <Text>TOTAL</Text>
                         </View>
-                        <View style={{ ...styles.cell, padding: 4, width: 88 }}>
+                        <View style={{ ...styles.cell, padding: 4, width: 68 }}>
                             <Text>{data.totals.totalQuantity}</Text>
                         </View>
-                        <View style={{ ...styles.cell, padding: 4, width: 78 }}>
+                        <View style={{ ...styles.cell, padding: 4, width: 68 }}>
                             <Text />
                         </View>
                         <View style={{ ...styles.cell, padding: 4, width: 118 }}>
                             <Text>{data.totals.totalValue}</Text>
                         </View>
-                        <View style={{ ...styles.cell, padding: 4, width: 196 }}>
+                        <View style={{ ...styles.cell, padding: 4, width: 208 }}>
                             <Text />
                         </View>
                     </View>

@@ -83,6 +83,16 @@ export const salesContractsRouter = createTRPCRouter({
                                     AND TM.USER_ID = ${ctx.user.id}
                             )
                         )
+                        AND ( -- Authorization personals 
+                            NOT EXISTS (
+                                SELECT 1
+                                FROM USERS AS U
+                                WHERE U.ID = ${ctx.user.id}
+                                    AND U.DEPARTMENT_ID IN (1, 2)
+                                    AND U.LEVEL_ID = 4
+                            )
+                            OR SC.APPROVAL_STATUS IN (1, 2)
+                        )
                         GROUP BY SC.ID, 
                             F.NAME, 
                             SC.ADDED_AT, 
@@ -176,6 +186,16 @@ export const salesContractsRouter = createTRPCRouter({
                                 WHERE T.BUYER_ID = SC.BUYER_ID
                                     AND TM.USER_ID = ${ctx.user.id}
                             )
+                        )
+                        AND ( -- Authorization personals 
+                            NOT EXISTS (
+                                SELECT 1
+                                FROM USERS AS U
+                                WHERE U.ID = ${ctx.user.id}
+                                    AND U.DEPARTMENT_ID IN (1, 2)
+                                    AND U.LEVEL_ID = 4
+                            )
+                            OR SC.APPROVAL_STATUS IN (1, 2)
                         )
                         AND (
                             SC.SALES_CONTRACT_NO ILIKE '%' || ${input.query} || '%'

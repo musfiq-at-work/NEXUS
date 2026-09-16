@@ -10,6 +10,7 @@ import { useNavigationStore, usePermissionStore } from "~/store";
 import { useDecodedUser, useModulePath } from "~/hooks";
 import ScDetails from "../../components/ScDetails";
 import type { ParamsProp } from "~/types/params";
+import { printingWhiteIcon } from "~/assets";
 
 const EditSalesContractPage = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
@@ -35,7 +36,7 @@ const EditSalesContractPage = ({ params }: ParamsProp) => {
     // Get current module permissions
     const pathId = useNavigationStore((s) => s.getByHref(modulePath));
     const permissions = usePermissionStore(s => (pathId ? s.permission[pathId] : undefined));
-    const { can_update } = permissions ?? {};
+    const { can_update, can_view } = permissions ?? {};
 
     const updateSalesContract = api.salesContracts.updateSalesContract.useMutation({
         onSuccess: async () => {
@@ -156,6 +157,18 @@ const EditSalesContractPage = ({ params }: ParamsProp) => {
     return (
         <Wrapper
             heading="Update Sales Contract"
+            subSectionRight={
+                can_view ? (
+                    <div className="w-50 mb-3">
+                        <Button
+                            variant="secondary"
+                            label="Print (PDF)"
+                            leftIcon={printingWhiteIcon}
+                            onClick={() => window.open(`/pdf/sales_contract/${id}`, "_blank")}
+                        />
+                    </div>
+                ) : null
+            } 
         >
             {salesContractData === null ? (
                 <Info info="The requested Sales Contract was not found." />

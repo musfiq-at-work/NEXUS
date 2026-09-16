@@ -31,11 +31,11 @@ const SalesContractAmendmentPDF = ({ data }: { data: GetPDFDataOutput }) => {
         { key: 'description', label: 'Description', width: 120 },
         { key: 'buyer_po', label: 'PO', width: 145 },
         { key: 'colors', label: 'Color', width: 108 },
-        { key: 'quantity', label: 'Qty/Unit', width: 88 },
-        { key: 'transfer_rate', label: 'Price/Unit', width: 78 },
+        { key: 'quantity', label: 'Qty / Unit', width: 88 },
+        { key: 'transfer_rate', label: 'Price / Unit', width: 78 },
         { key: 'price', label: 'Total Price Per Order Quantity', width: 118 },
         { key: 'destination', label: 'Destination', width: 98 },
-        { key: 'exfactory_date', label: 'Delivery Date (Ex-Factory)', width: 98 }
+        { key: 'exfactory_date', label: 'Delivery Date (Ex- Factory)', width: 98 }
     ], []);
 
     const useFlattenedRows = (orderData: GetPDFDataOutput['orderData']) => {
@@ -349,10 +349,12 @@ const SalesContractAmendmentPDF = ({ data }: { data: GetPDFDataOutput }) => {
                                     <View key={`ship-${index}`} style={styles.row} wrap={false}>
                                     {tableColumns.map((column, i) => (
                                         <View key={column.key} style={{...columnStyles[i], flexWrap: "wrap"}}>
-                                            {/* <Text>{row.data[column.key]}</Text> */}
-                                            {row.data[column.key]?.split("").map((s: string, idx: number) => {
-                                                return <Text key={idx}>{s}</Text>
-                                            })}
+                                            {/* {row.data[column.key]} */}
+                                            <Text hyphenationCallback={
+                                                (word) => word.split('/').flatMap((part, i, arr) => i < arr.length - 1 ? [part, '/'] : [part])
+                                            }>
+                                                {String(row.data[column.key] ?? '')}
+                                            </Text>
                                         </View>
                                     ))}
                                     </View>
