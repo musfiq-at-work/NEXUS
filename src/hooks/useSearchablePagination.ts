@@ -1,8 +1,15 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { usePathname } from "next/navigation";
 import { useDebouncedValue, useTablePagination } from "~/hooks";
 
 export const useSearchablePagination = () => {
+    const pathname = usePathname();
     const [searchTerm, setSearchTerm] = useState('');
+
+    useEffect(() => {
+        const storedSearchTerm = window.localStorage.getItem(`search-query:${pathname}`);
+        setSearchTerm(storedSearchTerm ?? '');
+    }, [pathname]);
 
     const debouncedSearch = useDebouncedValue(searchTerm);
 
@@ -10,8 +17,15 @@ export const useSearchablePagination = () => {
 
     const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
         setPage(0);
-        setSearchTerm(event.target.value.trim());
-    }, [setPage]);
+        const nextSearchTerm = event.target.value.trim();
+        setSearchTerm(nextSearchTerm);
+
+        if (nextSearchTerm) {
+            window.localStorage.setItem(`search-query:${pathname}`, nextSearchTerm);
+        } else {
+            window.localStorage.removeItem(`search-query:${pathname}`);
+        }
+    }, [pathname, setPage]);
 
     return {
         searchTerm,

@@ -1,8 +1,8 @@
 'use client';
 
-import { Button, Form, Info, MessageBox, SearchField, Wrapper } from "~/components";
+import { Button, Form, Info, SearchField, Wrapper } from "~/components";
 import { useTnaEventsForm } from "./config/useTnaEventsForm";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useFieldArray, useWatch } from "react-hook-form";
 import type { FormValues } from "./config/formSchema";
 import TableForm from "~/components/organisms/table/TableForm";
@@ -13,16 +13,14 @@ import { useFormFields } from "./config/useTableFormFields";
 import { formatDate, formatDateForInput } from "~/utils/localDateString";
 import { toast } from "sonner";
 import { parseTRPCError } from "~/utils/parseTRPCError";
-import { useDebouncedValue } from "~/hooks";
+import { useSearchablePagination } from "~/hooks";
 
 const TNAEventsPage = () => {
-    const [searchTerm, setSearchTerm] = useState('');
-
     const { methods, formFields, validationError, control } = useTnaEventsForm();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const debouncedSearch = useDebouncedValue(searchTerm);
+    const { debouncedSearch, handleSearchChange } = useSearchablePagination();
 
     const utils = api.useUtils();
 
@@ -43,10 +41,6 @@ const TNAEventsPage = () => {
             actionIds,
         } : skipToken,
     );
-
-    const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(event.target.value.trim());
-    }, []);
 
     // Search query (enabled only when there's a search term)
     const {data: searchQuery, isLoading: isSearchLoading} = api.tnaPlan.searchTnaPlansForEventUpdate.useQuery(
