@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Heading, Loader, TableBody, TableHead, TableHeadCells, TableWrapper, GenericFormTableRow } from "~/components";
-import { type Control, type FieldArrayWithId, type FieldValues, type Path, type UseFormRegister } from "react-hook-form";
+import { type Control, type FieldArrayWithId, type FieldValues, type UseFormRegister } from "react-hook-form";
 import { plusIcon } from "~/assets";
 import type { BaseField } from "~/types/form";
 import Image from "next/image";
@@ -15,7 +15,7 @@ type TableHeader<T> = {
 
 type Props<T extends FieldValues> = {
     fields: BaseField<string>[];
-    validationError?: {[key: string]: any};
+    validationError?: Record<string, unknown>;
     isLoading?: boolean;
     error?: string | null;
     disabled?: boolean;

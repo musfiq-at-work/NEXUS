@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Form, SearchField, Wrapper } from "~/components";
+import { Button, Form, Info, MessageBox, SearchField, Wrapper } from "~/components";
 import { useTnaEventsForm } from "./config/useTnaEventsForm";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFieldArray, useWatch } from "react-hook-form";
@@ -56,10 +56,10 @@ const TNAEventsPage = () => {
 
     const tableEvents = useMemo(() => {
         if (debouncedSearch.trim().length > 0) {
-            return searchQuery ?? [];
+            return searchQuery?.events ?? [];
         }
 
-        return events ?? [];
+        return events?.events ?? [];
     }, [debouncedSearch, events, searchQuery]);
 
     const mappedTableEvents = useMemo(
@@ -155,6 +155,14 @@ const TNAEventsPage = () => {
                 disabled={isLoading || isSearchLoading}
                 control={methods.control}
             />
+
+            
+            {actionFields.length > 0 && 
+                <Info variant='info'
+                    className="items-center w-full text-center"
+                    info={`Showing ${actionFields.length} / ${searchQuery && searchQuery?.total > 0 ? searchQuery?.total ?? 0 : events?.total} Rows`} 
+                />
+            }
 
             <div className="w-full flex flex-row justify-end">
                 <Button type="button" 

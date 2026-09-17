@@ -622,6 +622,8 @@ export const tnaPlanRouter = createTRPCRouter({
             from_date: z.string(),
             to_date: z.string(),
             actionIds: z.array(z.number()).min(1, "At least one action must be selected"),
+            limit: z.number().optional(),
+            offset: z.number().optional()
          }))
         .query(async ({ ctx, input }) => {
             const can_update = ctx.permissions[m.TNA_EVENTS]?.can_update;
@@ -634,7 +636,7 @@ export const tnaPlanRouter = createTRPCRouter({
             }
 
             try {
-                const events = await ctx.db.$queryRaw<EventsType[]>`
+                const events = await ctx.db.$queryRaw<Array<EventsType & { total_count: bigint }>>`
                     SELECT 
                         TPD.id AS id,
                         BO.ref_no AS order_ref,
@@ -651,7 +653,8 @@ export const tnaPlanRouter = createTRPCRouter({
                         TPD.ACTUAL_DATE AS actual_date,
                         B.BUYER_NAME AS buyer_name,
                         F.NAME AS factory_name,
-                        D.NAME AS destination_name
+                        D.NAME AS destination_name,
+                        COUNT(*) OVER() AS total_count
                     FROM tna_plan_details AS TPD 
                         INNER JOIN shipment_details AS SD ON SD.id = TPD.shipment_id
                         INNER JOIN order_styles AS OS ON OS.id = SD.order_style_id
@@ -688,9 +691,15 @@ export const tnaPlanRouter = createTRPCRouter({
                         )
                         AND TPD.ACTUAL_DATE IS NULL
                         AND TA.ID IN (${Prisma.join(input.actionIds)})
-                    ORDER BY PLAN_DATE ASC;
+                    ORDER BY PLAN_DATE ASC
+                    LIMIT ${input.limit ?? 100}    
+                    OFFSET ${input.offset ?? 0};
                 `;
-                return events;
+                
+                return {
+                    events: events.map(({ total_count: _, ...row }) => row),
+                    total: Number(events[0]?.total_count ?? 0),
+                };
             }
             catch (error) {
                 await logError(error, ctx, input);
@@ -700,10 +709,14 @@ export const tnaPlanRouter = createTRPCRouter({
 
     searchTnaPlansForEventUpdate: protectedProcedure
         .input(z.object({
-            search_term: z.string()
+            search_term: z.string(),
+            limit: z.number().optional(),
+            offset: z.number().optional()
         }))
     .query(async ({ ctx, input }) => {
             const can_update = ctx.permissions[m.TNA_EVENTS]?.can_update;
+
+            console.log('input', input)
 
             if (!can_update) {
                 throw new TRPCError({ 
@@ -713,7 +726,7 @@ export const tnaPlanRouter = createTRPCRouter({
             }
 
             try {
-                const events = await ctx.db.$queryRaw<EventsType[]>`
+                const events = await ctx.db.$queryRaw<Array<EventsType & { total_count: bigint }>>`
                     SELECT 
                         TPD.id AS id,
                         BO.ref_no AS order_ref,
@@ -730,7 +743,8 @@ export const tnaPlanRouter = createTRPCRouter({
                         TPD.ACTUAL_DATE AS actual_date,
                         B.BUYER_NAME AS buyer_name,
                         F.NAME AS factory_name,
-                        D.NAME AS destination_name
+                        D.NAME AS destination_name,
+                        COUNT(*) OVER() AS total_count
                     FROM tna_plan_details AS TPD 
                         INNER JOIN shipment_details AS SD ON SD.id = TPD.shipment_id
                         INNER JOIN order_styles AS OS ON OS.id = SD.order_style_id
@@ -766,9 +780,14 @@ export const tnaPlanRouter = createTRPCRouter({
                         B.BUYER_NAME ILIKE '%' || ${input.search_term} || '%' OR
                         F.NAME ILIKE '%' || ${input.search_term} || '%'
                     )
-                    ORDER BY PLAN_DATE ASC;
+                    ORDER BY PLAN_DATE ASC
+                    LIMIT ${input.limit ?? 100}    
+                    OFFSET ${input.offset ?? 0};
                 `;
-                return events;
+                return {
+                    events: events.map(({ total_count: _, ...row }) => row),
+                    total: Number(events[0]?.total_count ?? 0),
+                };
             }
             catch (error) {
                 await logError(error, ctx, input);

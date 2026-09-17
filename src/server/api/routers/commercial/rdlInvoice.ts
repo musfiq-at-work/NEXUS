@@ -37,7 +37,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             RI.INVOICE_DATE,
                             COALESCE(RI.IS_AUTHORIZED, FALSE) AS IS_AUTHORIZED,
                             COALESCE(SUM(SD.FOB_RATE * RISD.INVOICE_QUANTITY) - RI.DISCOUNT, 0) AS VALUE,
-                            C.SYMBOL,
+                            MAX(C.SYMBOL) AS SYMBOL,
                             RI.ADDED_AT
                         FROM rdl_invoice AS RI
                             LEFT JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
@@ -64,7 +64,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                                     AND TM.USER_ID = ${ctx.user.id}
                             )
                         )
-                        GROUP BY RI.ID, B.ID, C.ID
+                        GROUP BY RI.ID, B.ID
                     )
                     SELECT *,
                         COUNT(*) OVER() AS TOTAL_COUNT
@@ -113,7 +113,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             RI.INVOICE_DATE,
                             COALESCE(RI.IS_AUTHORIZED, FALSE) AS IS_AUTHORIZED,
                             SUM(SD.FOB_RATE * RISD.INVOICE_QUANTITY) - RI.DISCOUNT AS VALUE,
-                            C.SYMBOL,
+                            MAX(C.SYMBOL) AS SYMBOL,
                             RI.ADDED_AT
                         FROM rdl_invoice AS RI
                             LEFT JOIN rdl_invoice_details AS RID ON RID.rdl_invoice_id = RI.id
@@ -147,7 +147,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                             OR OS.STYLE ILIKE '%' || ${input.query} || '%'
                             OR SD.buyer_po ILIKE '%' || ${input.query} || '%'
                         )
-                        GROUP BY RI.ID, B.ID, C.ID
+                        GROUP BY RI.ID, B.ID
                     )
                     SELECT *,
                         COUNT(*) OVER() AS TOTAL_COUNT

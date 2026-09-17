@@ -26,7 +26,7 @@ const CommissionInvoicePDF = ({ data }: { data: GetPDFDataOutput }) => {
     const buyerOrderData: HeaderData = [
         [
             { label: "LC / RDL Ref", value: data.header?.lc_sc_no ?? "" },
-            { label: "Bank Name", value: data.header?.buyer_name ?? "" },
+            { label: "Buyer Name", value: data.header?.buyer_name ?? "" },
             { label: "Bank Name", value: data.header?.bank_name ?? "" },
             { label: "Exfactory Date", value: data.header?.exfactory_date ?? "" },
         ],
