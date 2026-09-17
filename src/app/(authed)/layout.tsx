@@ -1,6 +1,7 @@
 import SideBarWrapper from "~/components/templates/SidebarWrapper";
 import ProtectedRoute from "~/components/templates/ProtectedRoutes";
 import TopBar from "~/components/organisms/topBar";
+import ScrollToTopBottom from "~/components/organisms/ScrollToTopBottom";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
 
@@ -9,6 +10,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         <TopBar />
         <SideBarWrapper>
           {children}
+          <ScrollToTopBottom />
         </SideBarWrapper>
       </ProtectedRoute>
   );

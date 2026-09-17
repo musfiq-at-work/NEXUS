@@ -31,6 +31,7 @@ export { default as TableFooter } from "./organisms/table/TableFooter";
 export { default as SideBar } from './organisms/sidebar/SideBar'
 export { default as MultiSelect } from "./organisms/MultiSelect";
 export { default as GenericFormTableRow } from "./organisms/table/GenericFormTableRow";
+export { default as ScrollToTopButton } from "./organisms/ScrollToTopBottom";
 
 // templates
 export { default as SideBarWrapper } from "./templates/SidebarWrapper";

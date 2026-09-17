@@ -544,7 +544,7 @@ export const salesContractsRouter = createTRPCRouter({
 
             try {
                 const orders = await ctx.db.$queryRaw<{ id: number; ref_no: string; buyer_name: string; season_name: string }[]>`
-                    SELECT
+                    SELECT DISTINCT
                         BO.id AS id,
                         BO.ref_no AS ref_no,
                         B.buyer_name AS buyer_name,
@@ -552,7 +552,7 @@ export const salesContractsRouter = createTRPCRouter({
                     FROM buyer_orders AS BO
                         INNER JOIN buyers AS B ON B.id = BO.buyer_id
                         INNER JOIN seasons AS S ON S.id = BO.season_id
-                        -- INNER JOIN commission_distributions AS CD ON CD.order_id = BO.id
+                        INNER JOIN commission_distributions AS CD ON CD.order_id = BO.id
                     WHERE BO.buyer_id = ${input.buyer_id}
                     AND BO.factory_id = ${input.factory_id}
                     AND (
@@ -568,7 +568,7 @@ export const salesContractsRouter = createTRPCRouter({
                             AND SCD.sales_contract_id = ${input.salesContractId}
                         )
                     )
-                    -- AND CD.approval_status = TRUE
+                    AND CD.approval_status = TRUE
                     ORDER BY BO.id DESC
                 `;
 
@@ -1569,7 +1569,6 @@ export const salesContractsRouter = createTRPCRouter({
             }
         }),
 
-
     getSalesContractCommissionPDFData: protectedProcedure
         .input(z.object({
             id: z.string(),
@@ -1785,20 +1784,6 @@ export const salesContractsRouter = createTRPCRouter({
                             }
                         );
 
-                        const grandTotal = {
-                            totalQuantity: quantityFormatter(totals.qty),
-                            totalRdlValue: currencyFormatter(totals.rdl, currencySymbol),
-                            totalFactoryValue: currencyFormatter(totals.factory, currencySymbol),
-                            commissionPercentage: `${totals.rdl ? ((totals.comm / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
-                            totalCommissionValue: currencyFormatter(totals.comm, currencySymbol),
-                            totalDhakaCommission: currencyFormatter(totals.dhaka, currencySymbol),
-                            totalDhakaCommissionPercentage: `${totals.rdl ? ((totals.dhaka / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
-                            totalOverseasCommission: currencyFormatter(totals.overseas, currencySymbol),
-                            totalOverseasCommissionPercentage: `${totals.rdl ? ((totals.overseas / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
-                            totalOthersCommission: currencyFormatter(totals.others, currencySymbol),
-                            totalOthersCommissionPercentage: `${totals.rdl ? ((totals.others / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
-                        };
-
                         return {
                             ref_no: detail.buyer_orders?.ref_no,
 
@@ -1961,48 +1946,48 @@ export const salesContractsRouter = createTRPCRouter({
                                 })
                             ) || [];
 
-                        const totals = shipmentRows.reduce(
-                            (acc, item) => {
-                                acc.qty += item.raw.totalQty;
-                                acc.rdl += item.raw.rdlVal;
-                                acc.factory += item.raw.factoryVal;
-                                acc.comm += item.raw.commVal;
-                                acc.dhaka += item.raw.dhakaComm;
-                                acc.overseas += item.raw.overseasComm;
-                                acc.others += item.raw.othersComm;
+                            const totals = shipmentRows.reduce(
+                                (acc, item) => {
+                                    acc.qty += item.raw.totalQty;
+                                    acc.rdl += item.raw.rdlVal;
+                                    acc.factory += item.raw.factoryVal;
+                                    acc.comm += item.raw.commVal;
+                                    acc.dhaka += item.raw.dhakaComm;
+                                    acc.overseas += item.raw.overseasComm;
+                                    acc.others += item.raw.othersComm;
 
-                                return acc;
-                            },
-                            {
-                                qty: 0,
-                                rdl: 0,
-                                factory: 0,
-                                comm: 0,
-                                dhaka: 0,
-                                overseas: 0,
-                                others: 0,
-                            }
-                        );
+                                    return acc;
+                                },
+                                {
+                                    qty: 0,
+                                    rdl: 0,
+                                    factory: 0,
+                                    comm: 0,
+                                    dhaka: 0,
+                                    overseas: 0,
+                                    others: 0,
+                                }
+                            );
 
-                        return {
-                            ref_no: detail.buyer_orders?.ref_no,
-                            shipment_details: shipmentRows.map(item => item.row),
-                            totals: totals,
-                            results: {
-                                totalQuantity: quantityFormatter(totals.qty),
-                                totalRdlValue: currencyFormatter( totals.rdl, currencySymbol),
-                                totalFactoryValue: currencyFormatter( totals.factory, currencySymbol),
-                                commissionPercentage: `${totals.rdl ? ((totals.comm / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
-                                totalCommissionValue: currencyFormatter(totals.comm,currencySymbol),
-                                totalDhakaCommission: currencyFormatter(totals.dhaka,currencySymbol),
-                                totalDhakaCommissionPercentage: `${totals.rdl ? ((totals.dhaka / totals.rdl) * 100).toFixed(2) : "0.00" }%`,
-                                totalOverseasCommission: currencyFormatter(totals.overseas,currencySymbol),
-                                totalOverseasCommissionPercentage: `${ totals.rdl ? ((totals.overseas / totals.rdl) * 100).toFixed(2) : "0.00" }%`,
-                                totalOthersCommission: currencyFormatter(totals.others,currencySymbol),
-                                totalOthersCommissionPercentage: `${ totals.rdl ? ((totals.others / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
-                            },
-                        };
-                    });
+                            return {
+                                ref_no: detail.buyer_orders?.ref_no,
+                                shipment_details: shipmentRows.map(item => item.row),
+                                totals: totals,
+                                results: {
+                                    totalQuantity: quantityFormatter(totals.qty),
+                                    totalRdlValue: currencyFormatter( totals.rdl, currencySymbol),
+                                    totalFactoryValue: currencyFormatter( totals.factory, currencySymbol),
+                                    commissionPercentage: `${totals.rdl ? ((totals.comm / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
+                                    totalCommissionValue: currencyFormatter(totals.comm,currencySymbol),
+                                    totalDhakaCommission: currencyFormatter(totals.dhaka,currencySymbol),
+                                    totalDhakaCommissionPercentage: `${totals.rdl ? ((totals.dhaka / totals.rdl) * 100).toFixed(2) : "0.00" }%`,
+                                    totalOverseasCommission: currencyFormatter(totals.overseas,currencySymbol),
+                                    totalOverseasCommissionPercentage: `${ totals.rdl ? ((totals.overseas / totals.rdl) * 100).toFixed(2) : "0.00" }%`,
+                                    totalOthersCommission: currencyFormatter(totals.others,currencySymbol),
+                                    totalOthersCommissionPercentage: `${ totals.rdl ? ((totals.others / totals.rdl) * 100).toFixed(2) : "0.00"}%`,
+                                },
+                            };
+                        });
 
                         const amendmentTotals = amendmentOrders.reduce(
                             (acc, order) => {

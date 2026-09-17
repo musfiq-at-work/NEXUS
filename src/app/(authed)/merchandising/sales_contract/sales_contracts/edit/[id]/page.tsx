@@ -151,8 +151,12 @@ const EditSalesContractPage = ({ params }: ParamsProp) => {
     const isAllCommissionDistributionsAuthorized = unauthorizedCommissionDistributions 
         ? !!unauthorizedCommissionDistributions.all_approved : false;
 
+    const noCommissionDistributions = unauthorizedCommissionDistributions?.all_approved === null;
+
     const unauthorizedCommissionDistributionRefNos = unauthorizedCommissionDistributions 
         ? unauthorizedCommissionDistributions.failed_ref_nos : "";
+
+    console.log('unauthorizedCommissionDistributions', unauthorizedCommissionDistributions);
 
     return (
         <Wrapper
@@ -218,12 +222,18 @@ const EditSalesContractPage = ({ params }: ParamsProp) => {
                     <MessageBox 
                         message="Authorize all the commission distributions in order to Send for Approval / Authorize this sales contract." 
                         active={!isAllCommissionDistributionsAuthorized && !!unauthorizedCommissionDistributions?.failed_ref_nos} 
-                        type="error" 
+                        type="warning" 
                     />
 
                     <MessageBox 
                         message={`The following commission distributions are unauthorized: ${unauthorizedCommissionDistributionRefNos}`}
                         active={!isAllCommissionDistributionsAuthorized && !!unauthorizedCommissionDistributions?.failed_ref_nos} 
+                        type="error" 
+                    />
+
+                    <MessageBox 
+                        message="The Order Reference in this sales contract are missing Commission Distribution." 
+                        active={noCommissionDistributions} 
                         type="error" 
                     />
 
@@ -299,7 +309,7 @@ const EditSalesContractPage = ({ params }: ParamsProp) => {
                                 </div>
                             )
                         )}
-                    </div>
+                    </div>                    
                 </>
             )}
         </Wrapper>

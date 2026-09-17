@@ -13,7 +13,7 @@ type WrapperProps = {
 // Wrapper component to provide a consistent layout with heading and optional subsections
 const Wrapper = ({ children, heading, subSectionLeft, subSectionRight, className }: WrapperProps) => {
     return (
-        <section className={clsx('w-full flex flex-col justify-center pb-16 pt-4')}>
+        <section className={clsx('w-full flex flex-col justify-center pb-24 pt-4')}>
             <Heading>{heading}</Heading>
             <div className='w-full flex flex-col justify-center items-center mt-2'>
                 <div className={clsx('w-full', className)}>
