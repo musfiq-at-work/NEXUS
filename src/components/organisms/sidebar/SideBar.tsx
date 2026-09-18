@@ -92,7 +92,7 @@ const SideBar = ({navData, children}: SideBarProps) => {
                 }}
                 transition={{ type: false }}
                 className={clsx(
-                    "my-0.75 mx-4 rounded-lg transition-all h-[99.4dvh] w-full",
+                    "my-0.75 mx-4 rounded-lg transition-all h-[99.3dvh] w-full",
                     isOpen ? "mr-4" : "mx-8"
                 )}
             >

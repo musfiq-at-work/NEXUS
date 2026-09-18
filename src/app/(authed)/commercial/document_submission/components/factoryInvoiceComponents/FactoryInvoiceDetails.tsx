@@ -71,10 +71,12 @@ const FactoryInvoiceDetails = (props: props) => {
     }, [rdlInvoiceDetails, invoiceIndex]);
 
     const rdlInvoices = methods.watch("rdlInvoices") ?? [];
+
     const lastFactoryInvoiceIndex = rdlInvoices.reduce(
         (lastIndex, rdlInvoice, index) => rdlInvoice.rdl_invoice_id ? index : lastIndex,
         -1,
     );
+
     const grandTotalQuantity = rdlInvoices.reduce(
         (total, rdlInvoice) => total + (rdlInvoice.factoryInvoices ?? []).reduce(
             (invoiceTotal, factoryInvoice) => invoiceTotal + safeNumber(factoryInvoice.quantity),
@@ -82,6 +84,7 @@ const FactoryInvoiceDetails = (props: props) => {
         ),
         0,
     );
+    
     const grandTotalValue = rdlInvoices.reduce(
         (total, rdlInvoice) => total + (rdlInvoice.factoryInvoices ?? []).reduce(
             (invoiceTotal, factoryInvoice) => invoiceTotal + safeNumber(factoryInvoice.factory_invoice_value),

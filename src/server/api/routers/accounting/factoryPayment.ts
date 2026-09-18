@@ -80,6 +80,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                             COALESCE(SUM(FP.PAID_AMOUNT), 0) AS FACTORY_PAID_AMOUNT,
                             COUNT(FP.ID) AS PAID_COUNT
                         FROM factory_payments AS FP
+                        WHERE FP.paid_amount > 0
                         GROUP BY FP.document_submission_id
                     ),
                     TT_PAYMENT AS (
@@ -90,6 +91,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                         FROM rdl_invoice_details AS RID
                             INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
                             INNER JOIN factory_payments AS FP ON FP.factory_invoice_id = FI.id
+                        WHERE FP.paid_amount > 0
                         GROUP BY RID.rdl_invoice_id
                     ),
                     LC_INVOICE_COUNT AS (
@@ -289,6 +291,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                             COALESCE(SUM(FP.PAID_AMOUNT), 0) AS FACTORY_PAID_AMOUNT,
                             COUNT(FP.ID) AS PAID_COUNT
                         FROM factory_payments AS FP
+                        WHERE FP.paid_amount > 0
                         GROUP BY FP.document_submission_id
                     ),
                     TT_PAYMENT AS (
@@ -299,6 +302,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                         FROM rdl_invoice_details AS RID
                         INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
                         INNER JOIN factory_payments AS FP ON FP.factory_invoice_id = FI.id
+                        WHERE FP.paid_amount > 0
                         GROUP BY RID.rdl_invoice_id
                     ),
                     LC_INVOICE_COUNT AS (

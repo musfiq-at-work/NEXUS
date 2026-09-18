@@ -17,7 +17,6 @@ export const formFields = () => {
             label: 'PO',
             placeholder: 'Enter PO',
             disabled: true,
-            freeze: true,
         },
         {
             name: 'destination',

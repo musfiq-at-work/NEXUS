@@ -2,11 +2,13 @@
 
 import React from "react";
 import { GenericFormTableRow, Heading, TableBody, TableWrapper } from "~/components";
-import { type FieldArrayWithId, type FieldErrors } from "react-hook-form";
+import { useWatch, type FieldArrayWithId, type FieldErrors } from "react-hook-form";
 import type { useProceedRealizationForm } from "../config/useProceedRealizationForm";
 import TableHeader, { type TableHeaderType } from "~/components/organisms/table/TableHeader";
 import type { ProceedRealizationFormValues } from "../config/formSchema";
 import { formFields as shipmentTableFormFields } from "../rdlInvoiceConfig/tableFormFields";
+import { safeNumber } from "~/utils/numbers";
+import { currencyFormatter } from "~/utils/localNumberStrings";
 
 type RdlInvoiceRow = FieldArrayWithId<ProceedRealizationFormValues>;
 
@@ -22,6 +24,14 @@ type Props = {
 
 const TableForm = (props: Props) => {
     const {columns, rows, disabled = false, name, methods, validationError} = props;
+
+    const details = useWatch({ control: methods.control, name: 'details' });
+
+    const totalInvoiceValue = details?.reduce(
+        (sum, item) => sum = sum + (safeNumber(item?.invoice_value?.split(' ')[1]?.replaceAll(',', ''))), 0
+    ) ?? 0;
+    
+    const totalProceedValue = details?.reduce((sum, item) => sum = sum + (item?.proceed_value ?? 0), 0) ?? 0;
 
     return (
         <>
@@ -46,6 +56,14 @@ const TableForm = (props: Props) => {
                                 />
                             ))}
                         </TableBody>
+                        {totalInvoiceValue > 0 && <tfoot>
+                            <tr className="font-bold text-sm border-2 border-gray/20">
+                                <td colSpan={1} className="border-r-2 border-gray/20 p-2 text-right">Total</td>
+                                <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{currencyFormatter(totalInvoiceValue, '$')}</td>
+                                <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{totalProceedValue}</td>
+                                <td className="border-r-2 border-gray/20 p-2" />
+                            </tr>
+                        </tfoot>}
                     </TableWrapper>
                 </div>
             </form>

@@ -39,9 +39,7 @@ const SearchField = ({ handleSearchChange, placeholder, infoText }: SearchFieldP
     useEffect(() => {
         const normalizedSearchTerm = searchTerm.trim();
 
-        if (!normalizedSearchTerm) {
-            return;
-        }
+        if (!normalizedSearchTerm) return;
 
         const timeout = window.setTimeout(() => {
             setSearchHistory((currentHistory) => {
@@ -50,10 +48,7 @@ const SearchField = ({ handleSearchChange, placeholder, infoText }: SearchFieldP
                     ...currentHistory.filter((query) => query !== normalizedSearchTerm),
                 ].slice(0, 10);
 
-                window.localStorage.setItem(
-                    `search-history:${pathname}`,
-                    JSON.stringify(nextHistory),
-                );
+                window.localStorage.setItem(`search-history:${pathname}`, JSON.stringify(nextHistory));
 
                 return nextHistory;
             });

@@ -33,7 +33,7 @@ const ScrollToTopBottom = () => {
 		<button
 			type="button"
 			onClick={scroll}
-			className="fixed bottom-2 right-1 z-50 flex size-9 items-center justify-center rounded-md bg-gray shadow-md transition hover:bg-accent opacity-80"
+			className="fixed bottom-2 right-1 z-50 flex size-9 items-center backdrop-blur-2xl justify-center rounded-lg border-2 shadow-lg transition hover:bg-accent opacity-80 hover:cursor-pointer"
 			aria-label={showTop ? "Scroll to top" : "Scroll to bottom"}
 		>
 			<span className="relative size-5">
@@ -41,7 +41,7 @@ const ScrollToTopBottom = () => {
 					<motion.img
 						key={showTop ? "top" : "bottom"}
 						src={showTop ? caretUpIcon.src : caretDownIcon.src}
-						className="absolute inset-0 w-6"
+						className="absolute inset-0 w-6 invert"
 						initial={{ opacity: 0, y: showTop ? 8 : -8 }}
 						animate={{ opacity: 1, y: 0 }}
 						exit={{ opacity: 0, y: showTop ? -8 : 8 }}

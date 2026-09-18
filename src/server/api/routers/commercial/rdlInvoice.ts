@@ -680,7 +680,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         FI.ID,
                         FI.INVOICE_NO,
                         SUM(I.TOTAL_QUANTITY) AS TOTAL_QUANTITY,
-                        SUM(I.FACTORY_VALUE) - COALESCE(FI.discount, 0) AS FACTORY_VALUE
+                        (SUM(I.FACTORY_VALUE) - COALESCE(FI.discount, 0))::NUMERIC(18, 2) AS FACTORY_VALUE
                     FROM FACTORY_INVOICE FI
                         INNER JOIN factory_invoice_details FID ON FID.factory_invoice_id = FI.ID
                         INNER JOIN INVOICE I ON I.EFSD_ID = FID.exfactory_shipment_id

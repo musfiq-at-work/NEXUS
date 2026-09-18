@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Heading, TableBody, TableWrapper } from "~/components";
-import { type FieldArrayWithId } from "react-hook-form";
+import { useWatch, type FieldArrayWithId } from "react-hook-form";
 import type { useFactoryInvoiceForm } from "../../config/useFactoryInvoiceForm";
 import ShipmentRows from "./ShipmentRows";
 import TableHeader, { type TableHeaderType } from "~/components/organisms/table/TableHeader";
@@ -24,6 +24,12 @@ interface Props {
 
 const ShipmentTableForm = (props: Props) => {
     const { title, columns, rows, register, disabled = false, name, methods, removeRow } =  props;
+
+    const details = useWatch({ control: methods.control, name: 'details' });
+
+    const totalOrderQuantity = details?.reduce((sum, item) => sum = sum + (item?.order_quantity ?? 0), 0) ?? 0;
+    const totalDeliveryQuantity = details?.reduce((sum, item) => sum = sum + (item?.delivery_quantity ?? 0), 0) ?? 0;
+    const totalFactoryValue = details?.reduce((sum, item) => sum = sum + (item?.factory_value ?? 0), 0) ?? 0;
 
     return (
         <>
@@ -48,6 +54,15 @@ const ShipmentTableForm = (props: Props) => {
                                 />
                             ))}
                         </TableBody>
+                        <tfoot>
+                            <tr className="font-bold text-sm border-2 border-gray/20">
+                                <td colSpan={5} className="border-r-2 border-gray/20 p-2 text-right">Total</td>
+                                <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{totalOrderQuantity}</td>
+                                <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{totalDeliveryQuantity}</td>
+                                <td className="border-r-2 border-gray/20 p-2" />
+                                <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{totalFactoryValue}</td>
+                            </tr>
+                        </tfoot>
                     </TableWrapper>
                 </div>
              </form>
