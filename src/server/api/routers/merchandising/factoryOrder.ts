@@ -633,10 +633,10 @@ export const factoryOrderRouter = createTRPCRouter({
                     styles: factoryOrder.buyer_orders?.order_styles.map((os) => ({
                         db_id: os.id,
                         shipments: os.shipment_details.map((sd) => ({
-                            db_id: sd.factory_shipment_details?.[0]?.id,
-                            exfactory_date: sd.factory_shipment_details?.[0]?.exfactory_date ?? null,
-                            factory_fob: sd.factory_shipment_details?.[0]?.factory_rate ?? null,
-                            transfer_rate: sd.factory_shipment_details?.[0]?.transfer_rate ?? null,
+                            db_id: sd.factory_shipment_details?.id,
+                            exfactory_date: sd.factory_shipment_details?.exfactory_date ?? null,
+                            factory_fob: sd.factory_shipment_details?.factory_rate ?? null,
+                            transfer_rate: sd.factory_shipment_details?.transfer_rate ?? null,
                             ex_factory_exists: sd.exfactory_shipments?.length > 0,
                         })),
                     })),

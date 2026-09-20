@@ -1360,7 +1360,7 @@ model shipment_details {
   commission_distributions_details commission_distributions_details?
   early_settlement_details         early_settlement_details?
   exfactory_shipments              exfactory_shipments[]
-  factory_shipment_details         factory_shipment_details[]
+  factory_shipment_details         factory_shipment_details?
   lc_amendment_shipments           lc_amendment_shipments[]
   lc_shipments                     lc_shipments[]
   rdl_invoice_shipment_details     rdl_invoice_shipment_details[]
@@ -1426,7 +1426,7 @@ model factory_orders_history {
 model factory_shipment_details {
   id                      String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   factory_order_id        String           @db.Uuid
-  shipment_detail_id      String           @db.Uuid
+  shipment_detail_id      String           @unique(map: "unique_factory_shipment_per_po") @db.Uuid
   exfactory_date          DateTime         @db.Date
   factory_rate            Float?
   transfer_rate           Float?

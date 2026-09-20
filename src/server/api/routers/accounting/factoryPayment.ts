@@ -327,41 +327,32 @@ export const factoryPaymentRouter = createTRPCRouter({
                                 WHEN PR.term_id = ${TT_ID} THEN CONCAT('tt.', TTD.RID)
                                 WHEN PR.term_id = ${LC_ID} THEN CONCAT('lc.', LCD.id)
                             END AS ID,
-
                             T.NAME AS TERM_NAME,
-
                             CASE
                                 WHEN PR.term_id = ${TT_ID} THEN TTD.invoice_no
                                 WHEN PR.term_id = ${LC_ID} THEN LCD.FDBC_NO
                             END AS FDBC_NO,
-
                             PR.REALIZATION_DATE,
-
                             CASE
                                 WHEN PR.term_id = ${TT_ID} THEN TTI.TOTAL_INVOICE_VALUE
                                 WHEN PR.term_id = ${LC_ID} THEN LCI.TOTAL_INVOICE_VALUE
                             END AS RDL_INVOICE_VALUE,
-
                             CASE
                                 WHEN PR.term_id = ${TT_ID} THEN TTP.REALIZED_AMOUNT
                                 WHEN PR.term_id = ${LC_ID} THEN LCP.REALIZED_AMOUNT
                             END AS REALIZED_AMOUNT,
-
                             CASE
                                 WHEN PR.term_id = ${TT_ID} THEN COALESCE(TT_PAY.FACTORY_PAID_AMOUNT, 0)
                                 WHEN PR.term_id = ${LC_ID} THEN COALESCE(LC_PAY.FACTORY_PAID_AMOUNT, 0)
                             END AS FACTORY_PAID_AMOUNT,
-
                             CASE
                                 WHEN PR.term_id = ${TT_ID} THEN COALESCE(TT_PAY.PAID_COUNT, 0)
                                 WHEN PR.term_id = ${LC_ID} THEN COALESCE(LC_PAY.PAID_COUNT, 0)
                             END AS PAID_COUNT,
-
                             CASE
                                 WHEN PR.term_id = ${TT_ID} THEN COALESCE(TT_COUNT.TOTAL_INVOICE_COUNT, 0) - COALESCE(TT_PAY.PAID_COUNT, 0)
                                 WHEN PR.term_id = ${LC_ID} THEN COALESCE(LC_COUNT.TOTAL_INVOICE_COUNT, 0) - COALESCE(LC_PAY.PAID_COUNT, 0)
                             END AS PENDING_COUNT,
-
                             PR.TERM_ID,
                             PR.DOCUMENT_SUBMISSION_ID,
                             TTD.RID AS RDL_INVOICE_ID,
@@ -519,7 +510,7 @@ export const factoryPaymentRouter = createTRPCRouter({
 
                         FROM FACTORY_PAYMENTS_BASE AS FPB
                     )
-                    SELECT
+                    SELECT DISTINCT
                         *,
                         COUNT(*) OVER() AS TOTAL_COUNT
                     FROM FACTORY_PAYMENTS_LIST AS PFL

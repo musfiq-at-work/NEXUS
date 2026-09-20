@@ -1325,8 +1325,8 @@ export const salesContractAmendmentRouter = createTRPCRouter({
                     }
                 });
 
-                const currencySymbol = orderDataObj?.sales_contract_amendment_details?.[0]?.buyer_orders?.order_styles?.[0]?.shipment_details?.[0]?.factory_shipment_details?.[0]?.factory_orders?.currencies?.symbol ?? '$';
-                const currencyName = orderDataObj?.sales_contract_amendment_details?.[0]?.buyer_orders?.order_styles?.[0]?.shipment_details?.[0]?.factory_shipment_details?.[0]?.factory_orders?.currencies?.name ?? 'USD';
+                const currencySymbol = orderDataObj?.sales_contract_amendment_details?.[0]?.buyer_orders?.order_styles?.[0]?.shipment_details?.[0]?.factory_shipment_details?.factory_orders?.currencies?.symbol ?? '$';
+                const currencyName = orderDataObj?.sales_contract_amendment_details?.[0]?.buyer_orders?.order_styles?.[0]?.shipment_details?.[0]?.factory_shipment_details?.factory_orders?.currencies?.name ?? 'USD';
 
                 const orderData = orderDataObj?.sales_contract_amendment_details.map(detail => ({
                     ref_no: detail.buyer_orders?.ref_no,
@@ -1339,15 +1339,15 @@ export const salesContractAmendmentRouter = createTRPCRouter({
                                 sd.shipment_item_details.reduce((sum, item) => sum + item.quantity, 0)
                             ),
                             colors: formatColorQty(sd.shipment_item_details),
-                            exfactory_date: formatDate(sd.factory_shipment_details?.[0]?.exfactory_date ?? ''),
-                            transfer_rate: (sd.factory_shipment_details?.[0]?.transfer_rate ?? 0) > 0
-                                    ? sd.factory_shipment_details?.[0]?.transfer_rate
-                                    : sd.factory_shipment_details?.[0]?.factory_rate,
+                            exfactory_date: formatDate(sd.factory_shipment_details?.exfactory_date ?? ''),
+                            transfer_rate: (sd.factory_shipment_details?.transfer_rate ?? 0) > 0
+                                    ? sd.factory_shipment_details?.transfer_rate
+                                    : sd.factory_shipment_details?.factory_rate,
                             price: currencyFormatter(
                                 (
-                                    ((sd.factory_shipment_details?.[0]?.transfer_rate ?? 0) > 0
-                                        ? sd.factory_shipment_details?.[0]?.transfer_rate
-                                        : sd.factory_shipment_details?.[0]?.factory_rate) ?? 0
+                                    ((sd.factory_shipment_details?.transfer_rate ?? 0) > 0
+                                        ? sd.factory_shipment_details?.transfer_rate
+                                        : sd.factory_shipment_details?.factory_rate) ?? 0
                                 ) *
                                 sd.shipment_item_details.reduce((sum, item) => sum + item.quantity, 0),
                                 currencySymbol
@@ -1367,9 +1367,9 @@ export const salesContractAmendmentRouter = createTRPCRouter({
                             detail.buyer_orders?.order_styles.reduce((sumOs, os) =>
                                 sumOs + os.shipment_details.reduce((sumSd, sd) =>
                                     sumSd + (
-                                        ((sd.factory_shipment_details?.[0]?.transfer_rate ?? 0) > 0
-                                            ? sd.factory_shipment_details?.[0]?.transfer_rate
-                                            : sd.factory_shipment_details?.[0]?.factory_rate) ?? 0
+                                        ((sd.factory_shipment_details?.transfer_rate ?? 0) > 0
+                                            ? sd.factory_shipment_details?.transfer_rate
+                                            : sd.factory_shipment_details?.factory_rate) ?? 0
                                     ) *
                                     sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0), 
                                 0), 
@@ -1394,9 +1394,9 @@ export const salesContractAmendmentRouter = createTRPCRouter({
                         sumDetail + detail.buyer_orders?.order_styles.reduce((sumOs, os) =>
                             sumOs + os.shipment_details.reduce((sumSd, sd) =>
                                 sumSd + (
-                                    ((sd.factory_shipment_details?.[0]?.transfer_rate ?? 0) > 0
-                                        ? sd.factory_shipment_details?.[0]?.transfer_rate
-                                        : sd.factory_shipment_details?.[0]?.factory_rate) ?? 0
+                                    ((sd.factory_shipment_details?.transfer_rate ?? 0) > 0
+                                        ? sd.factory_shipment_details?.transfer_rate
+                                        : sd.factory_shipment_details?.factory_rate) ?? 0
                                 ) *
                                 sd.shipment_item_details.reduce((sumItem, item) => sumItem + item.quantity, 0), 
                             0), 

@@ -55,13 +55,7 @@ const SideBar = ({navData, children}: SideBarProps) => {
     const isOpen = useSidebarStore((state) => state.isOpen);
     const toggleIsOpen = useSidebarStore((state) => state.toggleIsOpen);
 
-    // temporary filter to remove the DOES NOT EXIST item with id 64
-    // this is for the DB migration phase, to maintain data integrity
-    // this should be removed once all the modules are properly set up in the backend
-    // If a module of the old system is missing in the new system, it's 64
-    const filteredNavData = navData.filter(item => item.id !== 64);
-
-    const dataTree = buildTree(filteredNavData);
+    const dataTree = buildTree(navData);
 
     return (
         <div className="flex flex-row">

@@ -356,7 +356,7 @@ export const lcTransferRouter = createTRPCRouter({
                 return lcList;
             }
             catch (error) {
-                            handlePrismaError(error);
+                handlePrismaError(error);
             }
         }),
 
@@ -422,14 +422,16 @@ export const lcTransferRouter = createTRPCRouter({
         .query(async ({ ctx, input }) => {
             try {
                 const salesContracts = await ctx.db.$queryRaw<{id: string, sales_contract_no: string}[]>`
-                    WITH TRANSFER AS ( -- Calculate total transferred quantity for each sales contract under the given LC
+                    -- Calculate total transferred quantity for each sales contract under the given LC
+                    WITH TRANSFER AS ( 
                         SELECT 
                             LCTD.SALES_CONTRACT_ID,
                             SUM(LCTD.LC_TRANSFER_QUANTITY) AS TRANSFER_QUANTITY
                         FROM LC_TRANSFER_DETAILS AS LCTD
                         GROUP BY LCTD.SALES_CONTRACT_ID
                     ),
-                    SHIPMENT AS ( -- Calculate total shipped quantity for each sales contract under the given LC
+                    -- Calculate total shipped quantity for each sales contract under the given LC
+                    SHIPMENT AS ( 
                         SELECT
                             SCD.SALES_CONTRACT_ID,
                             SUM(SID.QUANTITY) AS SC_QUANTITY
@@ -509,7 +511,9 @@ export const lcTransferRouter = createTRPCRouter({
                             INNER JOIN FACTORY_SHIPMENT_DETAILS AS FSD ON FSD.SHIPMENT_DETAIL_ID = SD.ID
                         GROUP BY SD.ID, BO.ID, FSD.ID
                     ),
-                    TRANSFER AS ( -- Calculate total transferred quantity and value for the given sales contract, excluding the current transfer if lcTransferId is provided
+                    -- Calculate total transferred quantity and value for the given sales contract
+                    -- excluding the current transfer if lcTransferId is provided
+                    TRANSFER AS ( 
                         SELECT
                             LTD.SALES_CONTRACT_ID AS SALES_CONTRACT_ID,
                             SUM(LC_TRANSFER_QUANTITY) AS PREVIOUS_TRANSFER_QUANTITY,
