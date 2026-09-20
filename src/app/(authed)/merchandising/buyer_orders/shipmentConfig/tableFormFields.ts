@@ -92,6 +92,12 @@ export const formFields = ({buyerId, departmentId}: Props) => {
             type: 'button',
         },
         {
+            name: 'selected_colors',
+            label: 'Colors',
+            placeholder: 'Enter Colors',
+            disabled: true,
+        },
+        {
             name: 'lot_quantity',
             label: 'Quantity',
             placeholder: 'Enter quantity',

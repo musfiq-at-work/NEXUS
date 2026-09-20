@@ -2,7 +2,7 @@ import { GenericFormTableRow, Portal } from "~/components";
 import { type useBuyerOrderForm } from "../../config/useBuyerOrderForm";
 import { formFields as shipmentTableFormFields } from "../../shipmentConfig/tableFormFields";
 import { useWatch, type FieldErrors } from "react-hook-form";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import ColorPopup from "../ColorPopup";
 import { api } from "~/trpc/react";
 import type { OrderFormValues } from "../../config/formSchema";
@@ -26,6 +26,7 @@ const ShipmentRows = (props: Props) => {
     const buyerId = useWatch({ control: methods.control, name: `order.buyer_id` });
     const departmentId = useWatch({ control: methods.control, name: `order.department_id` });
     const exFactoryExists = useWatch({ control: methods.control, name: `order.styles.${styleIndex}.shipments.${index}.ex_factory_exists` });
+    const shipmentColors = useWatch({ control: methods.control, name: `order.styles.${styleIndex}.shipments.${index}.colors` }) ?? [];
 
     const [selectedShipmentIndex, setSelectedShipmentIndex] = useState(0);
     const [openColorModal, setOpenColorModal] = useState(false);
@@ -36,6 +37,19 @@ const ShipmentRows = (props: Props) => {
     }, []);
 
     const colors = api.colors.getAll.useQuery(undefined, { staleTime: 900 * 1000 }).data ?? [];
+
+    useEffect(() => {
+        const selectedColors = shipmentColors.map((color) => {
+            const colorName = colors.find((option) => option.id === Number(color.color_id))?.name ?? color.color_id;
+            return `${colorName} (${color.quantity})`;
+        }).join(", ");
+
+        methods.setValue(
+            `order.styles.${styleIndex}.shipments.${index}.selected_colors`,
+            selectedColors,
+            { shouldDirty: false }
+        );
+    }, [colors, index, methods, shipmentColors, styleIndex]);
 
     const { can_delete } = useModulePermissions();
 

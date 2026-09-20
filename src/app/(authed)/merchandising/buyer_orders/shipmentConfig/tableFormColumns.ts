@@ -7,6 +7,7 @@ export const tableFormColumns = [
     { key: 'payment_term', label: 'Payment Term' },
     { key: 'size_range', label: 'Size Range' },
     { key: 'add_colors', label: 'Add Colors' },
+    { key: 'selected_colors', label: 'Colors'},
     { key: 'lot_quantity', label: 'Quantity' },
     { key: 'fob_rate', label: 'RDL FOB' },
     { key: 'rdl_fob_usd', label: 'RDL FOB (USD)' },

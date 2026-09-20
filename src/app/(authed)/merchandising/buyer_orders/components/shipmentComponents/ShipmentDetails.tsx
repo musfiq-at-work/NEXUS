@@ -91,7 +91,6 @@ const ShipmentDetails = (props: props) => {
         !!buyerId ? { buyer_id: parseInt(buyerId) } : skipToken,
         { staleTime: 900 * 1000 }
     ).data?.buffer ?? 7;
-
     
     const shipmentsData = useWatch({
         control: methods.control,

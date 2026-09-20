@@ -12,6 +12,7 @@ export const shipmentSchema = z.object({
     payment_term_id: z.string().min(1, "Payment Term is required"),
     size_id: z.string().min(1, "Size Range is required"),
     lot_quantity: z.number().min(1, "Quantity must be at least 1"),
+    selected_colors: z.string().optional(),
     fob_rate: z.number().gt(0, "RDL FOB must be greater than 0"),
     rdl_fob_usd: z.any().optional(),
     rdl_value: z.any().optional(),
