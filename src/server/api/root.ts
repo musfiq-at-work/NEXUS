@@ -1,21 +1,19 @@
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 import { 
-	levelRouter, userRouter, authRouter, departmentsRouter, permissionRouter, modulesRouter, 
-	authorizationsRouter, countriesRouter, currenciesRouter, overseasOfficesRouter, 
-	destinationsRouter, banksRouter, companiesRouter, termsRouter, paymentTermsRouter, 
-	productTypeRouter, productsRouter, fabricsRouter, fabricsSuppliersRouter, colorsRouter, 
-	fobTypesRouter, freightTermsRouter, courierRouter, tnaActionsRouter, factoryRouter, buyerRouter,
-	seasonsRouter, teamsRouter, handoverDatesRouter, buyerOrdersRouter, factoryOrderRouter, 
-	tnaBaseActionRouter, tnaTemplatesRouter, tnaPlanRouter, commissionDistributionRouter,
-	scContactPersonRouter, salesContractsRouter, salesContractAmendmentRouter, lcMasterRouter, 
-	lcAmendmentRouter, toleranceLevelRouter, exFactoryRouter, lcTransferRouter, factoryInvoiceRouter, 
-	evPermissionRouter, rdlInvoiceRouter, documentSubmissionRouter, commissionInvoiceRouter,
-	proceedRealizationRouter, factoryPaymentRouter, salesReportRouter, exportReportRouter,
-	orderSummaryReportRouter, debitNotesRouter, crossPaymentsRouter, commercialTnaTemplatesRouter,
-	activityReportRouter, commercialTnaPlanRouter, exportSummaryReportRouter, commissionPercentageRouter,
-	earlySettlementPercentageRoute, errorLogsRouter, userSessionsRouter, lcScClosingRouter,
-	earlySettlementRouter, commissionDistributionReportRouter, lcTransferReportRouter
+	levelRouter, userRouter, authRouter, departmentsRouter, permissionRouter, modulesRouter, authorizationsRouter, 
+	countriesRouter, currenciesRouter, overseasOfficesRouter, destinationsRouter, banksRouter, companiesRouter, 
+	termsRouter, paymentTermsRouter, productTypeRouter, productsRouter, fabricsRouter, fabricsSuppliersRouter, 
+	colorsRouter, fobTypesRouter, freightTermsRouter, courierRouter, tnaActionsRouter, factoryRouter, buyerRouter,
+	seasonsRouter, teamsRouter, handoverDatesRouter, buyerOrdersRouter, factoryOrderRouter, tnaBaseActionRouter, 
+	tnaTemplatesRouter, tnaPlanRouter, commissionDistributionRouter, scContactPersonRouter, salesContractsRouter, 
+	salesContractAmendmentRouter, lcMasterRouter, lcAmendmentRouter, toleranceLevelRouter, exFactoryRouter, 
+	lcTransferRouter, factoryInvoiceRouter, evPermissionRouter, rdlInvoiceRouter, documentSubmissionRouter, 
+	commissionInvoiceRouter, proceedRealizationRouter, factoryPaymentRouter, salesReportRouter, exportReportRouter,
+	orderSummaryReportRouter, debitNotesRouter, crossPaymentsRouter, commercialTnaTemplatesRouter, activityReportRouter, 
+	commercialTnaPlanRouter, exportSummaryReportRouter, commissionPercentageRouter, earlySettlementPercentageRoute, 
+	errorLogsRouter, userSessionsRouter, lcScClosingRouter, earlySettlementRouter, commissionDistributionReportRouter, 
+	lcTransferReportRouter
 } from '.';
 
 // All routers added in /api/routers should be manually added here.

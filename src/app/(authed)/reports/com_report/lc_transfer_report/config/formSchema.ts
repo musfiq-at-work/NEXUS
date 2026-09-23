@@ -5,7 +5,7 @@ export const LcTransferReportFormSchema = z
 .object({
     buyer_id: z.string().min(1, 'Buyer Id is required'),
     lcId: z.string().min(1, 'LC/SC Id is required'),
-    factoryId: z.string().optional(),
+    factoryId: z.number().optional(),
 })
 
 export type LcTransferReportFormValues = z.infer<typeof LcTransferReportFormSchema>;

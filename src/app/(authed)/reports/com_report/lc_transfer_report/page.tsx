@@ -22,8 +22,7 @@ const LcTransferReportPage = () => {
             const params = new URLSearchParams();
 
 			Object.entries({
-				buyer: lcTransferReportData.buyer_id,
-				lcScId: lcTransferReportData.lcId,
+				lcId: lcTransferReportData.lcId,
 				factoryID: lcTransferReportData.factoryId,
 			}).forEach(([key, value]) => {
 				if (value !== undefined && value !== null && value !== "") {
