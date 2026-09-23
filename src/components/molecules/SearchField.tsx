@@ -5,6 +5,7 @@ import Info from "../atoms/Info";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { getStoredSearchQuery } from "~/utils/searchQueryStorage";
 
 type SearchFieldProps = {
     handleSearchChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -20,7 +21,7 @@ const SearchField = ({ handleSearchChange, placeholder, infoText }: SearchFieldP
     const searchListId = `search-history-${pathname.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
 
     useEffect(() => {
-        setSearchTerm(window.localStorage.getItem(`search-query:${pathname}`) ?? '');
+        setSearchTerm(getStoredSearchQuery(pathname));
 
         try {
             const storedHistory = window.localStorage.getItem(`search-history:${pathname}`);
@@ -36,6 +37,7 @@ const SearchField = ({ handleSearchChange, placeholder, infoText }: SearchFieldP
         }
     }, [pathname]);
 
+    // Debounce search-history save
     useEffect(() => {
         const normalizedSearchTerm = searchTerm.trim();
 
@@ -52,7 +54,7 @@ const SearchField = ({ handleSearchChange, placeholder, infoText }: SearchFieldP
 
                 return nextHistory;
             });
-        }, 300);
+        }, 500);
 
         return () => window.clearTimeout(timeout);
     }, [pathname, searchTerm]);

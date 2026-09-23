@@ -14,11 +14,18 @@ const TopBar = () => {
     const [logOutClicked, setLogOutClicked] = useState(false);
 
     const utils = api.useUtils();
+
+    const clearSearchQueries = () => {
+        Object.keys(localStorage)
+            .filter(key => key.startsWith("search-query:"))
+            .forEach(key => localStorage.removeItem(key));
+    };
     
     const signOutMutation = api.auth.logout.useMutation({
         onSuccess: async () => {
             await utils.invalidate();
             localStorage.removeItem("token");
+            clearSearchQueries();
             toast.success("Successfully Logged Out", { duration: 2000 });
             window.location.reload();
         },
@@ -32,6 +39,7 @@ const TopBar = () => {
         } catch (error) {
             toast.error("Error during logout: " + (error as Error).message);
             localStorage.removeItem("token"); // Fallback logout
+            clearSearchQueries();
             window.location.reload();
         } finally {
             setLogOutClicked(false);

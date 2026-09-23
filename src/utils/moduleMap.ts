@@ -85,6 +85,7 @@ enum moduleMap {
     EARLY_SETTLEMENT = 89,
     COMMISSION_REPORT = 90,
     ACCOUNTS_REPORTS = 91,
+    LC_TRANSFER_REPORT = 92,
 }
 
 export { moduleMap as m };

@@ -112,6 +112,7 @@ const sideBarConfig: Record<number, {href: string;}> = {
     [m.LC_SC_CLOSING]: { href: "/reports/com_report/lc_sc_closing" },
     [m.COMMERCIAL_ACTIVITY_REPORT]: { href: "/reports/com_report/activity_report" },
     [m.COMMISSION_REPORT]: { href: "/reports/acc_reports/commission_report" },
+    [m.LC_TRANSFER_REPORT]: { href: "/reports/com_report/lc_transfer_report"},
 
     // Maintenance Module
     [m.ERROR_LOGS]: { href: "/maintenance/error_logs" },
