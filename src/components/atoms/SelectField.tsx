@@ -48,7 +48,7 @@ const SelectField = ({ options, value, onChange, error, disabled, className = 'e
                 placeholder: () => "text-gray-400 whitespace-normal",
                 menu: () => "rounded-lg bg-white shadow-lg border border-gray-200 min-w-[130px]",
                 option: ({ isFocused, isSelected }) => clsx(
-                    "px-3 py-2 cursor-pointer text-wrap min-w-[130px] break-all",
+                    "px-3 py-2 cursor-pointer text-wrap min-w-[125px] break-all",
                     isSelected && "bg-primary text-white",
                     isFocused && !isSelected && "bg-secondary-accent text-white"
                 ),

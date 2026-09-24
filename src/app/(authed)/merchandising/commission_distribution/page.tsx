@@ -1,15 +1,17 @@
 'use client';
 import { useRouter } from "next/navigation";
 import { plusIcon } from "~/assets";
-import { Button, SearchField, Table, Wrapper, Popup } from "~/components";
+import { Button, SearchField, Table, Wrapper, Popup, Filter } from "~/components";
 import { api } from "~/trpc/react";
 import { toast } from "sonner";
 import { tableHeaders } from "./config/columns";
 import { useSearchablePagination, useModulePermissions, useDeleteConfirmation } from "~/hooks";
+import { useState } from "react";
 
 const CommissionDistribution = () => {
     const router = useRouter();
     const utils = api.useUtils();
+    const [filter, setFilter] = useState(-1);
 
     const { page, limit, debouncedSearch, handleSearchChange, nextPage, prevPage } = useSearchablePagination();
 
@@ -17,6 +19,7 @@ const CommissionDistribution = () => {
 
     // Fetch paginated data
     const {data: commissionDistributions, isLoading} = api.commissionDistribution.getCommissionDistribution.useQuery({
+        filter,
         limit,
         offset: page * limit,
     });
@@ -74,6 +77,18 @@ const CommissionDistribution = () => {
                             />
                         </div>
                     ) : null
+                }
+                filters={
+                    <Filter 
+                        filter={filter}
+                        setFilter={setFilter}
+                        label='Approval Status'
+                        options={[
+                            {label: 'SELECT', value: -1}, 
+                            {label: 'PENDING', value: 0}, 
+                            {label: 'AUTHORIZED', value: 1}, 
+                        ]}
+                    />
                 }
             >
                 <div className="w-full">

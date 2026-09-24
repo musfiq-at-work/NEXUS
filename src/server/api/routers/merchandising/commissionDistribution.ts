@@ -3,7 +3,7 @@ import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { actions } from "@prisma/client";
+import { actions, Prisma } from "@prisma/client";
 import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 import type { CommissionDistribution, CommissionDistributionDetail, PDFHeader, PDFDetail } from './_types/commissionDestribution';
@@ -12,6 +12,7 @@ export const commissionDistributionRouter = createTRPCRouter({
     getCommissionDistribution: protectedProcedure
         .input(
             z.object({
+                filter: z.number().min(-1).default(-1),  
                 limit: z.number().optional(),
                 offset: z.number().optional(),
             })
@@ -53,6 +54,9 @@ export const commissionDistributionRouter = createTRPCRouter({
                                 AND TM.USER_ID = ${ctx.user.id}
                             )
                         )
+                        ${input.filter === -1 
+                            ? Prisma.empty
+                            : Prisma.sql`AND CD.approval_status = ${input.filter === 0}`}
                     )
                     SELECT 
                         id,

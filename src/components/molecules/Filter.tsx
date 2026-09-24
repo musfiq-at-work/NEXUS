@@ -4,29 +4,34 @@ import type { SetStateAction } from "react";
 
 interface Props {
     filter: number;
-    filterChange: (value: string | number | boolean | null) => void;
     setFilter: (value: SetStateAction<number>) => void;
     label: string;
     options: Option[];
 }
 
 const Filter = (props: Props) => {
-    const { filter, filterChange, setFilter, label, options } = props;
+    const { filter, setFilter, label, options } = props;
+
+    const filterChange = (value: string | number | boolean | null) => {
+        if (typeof value === "number") setFilter(value);
+    }
 
     return (
-        <div className={`flex w-full items-center justify-end gap-3 rounded-xl border-2 
+        <div className={`flex w-full items-center justify-end gap-2 rounded-xl border-2 
             bg-white/70 pl-3 backdrop-blur-sm transition-colors sm:w-auto 
             ${ filter !== -1 ? 'border-secondary' : 'border-slate-200/80' }`
         }>
             <label className="whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-primary-dark">
                 {label}
             </label>
+
             <SelectField
                 options={options}
                 value={filter}
                 onChange={filterChange}
-                className='!mb-0 w-52 border-x border-slate-200 bg-white transition-shadow'
+                className='!mb-0 w-52 border-x border-slate-100 bg-white'
             />
+            
             <button
                 type="button"
                 aria-label="Clear approval status filter"

@@ -54,12 +54,6 @@ const BuyerOrders = () => {
         payloadBuilder: id => ({ id }),
     });
 
-    const filterChange = (value: string | number | boolean | null) => {
-        if (typeof value === "number") {
-            setFilter(value)
-        }
-    }
-
     return (
         <>
             <Wrapper
@@ -86,14 +80,13 @@ const BuyerOrders = () => {
                 filters={
                     <Filter 
                         filter={filter}
-                        filterChange={filterChange}
                         setFilter={setFilter}
                         label='Approval Status'
                         options={[
-                            {label: 'Select', value: -1}, 
-                            {label: 'Incomplete', value: 0}, 
-                            {label: 'Pending', value: 1}, 
-                            {label: 'Approved', value: 2}
+                            {label: 'SELECT', value: -1}, 
+                            {label: 'INCOMPLETE', value: 0}, 
+                            {label: 'PENDING', value: 1}, 
+                            {label: 'APPROVED', value: 2}
                         ]}
                     />
                 }
