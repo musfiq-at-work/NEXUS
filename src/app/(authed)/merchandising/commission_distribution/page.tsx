@@ -62,7 +62,7 @@ const CommissionDistribution = () => {
                 subSectionLeft={
                     <SearchField
                         placeholder="Search Commission Distributions..."
-                        infoText="Buyer Name, Order Reference, Style, PO, and Plan Date."
+                        infoText="Search Buyer Name, Order Reference, Style, PO, and Plan Date."
                         handleSearchChange={handleSearchChange}
                     />
                 }
@@ -84,7 +84,7 @@ const CommissionDistribution = () => {
                         setFilter={setFilter}
                         label='Approval Status'
                         options={[
-                            {label: 'SELECT', value: -1}, 
+                            {label: 'ALL', value: -1}, 
                             {label: 'PENDING', value: 0}, 
                             {label: 'AUTHORIZED', value: 1}, 
                         ]}

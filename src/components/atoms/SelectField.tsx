@@ -46,9 +46,9 @@ const SelectField = ({ options, value, onChange, error, disabled, className = 'e
                 singleValue: () => "text-gray-900 whitespace-normal break-words leading-snug",
                 input: () => "m-0 p-0 w-full min-w-0",
                 placeholder: () => "text-gray-400 whitespace-normal",
-                menu: () => "rounded-lg bg-white shadow-lg border border-gray-200 min-w-[130px]",
+                menu: () => "rounded-lg bg-white shadow-lg border border-gray-200 min-w-[210px]",
                 option: ({ isFocused, isSelected }) => clsx(
-                    "px-3 py-2 cursor-pointer text-wrap min-w-[125px] break-all",
+                    "px-3 py-2 cursor-pointer text-wrap min-w-[200px] break-all",
                     isSelected && "bg-primary text-white",
                     isFocused && !isSelected && "bg-secondary-accent text-white"
                 ),

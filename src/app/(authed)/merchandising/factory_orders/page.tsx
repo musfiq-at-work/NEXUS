@@ -63,7 +63,7 @@ const FactoryOrders = () => {
                 subSectionLeft={
                     <SearchField
                         placeholder="Search Factory Orders..."
-                        infoText="Order Reference, Style, PO, Buyer Name, Factory Name, Department, Season"
+                        infoText="Search Order Reference, Style, PO, Buyer Name, Factory Name, Department, Season"
                         handleSearchChange={handleSearchChange}
                     />
                 }
@@ -85,7 +85,7 @@ const FactoryOrders = () => {
                         setFilter={setFilter}
                         label='Approval Status'
                         options={[
-                            {label: 'SELECT', value: -1}, 
+                            {label: 'ALL', value: -1}, 
                             {label: 'INCOMPLETE', value: 0}, 
                             {label: 'PENDING', value: 1}, 
                             {label: 'LEVEL 1 AUTHORIZED', value: 2}, 

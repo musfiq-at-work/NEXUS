@@ -61,7 +61,7 @@ const BuyerOrders = () => {
                 subSectionLeft={
                     <SearchField
                         placeholder="Search Buyer Orders..."
-                        infoText="Buyer Name, Order Reference, Style, PO, Department, Season, and Team name."
+                        infoText="Search Buyer Name, Order Reference, Style, PO, Department, Season, and Team name."
                         handleSearchChange={handleSearchChange}
                     />
                 }
@@ -83,7 +83,7 @@ const BuyerOrders = () => {
                         setFilter={setFilter}
                         label='Approval Status'
                         options={[
-                            {label: 'SELECT', value: -1}, 
+                            {label: 'ALL', value: -1}, 
                             {label: 'INCOMPLETE', value: 0}, 
                             {label: 'PENDING', value: 1}, 
                             {label: 'APPROVED', value: 2}

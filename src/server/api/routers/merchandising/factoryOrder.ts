@@ -87,8 +87,8 @@ export const factoryOrderRouter = createTRPCRouter({
                         order_status.*,
                         COUNT(*) OVER() AS total_count
                     FROM order_status
-                    WHERE ${Number(input.filter)}::integer = -1
-                        OR approval_status = CASE ${Number(input.filter)}::integer
+                    WHERE ${Number(input.filter)}::INTEGER = -1
+                        OR approval_status = CASE ${Number(input.filter)}::INTEGER
                             WHEN 0 THEN -1
                             WHEN 1 THEN 0
                             WHEN 2 THEN 1

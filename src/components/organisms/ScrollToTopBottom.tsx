@@ -33,7 +33,8 @@ const ScrollToTopBottom = () => {
 		<button
 			type="button"
 			onClick={scroll}
-			className="fixed bottom-2 right-1 z-50 flex size-9 items-center backdrop-blur-2xl justify-center rounded-lg border-2 shadow-lg transition hover:bg-accent opacity-80 hover:cursor-pointer"
+			className="fixed bottom-2 right-1 z-50 flex size-9 items-center backdrop-blur-2xl justify-center 
+				rounded-lg border-2 border-gray-600 shadow-lg transition hover:bg-accent hover:cursor-pointer opacity-55 hover:opacity-100"
 			aria-label={showTop ? "Scroll to top" : "Scroll to bottom"}
 		>
 			<span className="relative size-5">

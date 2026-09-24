@@ -19,7 +19,7 @@ const Filter = (props: Props) => {
     return (
         <div className={`flex w-full items-center justify-end gap-2 rounded-xl border-2 
             bg-white/70 pl-3 backdrop-blur-sm transition-colors sm:w-auto 
-            ${ filter !== -1 ? 'border-secondary' : 'border-slate-200/80' }`
+            ${ filter !== -1 ? 'border-secondary' : 'border-slate-200' }`
         }>
             <label className="whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-primary-dark">
                 {label}

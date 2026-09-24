@@ -286,8 +286,8 @@ export const buyerOrdersRouter = createTRPCRouter({
                         buyer_order_status.*,
                         COUNT(*) OVER() AS total_count
                     FROM buyer_order_status
-                    WHERE ${Number(input.filter)}::integer = -1
-                        OR status = CASE ${Number(input.filter)}::integer
+                    WHERE ${Number(input.filter)}::INTEGER = -1
+                        OR status = CASE ${Number(input.filter)}::INTEGER
                             WHEN 0 THEN 'INCOMPLETE'
                             WHEN 1 THEN 'PENDING'
                             WHEN 2 THEN 'APPROVED'

@@ -3,7 +3,7 @@ import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { actions } from "@prisma/client";
+import { actions, Prisma } from "@prisma/client";
 import { amountToWords, currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 import { formatDate } from "~/utils/localDateString";
@@ -23,6 +23,7 @@ export const salesContractsRouter = createTRPCRouter({
     getSalesContracts: protectedProcedure
         .input(
             z.object({
+                filter: z.number().min(-1).default(-1), 
                 limit: z.number().optional(),
                 offset: z.number().optional(),
             })
@@ -93,6 +94,9 @@ export const salesContractsRouter = createTRPCRouter({
                             )
                             OR SC.APPROVAL_STATUS IN (1, 2)
                         )
+                        ${input.filter === -1 
+                            ? Prisma.empty
+                            : Prisma.sql`AND SC.approval_status = ${input.filter}`}
                         GROUP BY SC.ID, 
                             F.NAME, 
                             SC.ADDED_AT, 
