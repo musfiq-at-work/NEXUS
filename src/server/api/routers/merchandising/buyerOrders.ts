@@ -209,8 +209,9 @@ async function deleteStyle(tx: Prisma.TransactionClient, styleId: string, userId
 export const buyerOrdersRouter = createTRPCRouter({
     getBuyerOrders: protectedProcedure
         .input(z.object({
+            filter: z.number().min(-1).default(-1),   
             limit: z.number().min(1).default(15),
-            offset: z.number().min(0).default(0),            
+            offset: z.number().min(0).default(0),  
         }))
         .query(async ({ ctx, input }) => {
             const can_view = ctx.permissions[m.BUYER_ORDERS]?.can_view;
@@ -224,58 +225,75 @@ export const buyerOrdersRouter = createTRPCRouter({
             
             try {
                 const result = await ctx.db.$queryRaw<BuyerOrderRow[]>`
-                    SELECT
-                        BO.id,
-                        BO.order_date,
-                        BO.added_at,
-                        B.buyer_name,
-                        BO.ref_no,
-                        BD.department,
-                        S.season_name AS season,
-                        T.team_name AS team,
-                        CASE
-                            WHEN NOT EXISTS (
+                    WITH style_status AS (
+                        SELECT
+                            OS.order_id,
+                            COUNT(*) AS style_count,
+                            COUNT(*) FILTER (
+                                WHERE COALESCE(SQ.shipped_quantity, 0) < OS.order_quantity
+                            ) AS incomplete_style_count
+                        FROM order_styles OS
+                        LEFT JOIN (
+                            SELECT
+                                SH.order_style_id,
+                                SUM(SC.quantity) AS shipped_quantity
+                            FROM shipment_details SH
+                            INNER JOIN shipment_item_details SC ON SC.shipment_detail_id = SH.id
+                            GROUP BY SH.order_style_id
+                        ) SQ ON SQ.order_style_id = OS.id
+                        GROUP BY OS.order_id
+                    ),
+                    buyer_order_status AS (
+                        SELECT
+                            BO.id,
+                            BO.order_date,
+                            BO.added_at,
+                            B.buyer_name,
+                            BO.ref_no,
+                            BD.department,
+                            S.season_name AS season,
+                            T.team_name AS team,
+                            CASE
+                                WHEN COALESCE(SS.style_count, 0) = 0 THEN 'INCOMPLETE'
+                                WHEN SS.incomplete_style_count > 0 THEN 'INCOMPLETE'
+                                WHEN FO.approval_status = 2 THEN 'APPROVED'
+                                ELSE 'PENDING'
+                            END AS status
+                        FROM buyer_orders BO
+                        INNER JOIN teams T ON T.id = BO.team_id
+                        INNER JOIN buyers B ON B.id = BO.buyer_id
+                        INNER JOIN buyer_departments BD ON BD.id = BO.department_id
+                        INNER JOIN seasons S ON S.id = BO.season_id
+                        LEFT JOIN factory_orders FO ON FO.order_id = BO.id
+                        LEFT JOIN style_status SS ON SS.order_id = BO.id
+                        WHERE (
+                            EXISTS (
                                 SELECT 1
-                                FROM order_styles BOS
-                                WHERE BOS.order_id = BO.id
-                            ) THEN 'INCOMPLETE'
-                            WHEN EXISTS (
+                                FROM users U
+                                WHERE U.id = ${ctx.user.id}
+                                AND U.department_id = ${ADMIN_DEPARTMENT_ID}
+                                AND U.level_id = ${ADMIN_LEVEL_ID}
+                            )
+                            OR EXISTS (
                                 SELECT 1
-                                FROM order_styles BOS
-                                LEFT JOIN shipment_details SH ON SH.order_style_id = BOS.id
-                                LEFT JOIN shipment_item_details SC ON SC.shipment_detail_id = SH.id
-                                WHERE BOS.order_id = BO.id
-                                GROUP BY BOS.id, BOS.order_quantity
-                                HAVING COALESCE(SUM(SC.quantity), 0) < BOS.order_quantity
-                            ) THEN 'INCOMPLETE'
-                            WHEN FO.approval_status = 2 THEN 'APPROVED'
-                            ELSE 'PENDING'
-                        END AS status,
-                        COUNT(*) OVER() AS total_count
-                    FROM BUYER_ORDERS BO
-                        INNER JOIN TEAMS T ON T.ID = BO.TEAM_ID
-                        INNER JOIN BUYERS B ON BO.buyer_id = B.id
-                        INNER JOIN BUYER_DEPARTMENTS BD ON BO.department_id = BD.id
-                        INNER JOIN SEASONS S ON S.id = BO.season_id
-                        LEFT JOIN FACTORY_ORDERS FO ON FO.order_id = BO.id
-                    WHERE (
-                        EXISTS (
-                            SELECT 1
-                            FROM USERS U
-                            WHERE U.ID = ${ctx.user.id}
-                            AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
-                            AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
-                        )
-                        OR EXISTS (
-                            SELECT 1
-                            FROM TEAM_MEMBERS TM
-                            WHERE TM.TEAM_ID = BO.TEAM_ID
-                            AND TM.USER_ID = ${ctx.user.id}
+                                FROM team_members TM
+                                WHERE TM.team_id = BO.team_id
+                                AND TM.user_id = ${ctx.user.id}
+                            )
                         )
                     )
-
-                    ORDER BY BO.added_at DESC, BO.order_date DESC
-                    LIMIT ${input.limit}    
+                    SELECT
+                        buyer_order_status.*,
+                        COUNT(*) OVER() AS total_count
+                    FROM buyer_order_status
+                    WHERE ${Number(input.filter)}::integer = -1
+                        OR status = CASE ${Number(input.filter)}::integer
+                            WHEN 0 THEN 'INCOMPLETE'
+                            WHEN 1 THEN 'PENDING'
+                            WHEN 2 THEN 'APPROVED'
+                        END
+                    ORDER BY added_at DESC, order_date DESC
+                    LIMIT ${input.limit}
                     OFFSET ${input.offset};
                 `;
 

@@ -24,6 +24,7 @@ export { default as Accordion } from "./molecules/Accordion";
 export { default as Portal } from "./molecules/portal";
 export { default as FormSelect } from "./molecules/FormSelect";
 export { default as MessageBox } from "./molecules/MessageBox"
+export { default as Filter } from "./molecules/Filter";
 
 // organisms
 export { default as GenericTableRow } from "./organisms/table/GenericTableRow";

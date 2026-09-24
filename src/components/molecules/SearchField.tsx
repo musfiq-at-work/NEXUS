@@ -15,7 +15,6 @@ type SearchFieldProps = {
 
 const SearchField = ({ handleSearchChange, placeholder, infoText }: SearchFieldProps) => {
     const pathname = usePathname();
-    const [isFocused, setIsFocused] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [searchHistory, setSearchHistory] = useState<string[]>([]);
     const searchListId = `search-history-${pathname.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
@@ -74,8 +73,6 @@ const SearchField = ({ handleSearchChange, placeholder, infoText }: SearchFieldP
                     className="py-2 pl-4 w-100 focus:outline-none border-none"
                     value={searchTerm}
                     onChange={handleChange}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
                 />
                 <datalist id={searchListId}>
                     {searchHistory.map((query) => (
@@ -87,7 +84,7 @@ const SearchField = ({ handleSearchChange, placeholder, infoText }: SearchFieldP
                 </label>
             </div>
             <div className="min-h-8">
-                {isFocused && infoText &&
+                {infoText &&
                     <Info info={infoText} variant="info" />
                 }
             </div>

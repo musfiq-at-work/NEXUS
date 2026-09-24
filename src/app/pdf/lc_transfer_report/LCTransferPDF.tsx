@@ -1,4 +1,4 @@
-import { Document, Page, Text } from "@react-pdf/renderer";
+import { Document, Page, Text, View } from "@react-pdf/renderer";
 import { registerPdfFonts, styles } from "../components/pdfConfig";
 import { PrintByAndDate, RenaissanceLogo, ReportTitle, HeaderPart, Table, TableSummary, Signature } from "../components";
 
@@ -59,6 +59,7 @@ const LCTransferPDF = ({ data }: { data: GetPDFDataOutput }) => {
 				<PrintByAndDate />
 				<ReportTitle title="LC TRANSFER SUMMARY" />
 				<HeaderPart data={buyerOrderData}/>
+                <View style={{marginTop: 10}}></View>
 				<Table columns={tableColumns} data={data.tableData}/>
             	<TableSummary results={results}/>
 				<Signature signatures={["Prepared By", "Checked By", "Approved By"]}/>
