@@ -263,6 +263,7 @@ export const crossPaymentsRouter = createTRPCRouter({
 
     getCrossPaymentList: protectedProcedure
         .input(z.object({
+            filter: z.number().min(-1).default(-1),
             offset: z.number().optional(),
             limit: z.number().optional(),
         }))
@@ -275,7 +276,7 @@ export const crossPaymentsRouter = createTRPCRouter({
                     message: "You do not have permission to view cross payments.",
                 });
             }
-            
+
             try {
                 const result = await ctx.db.$queryRaw<CrossPaymentList[]>`
                     WITH CROSS_PAYS AS (
@@ -292,28 +293,33 @@ export const crossPaymentsRouter = createTRPCRouter({
                             LEFT JOIN CROSS_PAYMENT_DETAILS AS CPD ON CPD.cross_payment_id = CP.id
                             INNER JOIN BUYERS AS B ON B.id = CP.buyer_id
                             INNER JOIN TERMS AS T ON T.id = CP.term_id
-                        WHERE EXISTS ( -- Admin
-                            SELECT 1
-                            FROM USERS AS U
-                            WHERE U.ID = ${ctx.user.id}
-                                AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
-                                AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
-                        )
-                        OR EXISTS ( -- Team Member
-                            SELECT 1
-                            FROM TEAM_MEMBERS AS TM 
-                                INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
-                                INNER JOIN USERS AS U ON U.ID = TM.USER_ID
-                            WHERE T.BUYER_ID = B.id
-                                AND TM.USER_ID = ${ctx.user.id}
-                                AND (
-                                    U.DEPARTMENT_ID = ${COMMERCIAL_DEPARTMENT_ID}
-                                    OR (
-                                        U.DEPARTMENT_ID = ${ACCOUNTING_DEPARTMENT_ID}
-                                        AND CP.IS_AUTHORIZED = TRUE
+                        WHERE (
+                            EXISTS ( -- Admin
+                                SELECT 1
+                                FROM USERS AS U
+                                WHERE U.ID = ${ctx.user.id}
+                                    AND U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
+                                    AND U.LEVEL_ID = ${ADMIN_LEVEL_ID}
+                            )
+                            OR EXISTS ( -- Team Member
+                                SELECT 1
+                                FROM TEAM_MEMBERS AS TM 
+                                    INNER JOIN TEAMS AS T ON T.ID = TM.TEAM_ID
+                                    INNER JOIN USERS AS U ON U.ID = TM.USER_ID
+                                WHERE T.BUYER_ID = B.id
+                                    AND TM.USER_ID = ${ctx.user.id}
+                                    AND (
+                                        U.DEPARTMENT_ID = ${COMMERCIAL_DEPARTMENT_ID}
+                                        OR (
+                                            U.DEPARTMENT_ID = ${ACCOUNTING_DEPARTMENT_ID}
+                                            AND CP.IS_AUTHORIZED = TRUE
+                                        )
                                     )
-                                )
+                            )
                         )
+                        ${input.filter === -1 
+                            ? Prisma.empty
+                            : Prisma.sql`AND COALESCE(CP.IS_AUTHORIZED, FALSE) = ${input.filter === 1}`}
                         GROUP BY CP.ID, B.ID, T.ID
                     )
                     SELECT 

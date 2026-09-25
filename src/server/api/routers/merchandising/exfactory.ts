@@ -11,6 +11,7 @@ export const exFactoryRouter = createTRPCRouter({
     getExFactories: protectedProcedure
         .input(
             z.object({
+                filter: z.number().min(-1).default(-1),   
                 limit: z.number().optional(),
                 offset: z.number().optional(),
             })
@@ -61,6 +62,9 @@ export const exFactoryRouter = createTRPCRouter({
                                     AND TM.USER_ID = ${ctx.user.id}
                             )
                         )
+                        ${input.filter === -1 
+                            ? Prisma.empty
+                            : Prisma.sql`AND E.IS_AUTHORIZED = ${input.filter}`}
                         GROUP BY E.ID, B.ID, F.ID
                     )
                     SELECT *,

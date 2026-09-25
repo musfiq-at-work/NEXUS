@@ -14,6 +14,7 @@ import type {
 export const rdlInvoiceRouter = createTRPCRouter({
     getRdlInvoice: protectedProcedure
         .input(z.object({
+            filter: z.number().min(-1).default(-1),  
             limit: z.number(),
             offset: z.number(),
         }))
@@ -64,6 +65,9 @@ export const rdlInvoiceRouter = createTRPCRouter({
                                     AND TM.USER_ID = ${ctx.user.id}
                             )
                         )
+                        ${input.filter === -1 
+                            ? Prisma.empty
+                            : Prisma.sql`AND COALESCE(RI.IS_AUTHORIZED, FALSE) = ${input.filter}`}
                         GROUP BY RI.ID, B.ID
                     )
                     SELECT *,
