@@ -46,9 +46,7 @@ const TopBar = () => {
         }
     }
 
-    const togglePopup = () => {
-        setIsPopupOpen(prev => !prev)
-    }
+    const togglePopup = () => setIsPopupOpen(prev => !prev);
 
     return (
         <>
@@ -61,7 +59,7 @@ const TopBar = () => {
                     className='w-9 h-9 ml-2 rounded-full'
                 />                 */}
                 <div className="ml-4 text-center ">
-                    <p className='font-semibold'>{user?.first_name} {user?.last_name}</p>
+                    <p className='font-semibold capitalize'>{user?.first_name} {user?.last_name}</p>
                     <span className='flex flex-row gap-2'>
                         <p className='text-sm border-r-2 border-gray-light pr-2'>{user?.department_name}</p>
                         <p className='text-sm'>{user?.level_name}</p>

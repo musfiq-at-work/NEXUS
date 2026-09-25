@@ -86,9 +86,9 @@ const SalesContracts = () => {
                         label='Approval Status'
                         options={[
                             {label: 'ALL', value: -1}, 
-                            {label: 'UNAUTHORIZED', value: 0}, 
+                            {label: 'AUTHORIZED', value: 2},
                             {label: 'READY FOR APPROVAL', value: 1}, 
-                            {label: 'APPROVED', value: 2}
+                            {label: 'UNAUTHORIZED', value: 0}, 
                         ]}
                     />
                 }

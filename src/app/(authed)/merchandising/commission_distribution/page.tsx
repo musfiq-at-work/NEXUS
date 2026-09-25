@@ -85,8 +85,8 @@ const CommissionDistribution = () => {
                         label='Approval Status'
                         options={[
                             {label: 'ALL', value: -1}, 
-                            {label: 'PENDING', value: 0}, 
                             {label: 'AUTHORIZED', value: 1}, 
+                            {label: 'UNAUTHORIZED', value: 0}, 
                         ]}
                     />
                 }

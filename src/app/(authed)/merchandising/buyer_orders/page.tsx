@@ -84,9 +84,9 @@ const BuyerOrders = () => {
                         label='Approval Status'
                         options={[
                             {label: 'ALL', value: -1}, 
-                            {label: 'INCOMPLETE', value: 0}, 
+                            {label: 'APPROVED', value: 2}, 
                             {label: 'PENDING', value: 1}, 
-                            {label: 'APPROVED', value: 2}
+                            {label: 'INCOMPLETE', value: 0}, 
                         ]}
                     />
                 }
