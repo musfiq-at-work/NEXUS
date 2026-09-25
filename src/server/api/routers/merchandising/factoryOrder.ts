@@ -314,6 +314,10 @@ export const factoryOrderRouter = createTRPCRouter({
                             },
                         },
                         order_styles: {
+                            orderBy: [
+                                { serial: "asc" },
+                                { added_at: "asc" }
+                            ],
                             select: {
                                 id: true,
                                 style: true,

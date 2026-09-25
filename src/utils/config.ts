@@ -9,6 +9,7 @@ export const FACTORY_PAYMENT = 11;
 export const ETD_DATE_COMMERCIAL = 8;
 export const HANDOVER_TO_FORWARDER = 7;
 export const DOC_SUBMIT_TO_BANK = 18;
+export const PP_MEETING_DATE = 26;
 
 // level ids
 export const ADMIN_LEVEL_ID = 5;

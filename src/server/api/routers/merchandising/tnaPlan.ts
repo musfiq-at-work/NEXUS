@@ -4,7 +4,7 @@ import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma } from "@prisma/client";
-import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID, ETD_DATE_DB_ID } from "~/utils/config";
+import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID, COMMERCIAL_DEPARTMENT_ID, ETD_DATE_DB_ID, HANDOVER_DATE_DB_ID, PP_MEETING_DATE, QUALITY_DEPARTMENT_ID } from "~/utils/config";
 import type { TNATemplateType, AdditionalDataType, ActionsType, EventsType } from './_types/tnaPlan';
 
 export const tnaPlanRouter = createTRPCRouter({
@@ -443,8 +443,8 @@ export const tnaPlanRouter = createTRPCRouter({
                             SELECT 
                                 TRUE 
                             FROM USERS AS U
-                            WHERE U.DEPARTMENT_ID = 5
-                                AND LEVEL_ID = 5
+                            WHERE U.DEPARTMENT_ID = ${ADMIN_DEPARTMENT_ID}
+                                AND LEVEL_ID = ${ADMIN_LEVEL_ID}
                                 AND U.ID = ${ctx.user.id}
                         )
                     )
@@ -725,6 +725,17 @@ export const tnaPlanRouter = createTRPCRouter({
                 });
             }
 
+            const userDepartment = ctx.user.department_id;
+            let eventFilter = Prisma.empty;
+
+            if(userDepartment === QUALITY_DEPARTMENT_ID) {
+                eventFilter = Prisma.sql`AND TA.ID = ${PP_MEETING_DATE}`
+            }
+            else if(userDepartment === COMMERCIAL_DEPARTMENT_ID){
+                eventFilter = Prisma.sql`AND (TA.ID = ${HANDOVER_DATE_DB_ID} OR TA.ID = ${ETD_DATE_DB_ID})`
+            }
+            
+
             try {
                 const events = await ctx.db.$queryRaw<Array<EventsType & { total_count: bigint }>>`
                     SELECT 
@@ -753,7 +764,7 @@ export const tnaPlanRouter = createTRPCRouter({
                         INNER JOIN tna_plans AS TP ON TP.id = TPD.tna_plan_id
                         INNER JOIN tna_templates AS TT ON TT.ID = TP.tna_template_id
                         INNER JOIN tna_template_actions AS TTA ON TTA.ID = TPD.tna_template_action_id
-                        INNER JOIN tna_actions AS TA ON TA.ID = TTA.tna_action_id
+                        INNER JOIN tna_actions AS TA ON TA.ID = TTA.tna_action_id ${eventFilter}
                         INNER JOIN FACTORIES AS F ON F.ID = BO.FACTORY_ID
                         INNER JOIN BUYERS AS B ON B.ID = BO.buyer_id
                         LEFT JOIN tna_base_actions AS TBA ON TBA.buyer_id = BO.buyer_id
