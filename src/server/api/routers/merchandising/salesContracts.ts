@@ -1128,6 +1128,8 @@ export const salesContractsRouter = createTRPCRouter({
                         },
                         select: {
                             id: true,
+                            sales_contract_date: true,
+                            sales_contract_no: true,
                             approval_status: true,
                             approved_once: true,
                         }
@@ -1185,6 +1187,18 @@ export const salesContractsRouter = createTRPCRouter({
                                 approved_once: existingSalesContract.approved_once || input.approval_status === 2 ? true : false,
                             }
                         });
+
+                        await tx.sales_contracts_history.create({
+                            data: {
+                                sales_contracts_id: input.id,
+                                approval_status: input.approval_status,
+                                sales_contract_date: existingSalesContract.sales_contract_date,
+                                sales_contract_no: existingSalesContract.sales_contract_no,
+                                approved_once: existingSalesContract.approved_once || input.approval_status === 2 ? true : false,
+                                action_type: actions.UPDATE,
+                                action_by: ctx.user.id,
+                            }
+                        })
                     }
                 }, {timeout: 30000})
             }

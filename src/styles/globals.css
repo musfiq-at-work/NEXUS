@@ -66,6 +66,7 @@ textarea {
     0 4px 20px rgba(0, 0, 0, 0.08),
     inset 0 0 0 1px rgba(255, 255, 255, 0.16) !important;
   border-radius: 0.5rem !important;
+  --width: 500px !important;
 }
 
 [data-sonner-toast][data-type="success"] {
@@ -80,6 +81,7 @@ textarea {
   color: var(--color-white) !important;
   font-size: 1.1rem !important;
   border-radius: 0.5rem !important;
+  border: 2px solid rgb(244, 63, 94) !important;
 }
 
 [data-sonner-toast][data-type="warning"] {
@@ -87,6 +89,7 @@ textarea {
   color: var(--color-white) !important;
   font-size: 1.1rem !important;
   border-radius: 0.5rem !important;
+  border: 2px solid rgb(255, 188, 20) !important;
 }
 
 [data-sonner-toast][data-type="info"] {
@@ -94,6 +97,7 @@ textarea {
   color: var(--color-white) !important;
   font-size: 1.1rem !important;
   border-radius: 0.5rem !important;
+  border: 2px solid rgb(59, 130, 246) !important;
 }
 
 @keyframes fadeSlideIn {

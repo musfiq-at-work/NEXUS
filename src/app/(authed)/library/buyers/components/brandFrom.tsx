@@ -11,7 +11,7 @@ type BrandFromProps = {
 
 const BrandFrom = ({newBrand, setNewBrand, handleAddBrands}: BrandFromProps) => {
     return (
-        <div className="mt-1 flex flex-col gap-3 rounded-xl border-2 border-dashed border-gray-400 p-4">
+        <div className="mt-1 flex flex-col gap-3 rounded-lg p-3 emboss">
             <div>
                 <Heading as='h4' className="mb-1">Add a brand</Heading>
                 <p className="text-sm text-gray-600">Start with a brand, then add its departments and sizes.</p>

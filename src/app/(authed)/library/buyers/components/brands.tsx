@@ -72,7 +72,7 @@ const Brands = (props: BrandsProps) => {
             <div className="mb-5 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                 <div id="buyer-brand-heading">
                     <Heading as='h2' className="mb-1">Brands, Departments and Size Sets</Heading>
-                    <p className="text-sm text-gray-600">Organize the products this buyer can order by brand, department, and size.</p>
+                    <p className="text-sm text-gray-600">Manage brands, departments, and sizes of the buyer.</p>
                 </div>
                 <span className="w-fit rounded-full bg-primary-dark text-white px-3 py-1 text-sm font-semibold">
                     {brands?.buyer_brands.length ?? 0} {brands?.buyer_brands.length === 1 ? "brand" : "brands"}
