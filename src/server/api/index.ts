@@ -73,9 +73,10 @@ export { exportReportRouter } from "./routers/reports/exportReport";
 export { orderSummaryReportRouter } from "./routers/reports/orderSummaryReport";
 export { activityReportRouter } from "./routers/reports/commercialActivityReport";
 export { exportSummaryReportRouter } from "./routers/reports/exportSummaryReport";
-export { lcScClosingRouter } from "./routers/reports/lcScClosing"
+export { lcScClosingRouter } from "./routers/reports/lcScClosing";
 export { commissionDistributionReportRouter } from "./routers/reports/commissionDistributionReport";
-export { lcTransferReportRouter } from "./routers/reports/lcTransferReport"
+export { lcTransferReportRouter } from "./routers/reports/lcTransferReport";
+export { crossPaymentReportRouter } from "./routers/reports/crossPaymentReport";
 
 // Maintenance router
 export { errorLogsRouter } from "./routers/maintenance/error_logs";

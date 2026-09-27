@@ -13,7 +13,7 @@ import {
 	orderSummaryReportRouter, debitNotesRouter, crossPaymentsRouter, commercialTnaTemplatesRouter, activityReportRouter, 
 	commercialTnaPlanRouter, exportSummaryReportRouter, commissionPercentageRouter, earlySettlementPercentageRoute, 
 	errorLogsRouter, userSessionsRouter, lcScClosingRouter, earlySettlementRouter, commissionDistributionReportRouter, 
-	lcTransferReportRouter
+	lcTransferReportRouter, crossPaymentReportRouter
 } from '.';
 
 // All routers added in /api/routers should be manually added here.
@@ -94,6 +94,7 @@ export const appRouter = createTRPCRouter({
 	lcScClosingReport: lcScClosingRouter,
 	commissionDistributionReport: commissionDistributionReportRouter,
 	lcTransferReport: lcTransferReportRouter,
+	crossPaymentReport: crossPaymentReportRouter,
 
 	// Devs
 	errorLogs: errorLogsRouter,
