@@ -1,6 +1,8 @@
 import z from "zod";
 
 export const crossPayReportFormSchema = z.object({
+    buyer_ids: z.array(z.number()).optional(),
+    factory_ids: z.array(z.string()).optional(),
     cross_pay_from: z.string().optional(),
     cross_pay_to: z.string().optional(),
     factory_pay_from: z.string().optional(),

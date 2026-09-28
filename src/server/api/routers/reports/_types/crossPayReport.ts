@@ -10,6 +10,7 @@ export interface CrossPayReport {
     factory_invoice_value: number;
     factory_payable_value: number;
     factory_payment_no: string;
+    factory_payment_date: string;
     fdbc_no: string;
     realization_date: string;
     rdl_invoice_no: string;

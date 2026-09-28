@@ -16,6 +16,7 @@ const normalizeData = (row: CrossPayReport): CrossPayReport => ({
     factory_invoice_quantity: safeNumber(row.factory_invoice_quantity),
     factory_invoice_value: safeNumber(row.factory_invoice_value),
     factory_payable_value: safeNumber(row.factory_payable_value),
+    factory_payment_date: formatDate(row.factory_payment_date),
     realization_date: row.realization_date ? formatDate(row.realization_date) : '-',
     rdl_invoice_date: row.rdl_invoice_date ? formatDate(row.rdl_invoice_date): '-',
     rdl_invoice_quantity: safeNumber(row.rdl_invoice_quantity),
@@ -26,6 +27,8 @@ const normalizeData = (row: CrossPayReport): CrossPayReport => ({
 export const crossPaymentReportRouter = createTRPCRouter({
     getExcel: protectedProcedure
         .input(z.object({
+            buyer_ids: z.array(z.number()).optional(),
+            factory_ids: z.array(z.string()).optional(),
             cross_pay_from: z.string().optional(),
             cross_pay_to: z.string().optional(),
             factory_pay_from: z.string().optional(),
@@ -39,22 +42,34 @@ export const crossPaymentReportRouter = createTRPCRouter({
                 });
             }
 
-            const dateFilters: Prisma.Sql[] = [];
+            const filters: Prisma.Sql[] = [];
 
             if (input.cross_pay_from && input.cross_pay_to) {
-                dateFilters.push(
+                filters.push(
                     Prisma.sql`CP.cross_payment_date BETWEEN ${input.cross_pay_from}::date AND ${input.cross_pay_to}::date`,
                 );
             }
 
             if (input.factory_pay_from && input.factory_pay_to) {
-                dateFilters.push(
+                filters.push(
                     Prisma.sql`CPD.FACTORY_PAYMENT_DATE BETWEEN ${input.factory_pay_from}::date AND ${input.factory_pay_to}::date`,
                 );
             }
 
-            const whereClause = dateFilters.length > 0
-                ? Prisma.sql`WHERE ${Prisma.join(dateFilters, " AND ")}`
+            if(input.buyer_ids && input.buyer_ids?.length > 0) {
+                filters.push(
+                    Prisma.sql`B.ID IN (${Prisma.join(input.buyer_ids)})`,
+                );
+            }
+
+            if(input.factory_ids && input.factory_ids?.length > 0) {
+                filters.push(
+                    Prisma.sql`F.ID IN (${Prisma.join(input.factory_ids)})`,
+                );
+            }
+
+            const whereClause = filters.length > 0
+                ? Prisma.sql`WHERE ${Prisma.join(filters, " AND ")}`
                 : Prisma.empty;
 
             try {

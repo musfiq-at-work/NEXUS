@@ -9,6 +9,8 @@ export const useCrossPaymentReport = () => {
     const methods = useForm<CrossPayReportFormValues>({
         resolver: zodResolver(crossPayReportFormSchema),
         defaultValues: {
+            buyer_ids: undefined,
+            factory_ids: undefined,
             cross_pay_from: undefined,
             cross_pay_to: undefined,
             factory_pay_from: undefined,

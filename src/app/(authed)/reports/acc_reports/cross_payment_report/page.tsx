@@ -20,13 +20,18 @@ const CrossPaymentReportPage = () => {
         try {
             setIsLoading(true);
             setError(null);
-
+            
+            console.log(values);
+            
             const result = await reportMutation.mutateAsync({
+                buyer_ids: values.buyer_ids,
+                factory_ids: values.factory_ids,
                 cross_pay_from: values.cross_pay_from,
                 cross_pay_to: values.cross_pay_to,
                 factory_pay_from: values.factory_pay_from,
                 factory_pay_to: values.factory_pay_to,
             });
+
 
             const blob = new Blob(
                 [new Uint8Array(result)], 
