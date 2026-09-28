@@ -3,7 +3,7 @@ import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { actions } from "@prisma/client";
+import { actions, Prisma } from "@prisma/client";
 import { currencyFormatter } from "~/utils/localNumberStrings";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 import type { LcResponse, LcDetailsResponse } from './_types/lcMaster';
@@ -12,6 +12,7 @@ export const lcMasterRouter = createTRPCRouter({
     getLc: protectedProcedure
         .input(
             z.object({
+                filter: z.number().min(-1).default(-1), 
                 limit: z.number().optional(),
                 offset: z.number().optional(),
             })
@@ -72,6 +73,9 @@ export const lcMasterRouter = createTRPCRouter({
                                     AND TM.USER_ID = ${ctx.user.id}
                             )
                         )
+                        ${input.filter === -1 
+                            ? Prisma.empty
+                            : Prisma.sql`AND LC.IS_AUTHORIZED = ${input.filter}`}
                         GROUP BY LC.ID, LC.ADDED_AT, B.BUYER_NAME, C.symbol, LCAMD.AMENDMENT_NO
                     )
                     SELECT *,
