@@ -26,5 +26,10 @@ export const COMPLIANCE_DEPARTMENT_ID = 6;
 export const TT_ID = 1;
 export const LC_ID = 2;
 
+
+// Defaults
+export const SALES_CONTRACT_DEFAULT_CONTRACT_PERSON_ID = '1';
+export const DEFAULT_FREIGHT_TERM = '1';
+
 // urls
 export const baseUrl = process.env.NODE_ENV === 'production' ? "http://rdlerp.rgbd.local:60005" : "http://localhost:4000";

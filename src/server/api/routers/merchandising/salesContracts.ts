@@ -426,6 +426,7 @@ export const salesContractsRouter = createTRPCRouter({
                             select: {
                                 short_name: true,
                                 buyer_name: true,
+                                prefix: true,
                             },
                         }),
 
@@ -440,7 +441,7 @@ export const salesContractsRouter = createTRPCRouter({
                         }),
                     ]);
 
-                    const buyerPrefix = buyer?.short_name ?? buyer?.buyer_name ?? "UNKNOWN";
+                    const buyerPrefix = buyer?.prefix ?? buyer?.short_name ?? buyer?.buyer_name ?? "UNKNOWN";
 
                     const factoryPrefix = (factory?.prefix === '' ? null : factory?.prefix) ?? factory?.name ?? "UNKNOWN";
 
