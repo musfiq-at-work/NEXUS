@@ -428,6 +428,8 @@ export const lcTransferRouter = createTRPCRouter({
                             LCTD.SALES_CONTRACT_ID,
                             SUM(LCTD.LC_TRANSFER_QUANTITY) AS TRANSFER_QUANTITY
                         FROM LC_TRANSFER_DETAILS AS LCTD
+                        INNER JOIN lc_transfer AS LCT ON LCT.id = LCTD.lc_transfer_id
+                            WHERE LCT.lc_master_id = ${input.lc_id}
                         GROUP BY LCTD.SALES_CONTRACT_ID
                     ),
                     -- Calculate total shipped quantity for each sales contract under the given LC
@@ -476,6 +478,8 @@ export const lcTransferRouter = createTRPCRouter({
                     AND SC.FACTORY_ID = ${input.factory_id}
                     GROUP BY SC.ID;
                 `;
+
+                console.log('salesContracts', salesContracts);
 
                 return salesContracts;
             }
