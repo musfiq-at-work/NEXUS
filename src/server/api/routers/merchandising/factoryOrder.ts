@@ -618,6 +618,10 @@ export const factoryOrderRouter = createTRPCRouter({
                                 id: true,
                                 ref_no: true,
                                 order_styles: {
+                                    orderBy: [
+                                        { serial: "asc" },
+                                        { added_at: "asc" }
+                                    ],
                                     select: {
                                         id: true,
                                         shipment_details: {
@@ -659,6 +663,7 @@ export const factoryOrderRouter = createTRPCRouter({
                         db_id: os.id,
                         shipments: os.shipment_details.map((sd) => ({
                             db_id: sd.factory_shipment_details?.id,
+                            shipment_id: sd.id,
                             exfactory_date: sd.factory_shipment_details?.exfactory_date ?? null,
                             factory_fob: sd.factory_shipment_details?.factory_rate ?? null,
                             transfer_rate: sd.factory_shipment_details?.transfer_rate ?? null,
