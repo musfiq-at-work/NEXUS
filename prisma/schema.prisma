@@ -687,6 +687,8 @@ model factories {
   lc_transfer_details lc_transfer_details[]
   rdl_invoice_details rdl_invoice_details[]
   sales_contracts     sales_contracts[]
+
+  @@index([name], map: "idx_factories_name")
 }
 
 model factory_history {
@@ -740,6 +742,7 @@ model tna_actions {
   tna_base_actions                 tna_base_actions[]
 
   @@unique([name, department_id], map: "unique_tna_actions")
+  @@index([name], map: "idx_tna_actions_name")
 }
 
 model tna_actions_history {
@@ -996,6 +999,8 @@ model buyers {
   teams                       teams[]
   tna_base_actions            tna_base_actions?
   tna_templates               tna_templates[]
+
+  @@index([buyer_name], map: "idx_buyers_buyer_name")
 }
 
 model buyers_history {
@@ -1269,6 +1274,9 @@ model buyer_orders {
   sales_contract_amendment_details sales_contract_amendment_details[]
   sales_contract_details           sales_contract_details[]
   tna_plans                        tna_plans[]
+
+  @@index([buyer_id], map: "idx_buyer_orders_buyer_id")
+  @@index([team_id], map: "idx_buyer_orders_team_id")
 }
 
 model buyer_orders_history {
@@ -1319,6 +1327,10 @@ model order_styles {
   fabric_suppliers    fabric_suppliers   @relation(fields: [supplier_id], references: [id], onUpdate: NoAction)
   shipment_details    shipment_details[]
   tna_plans           tna_plans[]
+
+  @@index([order_id], map: "idx_order_styles_order_id")
+  @@index([product_id], map: "idx_order_styles_product_id")
+  @@index([style], map: "idx_order_styles_style")
 }
 
 model order_styles_history {
@@ -1370,6 +1382,11 @@ model shipment_details {
   buyer_department_sizes           buyer_department_sizes            @relation(fields: [size_id], references: [id], onUpdate: NoAction)
   shipment_item_details            shipment_item_details[]
   tna_plan_details                 tna_plan_details[]
+
+  @@index([buyer_po], map: "idx_shipment_details_buyer_po")
+  @@index([etd_date], map: "idx_shipment_details_etd_date")
+  @@index([handover_date], map: "idx_shipment_details_handover_date")
+  @@index([order_style_id], map: "idx_shipment_details_order_style_id")
 }
 
 model shipment_details_history {
@@ -1406,6 +1423,8 @@ model factory_orders {
   currencies               currencies?                @relation(fields: [currency_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   buyer_orders             buyer_orders               @relation(fields: [order_id], references: [id], onUpdate: NoAction)
   factory_shipment_details factory_shipment_details[]
+
+  @@index([order_id], map: "idx_factory_orders_order_id")
 }
 
 model factory_orders_history {
@@ -1437,6 +1456,10 @@ model factory_shipment_details {
   added_at                DateTime?        @default(now()) @db.Timestamp(6)
   factory_orders          factory_orders   @relation(fields: [factory_order_id], references: [id], onUpdate: NoAction, map: "factory_order_fk")
   shipment_details        shipment_details @relation(fields: [shipment_detail_id], references: [id], onUpdate: NoAction, map: "shipment_details_fk")
+
+  @@index([exfactory_date], map: "idx_factory_shipment_details_exfactory_date")
+  @@index([factory_order_id], map: "idx_factory_shipment_details_factory_order_id")
+  @@index([shipment_detail_id], map: "idx_factory_shipment_details_shipment_detail_id")
 }
 
 model factory_shipment_details_history {
@@ -1465,6 +1488,8 @@ model shipment_item_details {
   old_pk                  Int?
   colors                  colors           @relation(fields: [color_id], references: [id], onUpdate: NoAction)
   shipment_details        shipment_details @relation(fields: [shipment_detail_id], references: [id], onUpdate: NoAction)
+
+  @@index([shipment_detail_id], map: "idx_shipment_item_details_shipment_detail_id")
 }
 
 model shipment_item_details_history {
@@ -1501,6 +1526,8 @@ model tna_plan_details {
   tna_plans                  tna_plans?        @relation(fields: [tna_plan_id], references: [id], onDelete: Restrict, onUpdate: Restrict)
 
   @@unique([tna_plan_id, shipment_id, tna_template_action_id], map: "uq_tna_plan_details")
+  @@index([actual_date], map: "idx_tna_plan_details_actual_date")
+  @@index([shipment_id], map: "idx_tna_plan_details_shipment_id")
 }
 
 model tna_plan_details_history {
@@ -1546,6 +1573,11 @@ model tna_plans {
   buyer_orders        buyer_orders       @relation(fields: [order_id], references: [id], onUpdate: NoAction)
   order_styles        order_styles       @relation(fields: [style_id], references: [id], onUpdate: NoAction)
   tna_templates       tna_templates      @relation(fields: [tna_template_id], references: [id], onUpdate: NoAction)
+
+  @@index([order_id], map: "idx_tna_plans_order_id")
+  @@index([plan_date], map: "idx_tna_plans_plan_date")
+  @@index([style_id], map: "idx_tna_plans_style_id")
+  @@index([tna_template_id], map: "idx_tna_plans_tna_template_id")
 }
 
 model tna_template_actions {
@@ -1560,6 +1592,8 @@ model tna_template_actions {
   old_pk              Int?
   serial              Int?
   tna_templates       tna_templates @relation(fields: [tna_template_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([tna_template_id], map: "idx_tna_template_actions_tna_template_id")
 }
 
 model tna_template_actions_history {
@@ -1591,6 +1625,10 @@ model tna_templates {
   tna_template_actions tna_template_actions[]
   teams                teams?                 @relation(fields: [team_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "team_foreign_key")
   buyers               buyers?                @relation(fields: [buyer_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([buyer_id], map: "idx_tna_templates_buyer_id")
+  @@index([team_id], map: "idx_tna_templates_team_id")
+  @@index([template_name], map: "idx_tna_templates_template_name")
 }
 
 model tna_templates_history {
@@ -1662,6 +1700,8 @@ model commission_distributions {
   remarks                          String?
   buyer_orders                     buyer_orders                       @relation(fields: [order_id], references: [id], onUpdate: NoAction)
   commission_distributions_details commission_distributions_details[]
+
+  @@index([order_id], map: "idx_commission_distributions_order_id")
 }
 
 model commission_distributions_details {
@@ -1677,6 +1717,8 @@ model commission_distributions_details {
   old_commission_distribution_id Int?
   commission_distributions       commission_distributions @relation(fields: [commission_distribution_id], references: [id], onUpdate: NoAction, map: "commission_distributions_detail_commission_distribution_id_fkey")
   shipment_details               shipment_details         @relation(fields: [shipment_details_id], references: [id], onUpdate: NoAction)
+
+  @@index([commission_distribution_id], map: "idx_commission_distributions_details_order_id")
 }
 
 model fob_type_history {
@@ -1710,6 +1752,8 @@ model sales_contract_amendment {
   added_at                         DateTime?                          @default(now()) @db.Timestamp(6)
   sales_contracts                  sales_contracts                    @relation(fields: [sales_contract_id], references: [id], onUpdate: NoAction)
   sales_contract_amendment_details sales_contract_amendment_details[]
+
+  @@index([sales_contract_id], map: "idx_sales_contract_amendment_sales_contract_id")
 }
 
 model sales_contract_amendment_details {
@@ -1724,6 +1768,7 @@ model sales_contract_amendment_details {
 
   @@unique([sales_contract_amendment_id, order_id], map: "unique_order_per_amendment")
   @@unique([sales_contract_amendment_id, order_id], map: "unique_order_per_amendment_const")
+  @@index([order_id], map: "idx_sales_contract_amendment_details_order_id")
 }
 
 model sales_contract_amendment_details_history {
@@ -1823,6 +1868,10 @@ model sales_contracts {
   destinations                                                     destinations?                         @relation(fields: [port_of_loading_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   company_banks_sales_contracts_rdl_bank_idTocompany_banks         company_banks                         @relation("sales_contracts_rdl_bank_idTocompany_banks", fields: [rdl_bank_id], references: [id], onUpdate: NoAction)
   factory_bank                                                     factory_bank?                         @relation(fields: [supplier_bank_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([buyer_id], map: "idx_sales_contracts_buyer_id")
+  @@index([factory_id], map: "idx_sales_contracts_factory_id")
+  @@index([sales_contract_no], map: "idx_sales_contracts_sales_contract_no")
 }
 
 model sales_contracts_history {
@@ -1863,6 +1912,7 @@ model sales_contract_details {
 
   @@unique([sales_contract_id, order_id], map: "unique_orders_in_sc")
   @@unique([sales_contract_id, order_id], map: "unique_orders_in_sales_contract")
+  @@index([order_id], map: "idx_sales_contract_details_order_id")
 }
 
 model sales_contract_details_history {
@@ -1950,6 +2000,8 @@ model lc_master {
   lc_orders             lc_orders[]
   lc_transfer           lc_transfer[]
   rdl_invoice           rdl_invoice[]
+
+  @@index([buyer_id], map: "idx_lc_master_buyer_id")
 }
 
 model lc_master_history {
@@ -1989,6 +2041,8 @@ model lc_orders {
   lc_shipments     lc_shipments[]
 
   @@unique([order_id, lc_master_id], map: "unique_order_per_lc")
+  @@index([lc_master_id], map: "idx_lc_orders_lc_master_id")
+  @@index([order_id], map: "idx_lc_orders_order_id")
 }
 
 model lc_orders_history {
@@ -2017,6 +2071,10 @@ model lc_shipments {
   shipment_details        shipment_details? @relation(fields: [shipment_details_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
 
   @@unique([lc_order_id, shipment_details_id], map: "unique_shipment_per_lc_order")
+  @@index([lc_master_id], map: "idx_lc_shipments_lc_master_id")
+  @@index([lc_order_id], map: "idx_lc_shipments_lc_order_id")
+  @@index([order_id], map: "idx_lc_shipments_order_id")
+  @@index([shipment_details_id], map: "idx_lc_shipments_shipment_details_id")
 }
 
 model lc_shipments_history {
@@ -2048,6 +2106,10 @@ model exfactory {
   factories        factories?         @relation(fields: [factory_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   terms            terms?             @relation(fields: [term_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   exfactory_orders exfactory_orders[]
+
+  @@index([buyer_id], map: "idx_exfactory_buyer_id")
+  @@index([exfactory_date], map: "idx_exfactory_exfactory_date")
+  @@index([factory_id], map: "idx_exfactory_factory_id")
 }
 
 model exfactory_history {
@@ -2075,6 +2137,9 @@ model exfactory_orders {
   exfactory           exfactory?            @relation(fields: [exfactory_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   buyer_orders        buyer_orders?         @relation(fields: [order_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   exfactory_shipments exfactory_shipments[]
+
+  @@index([exfactory_id], map: "idx_exfactory_orders_exfactory_id")
+  @@index([order_id], map: "idx_exfactory_orders_order_id")
 }
 
 model exfactory_orders_history {
@@ -2103,6 +2168,9 @@ model exfactory_shipments {
   exfactory_orders                  exfactory_orders?         @relation(fields: [exfactory_orders_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   shipment_details                  shipment_details?         @relation(fields: [shipment_details_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   factory_invoice_details           factory_invoice_details[]
+
+  @@index([exfactory_orders_id], map: "idx_exfactory_shipments_exfactory_orders_id")
+  @@index([shipment_details_id], map: "idx_exfactory_shipments_shipment_details_id")
 }
 
 model exfactory_shipments_history {
@@ -2141,6 +2209,8 @@ model lc_amendment {
   lc_master              lc_master?               @relation(fields: [lc_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   lc_amendment_orders    lc_amendment_orders[]
   lc_amendment_shipments lc_amendment_shipments[]
+
+  @@index([lc_id], map: "idx_lc_amendment_lc_id")
 }
 
 model lc_amendment_history {
@@ -2179,6 +2249,8 @@ model lc_amendment_orders {
   lc_amendment_shipments lc_amendment_shipments[]
 
   @@unique([lc_amendment_id, order_id], map: "unique_order_per_lc_amendment")
+  @@index([lc_amendment_id], map: "idx_lc_amendment_orders_lc_amendment_id")
+  @@index([order_id], map: "idx_lc_amendment_orders_order_id")
 }
 
 model lc_amendment_orders_history {
@@ -2211,6 +2283,10 @@ model lc_amendment_shipments {
   shipment_details        shipment_details?    @relation(fields: [shipment_details_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
 
   @@unique([lc_amendment_order_id, shipment_details_id], map: "unique_shipment_per_lc_amendment_order")
+  @@index([lc_amendment_id], map: "idx_lc_amendment_shipments_lc_amendment_id")
+  @@index([lc_amendment_order_id], map: "idx_lc_amendment_shipments_lc_amendment_order_id")
+  @@index([order_id], map: "idx_lc_amendment_shipments_order_id")
+  @@index([shipment_details_id], map: "idx_lc_amendment_shipments_shipment_details_id")
 }
 
 model lc_amendment_shipments_history {
@@ -2255,6 +2331,8 @@ model lc_transfer {
   remarks             String?
   lc_master           lc_master             @relation(fields: [lc_master_id], references: [id], onUpdate: NoAction)
   lc_transfer_details lc_transfer_details[]
+
+  @@index([lc_master_id], map: "idx_lc_transfer_lc_master_id")
 }
 
 model lc_transfer_details {
@@ -2273,6 +2351,10 @@ model lc_transfer_details {
   factories             factories       @relation(fields: [factory_id], references: [id], onUpdate: NoAction)
   lc_transfer           lc_transfer     @relation(fields: [lc_transfer_id], references: [id], onUpdate: NoAction)
   sales_contracts       sales_contracts @relation(fields: [sales_contract_id], references: [id], onUpdate: NoAction)
+
+  @@index([factory_id], map: "idx_lc_transfer_details_factory_id")
+  @@index([lc_transfer_id], map: "idx_lc_transfer_details_lc_transfer_id")
+  @@index([sales_contract_id], map: "idx_lc_transfer_details_sales_contract_id")
 }
 
 model lc_transfer_details_history {
@@ -2337,6 +2419,12 @@ model factory_invoice {
   factory_invoice_notify_party         factory_invoice_notify_party[]
   factory_payments                     factory_payments[]
   rdl_invoice_details                  rdl_invoice_details[]
+
+  @@index([buyer_id], map: "idx_factory_invoice_buyer_id")
+  @@index([factory_id], map: "idx_factory_invoice_factory_id")
+  @@index([invoice_no], map: "idx_factory_invoice_invoice_no")
+  @@index([lc_id], map: "idx_factory_invoice_lc_id")
+  @@index([sales_contract_id], map: "idx_factory_invoice_sales_contract_id")
 }
 
 model factory_invoice_details {
@@ -2350,6 +2438,9 @@ model factory_invoice_details {
   exfactory_shipments          exfactory_shipments            @relation(fields: [exfactory_shipment_id], references: [id], onUpdate: NoAction)
   factory_invoice              factory_invoice                @relation(fields: [factory_invoice_id], references: [id], onUpdate: NoAction)
   rdl_invoice_shipment_details rdl_invoice_shipment_details[]
+
+  @@index([exfactory_shipment_id], map: "idx_factory_invoice_details_exfactory_shipment_id")
+  @@index([factory_invoice_id], map: "idx_factory_invoice_details_factory_invoice_id")
 }
 
 model factory_invoice_details_history {
@@ -3101,6 +3192,9 @@ model early_settlement {
   buyers                   buyers                     @relation(fields: [buyer_id], references: [id], onUpdate: NoAction)
   buyer_orders             buyer_orders               @relation(fields: [order_id], references: [id], onUpdate: NoAction)
   early_settlement_details early_settlement_details[]
+
+  @@index([buyer_id], map: "idx_early_settlement_buyer_id")
+  @@index([order_id], map: "idx_early_settlement_order_id")
 }
 
 model early_settlement_details {
@@ -3111,6 +3205,8 @@ model early_settlement_details {
   early_settlement_id     String?           @db.Uuid
   early_settlement        early_settlement? @relation(fields: [early_settlement_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   shipment_details        shipment_details  @relation(fields: [shipment_details_id], references: [id], onUpdate: NoAction)
+
+  @@index([early_settlement_id], map: "idx_early_settlement_details_early_settlement_id")
 }
 
 model early_settlement_details_history {
