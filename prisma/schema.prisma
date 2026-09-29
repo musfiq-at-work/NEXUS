@@ -212,6 +212,7 @@ model users {
   level_permission_history_level_permission_history_action_byTousers level_permission_history[]                     @relation("level_permission_history_action_byTousers")
   level_permission_history_level_permission_history_added_byTousers  level_permission_history[]                     @relation("level_permission_history_added_byTousers")
   levels_history                                                     levels_history[]
+  notifications                                                      notifications[]
   order_styles_history                                               order_styles_history[]
   overseas_office_history_overseas_office_history_action_byTousers   overseas_office_history[]                      @relation("overseas_office_history_action_byTousers")
   payment_terms_history_payment_terms_history_action_byTousers       payment_terms_history[]                        @relation("payment_terms_history_action_byTousers")
@@ -250,6 +251,26 @@ model users {
   departments                                                        departments                                    @relation(fields: [department_id], references: [id], onUpdate: NoAction)
   levels                                                             levels                                         @relation(fields: [level_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users_history_users_history_action_byTousers                       users_history[]                                @relation("users_history_action_byTousers")
+}
+
+model notifications {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recipient_id   String    @db.Uuid
+  event_id       String    @db.Uuid
+  event_type     String    @db.VarChar(100)
+  aggregate_type String    @db.VarChar(50)
+  aggregate_id   String    @db.Uuid
+  actor_id       String?   @db.Uuid
+  title          String    @db.VarChar(200)
+  message        String    @db.VarChar(500)
+  payload        Json      @default("{}")
+  read_at        DateTime? @db.Timestamp(6)
+  created_at     DateTime  @default(now()) @db.Timestamp(6)
+  recipient      users     @relation(fields: [recipient_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([recipient_id, event_id], map: "notifications_recipient_event_key")
+  @@index([recipient_id, read_at, created_at(sort: Desc)], map: "notifications_recipient_read_created_idx")
+  @@map("notifications")
 }
 
 model users_history {

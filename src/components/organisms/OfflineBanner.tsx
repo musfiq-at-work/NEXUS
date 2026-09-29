@@ -6,7 +6,7 @@ import { api } from "~/trpc/react";
 const OfflineBanner = () => {
     const [browserOffline, setBrowserOffline] = useState(false);
 
-    const healthBeat = api.health.heartBeat.useQuery(undefined, {
+    const heartBeat = api.health.heartBeat.useQuery(undefined, {
         retry: false,
         refetchInterval: 15000,
         refetchIntervalInBackground: true,
@@ -30,7 +30,7 @@ const OfflineBanner = () => {
         };
     }, []);
 
-    const offline = browserOffline || healthBeat.isError;
+    const offline = browserOffline || heartBeat.isError;
 
     if (!offline) {
         return null;

@@ -13,7 +13,7 @@ import {
 	orderSummaryReportRouter, debitNotesRouter, crossPaymentsRouter, commercialTnaTemplatesRouter, activityReportRouter, 
 	commercialTnaPlanRouter, exportSummaryReportRouter, commissionPercentageRouter, earlySettlementPercentageRoute, 
 	errorLogsRouter, userSessionsRouter, lcScClosingRouter, earlySettlementRouter, commissionDistributionReportRouter, 
-	lcTransferReportRouter, crossPaymentReportRouter, healthRouter
+	lcTransferReportRouter, crossPaymentReportRouter, healthRouter, notificationsRouter
 } from '.';
 
 // All routers added in /api/routers should be manually added here.
@@ -100,6 +100,7 @@ export const appRouter = createTRPCRouter({
 	errorLogs: errorLogsRouter,
 	userSessions: userSessionsRouter,
 	health: healthRouter,
+	notifications: notificationsRouter,
 });
 
 // export type definition of API

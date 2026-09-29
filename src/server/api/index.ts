@@ -82,3 +82,4 @@ export { crossPaymentReportRouter } from "./routers/reports/crossPaymentReport";
 export { errorLogsRouter } from "./routers/maintenance/error_logs";
 export { userSessionsRouter } from "./routers/maintenance/user_sessions";
 export { healthRouter } from "./routers/maintenance/health";
+export { notificationsRouter } from "./routers/maintenance/notifications";
