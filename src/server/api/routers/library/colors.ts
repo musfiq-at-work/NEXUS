@@ -4,9 +4,20 @@ import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions } from "@prisma/client";
+// import { historyQueue } from "~/server/queues/history.queue";
+// import { redis } from "~/server/redis";
+
+// const cacheKey = "colors:all";
 
 export const colorsRouter = createTRPCRouter({
     getAll: protectedProcedure.query(async ({ ctx }) => {
+
+        // const cached = await redis.get(cacheKey);
+
+        // if (cached) {
+        //     return JSON.parse(cached);
+        // }
+        
         const colors = await ctx.db.colors.findMany({
             select: {
                 id: true,
@@ -14,6 +25,9 @@ export const colorsRouter = createTRPCRouter({
             },
             orderBy: { name: "asc" },
         })
+
+        // await redis.set(cacheKey, JSON.stringify(colors));
+
         return colors;
     }),
 
@@ -107,6 +121,21 @@ export const colorsRouter = createTRPCRouter({
                     },
                 });
 
+                // await historyQueue.add("color-added", {
+                //     color_id: color.id,
+                //     name: color.name,
+                //     action_type: actions.ADDED,
+                //     action_by: ctx.user.id,
+                // }, {
+                //     attempts: 5,
+                //     backoff: {
+                //         type: "exponential",
+                //         delay: 1000,
+                //     },
+                // });
+
+                // await redis.del(cacheKey);
+
                 return color;
             });
         }
@@ -142,6 +171,8 @@ export const colorsRouter = createTRPCRouter({
                         message: "Color not found." 
                     });
                 }
+
+                // await redis.del(cacheKey);
 
                 await tx.color_history.create({
                     data: {
@@ -193,6 +224,8 @@ export const colorsRouter = createTRPCRouter({
                             name: input.name.trim(),
                         },
                     });
+
+                    // await redis.del(cacheKey);
 
                     return res;
                 });

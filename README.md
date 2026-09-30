@@ -6,7 +6,7 @@ RDL NEXUS is build with the [T3 stack](https://create.t3.gg/en/introduction), gu
 - Framework: [NextJS](https://nextjs.org/docs)
 - Async State Management: [TanStack Query](https://tanstack.com/query/latest/docs/framework/react/overview) 
 - Non-Async State Management: [Zustand](https://zustand.docs.pmnd.rs/getting-started/introduction)
-- API: [tRPC](https://trpc.io/docs)
+- API: [tRPC](https://trpc.io)
 - ORM: [Prisma](https://www.prisma.io/docs/getting-started/prisma-orm/add-to-existing-project/postgresql)
 - Database: [PostgreSQL](https://www.postgresql.org/docs/18/index.html)
 - UI: [Tailwind CSS](https://tailwindcss.com/docs/installation/using-vite)
