@@ -269,7 +269,7 @@ const SalesContractPDF = ({ data }: { data: GetPDFDataOutput }) => {
                     </View>
 
                     {/* Contact Person Details */}
-                    <View style={{maxWidth: 700, display: 'flex', flexDirection: 'column', gap: 5, marginTop: 15}}>
+                    <View style={{maxWidth: 700, display: 'flex', flexDirection: 'column', gap: 5, marginTop: 15}} wrap={false}>
                         <Text style={styles.textBold}>CONTACT PERSON: {data.pdfHeaderData?.contact_person}</Text>
                         <Text style={styles.textAmasis}>Contact Number: {data.pdfHeaderData?.contact_number}</Text>
                         <Text style={styles.textAmasis}>PABX: {data.pdfHeaderData?.contact_person_pabx}, EXT: {data.pdfHeaderData?.contact_person_ext}</Text>

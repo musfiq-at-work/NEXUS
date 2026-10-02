@@ -269,3 +269,7 @@ docker cp f774b3399547:/app/public/uploads/style_photos ~/backup/
 // copy it to the local pc
 scp -P 60011 -r rdlerpadmin@192.168.21.253:~/backup/style_photos "E:\backup\04_09_2026"
 ```
+
+```bash
+    docker network create rdl-nexus-redis
+```

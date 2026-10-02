@@ -5,18 +5,19 @@ import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions } from "@prisma/client";
 // import { historyQueue } from "~/server/queues/history.queue";
-// import { redis } from "~/server/redis";
+import { getRedis } from "~/server/redis";
 
-// const cacheKey = "colors:all";
+const cacheKey = "colors:all";
 
 export const colorsRouter = createTRPCRouter({
     getAll: protectedProcedure.query(async ({ ctx }) => {
 
-        // const cached = await redis.get(cacheKey);
+        const redis = await getRedis();
+        const cached = redis ? await redis.get(cacheKey) : null;
 
-        // if (cached) {
-        //     return JSON.parse(cached);
-        // }
+        if (cached) {
+            return JSON.parse(cached) as { id: number; name: string }[];
+        }
         
         const colors = await ctx.db.colors.findMany({
             select: {
@@ -26,7 +27,7 @@ export const colorsRouter = createTRPCRouter({
             orderBy: { name: "asc" },
         })
 
-        // await redis.set(cacheKey, JSON.stringify(colors));
+        if (redis) await redis.set(cacheKey, JSON.stringify(colors));
 
         return colors;
     }),
@@ -134,7 +135,8 @@ export const colorsRouter = createTRPCRouter({
                 //     },
                 // });
 
-                // await redis.del(cacheKey);
+                const redis = await getRedis();
+                if (redis) await redis.del(cacheKey);
 
                 return color;
             });
@@ -172,7 +174,8 @@ export const colorsRouter = createTRPCRouter({
                     });
                 }
 
-                // await redis.del(cacheKey);
+                const redis = await getRedis();
+                if (redis) await redis.del(cacheKey);
 
                 await tx.color_history.create({
                     data: {
@@ -225,7 +228,8 @@ export const colorsRouter = createTRPCRouter({
                         },
                     });
 
-                    // await redis.del(cacheKey);
+                    const redis = await getRedis();
+                    if (redis) await redis.del(cacheKey);
 
                     return res;
                 });

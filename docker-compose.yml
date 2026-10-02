@@ -10,10 +10,17 @@ services:
     ports:
       - "7000:7000"
     env_file:
-      - .env
+      - .env.production
     environment:
       - NODE_ENV=production
       - PORT=7000
       - TZ=Asia/Dhaka
     volumes:
       - ./public:/app/public
+
+    networks:
+      - rdl-nexus-network
+
+networks:
+  rdl-nexus-network:
+    external: true
