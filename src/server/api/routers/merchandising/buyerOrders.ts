@@ -5,6 +5,7 @@ import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, order_status, shipment_modes } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
+import { transactionWithQueuedHistory } from "~/server/queues/transactionWithQueuedHistory";
 import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 import type { BuyerOrderRow, GetPDFHeaderOutput, GetPDFPoOutput } from "./_types/buyerOrder";
@@ -360,7 +361,7 @@ export const buyerOrdersRouter = createTRPCRouter({
                     });
                 }
 
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const factoryOrders = await tx.factory_orders.findMany({
                         where: { order_id: input.id },
                     });
@@ -641,7 +642,7 @@ export const buyerOrdersRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const currentYear = new Date().getFullYear();
 
                     const meta = await tx.buyer_order_ref_metadata.upsert({
@@ -1044,7 +1045,7 @@ export const buyerOrdersRouter = createTRPCRouter({
                     });
                 }
 
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const existingOrder = await tx.buyer_orders.findUnique({
                         where: {
                             id: input.db_id,
@@ -1289,7 +1290,7 @@ export const buyerOrdersRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(tx => deleteStyle(tx, input.style_id, ctx.user.id), {timeout: 30000});
+                return await transactionWithQueuedHistory(ctx.db, tx => deleteStyle(tx, input.style_id, ctx.user.id), {timeout: 30000});
             }
             catch (error){
                 await logError(error, ctx, input);
@@ -1311,7 +1312,7 @@ export const buyerOrdersRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(tx => deleteShipment(tx, input.shipment_id, ctx.user.id), {timeout: 30000});
+                return await transactionWithQueuedHistory(ctx.db, tx => deleteShipment(tx, input.shipment_id, ctx.user.id), {timeout: 30000});
             }
             catch (error){
                 console.log('In buyer order', error)
@@ -1337,7 +1338,7 @@ export const buyerOrdersRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const existingColor = await tx.shipment_item_details.findUnique({
                         where: { id: input.color_id },
                     });

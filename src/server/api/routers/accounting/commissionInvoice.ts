@@ -1,3 +1,4 @@
+import { transactionWithQueuedHistory } from "~/server/queues/transactionWithQueuedHistory";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
@@ -185,7 +186,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const deletedInvoice = await tx.commission_invoice.delete({
                         where: { id: input.id },
                     });
@@ -555,7 +556,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
 
                 const isTT = terms.name.toLowerCase() === 'tt'
 
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const newInvoice = await tx.commission_invoice.create({
                         data: {
                             term_id: input.term_id,
@@ -612,7 +613,7 @@ export const commissionInvoiceRouter = createTRPCRouter({
             }
             
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const updatedInvoice = await ctx.db.commission_invoice.update({
                         where: { id: input.id },
                         data: {

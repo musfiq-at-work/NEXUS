@@ -1,3 +1,4 @@
+import { transactionWithQueuedHistory } from "~/server/queues/transactionWithQueuedHistory";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
@@ -165,7 +166,7 @@ export const documentSubmissionRouter = createTRPCRouter({
             }
             
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const documentSubmissionDetails = await tx.document_submissions_details.findMany({
                         where: {
                             document_submissions: {
@@ -304,7 +305,7 @@ export const documentSubmissionRouter = createTRPCRouter({
 
                 const isTT = terms.name.toLowerCase() === 'tt';
 
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const newDocumentSubmission = await tx.document_submissions.create({
                         data: {
                             term_id: input.term_id,
@@ -621,7 +622,7 @@ export const documentSubmissionRouter = createTRPCRouter({
             }
             
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const relatedFactoryInvoices = await tx.document_submission_factory_invoices.findMany({
                         where: {
                             document_submissions_details_id: input.db_id
@@ -891,7 +892,7 @@ export const documentSubmissionRouter = createTRPCRouter({
                     });
                 }
 
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const updatedDocumentSubmission = await tx.document_submissions.update({
                         where: { id: input.id },
                         data: {

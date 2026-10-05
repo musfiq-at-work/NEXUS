@@ -1,3 +1,4 @@
+import { transactionWithQueuedHistory } from "~/server/queues/transactionWithQueuedHistory";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
@@ -175,7 +176,7 @@ export const proceedRealizationRouter = createTRPCRouter({
             
             try {
                 // Order of action is very very important
-                await ctx.db.$transaction(async (tx) => {
+                await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const realization = await tx.proceed_realization.findUnique({
                         where: {
                             id: input.id
@@ -362,7 +363,7 @@ export const proceedRealizationRouter = createTRPCRouter({
             }
             
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const newProceedRealization = await tx.proceed_realization.create({
                         data: {
                             buyer_id: input.buyer_id,
@@ -615,7 +616,7 @@ export const proceedRealizationRouter = createTRPCRouter({
                     });
                 }
 
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const updatedProceedRealization = await tx.proceed_realization.update({
                         where: {
                             id: input.id,

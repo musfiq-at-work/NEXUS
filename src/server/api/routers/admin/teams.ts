@@ -1,3 +1,4 @@
+import { transactionWithQueuedHistory } from "~/server/queues/transactionWithQueuedHistory";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
@@ -131,7 +132,7 @@ export const teamsRouter = createTRPCRouter({
         }
 
         try {
-            return await ctx.db.$transaction(async (tx) => {
+            return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                 const newTeam = await tx.teams.create({
                     data: {
                         team_name: input.team_name,
@@ -192,7 +193,7 @@ export const teamsRouter = createTRPCRouter({
         }
 
         try {
-            return await ctx.db.$transaction(async (tx) => {
+            return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                 const teamMembersToDelete = await tx.team_members.findMany({
                     where: { team_id: input.id },
                 });
@@ -263,7 +264,7 @@ export const teamsRouter = createTRPCRouter({
         }
 
         try {
-            await ctx.db.$transaction(async (tx) => {
+            await transactionWithQueuedHistory(ctx.db, async (tx) => {
                 const updatedTeam = await tx.teams.update({
                     where: { id: input.id },
                     data: {
@@ -399,7 +400,7 @@ export const teamsRouter = createTRPCRouter({
             });
         }
 
-        return await ctx.db.$transaction(async (tx) => {
+        return await transactionWithQueuedHistory(ctx.db, async (tx) => {
             const memberToDelete = await tx.team_members.delete({
                 where: { id: input.id },
             })

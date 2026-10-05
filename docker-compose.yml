@@ -10,7 +10,7 @@ services:
     ports:
       - "7000:7000"
     env_file:
-      - .env.production
+      - .env
     environment:
       - NODE_ENV=production
       - PORT=7000

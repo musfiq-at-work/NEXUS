@@ -1,3 +1,4 @@
+import { transactionWithQueuedHistory } from "~/server/queues/transactionWithQueuedHistory";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
@@ -165,7 +166,7 @@ export const lcTransferRouter = createTRPCRouter({
             }
             
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const lcDetails = await tx.lc_transfer_details.findMany({
                         where: {
                             lc_transfer_id: input.id,
@@ -243,7 +244,7 @@ export const lcTransferRouter = createTRPCRouter({
             }
             
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const newLcTransfer = await tx.lc_transfer.create({
                         data: {
                             lc_master_id: input.lc_id,
@@ -563,7 +564,7 @@ export const lcTransferRouter = createTRPCRouter({
             }
             
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const transferDetail = await tx.lc_transfer_details.delete({
                         where: {
                             id: input.lc_transfer_id,
@@ -624,7 +625,7 @@ export const lcTransferRouter = createTRPCRouter({
             }
             
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const newLcTransfer = await tx.lc_transfer.update({
                         where: {
                             id: input.id

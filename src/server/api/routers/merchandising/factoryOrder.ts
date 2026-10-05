@@ -1,3 +1,4 @@
+import { transactionWithQueuedHistory } from "~/server/queues/transactionWithQueuedHistory";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
@@ -483,7 +484,7 @@ export const factoryOrderRouter = createTRPCRouter({
             }
             
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const factoryOrderDate = new Date(
                         input.factory_order_date
                     );
@@ -539,6 +540,8 @@ export const factoryOrderRouter = createTRPCRouter({
                                     exfactory_date: shipment.exfactory_date,
                                     factory_rate: shipment.factory_rate,
                                     transfer_rate: shipment.transfer_rate,
+                                    shipment_detail_id: shipment.shipment_detail_id,
+                                    factory_order_id: shipment.factory_order_id,
                                     action_by: ctx.user.id,
                                     action_type: actions.ADDED,
                                 },
@@ -758,7 +761,7 @@ export const factoryOrderRouter = createTRPCRouter({
                 }
 
                 // Start transaction
-                const updatedFactoryOrder = await ctx.db.$transaction(async (tx) => {
+                const updatedFactoryOrder = await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const factoryOrder = await tx.factory_orders.update({ // Update Factory Order
                         where: { id: input.factoryOrderId },
                         data: {
@@ -810,6 +813,8 @@ export const factoryOrderRouter = createTRPCRouter({
                                     exfactory_date: new Date(shipmentInput.exfactory_date),
                                     factory_rate: shipmentInput.factory_fob,
                                     transfer_rate: shipmentInput.transfer_rate,
+                                    shipment_detail_id: shipment.shipment_detail_id,
+                                    factory_order_id: shipment.factory_order_id,
                                     action_by: ctx.user.id,
                                     action_type: actions.UPDATE,
                                 },
@@ -980,7 +985,7 @@ export const factoryOrderRouter = createTRPCRouter({
                 }
 
                 // Update the approval status within a transaction
-                const approvedFactoryOrder = await ctx.db.$transaction(async (tx) => {
+                const approvedFactoryOrder = await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const factoryOrder = await tx.factory_orders.update({
                         where: { id: input.factoryOrderId },
                         data: {
@@ -1037,7 +1042,7 @@ export const factoryOrderRouter = createTRPCRouter({
                     });
                 }
 
-                const deletedFactoryOrder = await ctx.db.$transaction(async (tx) => {
+                const deletedFactoryOrder = await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     // Delete related factory shipment details first
                     const existingFactoryShipments = await tx.factory_shipment_details.findMany({
                         where: { factory_order_id: input.id },
@@ -1063,6 +1068,8 @@ export const factoryOrderRouter = createTRPCRouter({
                                 exfactory_date: shipment.exfactory_date,
                                 factory_rate: shipment.factory_rate,
                                 transfer_rate: shipment.transfer_rate,
+                                shipment_detail_id: shipment.shipment_detail_id,
+                                factory_order_id: shipment.factory_order_id,
                                 action_by: ctx.user.id,
                                 action_type: actions.DELETE,
                             },

@@ -1,3 +1,4 @@
+import { transactionWithQueuedHistory } from "~/server/queues/transactionWithQueuedHistory";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
@@ -179,7 +180,7 @@ export const commissionDistributionRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const isApproved = await tx.commission_distributions.findUnique({
                         where: { id: input.id },
                         select: { approval_status: true },
@@ -324,7 +325,7 @@ export const commissionDistributionRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const newDistribution = await tx.commission_distributions.create({
                         data: {
                             order_id: input.order_id,
@@ -573,7 +574,7 @@ export const commissionDistributionRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const updatedDistribution =
                         await tx.commission_distributions.update({
                             where: {
@@ -733,22 +734,23 @@ export const commissionDistributionRouter = createTRPCRouter({
                     });
                 }
 
-                const updatedDistribution = await ctx.db.commission_distributions.update({
-                    where: { id: input.id },
-                    data: {
-                        approval_status: input.approval_status,
-                    }
-                });
+                const updatedDistribution = await transactionWithQueuedHistory(ctx.db, async (tx) => {
+                    const updated = await tx.commission_distributions.update({
+                        where: { id: input.id },
+                        data: { approval_status: input.approval_status },
+                    });
 
-                await ctx.db.commission_distribution_history.create({
-                    data: {
-                        commission_distribution_id: updatedDistribution.id,
-                        order_id: updatedDistribution.order_id,
-                        plan_date: updatedDistribution.plan_date,
-                        approval_status: updatedDistribution.approval_status,
-                        action_type: actions.UPDATE,
-                        action_by: ctx.user.id,
-                    }
+                    await tx.commission_distribution_history.create({
+                        data: {
+                            commission_distribution_id: updated.id,
+                            order_id: updated.order_id,
+                            plan_date: updated.plan_date,
+                            approval_status: updated.approval_status,
+                            action_type: actions.UPDATE,
+                            action_by: ctx.user.id,
+                        },
+                    });
+                    return updated;
                 });
 
                 return updatedDistribution;

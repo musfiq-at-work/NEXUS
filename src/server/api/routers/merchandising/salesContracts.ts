@@ -1,3 +1,4 @@
+import { transactionWithQueuedHistory } from "~/server/queues/transactionWithQueuedHistory";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
@@ -268,7 +269,7 @@ export const salesContractsRouter = createTRPCRouter({
             }
 
             try {
-                await ctx.db.$transaction(async (tx) => {
+                await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const salesContractDetails = await tx.sales_contract_details.findMany({
                         where: {
                             sales_contract_id: input.id,
@@ -398,7 +399,7 @@ export const salesContractsRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const currentYear = new Date().getFullYear();
 
                     // Atomic serial generation
@@ -447,7 +448,7 @@ export const salesContractsRouter = createTRPCRouter({
 
                     const serial = String(metadata.last_serial).padStart(4, "0");
 
-                    const sales_contract_no = `RDL/SC/${buyerPrefix.trim()}/${factoryPrefix.trim()}/${currentYear}/${serial}`;
+                    const sales_contract_no = `RDL/SC/${buyerPrefix.trim()}/${factoryPrefix.trim()}/${String(currentYear).slice(-2)}/${serial}`;
 
                     // Create SC
                     const newSalesContract = await tx.sales_contracts.create({
@@ -781,7 +782,7 @@ export const salesContractsRouter = createTRPCRouter({
                     });
                 }
 
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const updatedSalesContract = await tx.sales_contracts.update({
                         where: { id: input.id },
                         data: {
@@ -993,7 +994,7 @@ export const salesContractsRouter = createTRPCRouter({
             }
 
             try {
-                await ctx.db.$transaction(async (tx) => {
+                await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const isApproved = await tx.sales_contract_details.findUnique({
                         where: {
                             id: input.id,
@@ -1122,7 +1123,7 @@ export const salesContractsRouter = createTRPCRouter({
             }
 
             try {
-                await ctx.db.$transaction(async (tx) => {
+                await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const existingSalesContract = await tx.sales_contracts.findUnique({
                         where: {
                             id: input.id,

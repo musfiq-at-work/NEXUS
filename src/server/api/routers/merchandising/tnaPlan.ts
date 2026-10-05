@@ -1,3 +1,4 @@
+import { transactionWithQueuedHistory } from "~/server/queues/transactionWithQueuedHistory";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
@@ -304,7 +305,7 @@ export const tnaPlanRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const newPlan = await tx.tna_plans.create({
                         data: {
                             tna_template_id: input.template_id,
@@ -479,7 +480,7 @@ export const tnaPlanRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const existingTnaPlanDetails = await tx.tna_plan_details.findMany({
                         where: { tna_plan_id: input.id },
                     });
@@ -581,7 +582,7 @@ export const tnaPlanRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const updatedActions = [];
 
                     for (const action of input) {
@@ -823,7 +824,7 @@ export const tnaPlanRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const updatedEvents = await Promise.all(
                         input.map(async (event) => {
                             return tx.tna_plan_details.update({

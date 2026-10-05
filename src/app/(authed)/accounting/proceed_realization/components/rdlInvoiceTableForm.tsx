@@ -60,7 +60,7 @@ const TableForm = (props: Props) => {
                             <tr className="font-bold text-sm border-2 border-gray/20">
                                 <td colSpan={1} className="border-r-2 border-gray/20 p-2 text-right">Total</td>
                                 <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{currencyFormatter(totalInvoiceValue, '$')}</td>
-                                <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{totalProceedValue}</td>
+                                <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{currencyFormatter(safeNumber(totalProceedValue), '$')}</td>
                                 <td className="border-r-2 border-gray/20 p-2" />
                             </tr>
                         </tfoot>}

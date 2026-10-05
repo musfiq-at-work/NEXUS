@@ -1,3 +1,4 @@
+import { transactionWithQueuedHistory } from "~/server/queues/transactionWithQueuedHistory";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
@@ -226,7 +227,7 @@ export const lcMasterRouter = createTRPCRouter({
             }
 
             try {
-                await ctx.db.$transaction(async (tx) => {
+                await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     await tx.lc_amendment_metadata.deleteMany({
                         where: { lc_id: input.id }
                     });
@@ -350,7 +351,7 @@ export const lcMasterRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const newLC = await tx.lc_master.create({
                         data: {
                             buyer_id: input.buyer_id,
@@ -459,7 +460,7 @@ export const lcMasterRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const updatedLC = await tx.lc_master.update({
                         where: {
                             id: input.id,
@@ -954,7 +955,7 @@ export const lcMasterRouter = createTRPCRouter({
             }
 
             try {
-                await ctx.db.$transaction(async (tx) => {
+                await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const existingShipments = await tx.lc_shipments.findMany({
                         where: {
                             lc_order_id: input.lc_order_id,
@@ -1030,7 +1031,7 @@ export const lcMasterRouter = createTRPCRouter({
             }
 
             try {
-                await ctx.db.$transaction(async (tx) => {
+                await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const shipments = await tx.lc_shipments.findMany({
                         where: {
                             lc_order_id: input.lc_order_id,
@@ -1137,7 +1138,7 @@ export const lcMasterRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const userLevel = ctx.user.level_id;
                     const userDepartment = ctx.user.department_id;
                     const isAdmin = userLevel === ADMIN_LEVEL_ID && userDepartment === ADMIN_DEPARTMENT_ID;

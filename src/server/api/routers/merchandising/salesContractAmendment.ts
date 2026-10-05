@@ -1,3 +1,4 @@
+import { transactionWithQueuedHistory } from "~/server/queues/transactionWithQueuedHistory";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
@@ -236,7 +237,7 @@ export const salesContractAmendmentRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const currentAmendmentNo = await tx.$queryRaw<{ amendment_no: number }[]>`
                         SELECT SCAM.amendment_no FROM sales_contract_amendment_no_metadata AS SCAM
                             INNER JOIN sales_contracts AS SC ON SC.id = SCAM.sales_contract_id
@@ -394,7 +395,7 @@ export const salesContractAmendmentRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const metadata =
                         await tx.sales_contract_amendment_no_metadata.upsert(
                             {
@@ -661,7 +662,7 @@ export const salesContractAmendmentRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     await tx.$executeRaw`
                         DELETE FROM sales_contract_details AS scd
                         USING sales_contract_amendment_details AS scad,
@@ -821,7 +822,7 @@ export const salesContractAmendmentRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     // EXISTING AMENDMENT
                     const existingAmendment = await tx.sales_contract_amendment.findUnique({
                         where: {

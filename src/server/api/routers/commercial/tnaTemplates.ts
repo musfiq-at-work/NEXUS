@@ -1,3 +1,4 @@
+import { transactionWithQueuedHistory } from "~/server/queues/transactionWithQueuedHistory";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
@@ -37,7 +38,7 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const newTemplate = await tx.commercial_tna_templates.create({
                         data: {
                             template_name: input.template_name,
@@ -232,7 +233,7 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const updatedTemplate = await tx.commercial_tna_templates.update({
                         where: { id: input.id },
                         data: {
@@ -324,7 +325,7 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const tnaTemplateActions = await tx.commercial_tna_templates_actions.findMany({
                         where: { commercial_tna_template_id: input.id },
                     });
@@ -443,7 +444,7 @@ export const commercialTnaTemplatesRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const deletedAction = await tx.commercial_tna_templates_actions.delete({
                         where: { id: input.id },
                     });

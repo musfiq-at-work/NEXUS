@@ -1,3 +1,4 @@
+import { transactionWithQueuedHistory } from "~/server/queues/transactionWithQueuedHistory";
 import bcrypt from "bcryptjs";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -139,7 +140,7 @@ export const userRouter = createTRPCRouter({
         }
 
         try {
-			return await ctx.db.$transaction(async (tx) => {
+			return await transactionWithQueuedHistory(ctx.db, async (tx) => {
 				const user = await tx.users.create({
 					data: {
 						first_name: input.first_name,
@@ -208,7 +209,7 @@ export const userRouter = createTRPCRouter({
         }
         
         try {
-			const { oldUserId, updatedUser } = await ctx.db.$transaction(async (tx) => {
+			const { oldUserId, updatedUser } = await transactionWithQueuedHistory(ctx.db, async (tx) => {
 				const user = await tx.users.findUnique({
 					where: { id: input.id },
 				});

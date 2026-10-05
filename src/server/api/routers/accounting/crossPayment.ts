@@ -1,3 +1,4 @@
+import { transactionWithQueuedHistory } from "~/server/queues/transactionWithQueuedHistory";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
@@ -34,7 +35,7 @@ export const crossPaymentsRouter = createTRPCRouter({
             try {
                 const currentYear = new Date().getFullYear();
                 
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const meta = await tx.cross_payments_metadata.upsert({
                         where: { 
                             year_buyer_id: {
@@ -461,7 +462,7 @@ export const crossPaymentsRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const crossPaymentDetails = await tx.cross_payment_details.findMany({
                         where: { cross_payment_id: input.cross_payment_id },
                     });
@@ -588,7 +589,7 @@ export const crossPaymentsRouter = createTRPCRouter({
                     });
                 }
 
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const updatedCrossPayment = await tx.cross_payments.update({
                         where: { id: input.cross_payment_id },
                         data: {
@@ -683,7 +684,7 @@ export const crossPaymentsRouter = createTRPCRouter({
                     });
                 }
 
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const detailToDelete = await tx.cross_payment_details.findUnique({
                         where: { id: input.db_id },
                     });
@@ -796,24 +797,25 @@ export const crossPaymentsRouter = createTRPCRouter({
                     });
                 }
 
-                const updatedCrossPayment = await ctx.db.cross_payments.update({
-                    where: { id: input.id },
-                    data: {
-                        is_authorized: input.approval_status,
-                    }
-                });
+                const updatedCrossPayment = await transactionWithQueuedHistory(ctx.db, async (tx) => {
+                    const updated = await tx.cross_payments.update({
+                        where: { id: input.id },
+                        data: { is_authorized: input.approval_status },
+                    });
 
-                await ctx.db.cross_payments_history.create({
-                    data: {
-                        cross_payments_id: updatedCrossPayment.id,
-                        cross_payment_ref: updatedCrossPayment.cross_payment_ref,
-                        cross_payment_date: updatedCrossPayment.cross_payment_date,
-                        buyer_id: updatedCrossPayment.buyer_id,
-                        term_id: updatedCrossPayment.term_id,
-                        is_authorized: updatedCrossPayment.is_authorized,
-                        action_type: actions.UPDATE,
-                        action_by: ctx.user.id,
-                    }
+                    await tx.cross_payments_history.create({
+                        data: {
+                            cross_payments_id: updated.id,
+                            cross_payment_ref: updated.cross_payment_ref,
+                            cross_payment_date: updated.cross_payment_date,
+                            buyer_id: updated.buyer_id,
+                            term_id: updated.term_id,
+                            is_authorized: updated.is_authorized,
+                            action_type: actions.UPDATE,
+                            action_by: ctx.user.id,
+                        },
+                    });
+                    return updated;
                 });
 
                 return updatedCrossPayment;

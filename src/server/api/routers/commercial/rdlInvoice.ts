@@ -1,3 +1,4 @@
+import { transactionWithQueuedHistory } from "~/server/queues/transactionWithQueuedHistory";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
@@ -189,7 +190,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
             }
             
             try {
-                await ctx.db.$transaction(async (tx) => {
+                await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const rdlInvoiceDetails = await tx.rdl_invoice_details.findMany({
                         where: { rdl_invoice_id: input.id },
                     });
@@ -496,7 +497,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
 
                 const isTT = terms.name.toLowerCase() === 'tt';
 
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const rdlInvoice = await tx.rdl_invoice.create({
                         data: {
                             buyer_id: input.buyer_id,
@@ -729,7 +730,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
             }
             
             try {
-                await ctx.db.$transaction(async (tx) => {
+                await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const rdlInvoiceDetail = await tx.rdl_invoice_details.findUnique({
                         where: { id: input.db_id },
                     });
@@ -879,7 +880,7 @@ export const rdlInvoiceRouter = createTRPCRouter({
             }
             
             try {
-                await ctx.db.$transaction(async (tx) => {
+                await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const updated = await tx.rdl_invoice.update({
                         where: { id: input.id },
                         data: {
@@ -1091,20 +1092,21 @@ export const rdlInvoiceRouter = createTRPCRouter({
                     });
                 }
 
-                const updatedInvoice = await ctx.db.rdl_invoice.update({
-                    where: { id: input.id },
-                    data: {
-                        is_authorized: input.approval_status,
-                    }
-                });
+                const updatedInvoice = await transactionWithQueuedHistory(ctx.db, async (tx) => {
+                    const updated = await tx.rdl_invoice.update({
+                        where: { id: input.id },
+                        data: { is_authorized: input.approval_status },
+                    });
 
-                await ctx.db.rdl_invoice_history.create({
-                    data: {
-                        rdl_invoice_id: updatedInvoice.id,
-                        is_authorized: updatedInvoice.is_authorized,
-                        action_type: actions.UPDATE,
-                        action_by: ctx.user.id,
-                    }
+                    await tx.rdl_invoice_history.create({
+                        data: {
+                            rdl_invoice_id: updated.id,
+                            is_authorized: updated.is_authorized,
+                            action_type: actions.UPDATE,
+                            action_by: ctx.user.id,
+                        },
+                    });
+                    return updated;
                 });
 
                 return updatedInvoice;

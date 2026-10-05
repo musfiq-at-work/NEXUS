@@ -1,3 +1,4 @@
+import { transactionWithQueuedHistory } from "~/server/queues/transactionWithQueuedHistory";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
@@ -200,7 +201,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
             }
             
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const tnaPlan = await tx.commercial_tna_planning.findUnique({    
                         where: { factory_invoice_id: input.id },
                     });
@@ -293,7 +294,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
             }
             
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const terms = await ctx.db.terms.findUnique({
                         where: { id: input.term_id },
                         select: { name: true },
@@ -627,7 +628,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
             }
             
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const terms = await ctx.db.terms.findUnique({
                         where: { id: input.term_id },
                         select: { name: true },
@@ -901,7 +902,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
             }
             
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const updatedInvoice = await tx.factory_invoice.update({
                         where: { id: input.id },
                         data: {
@@ -971,7 +972,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
             }
             
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const detail = await tx.factory_invoice_details.delete({
                         where: { id: input.id },
                     });

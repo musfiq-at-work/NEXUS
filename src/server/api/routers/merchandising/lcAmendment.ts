@@ -1,3 +1,4 @@
+import { transactionWithQueuedHistory } from "~/server/queues/transactionWithQueuedHistory";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
@@ -231,7 +232,7 @@ export const lcAmendmentRouter = createTRPCRouter({
 					});
 				}
 
-				return await ctx.db.$transaction(async (tx) => {
+				return await transactionWithQueuedHistory(ctx.db, async (tx) => {
 					const currentLcAmendment = await tx.lc_amendment.findUnique({
 						where: {
 							id: input.id,
@@ -449,7 +450,7 @@ export const lcAmendmentRouter = createTRPCRouter({
 					});
 				}
 
-				return await ctx.db.$transaction(async (tx) => {
+				return await transactionWithQueuedHistory(ctx.db, async (tx) => {
 					const metaData = await tx.lc_amendment_metadata.upsert({
 						where: {
 							lc_id: input.lc_id,
@@ -878,7 +879,7 @@ export const lcAmendmentRouter = createTRPCRouter({
 					});
 				}
 
-				return await ctx.db.$transaction(async (tx) => {
+				return await transactionWithQueuedHistory(ctx.db, async (tx) => {
 
 					// Get Amendment
 					const existingLcAmendment = await tx.lc_amendment.findUnique({

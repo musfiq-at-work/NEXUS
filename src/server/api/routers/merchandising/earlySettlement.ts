@@ -1,3 +1,4 @@
+import { transactionWithQueuedHistory } from "~/server/queues/transactionWithQueuedHistory";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
@@ -148,27 +149,27 @@ export const earlySettlementRouter = createTRPCRouter({
             }
             
             try {
-                return await ctx.db.$transaction(async (tx) => {
-                    const earlySettlementDetails = await ctx.db.early_settlement_details.findMany({
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
+                    const earlySettlementDetails = await tx.early_settlement_details.findMany({
                         where: {
                             early_settlement_id: input.id
                         }
                     })
 
                     await Promise.all([
-                        await ctx.db.early_settlement_details.deleteMany({
+                        await tx.early_settlement_details.deleteMany({
                             where: {
                                 early_settlement_id: input.id
                             }
                         }),
                         
-                        await ctx.db.early_settlement.delete({
+                        await tx.early_settlement.delete({
                             where: {
                                 id: input.id
                             }
                         }),
                         
-                        await ctx.db.early_settlement_details_history.createMany({
+                        await tx.early_settlement_details_history.createMany({
                             data: earlySettlementDetails.map((settlements) => ({
                                 early_settlement_details_id: settlements.id,
                                 shipment_details_id: settlements.early_settlement_id,
@@ -395,7 +396,7 @@ export const earlySettlementRouter = createTRPCRouter({
             }
             
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const newEarlySettlement = await tx.early_settlement.create({
                         data: {
                             order_id: input.order_id,
@@ -562,7 +563,7 @@ export const earlySettlementRouter = createTRPCRouter({
                 })
             }
 
-            return await ctx.db.$transaction(async (tx) => {
+            return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                 const existingDetails = await tx.early_settlement_details.findMany({
                     where: {
                         early_settlement_id: input.id

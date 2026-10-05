@@ -1,3 +1,4 @@
+import { transactionWithQueuedHistory } from "~/server/queues/transactionWithQueuedHistory";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
@@ -195,7 +196,7 @@ export const exFactoryRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const exfactory = await tx.exfactory.findUnique({
                         where: { id: input.id },
                     });
@@ -338,7 +339,7 @@ export const exFactoryRouter = createTRPCRouter({
             }
             
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const currentYear = new Date().getFullYear();
 
                     const meta = await tx.exfactory_metadata.upsert({
@@ -586,7 +587,7 @@ export const exFactoryRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const exfactoryOrder = await tx.exfactory_orders.findUnique({
                         where: { id: input.exfactory_order_id },
                     });
@@ -914,7 +915,7 @@ export const exFactoryRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const exfactory = await tx.exfactory.findUnique({
                         where: {
                             id: input.db_id,
@@ -1100,23 +1101,24 @@ export const exFactoryRouter = createTRPCRouter({
                     });
                 }
 
-                const updatedExFactory = await ctx.db.exfactory.update({
-                    where: { id: input.id },
-                    data: {
-                        is_authorized: input.approval_status,
-                    }
-                });
+                const updatedExFactory = await transactionWithQueuedHistory(ctx.db, async (tx) => {
+                    const updated = await tx.exfactory.update({
+                        where: { id: input.id },
+                        data: { is_authorized: input.approval_status },
+                    });
 
-                await ctx.db.exfactory_history.create({
-                    data: {
-                        exfactory_date: updatedExFactory.exfactory_date,
-                        exfactory_no: updatedExFactory.exfactory_no,
-                        exfactory_id: input.id,
-                        buyer_id: updatedExFactory.buyer_id,
-                        factory_id: updatedExFactory.factory_id,
-                        action_type: actions.UPDATE,
-                        action_by: ctx.user.id,
-                    }
+                    await tx.exfactory_history.create({
+                        data: {
+                            exfactory_date: updated.exfactory_date,
+                            exfactory_no: updated.exfactory_no,
+                            exfactory_id: input.id,
+                            buyer_id: updated.buyer_id,
+                            factory_id: updated.factory_id,
+                            action_type: actions.UPDATE,
+                            action_by: ctx.user.id,
+                        },
+                    });
+                    return updated;
                 });
 
                 return updatedExFactory;
@@ -1142,7 +1144,7 @@ export const exFactoryRouter = createTRPCRouter({
             }
 
             try {
-                return await ctx.db.$transaction(async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const exfactoryShipment = await tx.exfactory_shipments.findUnique({
                         where: { id: input.exfactory_shipment_id },
                         select: {
