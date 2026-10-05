@@ -49,23 +49,28 @@ export async function transactionWithQueuedHistory<T>(
         countsByModel,
     });
 
-    for (const write of historyWrites) {
-        try {
-            const job = await historyQueue.add(write.model, write.data, {
-                attempts: 5,
-                backoff: { type: "exponential", delay: 1000 },
-            });
-            console.info("[history-queue] Enqueued history write", {
-                jobId: job.id,
-                jobName: job.name,
-            });
-        } catch (error) {
-            console.error("[history-queue] Failed to enqueue history write", {
-                model: write.model,
-                error,
-            });
-            throw error;
-        }
+    const jobs = historyWrites.map((write) => ({
+        name: write.model,
+        data: write.data,
+        opts: {
+            attempts: 5,
+            backoff: { type: "exponential" as const, delay: 1000 },
+        },
+    }));
+
+    try {
+        const addedJobs = await historyQueue.addBulk(jobs);
+
+        console.info("[history-queue] Enqueued history writes", {
+            count: addedJobs.length,
+            countsByModel,
+        });
+    } catch (error) {
+        console.error("[history-queue] Failed to enqueue history writes", {
+            count: historyWrites.length,
+            error,
+        });
+        throw error;
     }
 
     return result;

@@ -1,4 +1,5 @@
 import { transactionWithQueuedHistory } from "~/server/queues/transactionWithQueuedHistory";
+import { historyQueue } from "~/server/queues/history.queue";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
@@ -822,7 +823,7 @@ export const salesContractAmendmentRouter = createTRPCRouter({
             }
 
             try {
-                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
+                const result = await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     // EXISTING AMENDMENT
                     const existingAmendment = await tx.sales_contract_amendment.findUnique({
                         where: {
@@ -915,33 +916,6 @@ export const salesContractAmendmentRouter = createTRPCRouter({
                             data: newOrderIds.map((order_id) => ({
                                 sales_contract_amendment_id: input.id,
                                 order_id,
-                            })),
-                        });
-                    }
-
-                    // fetch newly created rows
-                    const createdAmendmentDetails =  newOrderIds.length > 0
-                        ? await tx.sales_contract_amendment_details.findMany({
-                            where: {
-                                sales_contract_amendment_id: input.id,
-                                order_id: { in: newOrderIds },
-                            },
-                            select: {
-                                id: true,
-                                order_id: true,
-                            },
-                        })
-                        : [];
-
-                    // AMENDMENT DETAIL HISTORY
-                    if (createdAmendmentDetails.length > 0) {
-                        await tx.sales_contract_amendment_details_history.createMany({
-                            data: createdAmendmentDetails.map((detail) => ({
-                                sales_contract_amendment_id: input.id,
-                                sales_contract_amendment_details: detail.id,
-                                order_id: detail.order_id,
-                                action_by: ctx.user.id,
-                                action_type: actions.ADDED,
                             })),
                         });
                     }
@@ -1051,6 +1025,24 @@ export const salesContractAmendmentRouter = createTRPCRouter({
                         deleted_order_ids: deletedOrderIds,
                     };
                 }, {timeout: 30000});
+
+                if (result.created_order_ids.length > 0) {
+                    await historyQueue.add(
+                        "sales_contract_amendment_details_added",
+                        {
+                            sales_contract_amendment_id: input.id,
+                            order_ids: result.created_order_ids,
+                            action_by: ctx.user.id,
+                            action_type: actions.ADDED,
+                        },
+                        {
+                            attempts: 5,
+                            backoff: { type: "exponential", delay: 1000 },
+                        },
+                    );
+                }
+
+                return result;
             } catch (error) {
                 await logError(error, ctx, input);
                 handlePrismaError(error);
