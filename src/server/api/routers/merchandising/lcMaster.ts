@@ -460,7 +460,7 @@ export const lcMasterRouter = createTRPCRouter({
             }
 
             try {
-                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx, queueHistoryJob) => {
                     const updatedLC = await tx.lc_master.update({
                         where: {
                             id: input.id,
@@ -577,10 +577,10 @@ export const lcMasterRouter = createTRPCRouter({
                         })
                     );
 
-                    let createdOrders: Awaited<ReturnType<typeof tx.lc_orders.findMany>> = [];
+                    let createdOrders: Awaited<ReturnType<typeof tx.lc_orders.createManyAndReturn>> = [];
 
                     if (newOrders.length > 0) {
-                        await tx.lc_orders.createMany({
+                        createdOrders = await tx.lc_orders.createManyAndReturn({
                             data: newOrders.map((order) => ({
                                 lc_master_id: input.id,
                                 order_id: order.order_id,
@@ -588,27 +588,17 @@ export const lcMasterRouter = createTRPCRouter({
                             })),
                         });
 
-                        createdOrders =await tx.lc_orders.findMany({
-                            where: {
+                        queueHistoryJob({
+                            name: "lc_orders_added",
+                            data: {
                                 lc_master_id: input.id,
-                                order_id: {
-                                    in: newOrders.map(
-                                        (order) =>
-                                            order.order_id
-                                    ),
-                                },
-                            },
-                        });
-
-                        await tx.lc_orders_history.createMany({
-                            data: createdOrders.map((order) => ({
-                                lc_master_id: input.id,
-                                lc_orders_id: order.id,
-                                order_id: order.order_id,
-                                dm_pi_no: order.dm_pi_no,
-                                action_type: actions.ADDED,
+                                orders: newOrders.map((order) => ({
+                                    order_id: order.order_id,
+                                    dm_pi_no: order.dm_pi_no ?? null,
+                                })),
+                                row_ids: createdOrders.map((row) => row.id),
                                 action_by: ctx.user.id,
-                            })),
+                            },
                         });
                     }
 

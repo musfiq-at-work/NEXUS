@@ -44,11 +44,10 @@ const ShipmentRows = (props: Props) => {
             return `${colorName} (${color.quantity})`;
         }).join(", ");
 
-        methods.setValue(
-            `order.styles.${styleIndex}.shipments.${index}.selected_colors`,
-            selectedColors,
-            { shouldDirty: false }
-        );
+        const selectedColorsPath = `order.styles.${styleIndex}.shipments.${index}.selected_colors` as const;
+        if (methods.getValues(selectedColorsPath) !== selectedColors) {
+            methods.setValue(selectedColorsPath, selectedColors, { shouldDirty: false });
+        }
     }, [colors, index, methods, shipmentColors, styleIndex]);
 
     const { can_delete } = useModulePermissions();

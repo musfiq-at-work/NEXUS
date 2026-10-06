@@ -35,7 +35,7 @@ export const crossPaymentsRouter = createTRPCRouter({
             try {
                 const currentYear = new Date().getFullYear();
                 
-                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx, queueHistoryJob) => {
                     const meta = await tx.cross_payments_metadata.upsert({
                         where: { 
                             year_buyer_id: {
@@ -102,24 +102,21 @@ export const crossPaymentsRouter = createTRPCRouter({
                         await tx.cross_payment_details.createMany({
                             data: crossPaymentDetailsData,
                         });
+
+                        queueHistoryJob({
+                            name: "cross_payment_details_added",
+                            data: {
+                                cross_payment_id: crossPayment.id,
+                                details: input.details.map((detail) => ({
+                                    factory_invoice_id: detail.factory_invoice_id,
+                                    factory_payment_no: detail.factory_payment_no ?? null,
+                                    factory_payment_date: detail.factory_payment_date ?? null,
+                                    value: detail.value,
+                                })),
+                                action_by: ctx.user.id,
+                            },
+                        });
                     }
-
-                    const addedDetails = await tx.cross_payment_details.findMany({
-                        where: { cross_payment_id: crossPayment.id },
-                    });
-
-                    await tx.cross_payment_details_history.createMany({
-                        data: addedDetails.map((detail) => ({
-                            cross_payment_details_id: detail.id,
-                            cross_payment_id: crossPayment.id,
-                            factory_invoice_id: detail.factory_invoice_id,
-                            factory_payment_no: detail.factory_payment_no,
-                            factory_payment_date: detail.factory_payment_date,
-                            value: detail.value,
-                            action_type: actions.ADDED,
-                            action_by: ctx.user.id,
-                        })),
-                    });
 
                     return crossPayment;
                 })

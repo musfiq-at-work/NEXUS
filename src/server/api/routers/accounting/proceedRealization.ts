@@ -363,7 +363,7 @@ export const proceedRealizationRouter = createTRPCRouter({
             }
             
             try {
-                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx, queueHistoryJob) => {
                     const newProceedRealization = await tx.proceed_realization.create({
                         data: {
                             buyer_id: input.buyer_id,
@@ -400,20 +400,13 @@ export const proceedRealizationRouter = createTRPCRouter({
                             })),
                         }),
 
-                        await tx.proceed_realization_details.findMany({
-                            where: {
+                        queueHistoryJob({
+                            name: "proceed_realization_details_added",
+                            data: {
                                 realization_id: newProceedRealization.id,
+                                rdl_invoice_ids: input.rdl_invoice_details.map((detail) => detail.rdl_invoice_id),
+                                action_by: ctx.user.id,
                             },
-                        }).then(async (details) => {
-                            await tx.proceed_realization_details_history.createMany({
-                                data: details.map((detail) => ({
-                                    realization_details_id: detail.id,
-                                    realization_id: detail.realization_id,
-                                    rdl_invoice_id: detail.rdl_invoice_id,
-                                    action_type: actions.ADDED,
-                                    action_by: ctx.user.id,
-                                })),
-                            });
                         }),
 
                         await tx.$executeRaw`

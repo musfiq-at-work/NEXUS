@@ -399,7 +399,7 @@ export const salesContractsRouter = createTRPCRouter({
             }
 
             try {
-                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx, queueHistoryJob) => {
                     const currentYear = new Date().getFullYear();
 
                     // Atomic serial generation
@@ -469,6 +469,29 @@ export const salesContractsRouter = createTRPCRouter({
                         },
                     });
 
+                    await tx.sales_contracts_history.create({
+                        data: {
+                            sales_contracts_id: newSalesContract.id,
+                            sales_contract_no: newSalesContract.sales_contract_no,
+                            sales_contract_date: newSalesContract.sales_contract_date,
+                            factory_id: newSalesContract.factory_id,
+                            approval_status: newSalesContract.approval_status,
+                            company_id: newSalesContract.company_id,
+                            contact_person_id: newSalesContract.contact_person_id,
+                            buyer_bank_id: newSalesContract.buyer_bank_id,
+                            buyer_id: newSalesContract.buyer_id,
+                            supplier_bank_id: newSalesContract.supplier_bank_id,
+                            rdl_bank_id: newSalesContract.rdl_bank_id,
+                            negotiation_bank_id: newSalesContract.negotiation_bank_id,
+                            partial_shipment: newSalesContract.partial_shipment,
+                            freight_term_id: newSalesContract.freight_term_id,
+                            approved_once: newSalesContract.approved_once,
+                            port_of_loading_id: newSalesContract.port_of_loading_id,
+                            action_type: actions.ADDED,
+                            action_by: ctx.user.id,
+                        }
+                    })
+
                     // Create Consignees
                     if (input.consignee_ids.length > 0) {
                         await tx.sales_contract_consignees.createMany({
@@ -480,33 +503,24 @@ export const salesContractsRouter = createTRPCRouter({
                     }
 
                     // Create SC Details
-                    let createdDetails: Awaited<ReturnType<typeof tx.sales_contract_details.findMany>> = [];
+                    let createdDetails: Awaited<ReturnType<typeof tx.sales_contract_details.createManyAndReturn>> = [];
 
                     if (input.details.length > 0) {
-                        await tx.sales_contract_details.createMany({
+                        createdDetails = await tx.sales_contract_details.createManyAndReturn({
                             data: input.details.map((detail) => ({
                                 sales_contract_id: newSalesContract.id,
                                 order_id: detail.order_id,
                             })),
                         });
 
-                        createdDetails = await tx.sales_contract_details.findMany({
-                            where: {
+                        queueHistoryJob({
+                            name: "sales_contract_details_added",
+                            data: {
                                 sales_contract_id: newSalesContract.id,
-                                order_id: {
-                                    in: input.details.map((detail) => detail.order_id),
-                                },
-                            },
-                        });
-
-                        await tx.sales_contract_details_history.createMany({
-                            data: createdDetails.map((detail) => ({
-                                sales_contract_id: newSalesContract.id,
-                                sales_contract_details_id: detail.id,
-                                order_id: detail.order_id,
-                                action_type: actions.ADDED,
+                                order_ids: input.details.map((detail) => detail.order_id),
+                                row_ids: createdDetails.map((detail) => detail.id),
                                 action_by: ctx.user.id,
-                            })),
+                            },
                         });
                     }
 
@@ -782,7 +796,7 @@ export const salesContractsRouter = createTRPCRouter({
                     });
                 }
 
-                return await transactionWithQueuedHistory(ctx.db, async (tx) => {
+                return await transactionWithQueuedHistory(ctx.db, async (tx, queueHistoryJob) => {
                     const updatedSalesContract = await tx.sales_contracts.update({
                         where: { id: input.id },
                         data: {
@@ -804,19 +818,19 @@ export const salesContractsRouter = createTRPCRouter({
                     await tx.sales_contracts_history.create({
                         data: {
                             sales_contracts_id: input.id,
-                            buyer_id: input.buyer_id,
+                            buyer_id: updatedSalesContract.buyer_id,
                             sales_contract_no: salesContract.sales_contract_no,
-                            factory_id: input.factory_id,
-                            sales_contract_date: input.sales_contract_date,
-                            buyer_bank_id: input.buyer_bank_id,
-                            supplier_bank_id: input.factory_bank_id,
-                            rdl_bank_id: input.rdl_bank_id,
-                            negotiation_bank_id: input.negotiation_bank_id,
-                            partial_shipment: input.partial_shipment,
-                            port_of_loading_id: input.destination_id,
-                            freight_term_id: input.freight_terms_id,
-                            company_id: input.company_id,
-                            contact_person_id: input.contact_person_id,
+                            factory_id: updatedSalesContract.factory_id,
+                            sales_contract_date: updatedSalesContract.sales_contract_date,
+                            buyer_bank_id: updatedSalesContract.buyer_bank_id,
+                            supplier_bank_id: updatedSalesContract.supplier_bank_id,
+                            rdl_bank_id: updatedSalesContract.rdl_bank_id,
+                            negotiation_bank_id: updatedSalesContract.negotiation_bank_id,
+                            partial_shipment: updatedSalesContract.partial_shipment,
+                            port_of_loading_id: updatedSalesContract.port_of_loading_id,
+                            freight_term_id: updatedSalesContract.freight_term_id,
+                            company_id: updatedSalesContract.company_id,
+                            contact_person_id: updatedSalesContract.contact_person_id,
                             action_type: actions.UPDATE,
                             action_by: ctx.user.id,
                         },
@@ -913,34 +927,25 @@ export const salesContractsRouter = createTRPCRouter({
                     );
 
                     let createdDetails: Awaited<
-                        ReturnType<typeof tx.sales_contract_details.findMany>
+                        ReturnType<typeof tx.sales_contract_details.createManyAndReturn>
                     > = [];
 
                     if (detailsToAdd.length > 0) {
-                        await tx.sales_contract_details.createMany({
+                        createdDetails = await tx.sales_contract_details.createManyAndReturn({
                             data: detailsToAdd.map(detail => ({
                                 sales_contract_id: input.id,
                                 order_id: detail.order_id,
                             })),
                         });
 
-                        createdDetails = await tx.sales_contract_details.findMany({
-                            where: {
+                        queueHistoryJob({
+                            name: "sales_contract_details_added",
+                            data: {
                                 sales_contract_id: input.id,
-                                order_id: {
-                                    in: detailsToAdd.map(detail => detail.order_id),
-                                },
-                            },
-                        });
-
-                        await tx.sales_contract_details_history.createMany({
-                            data: createdDetails.map(detail => ({
-                                sales_contract_id: input.id,
-                                sales_contract_details_id: detail.id,
-                                order_id: detail.order_id,
-                                action_type: actions.ADDED,
+                                order_ids: detailsToAdd.map((detail) => detail.order_id),
+                                row_ids: createdDetails.map((detail) => detail.id),
                                 action_by: ctx.user.id,
-                            })),
+                            },
                         });
                     }
 

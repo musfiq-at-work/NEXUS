@@ -8,6 +8,8 @@ const config = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // BullMQ's optional Valkey GLIDE adapter loads native .node binaries.
+  serverExternalPackages: ["bullmq", "@valkey/valkey-glide"],
   
   webpack: (config) => {
       config.resolve.alias.canvas = false;

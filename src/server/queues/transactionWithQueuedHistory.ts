@@ -1,15 +1,20 @@
 import { Prisma } from "@prisma/client";
 import type { PrismaClient } from "@prisma/client";
 import { historyQueue } from "~/server/queues/history.queue";
+import type { HistoryLookupJob } from "~/server/queues/historyLookupJobs";
 
 type HistoryWrite = { model: string; data: unknown };
 
 export async function transactionWithQueuedHistory<T>(
     db: PrismaClient,
-    callback: (tx: Prisma.TransactionClient) => Promise<T>,
+    callback: (
+        tx: Prisma.TransactionClient,
+        queueHistoryJob: (job: HistoryLookupJob) => void,
+    ) => Promise<T>,
     options?: { maxWait?: number; timeout?: number; isolationLevel?: Prisma.TransactionIsolationLevel },
 ): Promise<T> {
     const historyWrites: HistoryWrite[] = [];
+    const historyJobs: HistoryLookupJob[] = [];
     const result = await db.$transaction(async (transaction) => {
         const tx = new Proxy(transaction, {
             get(target, property) {
@@ -35,23 +40,31 @@ export async function transactionWithQueuedHistory<T>(
             },
         }) as Prisma.TransactionClient;
 
-        return callback(tx);
+        return callback(tx, (job) => {
+            job.data.action_at ??= new Date().toISOString();
+            historyJobs.push(job);
+        });
     }, options);
 
-    if (historyWrites.length === 0) return result;
+    if (historyWrites.length === 0 && historyJobs.length === 0) return result;
 
     const countsByModel = historyWrites.reduce<Record<string, number>>((counts, write) => {
         counts[write.model] = (counts[write.model] ?? 0) + 1;
         return counts;
     }, {});
+    for (const job of historyJobs) {
+        countsByModel[job.name] = (countsByModel[job.name] ?? 0) + 1;
+    }
     console.info("[history-queue] Transaction committed; enqueueing history writes", {
-        count: historyWrites.length,
+        count: historyWrites.length + historyJobs.length,
         countsByModel,
     });
 
-    const jobs = historyWrites.map((write) => ({
-        name: write.model,
-        data: write.data,
+    const jobs = [
+        ...historyWrites.map((write) => ({ name: write.model, data: write.data })),
+        ...historyJobs,
+    ].map((job) => ({
+        ...job,
         opts: {
             attempts: 5,
             backoff: { type: "exponential" as const, delay: 1000 },
@@ -67,7 +80,7 @@ export async function transactionWithQueuedHistory<T>(
         });
     } catch (error) {
         console.error("[history-queue] Failed to enqueue history writes", {
-            count: historyWrites.length,
+            count: jobs.length,
             error,
         });
         throw error;

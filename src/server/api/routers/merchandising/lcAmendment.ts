@@ -879,7 +879,7 @@ export const lcAmendmentRouter = createTRPCRouter({
 					});
 				}
 
-				return await transactionWithQueuedHistory(ctx.db, async (tx) => {
+				return await transactionWithQueuedHistory(ctx.db, async (tx, queueHistoryJob) => {
 
 					// Get Amendment
 					const existingLcAmendment = await tx.lc_amendment.findUnique({
@@ -1059,26 +1059,16 @@ export const lcAmendmentRouter = createTRPCRouter({
 							})),
 						});
 
-						const createdAmendmentOrders = await tx.lc_amendment_orders.findMany({
-								where: {
-									lc_amendment_id: input.id,
-									order_id: {
-										in: amendmentOrdersToAdd.map(
-											order => order.order_id
-										),
-									},
-								},
-							});
-
-						await tx.lc_amendment_orders_history.createMany({
-							data: createdAmendmentOrders.map(order => ({
-								lc_amendment_id: order.lc_amendment_id,
-								order_id: order.order_id,
-								lc_amendment_orders_id: order.id,
-								dm_pi_no: order.dm_pi_no,
-								action_type: actions.ADDED,
+						queueHistoryJob({
+							name: "lc_amendment_orders_added",
+							data: {
+								lc_amendment_id: input.id,
+								orders: amendmentOrdersToAdd.map((order) => ({
+									order_id: order.order_id,
+									dm_pi_no: order.pi_no ?? null,
+								})),
 								action_by: ctx.user.id,
-							})),
+							},
 						});
 					}
 
@@ -1203,27 +1193,16 @@ export const lcAmendmentRouter = createTRPCRouter({
 							})),
 						});
 
-						const createdLcOrders = await tx.lc_orders.findMany({
-							where: {
-								lc_master_id:
-									existingLcAmendment.lc_id,
-								order_id: {
-									in: lcOrdersToAdd.map(
-										order => order.order_id
-									),
-								},
-							},
-						});
-
-						await tx.lc_orders_history.createMany({
-							data: createdLcOrders.map(order => ({
-								lc_master_id: order.lc_master_id,
-								order_id: order.order_id,
-								lc_orders_id: order.id,
-								dm_pi_no: order.dm_pi_no,
-								action_type: actions.ADDED,
+						queueHistoryJob({
+							name: "lc_orders_added",
+							data: {
+								lc_master_id: existingLcAmendment.lc_id,
+								orders: lcOrdersToAdd.map((order) => ({
+									order_id: order.order_id,
+									dm_pi_no: order.pi_no ?? null,
+								})),
 								action_by: ctx.user.id,
-							})),
+							},
 						});
 					}
 
