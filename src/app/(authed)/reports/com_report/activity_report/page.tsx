@@ -15,7 +15,7 @@ const currentTime = new Date().toLocaleTimeString('en-US', {
 	hour12: true
 }).replace(':', '-');
 
-const OrderSummaryReportPage = () => {
+const CommercialActivityReportPage = () => {
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +26,7 @@ const OrderSummaryReportPage = () => {
 	const getPdfDataMutation = api.activityReportRouter.getCommercialActivityReport.useMutation({
 		onSuccess: async () => {
             setError(null);
-            toast.success("Order Summary Report generated successfully!");
+            toast.success("Commercial Activity Report generated successfully!");
         }
     });
   
@@ -95,4 +95,4 @@ const OrderSummaryReportPage = () => {
 	)
 }
 
-export default OrderSummaryReportPage;
+export default CommercialActivityReportPage;
