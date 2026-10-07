@@ -9,25 +9,27 @@ export const notificationsRouter = createTRPCRouter({
 			const [items, unreadCount] = await Promise.all([
 				ctx.db.notifications.findMany({
 					where,
-					orderBy: { created_at: "desc" },
+					orderBy: { added_at: "desc" },
 					take: input.limit,
 				}),
-				ctx.db.notifications.count({ where: { ...where, read_at: null } }),
+				ctx.db.notifications.count({ where: { ...where, marked_at: null } }),
 			]);
 			return { items, unreadCount };
 		}),
+		
 	markRead: protectedProcedure
 		.input(z.object({ id: z.string().uuid() }))
 		.mutation(({ ctx, input }) =>
 			ctx.db.notifications.updateMany({
-				where: { id: input.id, recipient_id: ctx.user.id, read_at: null },
-				data: { read_at: new Date() },
+				where: { id: input.id, recipient_id: ctx.user.id, marked_at: null },
+				data: { marked_at: new Date() },
 			}),
 		),
+		
 	markAllRead: protectedProcedure.mutation(({ ctx }) =>
 		ctx.db.notifications.updateMany({
-			where: { recipient_id: ctx.user.id, read_at: null },
-			data: { read_at: new Date() },
+			where: { recipient_id: ctx.user.id, marked_at: null },
+			data: { marked_at: new Date() },
 		}),
 	),
 });

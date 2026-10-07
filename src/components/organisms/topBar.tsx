@@ -3,10 +3,11 @@ import React, { useState } from "react";
 import { toast } from "sonner";
 import { useDecodedUser } from "~/hooks";
 import { api } from "~/trpc/react";
-import { logoutIcon, notificationIcon } from "~/assets";
+import { logoutIcon } from "~/assets";
 import Popup from "../templates/Popup";
 import Image from "next/image";
 import OfflineBanner from "./OfflineBanner";
+import NotificationCenter from "./NotificationCenter";
 
 const TopBar = () => {        
     const { user } = useDecodedUser();
@@ -53,10 +54,7 @@ const TopBar = () => {
         <div className='fixed top-1 mt-2 right-4 flex flex-row items-center justify-between rounded-full backdrop-blur-md z-50'>
             <OfflineBanner />
             <div className='flex flex-row items-center justify-between rounded-full backdrop-blur-md z-50 pl-2 shadow-sm bg-background/40'>
-                <Image src={notificationIcon.src} alt="notification" width={20} height={20}
-                    className='w-9 h-9 mx-2 my-2 cursor-pointer rounded-full'
-                    onClick={() => toast('Notification panel coming soon!')}
-                />  
+                <NotificationCenter />
                 {/* <Image src={userIcon.src} alt="notification" width={20} height={20}
                     className='w-9 h-9 ml-2 rounded-full'
                 />                 */}
