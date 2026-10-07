@@ -8,7 +8,8 @@ import { db } from "~/server/db";
 
 import { getRedis } from "~/server/redis";
 
-const cacheKey = "permissions:all";
+const getPermissionsCacheKey = (levelId: number, departmentId: number | null) =>
+	`permissions:${levelId}:${departmentId}`;
 
 const getPermissions = async (database: typeof db, levelId: number, departmentId: number) => {
 	const permissionsObject = await database.level_permission.findMany({
@@ -72,6 +73,10 @@ export const permissionRouter = createTRPCRouter({
 	)
   	.query(async ({ ctx, input }) => {
 		const redis = await getRedis();
+		const cacheKey = getPermissionsCacheKey(
+			parseInt(input.level_id),
+			parseInt(input.department_id),
+		);
 		const cached = redis ? await redis.get(cacheKey) : null;
 
 		if (cached) {
@@ -113,6 +118,11 @@ export const permissionRouter = createTRPCRouter({
         }
 
         try {
+			const affectedPermissions = await ctx.db.level_permission.findMany({
+				where: { id: { in: Object.keys(input.permissions) } },
+				select: { level_id: true, department_id: true },
+			});
+
 			await Promise.all(
 				Object.entries(input.permissions).map(async ([id, permission]) => {
 
@@ -135,7 +145,15 @@ export const permissionRouter = createTRPCRouter({
 			);
 
 			const redis = await getRedis();
-			await Promise.all([redis?.del(cacheKey), invalidateAuthPermissionsCache()]);
+			const cacheKeys = new Set(
+				affectedPermissions.map(({ level_id, department_id }) =>
+					getPermissionsCacheKey(level_id, department_id)
+				)
+			);
+			await Promise.all([
+				...[...cacheKeys].map((key) => redis?.del(key)),
+				invalidateAuthPermissionsCache(),
+			]);
         }
         catch (error) {
             await logError(error, ctx, input);
@@ -262,7 +280,15 @@ export const permissionRouter = createTRPCRouter({
 			);
 
 			const redis = await getRedis();
-			await Promise.all([redis?.del(cacheKey), invalidateAuthPermissionsCache()]);
+			const cacheKeys = new Set(
+				input.map((permission) =>
+					getPermissionsCacheKey(permission.level_id, permission.department_id)
+				)
+			);
+			await Promise.all([
+				...[...cacheKeys].map((key) => redis?.del(key)),
+				invalidateAuthPermissionsCache(),
+			]);
         }
         catch (error) {
             await logError(error, ctx, input);
