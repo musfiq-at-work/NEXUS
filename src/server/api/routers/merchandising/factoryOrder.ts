@@ -9,6 +9,7 @@ import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings
 import { formatDate } from "~/utils/localDateString";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 import type { FactoryOrderRow, GetPDFDataOutput, FactoryOrdersPoDetails } from './_types/factoryOrder';
+import { notificationQueue } from "~/server/queues/notification.queue";
 
 export const factoryOrderRouter = createTRPCRouter({
     getFactoryOrders: protectedProcedure
@@ -1001,6 +1002,18 @@ export const factoryOrderRouter = createTRPCRouter({
                             action_type: actions.UPDATE,
                             order_id: factoryOrder.order_id,
                             approval_status: input.approval_status,
+                        },
+                    });
+
+                    await notificationQueue.add("factory-order-submitted", {
+                        factoryOrderId: input.factoryOrderId,
+                        approval_status: input.approval_status,
+                        action_by: ctx.user.id,
+                    }, {
+                        attempts: 5,
+                        backoff: {
+                            type: "exponential",
+                            delay: 1000,
                         },
                     });
 
