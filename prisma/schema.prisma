@@ -1122,7 +1122,7 @@ model team_members_history {
 model teams {
   id            Int             @id @default(autoincrement())
   buyer_id      Int?
-  team_name     String          @db.VarChar(55)
+  team_name     String          @unique(map: "unique_team_name") @db.VarChar(55)
   added_at      DateTime?       @default(now()) @db.Timestamp(6)
   buyer_orders  buyer_orders[]
   team_members  team_members[]

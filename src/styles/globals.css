@@ -28,6 +28,8 @@
 
   --color-background: var(--color-gray-100);
   --color-sidebar: var(--color-slate-950);
+
+  --color-warning: var(--color-amber-400);
   
   --color-white: #FFFFFF;
   --color-black: #000000;

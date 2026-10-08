@@ -55,9 +55,7 @@ const TopBar = () => {
             <OfflineBanner />
             <div className='flex flex-row items-center justify-between rounded-full backdrop-blur-md z-50 pl-2 shadow-sm bg-background/40'>
                 <NotificationCenter />
-                {/* <Image src={userIcon.src} alt="notification" width={20} height={20}
-                    className='w-9 h-9 ml-2 rounded-full'
-                />                 */}
+                
                 <div className="ml-4 text-center ">
                     <p className='font-semibold capitalize'>{user?.first_name} {user?.last_name}</p>
                     <span className='flex flex-row gap-2'>

@@ -22,7 +22,7 @@ const NotificationTrigger = ({open, unreadCount, onClick }: NotificationTriggerP
 			{unreadCount > 0 && (
 				<span
 					aria-hidden="true"
-					className="bg-primary ring-background absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white ring-2"
+					className="bg-red ring-background absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white ring-2"
 				>
 					{unreadCount > 99 ? "99+" : unreadCount}
 				</span>
