@@ -6,7 +6,8 @@ import { tableFormColumns as stylesTableFormColumns } from "../../styleConfig/ta
 import { api } from "~/trpc/react";
 import { toast } from "sonner";
 import { parseTRPCError } from "~/utils/parseTRPCError";
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
+import { skipToken } from "@tanstack/react-query";
 
 type Props = {
     methods: ReturnType<typeof useBuyerOrderForm>['methods'];
@@ -58,13 +59,20 @@ const StylesDetails = ({ methods, validationError, disabled = false }: Props) =>
         }
     }, [deleteStylesMutation, removeStyle, styleFields]);
 
+    const order_id = methods.getValues("order.db_id");
+
+    const { data: hasCommissionDistribution } = api.buyerOrders.hasCommissionDistribution.useQuery(
+        !!order_id ? {id: order_id } : skipToken 
+    )
+
+
     return (
         <TableForm 
             name="order.styles"
             rows={styleFields}
             columns={stylesTableFormColumns}
             register={methods.register}
-            addRow={stylesAddRow}
+            addRow={!hasCommissionDistribution ? stylesAddRow : () => toast.error("Cannot add new Style: Commission Distribution exists for this order.")}
             removeRow={stylesRemoveRow}
             disabled={disabled}
             methods={methods}

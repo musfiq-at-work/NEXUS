@@ -16,13 +16,14 @@ const NotificationTrigger = ({open, unreadCount, onClick }: NotificationTriggerP
 			aria-haspopup="dialog"
 			aria-controls={open ? "notification-panel" : undefined}
 			onClick={onClick}
-			className="relative mx-2 my-4 size-9"
+			className="relative mx-2 my-2 size-10"
         >
-          	<Image src={notificationIcon.src} alt="" width={30} height={30} />
+          	<Image src={notificationIcon.src} alt="" width={40} height={40} className="hover:bg-gray-300 p-1 rounded-full"/>
 			{unreadCount > 0 && (
 				<span
 					aria-hidden="true"
-					className="bg-red ring-background absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white ring-2"
+					className="bg-red ring-background absolute -top-1 -right-1 flex h-4 min-w-4 items-center 
+						justify-center rounded-full px-1 text-[10px] font-semibold text-white ring-2"
 				>
 					{unreadCount > 99 ? "99+" : unreadCount}
 				</span>

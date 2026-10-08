@@ -227,6 +227,13 @@ const ShipmentDetails = (props: props) => {
         </div>
     );
 
+    const order_id = methods.getValues("order.db_id");
+
+    const { data: hasCommissionDistribution } = api.buyerOrders.hasCommissionDistribution.useQuery(
+        !!order_id ? {id: order_id } : skipToken 
+    )
+    
+
     return (
         <TableForm 
             title={<ShipmentHeading />}
@@ -234,7 +241,7 @@ const ShipmentDetails = (props: props) => {
             rows={shipmentFields}
             columns={shipmentTableFormColumns}
             register={methods.register}
-            addRow={addShipmentRow}
+            addRow={!hasCommissionDistribution ? addShipmentRow : () => toast.error("Cannot add new shipment: Commission Distribution exists for this order.")}
             removeRow={removeShipmentRow}
             copyRow={copyShipmentRow}
             disabled={disabled}

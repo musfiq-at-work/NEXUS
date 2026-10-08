@@ -9,7 +9,7 @@ import NotificationTrigger from "../molecules/NotificationTrigger";
 import SidePanel from "../molecules/SidePanel";
 
 export default function NotificationCenter() {
-	const [open, setOpen] = useState(true);
+	const [open, setOpen] = useState(false);
 	const close = useCallback(() => setOpen(false), []);
 	const { filter, setFilter, counts, visibleNotifications, markRead, dismiss } = useNotifications();
 

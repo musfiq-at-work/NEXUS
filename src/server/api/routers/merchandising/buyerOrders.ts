@@ -1376,6 +1376,29 @@ export const buyerOrdersRouter = createTRPCRouter({
             }
         }),
 
+    hasCommissionDistribution: protectedProcedure
+        .input(z.object({
+            id: z.string().uuid(),
+        }))
+        .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.BUYER_ORDERS]?.can_view;
+
+            if (!can_view) {
+                throw new TRPCError({ 
+                    code: 'FORBIDDEN', 
+                    message: 'You do not have permission to view buyer orders.' 
+                });
+            }
+
+            const hasCommissionDistribution = await ctx.db.commission_distributions.findUnique({
+                where: {
+                    order_id: input.id,
+                },
+            });
+
+            return !!hasCommissionDistribution?.id;
+        }),
+
     getPDFData: protectedProcedure
         .input(z.object({
             id: z.string().uuid(),

@@ -12,6 +12,7 @@ import type { shipment_modes } from "@prisma/client";
 import { printingWhiteIcon } from "~/assets";
 import PhotoContainer from "../../components/photoComponents/PhotoContainer";
 import type { ParamsProp } from "~/types/params";
+import { skipToken } from "@tanstack/react-query";
 
 const EditBuyerOrderPage = ({ params }: ParamsProp) => {
     const { id } = React.use(params);
@@ -43,6 +44,12 @@ const EditBuyerOrderPage = ({ params }: ParamsProp) => {
             ]);
         },
     });
+
+    const order_id = methods.getValues("order.db_id");
+    
+    const { data: hasCommissionDistribution } = api.buyerOrders.hasCommissionDistribution.useQuery(
+        !!order_id ? {id: order_id } : skipToken 
+    )
 
     // Handle form submission for all fields
     const onSubmitAll = useCallback(handleSubmit(async (buyerOrderData) => {
@@ -135,6 +142,7 @@ const EditBuyerOrderPage = ({ params }: ParamsProp) => {
                 control={control}
                 disabled={!can_update || isApprovedInFactoryOrder}
             />
+
             <StylesDetails 
                 methods={methods}
                 validationError={validationError.order ?? {}}
@@ -148,6 +156,12 @@ const EditBuyerOrderPage = ({ params }: ParamsProp) => {
                 message="Factory order has been approved for this order and cannot be updated." 
                 active={isApprovedInFactoryOrder} 
                 type="secondary" 
+            />
+
+            <MessageBox 
+                message="This order has commission distribution, no new styles or shipments can be added." 
+                active={!!hasCommissionDistribution} 
+                type="error" 
             />
             
             <div className="w-full flex flex-row justify-end">
