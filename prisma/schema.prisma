@@ -256,11 +256,12 @@ model users {
 
 model notifications {
   id           String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title        String             @db.VarChar(30)
+  title        String             @db.VarChar(70)
   body         String
   recipient_id String             @db.Uuid
   module_id    Int?
   target_id    String?            @db.VarChar(50)
+  slug         String?
   event_type   notification_types
   is_marked    Boolean?           @default(false)
   marked_at    DateTime?          @db.Timestamp(6)
