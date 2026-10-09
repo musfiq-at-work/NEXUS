@@ -22,14 +22,14 @@ export const notificationsRouter = createTRPCRouter({
 		.mutation(({ ctx, input }) =>
 			ctx.db.notifications.updateMany({
 				where: { id: input.id, recipient_id: ctx.user.id, marked_at: null },
-				data: { marked_at: new Date() },
+				data: { marked_at: new Date(), is_marked: true },
 			}),
 		),
 		
 	markAllRead: protectedProcedure.mutation(({ ctx }) =>
 		ctx.db.notifications.updateMany({
 			where: { recipient_id: ctx.user.id, marked_at: null },
-			data: { marked_at: new Date() },
+			data: { marked_at: new Date(), is_marked: true },
 		}),
 	),
 });
