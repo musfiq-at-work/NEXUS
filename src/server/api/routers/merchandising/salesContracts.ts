@@ -9,6 +9,7 @@ import { amountToWords, currencyFormatter, quantityFormatter } from "~/utils/loc
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 import { formatDate } from "~/utils/localDateString";
 import type { SalesContractResponse, SalesContractPDFHeaderData } from "./_types/salesContract";
+import { notificationQueue } from "~/server/queues/notification.queue";
 
 export const formatColorQty = (items: { colors: { name: string }; quantity: number }[]): string => {
     const map = items.reduce((acc, item) => {
@@ -1205,7 +1206,21 @@ export const salesContractsRouter = createTRPCRouter({
                                 action_type: actions.UPDATE,
                                 action_by: ctx.user.id,
                             }
-                        })
+                        });
+
+                        await notificationQueue.add("sales-contract-submitted", {
+                            sales_contract_id: input.id,
+                            approval_status: input.approval_status,
+                            action_by: `${ctx.user.first_name} ${ctx.user.last_name}`,
+                            level_id: ctx.user.level_id,
+                        }, {
+                            attempts: 5,
+                            backoff: {
+                                type: "exponential",
+                                delay: 1000,
+                            },
+                        });
+                        
                     }
                 }, {timeout: 30000})
             }

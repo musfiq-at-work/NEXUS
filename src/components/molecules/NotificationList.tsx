@@ -44,7 +44,7 @@ const NotificationList = (props: NotificationListProps) => {
         return (
             <div className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center" role="status">
                 <p className="font-medium text-gray-900">No notifications here</p>
-                <p className="mt-2 text-sm text-gray-500">Try another filter or check back later.</p>
+                <p className="mt-2 text-sm text-gray-500">Check back later.</p>
             </div>
         );
     }

@@ -1009,6 +1009,7 @@ export const factoryOrderRouter = createTRPCRouter({
                         factoryOrderId: input.factoryOrderId,
                         approval_status: input.approval_status,
                         action_by: `${ctx.user.first_name} ${ctx.user.last_name}`,
+                        level_id: ctx.user.level_id,
                     }, {
                         attempts: 5,
                         backoff: {

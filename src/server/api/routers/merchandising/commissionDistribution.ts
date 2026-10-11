@@ -8,6 +8,7 @@ import { actions, Prisma } from "@prisma/client";
 import { currencyFormatter, quantityFormatter } from "~/utils/localNumberStrings";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 import type { CommissionDistribution, CommissionDistributionDetail, PDFHeader, PDFDetail } from './_types/commissionDestribution';
+import { notificationQueue } from "~/server/queues/notification.queue";
 
 export const commissionDistributionRouter = createTRPCRouter({
     getCommissionDistribution: protectedProcedure
@@ -423,6 +424,19 @@ export const commissionDistributionRouter = createTRPCRouter({
                         WHERE CD.id = ${newDistribution.id};
                     `;
 
+                    await notificationQueue.add("commission-distribution-submitted", {
+                        commission_distribution_id: newDistribution.id,
+                        approval_status: -1,
+                        action_by: `${ctx.user.first_name} ${ctx.user.last_name}`,
+                        level_id: ctx.user.level_id,
+                    }, {
+                        attempts: 5,
+                        backoff: {
+                            type: "exponential",
+                            delay: 1000,
+                        },
+                    });
+
                     return newDistribution;
                 }, {timeout: 30000});
             }
@@ -750,6 +764,20 @@ export const commissionDistributionRouter = createTRPCRouter({
                             action_by: ctx.user.id,
                         },
                     });
+
+                    await notificationQueue.add("commission-distribution-submitted", {
+                        commission_distribution_id: input.id,
+                        approval_status: input.approval_status,
+                        action_by: `${ctx.user.first_name} ${ctx.user.last_name}`,
+                        level_id: ctx.user.level_id,
+                    }, {
+                        attempts: 5,
+                        backoff: {
+                            type: "exponential",
+                            delay: 1000,
+                        },
+                    });
+
                     return updated;
                 });
 

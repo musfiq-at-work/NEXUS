@@ -99,7 +99,6 @@ const EditSalesContractPage = ({ params }: ParamsProp) => {
 
     const approveSalesContract = api.salesContracts.approveSalesContract.useMutation({
         onSuccess: async () => {
-            toast.success("Sales Contract approved successfully!");
             await Promise.all([
                 utils.salesContracts.getSalesContractById.invalidate({ id: id }),
                 utils.salesContracts.getSalesContracts.invalidate(),
@@ -123,6 +122,19 @@ const EditSalesContractPage = ({ params }: ParamsProp) => {
                 approval_status: status,
                 previous_approval_status: authorizations?.authorization?.approval_status ?? 0,
             });
+
+            if(status === 1) {
+                toast.success("Sales Contract sent for approval successfully!");
+            }
+            else if(status === 0) {
+                toast.success("Sales Contract unauthorized successfully!");
+            }
+            else if(status === 2) {
+                toast.success("Sales Contract authorized successfully!");
+            }
+            else {
+                toast.success("Sales Contract approval status updated successfully!");
+            }
         }
         catch (error) {
             const message = parseTRPCError(error);

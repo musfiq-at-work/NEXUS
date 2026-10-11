@@ -5,14 +5,14 @@ import type { HistoryLookupJob } from "~/server/queues/historyLookupJobs";
 
 type HistoryWrite = { model: string; data: unknown };
 
-export async function transactionWithQueuedHistory<T>(
+export const transactionWithQueuedHistory = async <T>(
     db: PrismaClient,
     callback: (
         tx: Prisma.TransactionClient,
         queueHistoryJob: (job: HistoryLookupJob) => void,
     ) => Promise<T>,
     options?: { maxWait?: number; timeout?: number; isolationLevel?: Prisma.TransactionIsolationLevel },
-): Promise<T> {
+): Promise<T> => {
     const historyWrites: HistoryWrite[] = [];
     const historyJobs: HistoryLookupJob[] = [];
     const result = await db.$transaction(async (transaction) => {
