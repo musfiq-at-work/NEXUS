@@ -139,7 +139,7 @@ textarea {
 }
 
 *::-webkit-scrollbar-thumb {
-  @apply bg-gray-400 rounded-full border-2 border-solid border-gray-100;
+  @apply bg-linear-to-t from-primary to-secondary rounded-full border-2 border-solid border-gray-100;
 }
 
 *::-webkit-scrollbar-thumb:hover {

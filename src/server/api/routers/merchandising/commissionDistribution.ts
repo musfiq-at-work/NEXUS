@@ -767,9 +767,8 @@ export const commissionDistributionRouter = createTRPCRouter({
 
                     await notificationQueue.add("commission-distribution-submitted", {
                         commission_distribution_id: input.id,
-                        approval_status: input.approval_status,
-                        action_by: `${ctx.user.first_name} ${ctx.user.last_name}`,
-                        level_id: ctx.user.level_id,
+                        approval_status: input.approval_status ? 1 : 0,
+                        action_by: `${ctx.user.first_name} ${ctx.user.last_name}`
                     }, {
                         attempts: 5,
                         backoff: {
