@@ -50,10 +50,7 @@ const NotificationList = (props: NotificationListProps) => {
     }
 
     return (
-        <ul
-            aria-label="Notifications"
-            className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pt-3 pr-4 pb-[calc(5rem+env(safe-area-inset-bottom))] pl-4"
-        >
+        <ul aria-label="Notifications" className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 pt-3 pb-4">
             {notifications.map((notification) => (
                 <li key={notification.id}>
                     <NotificationCard notification={notification} isMarkingRead={isMarkingRead} onMarkRead={onMarkRead} onDismiss={onDismiss} onOpen={onOpen} />

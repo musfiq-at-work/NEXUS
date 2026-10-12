@@ -17,7 +17,7 @@ const Filter = (props: Props) => {
     }
 
     return (
-        <div className={`flex w-full items-center justify-end gap-2 rounded-xl border-2 
+        <div className={`flex w-full items-center justify-end gap-2 rounded-lg border-2 
             bg-white/70 pl-3 backdrop-blur-sm transition-colors sm:w-auto 
             ${ filter !== -1 ? 'border-secondary' : 'border-slate-200' }`
         }>

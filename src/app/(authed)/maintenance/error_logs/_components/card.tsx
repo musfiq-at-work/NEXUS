@@ -54,7 +54,7 @@ export default function ErrorCard({ error }: ErrorCardProps) {
     const isTRPCError = error.error_name === 'TRPCError';
 
     return (
-        <div className="overflow-hidden rounded-xl border border-red-200 bg-white shadow mb-4 m-2">
+        <div className="overflow-hidden rounded-lg border border-red-200 bg-white shadow mb-4 m-2">
             {/* Header */}
             <div className="flex items-center justify-between border-b border-red-200 bg-red-50 px-6 py-4">
                 <div className="flex items-center gap-4">

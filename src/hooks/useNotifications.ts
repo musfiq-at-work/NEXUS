@@ -9,11 +9,13 @@ import { parseTRPCError } from "~/utils/parseTRPCError";
 
 export default function useNotifications(open = false) {
     const [filter, setFilter] = useState<NotificationFilter>("unread");
+    const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null);
+    const [page, setPage] = useState(1);
     const [dismissedIds, setDismissedIds] = useState<string[]>([]);
     const seenNotificationIds = useRef<Set<string> | null>(null);
     const utils = api.useUtils();
-    const { data, isPending, isError, isFetching, refetch } = api.notifications.list.useQuery(
-        { limit: 50 },
+    const { data: latestData } = api.notifications.list.useQuery(
+        { page: 1, filter: "all", moduleId: null, dismissedIds: [] },
         {
             refetchInterval: 30_000,
             refetchOnWindowFocus: true,
@@ -21,20 +23,27 @@ export default function useNotifications(open = false) {
             retry: 1,
         },
     );
+    const { data, isPending, isError, isFetching, refetch } = api.notifications.list.useQuery(
+        { page, filter, moduleId: selectedModuleId, dismissedIds },
+        {
+            enabled: open,
+            staleTime: 0,
+            refetchInterval: open ? 30_000 : false,
+            refetchOnWindowFocus: true,
+            refetchOnReconnect: true,
+            retry: 1,
+        },
+    );
 
     useEffect(() => {
-        if (open) void refetch();
-    }, [open, refetch]);
-
-    useEffect(() => {
-        if (!data) return;
+        if (!latestData) return;
 
         if (seenNotificationIds.current === null) {
-            seenNotificationIds.current = new Set(data.items.map((notification) => notification.id));
+            seenNotificationIds.current = new Set(latestData.items.map((notification) => notification.id));
             return;
         }
 
-        for (const notification of data.items) {
+        for (const notification of latestData.items) {
             if (seenNotificationIds.current.has(notification.id)) continue;
             seenNotificationIds.current.add(notification.id);
 
@@ -46,7 +55,18 @@ export default function useNotifications(open = false) {
                 duration: 6000,
             });
         }
-    }, [data]);
+    }, [latestData]);
+
+    useEffect(() => {
+        if (data && data.page !== page) setPage(data.page);
+    }, [data, page]);
+
+    useEffect(() => {
+        if (selectedModuleId === null || !latestData || latestData.modules.some((module) => module.id === selectedModuleId)) return;
+
+        setSelectedModuleId(null);
+        setPage(1);
+    }, [latestData, selectedModuleId]);
 
     const markReadMutation = api.notifications.markRead.useMutation({
         onSuccess: () => utils.notifications.list.invalidate(),
@@ -60,18 +80,19 @@ export default function useNotifications(open = false) {
 
     const isMarkingRead = markReadMutation.isPending || markAllReadMutation.isPending;
     const notifications = (data?.items ?? []).filter((notification) => !dismissedIds.includes(notification.id));
+    const unreadCount = latestData?.unreadCount ?? data?.unreadCount ?? 0;
+    const counts = data?.counts ?? { all: 0, unread: 0, system: 0 };
+    const modules = latestData?.modules ?? data?.modules ?? [];
 
-    const counts = {
-        all: notifications.length,
-        unread: data?.unreadCount ?? 0,
-        system: notifications.filter((notification) => notification.module_id === null).length,
+    const changeFilter = (nextFilter: NotificationFilter) => {
+        setFilter(nextFilter);
+        setPage(1);
     };
 
-    const visibleNotifications = notifications.filter((notification) => {
-        if (filter === "unread") return notification.is_marked === false;
-        if (filter === "system") return notification.module_id === null;
-        return true;
-    });
+    const changeModule = (moduleId: number | null) => {
+        setSelectedModuleId(moduleId);
+        setPage(1);
+    };
 
     const markRead = (id?: string) => {
         if (isMarkingRead) return;
@@ -96,16 +117,24 @@ export default function useNotifications(open = false) {
 
     return {
         filter,
-        setFilter,
+        setFilter: changeFilter,
+        selectedModuleId,
+        setSelectedModuleId: changeModule,
+        modules,
+        page: data?.page ?? page,
+        pageSize: data?.pageSize ?? latestData?.pageSize ?? 0,
+        total: data?.total ?? 0,
+        totalPages: data?.totalPages ?? 1,
+        setPage,
         counts,
-        visibleNotifications,
+        unreadCount,
+        visibleNotifications: notifications,
         markRead,
         dismiss,
         isLoading: isPending,
         hasError: isError,
         isRefreshing: isFetching,
         isMarkingRead,
-        isAtLimit: data?.items.length === 50,
         refresh: () => {
             void refetch();
         },

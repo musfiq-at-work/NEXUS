@@ -31,7 +31,7 @@ const NotificationCard = (props: NotificationCardProps) => {
     const href = slug ? `/${slug.replace(/^\/+/, "")}` : null;
 
     return (
-        <article className={clsx("relative flex h-full flex-row gap-3 rounded-xl bg-white p-3 shadow-sm")}>
+        <article className={clsx("relative flex h-full flex-row gap-3 rounded-lg bg-white p-3 shadow-sm")}>
             <span className={clsx("w-1.5 shrink-0 self-stretch rounded-lg", notificationStyles[event_type])} />
             <div className="min-w-0 flex-1">
                 <div className="flex items-start gap-2">
@@ -43,7 +43,7 @@ const NotificationCard = (props: NotificationCardProps) => {
                                 if (!isMarked) onMarkRead(id);
                                 onOpen();
                             }}
-                            className="focus-visible:outline-primary min-w-0 flex-1 rounded py-1 text-sm leading-5 font-semibold text-gray-900 after:absolute after:inset-0 after:rounded-xl hover:underline focus-visible:outline-2"
+                            className="focus-visible:outline-primary min-w-0 flex-1 rounded py-1 text-sm leading-5 font-semibold text-gray-900 after:absolute after:inset-0 after:rounded-lg hover:underline focus-visible:outline-2"
                         >
                             {title}
                         </Link>
