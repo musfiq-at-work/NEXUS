@@ -257,14 +257,14 @@ export const lcAmendmentRouter = createTRPCRouter({
 
 					if (hasMoreRecentAmendment) {
 						throw new TRPCError({
-							code: "FORBIDDEN",	
+							code: "BAD_REQUEST",	
 							message: "This LC Amendment cannot be deleted as there are more recent amendments for the same LC.",
 						});
 					}
 
 					if (isAuthorized) {
 						throw new TRPCError({
-							code: "FORBIDDEN",
+							code: "BAD_REQUEST",
 							message: "This LC Amendment cannot be deleted as the associated LC is authorized.",
 						});
 					}

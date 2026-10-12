@@ -241,6 +241,29 @@ export const lcMasterRouter = createTRPCRouter({
                         }
                     });
 
+                    const hasExfactory = await tx.lc_shipments.findFirst({
+                        where: {
+                            shipment_details: {
+                                exfactory_shipments: {
+                                    some: {
+                                        shipment_details_id: {
+                                            in: lcShipmentDetails
+                                                .map((shipment) => shipment.shipment_details_id)
+                                                .filter((id): id is string => id !== null)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    if(hasExfactory) {
+                        throw new TRPCError({
+                            code: "BAD_REQUEST",
+                            message: "This LC cannot be deleted as there are shipments with ex-factory."
+                        });
+                    }
+
                     for (const shipment of lcShipmentDetails) {
                         await tx.lc_shipments_history.create({
                             data: {
@@ -421,7 +444,6 @@ export const lcMasterRouter = createTRPCRouter({
                         lc_id: newLC.id,
                         approval_status: -1,
                         action_by: `${ctx.user.first_name} ${ctx.user.last_name}`,
-                        level_id: ctx.user.level_id,
                     }, {
                         attempts: 5,
                         backoff: {
