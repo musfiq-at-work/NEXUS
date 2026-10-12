@@ -892,6 +892,11 @@ export const documentSubmissionRouter = createTRPCRouter({
                     });
                 }
 
+                input.rdlInvoices?.forEach((rdlInvoice) => {
+                    console.log("Updating document submission with input:", rdlInvoice.factoryInvoices);
+                })
+
+
                 return await transactionWithQueuedHistory(ctx.db, async (tx) => {
                     const updatedDocumentSubmission = await tx.document_submissions.update({
                         where: { id: input.id },
@@ -954,6 +959,15 @@ export const documentSubmissionRouter = createTRPCRouter({
                                             await tx.document_submission_factory_invoices.update({
                                                 where: { id: factoryInvoice.db_id },
                                                 data: {
+                                                    factory_fdbc_no: factoryInvoice.factory_fdbc_no,
+                                                }
+                                            });
+                                        }
+                                        else {
+                                            await tx.document_submission_factory_invoices.create({
+                                                data: {
+                                                    document_submissions_details_id: rdlInvoice.db_id!,
+                                                    factory_invoice_id: factoryInvoice.factory_invoice_id,
                                                     factory_fdbc_no: factoryInvoice.factory_fdbc_no,
                                                 }
                                             });
