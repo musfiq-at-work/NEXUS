@@ -7,6 +7,7 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma, shipment_modes } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
 import type { Exfactory, ExfactoryShipments, PendingExFactory } from "./_types/exfactory";
+import { notificationQueue } from "~/server/queues/notification.queue";
 
 export const exFactoryRouter = createTRPCRouter({
     getExFactories: protectedProcedure
@@ -446,6 +447,18 @@ export const exFactoryRouter = createTRPCRouter({
                             };
                         })
                     );
+
+                    await notificationQueue.add("exfactory-submitted", {
+                        exfactory_id: addedExfactory.id,
+                        approval_status: -1,
+                        action_by: `${ctx.user.first_name} ${ctx.user.last_name}`,
+                    }, {
+                        attempts: 5,
+                        backoff: {
+                            type: "exponential",
+                            delay: 1000,
+                        },
+                    });
 
                     return {
                         ...addedExfactory,
@@ -1118,6 +1131,19 @@ export const exFactoryRouter = createTRPCRouter({
                             action_by: ctx.user.id,
                         },
                     });
+
+                    await notificationQueue.add("exfactory-submitted", {
+                        exfactory_id: input.id,
+                        approval_status: input.approval_status ? 1 : 0,
+                        action_by: `${ctx.user.first_name} ${ctx.user.last_name}`,
+                    }, {
+                        attempts: 5,
+                        backoff: {
+                            type: "exponential",
+                            delay: 1000,
+                        },
+                    });
+
                     return updated;
                 });
 
