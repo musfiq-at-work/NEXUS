@@ -11,6 +11,7 @@ import type {
     RdlInvoiceListItem, ShipmentDetailForFactoryInvoice, FactoryInvoiceForRDLInvoice, 
     FactoryInvoicePDFTableItem, BankDetailsOfBeneficiary 
 } from './_types/rdlInvoice';
+import { notificationQueue } from "~/server/queues/notification.queue";
 
 export const rdlInvoiceRouter = createTRPCRouter({
     getRdlInvoice: protectedProcedure
@@ -581,6 +582,18 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         })
                     );
 
+                    await notificationQueue.add("rdl-Invoice-Submitted", {
+                        rdl_invoice_id: rdlInvoice.id,
+                        approval_status: -1,
+                        action_by: `${ctx.user.first_name} ${ctx.user.last_name}`,
+                    }, {
+                        attempts: 5,
+                        backoff: {
+                            type: "exponential",
+                            delay: 1000,
+                        },
+                    });
+
                     return rdlInvoice;
                 }, {timeout: 30000});
             }
@@ -632,16 +645,6 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         AND CRID.rdl_invoice_id = ${input.rdl_invoice_id}
                     `
                     : Prisma.empty;
-
-                // const invoiceFilter = input.rdl_invoice_id
-                //     ? Prisma.sql`
-                //         AND (
-                //             CRID.ID IS NULL
-                //             OR PI.FACTORY_INVOICE_ID IS NULL
-                //             OR COALESCE(PI.PREVIOUS_QUANTITY, 0)::NUMERIC(18,2) < I.TOTAL_QUANTITY::NUMERIC(18,2)
-                //         )
-                //     `
-                //     : Prisma.empty;
 
                 const havingClause = input.rdl_invoice_id
                     ? Prisma.empty
@@ -1107,6 +1110,18 @@ export const rdlInvoiceRouter = createTRPCRouter({
                         },
                     });
                     return updated;
+                });
+
+                await notificationQueue.add("rdl-Invoice-Submitted", {
+                    rdl_invoice_id: input.id,
+                    approval_status: input.approval_status ? 1 : 0,
+                    action_by: `${ctx.user.first_name} ${ctx.user.last_name}`,
+                }, {
+                    attempts: 5,
+                    backoff: {
+                        type: "exponential",
+                        delay: 1000,
+                    },
                 });
 
                 return updatedInvoice;
