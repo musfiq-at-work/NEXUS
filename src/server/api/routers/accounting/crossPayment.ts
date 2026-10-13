@@ -7,6 +7,7 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, Prisma } from "@prisma/client";
 import { ACCOUNTING_DEPARTMENT_ID, ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID, COMMERCIAL_DEPARTMENT_ID } from "~/utils/config";
 import type { CrossPaymentDetails, CrossPaymentList } from './_types/crossPayment';
+import { notificationQueue } from "~/server/queues/notification.queue";
 
 export const crossPaymentsRouter = createTRPCRouter({
     addCrossPayment: protectedProcedure
@@ -117,6 +118,19 @@ export const crossPaymentsRouter = createTRPCRouter({
                             },
                         });
                     }
+
+                    await notificationQueue.add("cross-payment-Submitted", {
+                        cross_payment_id: crossPayment.id,
+                        cross_payment_ref: crossPayment.cross_payment_ref,
+                        approval_status: -1,
+                        action_by: `${ctx.user.first_name} ${ctx.user.last_name}`,
+                    }, {
+                        attempts: 5,
+                        backoff: {
+                            type: "exponential",
+                            delay: 1000,
+                        },
+                    });
 
                     return crossPayment;
                 })
@@ -813,6 +827,19 @@ export const crossPaymentsRouter = createTRPCRouter({
                         },
                     });
                     return updated;
+                });
+
+                await notificationQueue.add("cross-payment-Submitted", {
+                    cross_payment_id: input.id,
+                    cross_payment_ref: updatedCrossPayment.cross_payment_ref,
+                    approval_status: input.approval_status ? 1 : 0,
+                    action_by: `${ctx.user.first_name} ${ctx.user.last_name}`,
+                }, {
+                    attempts: 5,
+                    backoff: {
+                        type: "exponential",
+                        delay: 1000,
+                    },
                 });
 
                 return updatedCrossPayment;

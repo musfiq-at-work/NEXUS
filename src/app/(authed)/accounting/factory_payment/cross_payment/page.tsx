@@ -117,7 +117,7 @@ const FactoryPaymentPage = () => {
                 description={`Are you sure you want to delete "${(
                     searchQuery.data?.crossPayments && !!debouncedSearch 
                         ? searchQuery.data.crossPayments : crossPaymentList
-                ).find((crossPayment) => crossPayment.id === deleteID)?.id}"?`}
+                ).find((crossPayment) => crossPayment.id === deleteID)?.cross_payment_ref}"?`}
                 actionLabel="DELETE"
                 negativeAction={true}
                 loading={isLoadingDelete}
