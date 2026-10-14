@@ -38,6 +38,7 @@ export const notificationsRouter = createTRPCRouter({
                         INNER JOIN modules AS M ON M.id = LP.module_id
                     WHERE U.id = ${ctx.user.id}::uuid
                         AND M.id IN (${Prisma.join(notificationModuleIds)})
+                        AND LP.can_view = true
                     ORDER BY M.ID ASC;
                 `;
             }
