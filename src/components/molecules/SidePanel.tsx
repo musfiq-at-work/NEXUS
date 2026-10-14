@@ -49,7 +49,7 @@ function SidePanelContent(props: Omit<SidePanelProps, "open">) {
 				animate={{ x: 0 }}
 				exit={{ x: "100%" }}
 				transition={transition}
-				className="absolute inset-y-0 right-0 flex h-[99dvh] w-full max-w-[420px] flex-col bg-gray-50 shadow-2xl outline-none 
+				className="absolute inset-y-0 right-0 flex h-[99dvh] w-full max-w-[450px] flex-col bg-gray-50 shadow-2xl outline-none 
 				 	m-1 rounded-lg overflow-hidden"
 			>
 				{children}

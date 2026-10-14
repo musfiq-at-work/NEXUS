@@ -1008,6 +1008,7 @@ export const factoryOrderRouter = createTRPCRouter({
                     await notificationQueue.add("factory-order-submitted", {
                         factoryOrderId: input.factoryOrderId,
                         approval_status: input.approval_status,
+                        previous_approval_status: input.previous_approval_status,
                         action_by: `${ctx.user.first_name} ${ctx.user.last_name}`,
                         level_id: ctx.user.level_id,
                     }, {

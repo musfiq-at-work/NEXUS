@@ -1211,6 +1211,7 @@ export const salesContractsRouter = createTRPCRouter({
                         await notificationQueue.add("sales-contract-submitted", {
                             sales_contract_id: input.id,
                             approval_status: input.approval_status,
+                            previous_approval_status: input.previous_approval_status,
                             action_by: `${ctx.user.first_name} ${ctx.user.last_name}`,
                             level_id: ctx.user.level_id,
                         }, {
