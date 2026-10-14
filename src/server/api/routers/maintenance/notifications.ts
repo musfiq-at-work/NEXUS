@@ -27,18 +27,18 @@ export const notificationsRouter = createTRPCRouter({
                 modules = await ctx.db.modules.findMany({
                     where: { id: { in: notificationModuleIds } },
                     select: { id: true, name: true },
-                    orderBy: { name: "asc" },
+                    orderBy: { id: "asc" },
                 });
             } else {
                 modules = await ctx.db.$queryRaw<NotificationModuleOption[]>`
-                    SELECT DISTINCT m.id, m.name
-                    FROM level_permission AS lp
-                        INNER JOIN users AS u ON u.level_id = lp.level_id AND u.department_id = lp.department_id
-                        INNER JOIN authorizations AS a ON a.department_id = u.department_id AND a.level_id = u.level_id
-                        INNER JOIN modules AS m ON m.id = a.module_id
-                    WHERE u.id = ${ctx.user.id}::uuid
-                        AND m.id IN (${Prisma.join(notificationModuleIds)})
-                    ORDER BY m.name ASC;
+                    SELECT DISTINCT
+                        M.id, M.name
+                    FROM USERS AS U
+                        INNER JOIN level_permission AS LP ON LP.department_id = U.department_id AND LP.level_id = U.level_id
+                        INNER JOIN modules AS M ON M.id = LP.module_id
+                    WHERE U.id = ${ctx.user.id}::uuid
+                        AND M.id IN (${Prisma.join(notificationModuleIds)})
+                    ORDER BY M.ID ASC;
                 `;
             }
 
