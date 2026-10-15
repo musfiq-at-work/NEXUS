@@ -9,6 +9,7 @@ type Props<T extends FieldValues> = {
     fields: BaseField<string>[];
     onSubmit?: React.FormEventHandler<HTMLFormElement>;
     buttonLabel: string;
+    secondaryActions?: React.ReactNode;
     register: UseFormRegister<T>;
     validationError: {[key: string]: any};
     isLoading?: boolean;
@@ -20,7 +21,7 @@ type Props<T extends FieldValues> = {
 
 // Form component to render dynamic form fields based on configuration
 const Form = <T extends FieldValues, >(props: Props<T>) => {
-    const { fields, onSubmit, buttonLabel, register, validationError, isLoading, error, disabled, control, name } = props;
+    const { fields, onSubmit, buttonLabel, secondaryActions, register, validationError, isLoading, error, disabled, control, name } = props;
 
     if(isLoading) return <Loader/>
 
@@ -151,10 +152,11 @@ const Form = <T extends FieldValues, >(props: Props<T>) => {
                         </React.Fragment>
                     ))}
                 </div>
-                {(!disabled && !!onSubmit) && <div className="w-full flex flex-row justify-end">
+                {(!disabled && !!onSubmit) && <div className="w-full flex flex-row items-center justify-end gap-3 mt-6">
+                    {secondaryActions}
                     <Button type="submit" 
                         label={buttonLabel} 
-                        className="text-lg tracking-wide mt-6 max-w-80"
+                        className="text-lg tracking-wide max-w-80"
                         disabled={isLoading}
                     />
                 </div>}

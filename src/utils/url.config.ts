@@ -118,6 +118,7 @@ const sideBarConfig: Record<number, {href: string;}> = {
     // Maintenance Module
     [m.ERROR_LOGS]: { href: "/maintenance/error_logs" },
     [m.USER_SESSIONS]: { href: "/maintenance/user_sessions" },
+    [m.NOTIFICATIONS]: { href: "/maintenance/notifications" },
 };
 
 export default sideBarConfig;

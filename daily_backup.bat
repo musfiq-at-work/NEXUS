@@ -19,7 +19,7 @@ set "DB_PORT=5432"
 set "BACKUP_ROOT=E:\backup"
 set "REMOTE_BACKUP=~/backup"
 
-set "CONTAINER=4855576369e8"
+set "CONTAINER=b2fe280c67f9"
 set "CONTAINER_PHOTOS=/app/public/uploads/style_photos"
 
 set "KNOWN_HOSTS=%USERPROFILE%\.ssh\known_hosts"

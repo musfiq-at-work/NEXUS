@@ -1,8 +1,9 @@
 import clsx from "clsx";
 import Link from "next/link";
 import { useId } from "react";
-import type { Notification } from "~/types/notification";
+import type { NotificationCardData } from "~/types/notification";
 import { formatNotificationBody } from "~/utils/formatNotificationBody";
+import { formatDateTime } from "~/utils/localDateString";
 import IconButton from "../atoms/IconButton";
 import RelativeTime from "../atoms/RelativeTime";
 import UiIcon from "../atoms/UiIcon";
@@ -15,15 +16,16 @@ export const notificationStyles = {
 };
 
 type NotificationCardProps = {
-    notification: Notification;
-    isMarkingRead: boolean;
-    onMarkRead: (id: string) => void;
-    onDismiss: (id: string) => void;
-    onOpen: () => void;
+    notification: NotificationCardData;
+    recipientName?: string;
+    isMarkingRead?: boolean;
+    onMarkRead?: (id: string) => void;
+    onDismiss?: (id: string) => void;
+    onOpen?: () => void;
 };
 
 const NotificationCard = (props: NotificationCardProps) => {
-    const { notification, isMarkingRead, onMarkRead, onDismiss, onOpen } = props;
+    const { notification, recipientName, isMarkingRead = false, onMarkRead, onDismiss, onOpen } = props;
 
     const bodyId = useId();
     const { id, title, body, event_type, marked_at, added_at, slug } = notification;
@@ -34,34 +36,46 @@ const NotificationCard = (props: NotificationCardProps) => {
         <article className={clsx("relative flex h-full flex-row gap-3 rounded-lg bg-white p-3 shadow-sm")}>
             <span className={clsx("w-1.5 shrink-0 self-stretch rounded-lg", notificationStyles[event_type])} />
             <div className="min-w-0 flex-1">
+                {recipientName !== undefined && (
+                    <div className="mb-2 flex items-start justify-between gap-3 border-b border-gray-100 pb-2 text-xs">
+                        <span className="min-w-0 font-semibold text-gray-700">{recipientName}</span>
+                        {added_at && (
+                            <time dateTime={added_at.toISOString()} className="shrink-0 text-right text-gray-400">
+                                {formatDateTime(added_at)}
+                            </time>
+                        )}
+                    </div>
+                )}
                 <div className="flex items-start gap-2">
                     {href ? (
                         <Link
                             href={href}
                             aria-describedby={bodyId}
                             onClick={() => {
-                                if (!isMarked) onMarkRead(id);
-                                onOpen();
+                                if (!isMarked) onMarkRead?.(id);
+                                onOpen?.();
                             }}
-                            className="focus-visible:outline-primary min-w-0 flex-1 rounded py-1 text-sm leading-5 font-semibold text-gray-900 after:absolute after:inset-0 after:rounded-lg hover:underline focus-visible:outline-2"
+                            className="focus-visible:outline-primary min-w-0 flex-1 rounded py-1 text-sm font-semibold leading-5 text-gray-900 after:absolute after:inset-0 after:rounded-lg hover:underline focus-visible:outline-2"
                         >
                             {title}
                         </Link>
                     ) : (
-                        <h3 className="min-w-0 flex-1 py-1 text-sm leading-5 font-semibold text-gray-900">{title}</h3>
+                        <h3 className="min-w-0 flex-1 py-1 text-sm font-semibold leading-5 text-gray-900">{title}</h3>
                     )}
-                    <IconButton label={`Dismiss ${title}`} onClick={() => onDismiss(id)} disabled={isMarkingRead} className="relative z-10 size-7">
-                        <UiIcon name="close" />
-                    </IconButton>
+                    {onDismiss && (
+                        <IconButton label={`Dismiss ${title}`} onClick={() => onDismiss(id)} disabled={isMarkingRead} className="relative z-10 size-7">
+                            <UiIcon name="close" />
+                        </IconButton>
+                    )}
                 </div>
                 <div id={bodyId} className="mt-1">
                     <p className="text-sm leading-6 text-gray-600">{formatNotificationBody(body)}</p>
                 </div>
-                <div className="mt-3 flex items-center justify-between gap-2 pr-3 text-xs">
-                    <RelativeTime date={added_at} />
+                <div className={clsx("mt-3 flex items-center gap-2 pr-3 text-xs", recipientName === undefined ? "justify-between" : "justify-end")}>
+                    {recipientName === undefined && <RelativeTime date={added_at} />}
                     {isMarked ? (
                         <span className="text-gray-400">Read</span>
-                    ) : (
+                    ) : onMarkRead ? (
                         <button
                             type="button"
                             onClick={() => onMarkRead(id)}
@@ -71,6 +85,11 @@ const NotificationCard = (props: NotificationCardProps) => {
                             <span className="bg-primary size-1.5 rounded-full" aria-hidden="true" />
                             Mark as read
                         </button>
+                    ) : (
+                        <span className="text-primary flex items-center gap-1.5">
+                            <span className="bg-primary size-1.5 rounded-full" aria-hidden="true" />
+                            Unread
+                        </span>
                     )}
                 </div>
             </div>
