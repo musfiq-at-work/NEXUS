@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { notificationFilters } from "~/app/(authed)/maintenance/notifications/config/formSchema";
+import { notificationFilters, notificationFormSchema } from "~/app/(authed)/maintenance/notifications/config/formSchema";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import type { NotificationAuditItem, NotificationModuleOption } from "~/types/notification";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
@@ -186,5 +186,43 @@ export const notificationsRouter = createTRPCRouter({
             where: { recipient_id: ctx.user.id, marked_at: null },
             data: { marked_at: new Date(), is_marked: true },
         }),
-    )
+    ),
+
+    addNotification: protectedProcedure
+        .input(notificationFormSchema)
+        .mutation(async ({ ctx, input }) => {
+            const isAdmin = ctx.user.level_id === ADMIN_LEVEL_ID && ctx.user.department_id === ADMIN_DEPARTMENT_ID;
+
+            if (!isAdmin) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to add system notifications.",
+                });
+            }
+
+            const recipients = await ctx.db.users.findMany({
+                where: {
+                    ...(input.level_id ? { level_id: input.level_id } : {}),
+                    ...(input.department_id ? { department_id: input.department_id } : {}),
+                    is_active: true
+                },
+                select: { id: true },
+            });
+
+            if (recipients.length === 0) {
+                throw new TRPCError({ 
+                    code: "BAD_REQUEST", 
+                    message: "No users match the selected level and department." 
+                });
+            }
+
+            return ctx.db.notifications.createMany({
+                data: recipients.map((recipient) => ({
+                    title: input.title,
+                    body: input.description,
+                    event_type: input.event_type,
+                    recipient_id: recipient.id,
+                })),
+            });
+        }),
 });

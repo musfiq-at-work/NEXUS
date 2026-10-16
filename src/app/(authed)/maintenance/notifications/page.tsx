@@ -1,10 +1,12 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button, Form, TableFooter, Wrapper } from "~/components";
 import NotificationCard from "~/components/molecules/NotificationCard";
+import { useDecodedUser } from "~/hooks/useDecodedUser";
 import { api } from "~/trpc/react";
 import { parseTRPCError } from "~/utils/parseTRPCError";
 import { notificationFilters, type NotificationFiltersValues } from "./config/formSchema";
@@ -21,6 +23,8 @@ const defaultFilters: NotificationFiltersValues = {
 };
 
 const Notifications = () => {
+    const router = useRouter();
+    const { isAdmin } = useDecodedUser();
     const [filters, setFilters] = useState<NotificationFiltersValues>(defaultFilters);
     const [page, setPage] = useState(1);
     const {
@@ -51,7 +55,19 @@ const Notifications = () => {
     };
 
     return (
-        <Wrapper heading="Notifications">
+        <Wrapper
+            heading="Notifications"
+            subSectionRight={
+                isAdmin && (
+                    <Button
+                        label="Send Notification"
+                        variant="secondary"
+                        className="max-w-56"
+                        onClick={() => router.push("/maintenance/notifications/new")}
+                    />
+                )
+            }
+        >
             <Form
                 fields={fields}
                 onSubmit={applyFilters}

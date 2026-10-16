@@ -79,11 +79,12 @@ export const invalidateAuthUserCache = async (...userIds: string[]) => {
 };
 
 export const invalidateAuthPermissionsCache = async () => {
-	const redis = await getRedis();
-	if (!redis) return;
-	for await (const key of redis.scanIterator({ MATCH: "auth:permissions:*" })) {
-		await redis.del(key);
-	}
+    const redis = await getRedis();
+    if (!redis) return;
+
+    for await (const keys of redis.scanIterator({ MATCH: "auth:permissions:*" })) {
+        if (keys.length > 0) await redis.del(keys);
+    }
 };
 
 // Main context creator
