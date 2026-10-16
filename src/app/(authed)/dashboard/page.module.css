@@ -1,0 +1,39 @@
+.banner {
+    animation: welcomeIn 700ms ease-out both;
+}
+
+.orb {
+    animation: drift 12s ease-in-out infinite alternate;
+}
+
+.orbSecondary {
+    animation-duration: 16s;
+    animation-delay: -6s;
+}
+
+@keyframes welcomeIn {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes drift {
+    from {
+        transform: translate(0, 0);
+    }
+    to {
+        transform: translate(24px, 18px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .banner,
+    .orb {
+        animation: none;
+    }
+}

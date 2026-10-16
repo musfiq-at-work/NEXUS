@@ -173,10 +173,18 @@ export const activityReportRouter = createTRPCRouter({
                             COALESCE(SC.sales_contract_no, '-') AS SC_NO,
                             COALESCE(DS.FDBC_NO, '-') AS FDBC_NO,
                             COALESCE(DS.SUBMISSION_DATE::TEXT, '-') AS DOCUMENT_SUBMISSION_DATE,
-                            COALESCE(CI.REF_NO, '-') AS CI_NO,
-                            COALESCE(TO_CHAR(CI.INVOICE_DATE, 'DD mon YYYY'), '-') AS CI_DATE,
-                            COALESCE(PRD.realized_amount::TEXT, '-') AS REALIZED_AMOUNT,
-                            COALESCE(TO_CHAR(PR.realization_date, 'DD mon YYYY'), '-') AS REALIZED_DATE
+                            CASE 
+                                WHEN RI.TERM_ID = 1
+                                    THEN COALESCE(CI.REF_NO, '-')
+                                ELSE COALESCE(DS.CI_NO, '-')
+                            END AS CI_NO,
+                            CASE 
+                                WHEN RI.TERM_ID = 1
+                                    THEN COALESCE(TO_CHAR(CI.INVOICE_DATE, 'DD mon YYYY'), '-')
+                                ELSE COALESCE(DS.CI_DATE, '-')
+                            END AS CI_DATE,
+                            PR.REALIZED_AMOUNT AS REALIZED_AMOUNT,
+                            PR.REALIZED_DATE AS REALIZED_DATE
                         FROM rdl_invoice RI
                             INNER JOIN rdl_invoice_details RID ON RID.rdl_invoice_id = RI.id
                             INNER JOIN rdl_invoice_shipment_details RISD ON RISD.rdl_invoice_details_id = RID.id
@@ -193,15 +201,45 @@ export const activityReportRouter = createTRPCRouter({
                             LEFT JOIN lc_master LC ON LC.id = LCO.lc_master_id
                             LEFT JOIN sales_contract_details SCD ON SCD.order_id = BO.id
                             LEFT JOIN sales_contracts SC ON SC.id = SCD.sales_contract_id
-                            LEFT JOIN document_submissions_details AS DSD ON DSD.rdl_invoice_id = RI.id
-                            LEFT JOIN document_submissions AS DS ON DS.id = DSD.document_submissions_id
-                            LEFT JOIN commission_invoice AS CI ON CI.document_submission_id = DS.id OR CI.rdl_invoice_id = RI.id
-                            LEFT JOIN proceed_realization_details AS PRD ON PRD.rdl_invoice_id = RI.id
-                            LEFT JOIN proceed_realization AS PR ON PR.id = PRD.realization_id
-                        WHERE E.exfactory_date BETWEEN ${input.fromDate} AND ${input.toDate}
+                            LEFT JOIN (
+                                SELECT 
+                                    DSD.rdl_invoice_id AS DSRID,
+                                    STRING_AGG(DISTINCT DS.FDBC_NO, ', ') AS FDBC_NO,
+                                    STRING_AGG(DISTINCT TO_CHAR(DS.SUBMISSION_DATE, 'DD mon YYYY')::TEXT, ', ') AS SUBMISSION_DATE,
+                                    COALESCE(CI.REF_NO, '-') AS CI_NO,
+                                    COALESCE(TO_CHAR(CI.INVOICE_DATE, 'DD mon YYYY'), '-') AS CI_DATE
+                                FROM document_submissions_details AS DSD
+                                LEFT JOIN document_submissions AS DS ON DS.id = DSD.document_submissions_id
+                                LEFT JOIN commission_invoice AS CI ON CI.document_submission_id = DS.id
+                                GROUP BY DSD.rdl_invoice_id, CI.id
+                            ) DS ON DS.DSRID = RI.id
+                            LEFT JOIN commission_invoice AS CI ON CI.rdl_invoice_id = RI.id
+                            LEFT JOIN (
+                                SELECT 
+                                    PRD.rdl_invoice_id AS PRDRID,
+                                    COALESCE(SUM(PRD.realized_amount)::TEXT, '-') AS REALIZED_AMOUNT,
+                                    STRING_AGG(DISTINCT TO_CHAR(PR.realization_date, 'DD mon YYYY')::TEXT, ', ') AS REALIZED_DATE
+                                FROM proceed_realization_details AS PRD
+                                LEFT JOIN proceed_realization AS PR ON PR.id = PRD.realization_id
+                                GROUP BY PRD.rdl_invoice_id
+                            ) PR ON PR.PRDRID = RI.id
+                        WHERE E.exfactory_date BETWEEN '2026-01-01' AND '2026-09-30'
                             AND COALESCE(ES.delivery_quantity, 0) > 0
                             ${buyerSelectClause}
-                        GROUP BY RI.id, RI.invoice_no, RI.invoice_date, B.id, DS.ID, CI.ID, PR.ID, PRD.ID, LC.ID, SC.ID;
+                        GROUP BY 
+                            RI.id, 
+                            RI.invoice_no, 
+                            RI.invoice_date, 
+                            B.id, 
+                            CI.ID, 
+                            DS.FDBC_NO,
+                            DS.SUBMISSION_DATE,
+                            DS.CI_NO,
+                            DS.CI_DATE,
+                            PR.REALIZED_AMOUNT,
+                            PR.REALIZED_DATE,
+                            LC.ID, 
+                            SC.ID;
                     `,
 
                     factoryInvoiceData = await ctx.db.$queryRaw<FactoryInvoiceData[]>`
