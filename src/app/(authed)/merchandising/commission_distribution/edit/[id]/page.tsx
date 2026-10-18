@@ -29,7 +29,7 @@ const EditCommissionDistributionPage = ({ params }: ParamsProp) => {
 
     const { data: authorizations, isLoading: isAuthorizationLoading } = api.commissionDistribution.getAuthorizations.useQuery({ id });
 
-    const { data: isFactoryOrderUnauthorized } = api.commissionDistribution.isFactoryOrderUnauthorized.useQuery({ id });
+    // const { data: isFactoryOrderUnauthorized } = api.commissionDistribution.isFactoryOrderUnauthorized.useQuery({ id });
     const { data: isSalesContractApproved } = api.commissionDistribution.isSalesContractApproved.useQuery({ id });
 
     const { user } = useDecodedUser();
@@ -152,13 +152,15 @@ const EditCommissionDistributionPage = ({ params }: ParamsProp) => {
                 validationError={validationError ?? {}}
                 error={error}
                 control={control}
-                disabled={!can_update || isAuthorized || isFactoryOrderUnauthorized || isSalesContractApproved}
+                // disabled={!can_update || isAuthorized || isFactoryOrderUnauthorized || isSalesContractApproved}
+                disabled={!can_update || isAuthorized || isSalesContractApproved}
             />
 
             <CommissionDetails 
                 methods={methods}
                 validationError={validationError ?? {}}
-                disabled={!can_update || isAuthorized || isFactoryOrderUnauthorized || isSalesContractApproved}
+                // disabled={!can_update || isAuthorized || isFactoryOrderUnauthorized || isSalesContractApproved}
+                disabled={!can_update || isAuthorized || isSalesContractApproved}
              />
 
             <MessageBox 
@@ -167,11 +169,11 @@ const EditCommissionDistributionPage = ({ params }: ParamsProp) => {
                 type="secondary" 
             />
 
-            <MessageBox 
+            {/* <MessageBox 
                 message="The associated factory order is unauthorized, the following commission distribution can't be updated / authorized." 
                 active={!!isFactoryOrderUnauthorized} 
                 type="error" 
-            />
+            /> */}
 
             <MessageBox 
                 message="The associated sales contract is approved, the following commission distributions can't be updated / authorized / unauthorized." 
@@ -184,7 +186,8 @@ const EditCommissionDistributionPage = ({ params }: ParamsProp) => {
                     onClick={() => onSubmitAll()}
                     label={"Update Commission Distribution"} 
                     className="text-lg tracking-wide mt-6 max-w-80 m-8"
-                    disabled={isLoading || isLoadingSubmit || isAuthorized || !can_update || isFactoryOrderUnauthorized || isSalesContractApproved}
+                    disabled={isLoading || isLoadingSubmit || isAuthorized || !can_update || isSalesContractApproved}
+                    // disabled={isLoading || isLoadingSubmit || isAuthorized || !can_update || isFactoryOrderUnauthorized || isSalesContractApproved}
                 />
             </div>
 
@@ -208,7 +211,8 @@ const EditCommissionDistributionPage = ({ params }: ParamsProp) => {
                             onClick={() => onSetAuthorization(true)}
                             label="Authorize Commission Distribution"
                             className="text-lg tracking-wide mt-6 max-w-80"
-                            disabled={!canAuthorize || isFactoryOrderUnauthorized || isSalesContractApproved}
+                            disabled={!canAuthorize || isSalesContractApproved}
+                            // disabled={!canAuthorize || isFactoryOrderUnauthorized || isSalesContractApproved}
                         />
                     </div>
                 )}

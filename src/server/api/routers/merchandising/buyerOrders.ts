@@ -257,8 +257,9 @@ export const buyerOrdersRouter = createTRPCRouter({
                             CASE
                                 WHEN COALESCE(SS.style_count, 0) = 0 THEN 'INCOMPLETE'
                                 WHEN SS.incomplete_style_count > 0 THEN 'INCOMPLETE'
-                                WHEN FO.approval_status = 2 THEN 'APPROVED'
-                                ELSE 'PENDING'
+                                -- WHEN FO.approval_status = 2 THEN 'APPROVED'
+                                -- ELSE 'PENDING'
+                                ELSE 'COMPLETE'
                             END AS status
                         FROM buyer_orders BO
                         INNER JOIN teams T ON T.id = BO.team_id
@@ -541,8 +542,9 @@ export const buyerOrdersRouter = createTRPCRouter({
                             GROUP BY BOS.id, BOS.order_quantity
                             HAVING COALESCE(SUM(SC.quantity), 0) < BOS.order_quantity
                         ) THEN 'INCOMPLETE'
-                        WHEN FO.approval_status = 2 THEN 'APPROVED'
-                        ELSE 'PENDING'
+                        -- WHEN FO.approval_status = 2 THEN 'APPROVED'
+                        -- ELSE 'PENDING'
+                        ELSE 'COMPLETE'
                     END AS status,
                     COUNT(*) OVER() AS total_count
                 FROM BUYER_ORDERS BO
@@ -579,7 +581,7 @@ export const buyerOrdersRouter = createTRPCRouter({
                     OR OS.style ILIKE '%' || ${input.query} || '%'
                     OR SD.buyer_po ILIKE '%' || ${input.query} || '%'
                 )
-                GROUP BY BO.ID, b.buyer_name, bd.department, s.season_name, T.team_name, FO.approval_status
+                GROUP BY BO.ID, b.buyer_name, bd.department, s.season_name, T.team_name --, FO.approval_status
                 ORDER BY BO.added_at DESC, BO.order_date DESC
                 LIMIT ${input.limit}    
                 OFFSET ${input.offset};

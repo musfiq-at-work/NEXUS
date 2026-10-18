@@ -7,9 +7,10 @@ export const tableHeaders= [
     { key: 'order_date', label: 'Order Date', type: 'date' },
     { key: 'team', label: 'Team' },
     { key: 'status', label: 'Approval Status', type: 'chip', chips: {
-            APPROVED: { label: 'APPROVED', type: 'success' },
+            COMPLETE: { label: 'COMPLETE', type: 'success' },
             INCOMPLETE: { label: 'INCOMPLETE', type: 'error' },
-            PENDING: { label: 'PENDING', type: 'warning' }
+            // APPROVED: { label: 'APPROVED', type: 'success' },
+            // PENDING: { label: 'PENDING', type: 'warning' }
         }
     },
     { key: 'actions', label: '', type: 'action' }
