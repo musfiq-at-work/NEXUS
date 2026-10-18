@@ -67,11 +67,11 @@ const TableForm = (props: Props) => {
                         <tfoot>
                             <tr className="font-bold text-sm border-2 border-gray/20">
                                 <td colSpan={4} className="border-r-2 border-gray/20 p-2 text-right">Total</td>
-                                <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{totalShipmentQuantity}</td>
-                                <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{totalPreviousQuantity}</td>
+                                <td className="bg-secondary text-center text-white border-r-2 border-gray/20 p-2">{totalShipmentQuantity}</td>
+                                <td className="bg-secondary text-center text-white border-r-2 border-gray/20 p-2">{totalPreviousQuantity}</td>
                                 <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{totalInvoiceQuantity}</td>
                                 <td className="border-r-2 border-gray/20 p-2" />
-                                <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{totalRdlValue}</td>
+                                <td className="bg-secondary text-center text-white border-r-2 border-gray/20 p-2">{totalRdlValue}</td>
                             </tr>
                         </tfoot>
                     </TableWrapper>

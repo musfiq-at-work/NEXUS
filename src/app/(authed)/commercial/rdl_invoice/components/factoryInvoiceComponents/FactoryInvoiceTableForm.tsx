@@ -86,8 +86,8 @@ const TableForm = (props: Props) => {
                         {totalQuantities > 0 && <tfoot>
                             <tr className="font-bold text-sm border-2 border-gray/20">
                                 <td colSpan={2} className="border-r-2 border-gray/20 p-2 text-right">Total</td>
-                                <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{totalQuantities}</td>
-                                <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{totalValue}</td>
+                                <td className="bg-secondary text-center text-white border-r-2 border-gray/20 p-2">{totalQuantities}</td>
+                                <td className="bg-secondary text-center text-white border-r-2 border-gray/20 p-2">{totalValue}</td>
                                 <td className="border-r-2 border-gray/20 p-2" />
                             </tr>
                         </tfoot>}

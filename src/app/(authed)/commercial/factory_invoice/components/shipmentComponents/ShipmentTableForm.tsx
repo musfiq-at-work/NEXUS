@@ -7,6 +7,7 @@ import type { useFactoryInvoiceForm } from "../../config/useFactoryInvoiceForm";
 import ShipmentRows from "./ShipmentRows";
 import TableHeader, { type TableHeaderType } from "~/components/organisms/table/TableHeader";
 import type { FactoryInvoiceFormValues } from "../../config/formSchema";
+import { quantityFormatter } from "~/utils/localNumberStrings";
 
 type ShipmentRow = FieldArrayWithId<FactoryInvoiceFormValues>;
 
@@ -57,10 +58,10 @@ const ShipmentTableForm = (props: Props) => {
                         <tfoot>
                             <tr className="font-bold text-sm border-2 border-gray/20">
                                 <td colSpan={5} className="border-r-2 border-gray/20 p-2 text-right">Total</td>
-                                <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{totalOrderQuantity}</td>
-                                <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{totalDeliveryQuantity}</td>
+                                <td className="bg-secondary text-center text-white border-r-2 border-gray/20 p-2">{quantityFormatter(totalOrderQuantity)}</td>
+                                <td className="bg-secondary text-center text-white border-r-2 border-gray/20 p-2">{quantityFormatter(totalDeliveryQuantity)}</td>
                                 <td className="border-r-2 border-gray/20 p-2" />
-                                <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{totalFactoryValue}</td>
+                                <td className="bg-secondary text-center text-white border-r-2 border-gray/20 p-2">{quantityFormatter(totalFactoryValue)}</td>
                             </tr>
                         </tfoot>
                     </TableWrapper>

@@ -31,6 +31,7 @@ export const formFields = ({buyerId, departmentId}: Props) => {
             name: 'buyer_po',
             label: 'Buyer PO',
             placeholder: 'Enter buyer PO',
+            type: 'text',
         },
         {
             name: 'etd_date',

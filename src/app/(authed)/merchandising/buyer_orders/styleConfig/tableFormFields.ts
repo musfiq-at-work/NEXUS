@@ -39,6 +39,7 @@ export const formFields = ({productTypeId}: {productTypeId: number | undefined})
         {
             name: 'style',
             label: 'Style',
+            type: 'text',
             placeholder: 'Enter style',
         },
         {

@@ -11,7 +11,7 @@ const DashboardPage = () => {
             <div className="flex flex-1 items-center justify-center px-2 py-10 sm:px-8">
                 <section
                     aria-labelledby="dashboard-welcome-heading"
-                    className={`${styles.banner} relative isolate flex min-h-80 w-full max-w-6xl flex-col items-center justify-center overflow-hidden rounded-3xl border border-primary/20 bg-linear-to-br from-primary-dark via-primary to-secondary-dark px-6 py-14 text-center shadow-xl shadow-primary/15 sm:min-h-96 sm:px-12 sm:py-16`}
+                    className={`${styles.banner} relative isolate flex min-h-80 w-full max-w-6xl flex-col items-center justify-center overflow-hidden rounded-3xl border border-primary/20 bg-linear-to-br from-primary via-primary-dark to-secondary px-6 py-14 text-center shadow-xl shadow-primary/15 sm:min-h-96 sm:px-12 sm:py-16`}
                 >
                     <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
                         <div className={`${styles.orb} absolute -left-24 -top-32 size-80 rounded-full border border-white/15 bg-white/5`} />

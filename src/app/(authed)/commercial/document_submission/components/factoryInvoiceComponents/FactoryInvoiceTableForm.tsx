@@ -67,8 +67,8 @@ const TableForm = (props: Props) => {
                         <tfoot>
                             <tr className="font-bold text-sm border-2 border-gray/20">
                                 <td colSpan={4} className="border-r-2 border-gray/20 p-2 text-right">Total</td>
-                                <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{totalQuantity}</td>
-                                <td className="bg-secondary text-white border-r-2 border-gray/20 p-2">{totalValue.toFixed(2)}</td>
+                                <td className="bg-secondary text-center text-white border-r-2 border-gray/20 p-2">{totalQuantity}</td>
+                                <td className="bg-secondary text-center text-white border-r-2 border-gray/20 p-2">{totalValue.toFixed(2)}</td>
                             </tr>
                         </tfoot>
                     </TableWrapper>
