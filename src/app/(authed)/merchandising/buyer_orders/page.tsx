@@ -11,7 +11,7 @@ import { useState } from "react";
 const BuyerOrders = () => {
     const router = useRouter();
     const utils = api.useUtils();
-    const [filter, setFilter] = useState(-1);
+    // const [filter, setFilter] = useState(-1);
 
     const { page, limit, debouncedSearch, handleSearchChange, nextPage, prevPage } = useSearchablePagination();
 
@@ -19,7 +19,7 @@ const BuyerOrders = () => {
 
     // Fetch paginated data
     const {data: buyerOrders, isLoading} = api.buyerOrders.getBuyerOrders.useQuery({
-        filter: filter,
+        // filter: filter,
         limit,
         offset: page * limit,
     });
@@ -77,19 +77,19 @@ const BuyerOrders = () => {
                         </div>
                     ) : null
                 }
-                filters={
-                    <Filter 
-                        filter={filter}
-                        setFilter={setFilter}
-                        label='Approval Status'
-                        options={[
-                            {label: 'ALL', value: -1}, 
-                            {label: 'APPROVED', value: 2}, 
-                            {label: 'PENDING', value: 1}, 
-                            {label: 'INCOMPLETE', value: 0}, 
-                        ]}
-                    />
-                }
+                // filters={
+                //     <Filter 
+                //         filter={filter}
+                //         setFilter={setFilter}
+                //         label='Approval Status'
+                //         options={[
+                //             {label: 'ALL', value: -1}, 
+                //             {label: 'APPROVED', value: 2}, 
+                //             {label: 'PENDING', value: 1}, 
+                //             {label: 'INCOMPLETE', value: 0}, 
+                //         ]}
+                //     />
+                // }
             >
                 <div className="w-full">
                     <Table

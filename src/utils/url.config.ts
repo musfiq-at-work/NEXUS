@@ -119,6 +119,9 @@ const sideBarConfig: Record<number, {href: string;}> = {
     [m.ERROR_LOGS]: { href: "/maintenance/error_logs" },
     [m.USER_SESSIONS]: { href: "/maintenance/user_sessions" },
     [m.NOTIFICATIONS]: { href: "/maintenance/notifications" },
+
+    // Quality Module
+    [m.ORDER_CHECKLIST]: {href: "/quality/order_checklist"}
 };
 
 export default sideBarConfig;

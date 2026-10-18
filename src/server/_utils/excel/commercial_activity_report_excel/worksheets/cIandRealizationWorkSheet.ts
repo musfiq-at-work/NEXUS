@@ -4,7 +4,7 @@ import { DOLLAR_SIGN_NUMBER_FORMAT, QUANTITY_NUMBER_FORMAT, TABLE_HEADER_ROW, TE
 import { currentTime, formatDate } from "~/utils/localDateString";
 import type { CiAndRealizationData } from "~/server/api/routers/reports/_types/commercialActivityReport";
 
-const CI_AND_REALIZATION_TABLE_COLUMN_COUNT = 14;
+const CI_AND_REALIZATION_TABLE_COLUMN_COUNT = 15;
 
 const ciAndRealizationTableColumns = [
     { key: 'buyer_name', width: 25 },
@@ -17,6 +17,7 @@ const ciAndRealizationTableColumns = [
     { key: 'sc_no', width: 25 },
     { key: 'fdbc_no', width: 25 },
     { key: 'document_submission_date', width: 15 },
+    { key: 'received_value', width: 20},
     { key: 'ci_no', width: 30 },
     { key: 'ci_date', width: 15 },
     { key: 'realized_amount', width: 20 },
@@ -34,6 +35,7 @@ const ciAndRealizationTableHeader = [
     'Sales Contract No',
     'Document Submission',
     'Document Submission Date',
+    'Received Value',
     'Commission Invoice',
     'Commission Invoice Date',
     'Realized Amount',
@@ -134,11 +136,11 @@ export const generateCiAndRealizationWorkSheet = (Props: CiAndRealizationWorkShe
     });
 
     // Currency columns
-    ["F", "M"].forEach((col) => {
+    ["F", "K", "N"].forEach((col) => {
         ciAndRealizationWorksheet.getColumn(col).numFmt = DOLLAR_SIGN_NUMBER_FORMAT;
     });
 
-    ["A", "B", "C", "D", "G", "H", "I", "J", "K", "L"].forEach((col) => {
+    ["A", "B", "C", "D", "G", "H", "I", "J", "L", "M"].forEach((col) => {
         ciAndRealizationWorksheet.getColumn(col).numFmt = TEXT_FORMAT;
     });
 
@@ -146,7 +148,8 @@ export const generateCiAndRealizationWorkSheet = (Props: CiAndRealizationWorkShe
         buyer_name: "Total",
         rdl_invoice_quantity: { formula: `SUBTOTAL(109,E${TABLE_HEADER_ROW + 1}:E${ciAndRealizationWorksheet.rowCount})` },
         rdl_invoice_value: { formula: `SUBTOTAL(109,F${TABLE_HEADER_ROW + 1}:F${ciAndRealizationWorksheet.rowCount})` },
-        realized_amount: { formula: `SUBTOTAL(109,M${TABLE_HEADER_ROW + 1}:M${ciAndRealizationWorksheet.rowCount})` },
+        received_value: { formula: `SUBTOTAL(109,K${TABLE_HEADER_ROW + 1}:K${ciAndRealizationWorksheet.rowCount})` },
+        realized_amount: { formula: `SUBTOTAL(109,N${TABLE_HEADER_ROW + 1}:N${ciAndRealizationWorksheet.rowCount})` },
     });
 
     totalCiAndRealizationRow.font = {

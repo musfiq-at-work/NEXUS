@@ -88,6 +88,7 @@ enum moduleMap {
     LC_TRANSFER_REPORT = 92,
     CROSS_PAYMENT_REPORT = 93,
     NOTIFICATIONS = 94,
+    ORDER_CHECKLIST = 58,
 }
 
 export { moduleMap as m };

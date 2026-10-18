@@ -210,7 +210,7 @@ async function deleteStyle(tx: Prisma.TransactionClient, styleId: string, userId
 export const buyerOrdersRouter = createTRPCRouter({
     getBuyerOrders: protectedProcedure
         .input(z.object({
-            filter: z.number().min(-1).default(-1),   
+            // filter: z.number().min(-1).default(-1),   
             limit: z.number().min(1).default(15),
             offset: z.number().min(0).default(0),  
         }))
@@ -288,16 +288,17 @@ export const buyerOrdersRouter = createTRPCRouter({
                         buyer_order_status.*,
                         COUNT(*) OVER() AS total_count
                     FROM buyer_order_status
-                    WHERE ${Number(input.filter)}::INTEGER = -1
-                        OR status = CASE ${Number(input.filter)}::INTEGER
-                            WHEN 0 THEN 'INCOMPLETE'
-                            WHEN 1 THEN 'PENDING'
-                            WHEN 2 THEN 'APPROVED'
-                        END
                     ORDER BY added_at DESC, order_date DESC
                     LIMIT ${input.limit}
                     OFFSET ${input.offset};
                 `;
+
+                // -- WHERE ${Number(input.filter)}::INTEGER = -1
+                // --     OR status = CASE ${Number(input.filter)}::INTEGER
+                // --         WHEN 0 THEN 'INCOMPLETE'
+                // --         WHEN 1 THEN 'PENDING'
+                // --         WHEN 2 THEN 'APPROVED'
+                // --     END
 
                 const total = result.length > 0 ? Number(result[0]?.total_count) : 0;
 
@@ -1236,13 +1237,10 @@ export const buyerOrdersRouter = createTRPCRouter({
                                             await tx.shipment_item_details_history.create({
                                                 data: {
                                                     shipment_item_details_id: itemDetail.id,
-                                                    action_type: colorEntry.db_id
-                                                        ? actions.UPDATE
-                                                        : actions.ADDED,
+                                                    action_type: colorEntry.db_id ? actions.UPDATE : actions.ADDED,
                                                     action_by: ctx.user.id,
                                                     quantity: itemDetail.quantity,
-                                                    shipment_detail_id:
-                                                        itemDetail.shipment_detail_id,
+                                                    shipment_detail_id: itemDetail.shipment_detail_id,
                                                     color_id: itemDetail.color_id,
                                                 },
                                             });

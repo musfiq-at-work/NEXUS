@@ -169,9 +169,10 @@ export const activityReportRouter = createTRPCRouter({
                             TO_CHAR(RI.invoice_date, 'DD Mon YYYY') AS rdl_invoice_date,
                             SUM(RISD.invoice_quantity) AS rdl_invoice_quantity,
                             SUM(RISD.invoice_quantity * SD.fob_rate / BO.currency_rate)::NUMERIC(18, 2) AS rdl_invoice_value,
-                            COALESCE(LC.lc_no, '-') AS LC_NO,
-                            COALESCE(SC.sales_contract_no, '-') AS SC_NO,
+                            STRING_AGG(DISTINCT LC.lc_no, ', ') AS LC_NO,
+                            STRING_AGG(DISTINCT SC.sales_contract_no, ', ') AS SC_NO,
                             COALESCE(DS.FDBC_NO, '-') AS FDBC_NO,
+                            COALESCE(DS.received_value) AS received_value,
                             COALESCE(DS.SUBMISSION_DATE::TEXT, '-') AS DOCUMENT_SUBMISSION_DATE,
                             CASE 
                                 WHEN RI.TERM_ID = 1
@@ -207,7 +208,8 @@ export const activityReportRouter = createTRPCRouter({
                                     STRING_AGG(DISTINCT DS.FDBC_NO, ', ') AS FDBC_NO,
                                     STRING_AGG(DISTINCT TO_CHAR(DS.SUBMISSION_DATE, 'DD mon YYYY')::TEXT, ', ') AS SUBMISSION_DATE,
                                     COALESCE(CI.REF_NO, '-') AS CI_NO,
-                                    COALESCE(TO_CHAR(CI.INVOICE_DATE, 'DD mon YYYY'), '-') AS CI_DATE
+                                    COALESCE(TO_CHAR(CI.INVOICE_DATE, 'DD mon YYYY'), '-') AS CI_DATE,
+                                    COALESCE(SUM(DSD.received_value)) AS received_value
                                 FROM document_submissions_details AS DSD
                                 LEFT JOIN document_submissions AS DS ON DS.id = DSD.document_submissions_id
                                 LEFT JOIN commission_invoice AS CI ON CI.document_submission_id = DS.id
@@ -223,13 +225,11 @@ export const activityReportRouter = createTRPCRouter({
                                 LEFT JOIN proceed_realization AS PR ON PR.id = PRD.realization_id
                                 GROUP BY PRD.rdl_invoice_id
                             ) PR ON PR.PRDRID = RI.id
-                        WHERE E.exfactory_date BETWEEN '2026-01-01' AND '2026-09-30'
+                        WHERE E.exfactory_date BETWEEN ${input.fromDate} AND ${input.toDate}
                             AND COALESCE(ES.delivery_quantity, 0) > 0
                             ${buyerSelectClause}
                         GROUP BY 
-                            RI.id, 
-                            RI.invoice_no, 
-                            RI.invoice_date, 
+                            RI.id,
                             B.id, 
                             CI.ID, 
                             DS.FDBC_NO,
@@ -238,8 +238,7 @@ export const activityReportRouter = createTRPCRouter({
                             DS.CI_DATE,
                             PR.REALIZED_AMOUNT,
                             PR.REALIZED_DATE,
-                            LC.ID, 
-                            SC.ID;
+                            DS.received_value;
                     `,
 
                     factoryInvoiceData = await ctx.db.$queryRaw<FactoryInvoiceData[]>`

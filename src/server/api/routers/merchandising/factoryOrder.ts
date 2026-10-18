@@ -14,7 +14,7 @@ import { notificationQueue } from "~/server/queues/notification.queue";
 export const factoryOrderRouter = createTRPCRouter({
     getFactoryOrders: protectedProcedure
         .input(z.object({
-            filter: z.number().min(-1).default(-1),   
+            // filter: z.number().min(-1).default(-1),   
             limit: z.number().min(1).default(15),
             offset: z.number().min(0).default(0),  
         }))
@@ -89,18 +89,18 @@ export const factoryOrderRouter = createTRPCRouter({
                         order_status.*,
                         COUNT(*) OVER() AS total_count
                     FROM order_status
-                    WHERE ${Number(input.filter)}::INTEGER = -1
-                        OR approval_status = CASE ${Number(input.filter)}::INTEGER
-                            WHEN 0 THEN -1
-                            WHEN 1 THEN 0
-                            WHEN 2 THEN 1
-                            WHEN 3 THEN 2
-                        END
                     ORDER BY added_at DESC, order_date DESC
                     LIMIT ${input.limit}
                     OFFSET ${input.offset};
                 `;
 
+                // WHERE ${Number(input.filter)}::INTEGER = -1
+                //     OR approval_status = CASE ${Number(input.filter)}::INTEGER
+                //         WHEN 0 THEN -1
+                //         WHEN 1 THEN 0
+                //         WHEN 2 THEN 1
+                //         WHEN 3 THEN 2
+                //     END
                 const totalCount = rows.length > 0 && rows[0] ? Number(rows[0].total_count) : 0;
 
                 const factoryOrders = rows.map(({ total_count: _, ...rest }) => rest);

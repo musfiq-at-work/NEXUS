@@ -200,7 +200,7 @@ const EditFactoryOrderPage = ({ params }: ParamsProp) => {
 
             <MessageBox 
                 message="Factory order / Buyer order is incomplete." 
-                active={!authorizations?.authorizations?.is_complete} 
+                active={!authorizations?.authorizations?.is_complete && isAuthorizationLoading === false} 
                 type="error" 
             />
 
