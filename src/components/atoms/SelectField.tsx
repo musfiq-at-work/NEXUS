@@ -14,16 +14,33 @@ type FormSelectProps = {
     error?: boolean;
     disabled?: boolean;
     className?: string;
+    prioritizeExactMatch?: boolean;
 };
 
-const SelectField = ({ options, value, onChange, error, disabled, className = 'emboss-inner'}: FormSelectProps) => {
+const SelectField = (props: FormSelectProps) => {
+    const { options, value, onChange, error, disabled, className = 'emboss-inner', prioritizeExactMatch = false } = props;
+
+    const [searchInput, setSearchInput] = React.useState("");
+
+    const rankedOptions = React.useMemo(() => {
+        const normalizedSearch = searchInput.trim().toLowerCase();
+        if (!prioritizeExactMatch || !normalizedSearch) return options;
+
+        return options?.slice().sort((left, right) => {
+            const leftIsExactMatch = left.label.trim().toLowerCase() === normalizedSearch;
+            const rightIsExactMatch = right.label.trim().toLowerCase() === normalizedSearch;
+            return Number(rightIsExactMatch) - Number(leftIsExactMatch) || left.label.length - right.label.length;
+        });
+    }, [options, prioritizeExactMatch, searchInput]);
+
     return (
         <Select
             unstyled
             isMulti={false}
-            options={options}
+            options={rankedOptions}
             value={options?.find((c) => String(c.value) === String(value)) ?? null}
             onChange={(val: SingleValue<Option>) => onChange(val ? val.value : null)}
+            onInputChange={prioritizeExactMatch ? setSearchInput : undefined}
             isDisabled={disabled}
             menuPortalTarget={document.body}
             menuPosition="fixed"
