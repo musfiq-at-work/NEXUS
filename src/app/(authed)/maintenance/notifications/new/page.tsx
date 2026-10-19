@@ -10,6 +10,7 @@ import { notificationStyles } from "~/components/molecules/NotificationCard";
 import { api } from "~/trpc/react";
 import { formatNotificationBody } from "~/utils/formatNotificationBody";
 import { parseTRPCError } from "~/utils/parseTRPCError";
+import NotificationDescriptionEditor from "../components/NotificationDescriptionEditor";
 import { notificationFormSchema, type NotificationFormValues } from "../config/formSchema";
 
 const getLabel = (type: notification_types) => {
@@ -90,17 +91,22 @@ const NewNotificationPage = () => {
                     <TextField {...register("title")} label="Title" placeholder="Enter a notification title" maxLength={70} error={errors.title?.message} />
                     <div className="flex flex-col">
                         <Label label="Description" htmlFor="description" isErrored={!!errors.description} />
-                        <textarea
-                            {...register("description")}
-                            id="description"
-                            rows={6}
-                            placeholder="Enter the notification description"
-                            aria-invalid={!!errors.description}
-                            aria-describedby="description-help description-error"
-                            className={`emboss-inner mb-1 w-full resize-y rounded-lg border-2 px-3 py-2 focus:outline-none ${errors.description ? "border-red-accent" : "border-transparent"}`}
+                        <Controller
+                            name="description"
+                            control={control}
+                            render={({ field }) => (
+                                <NotificationDescriptionEditor
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    onBlur={field.onBlur}
+                                    inputRef={field.ref}
+                                    disabled={isSending}
+                                    error={!!errors.description}
+                                />
+                            )}
                         />
                         <p id="description-help" className="text-sm text-gray-600">
-                            Wrap text in __b__ to make it bold. Example: __b__important text__b__.
+                            Select text to apply bold, italic, or underline, or use the bullet list button to add a list.
                         </p>
                         <div id="description-error">
                             <Info info={errors.description?.message} variant="error" />
@@ -167,7 +173,7 @@ const NewNotificationPage = () => {
                             <span aria-hidden="true" className={`w-1.5 shrink-0 self-stretch rounded-lg ${notificationStyles[eventType]}`} />
                             <div className="min-w-0 flex-1">
                                 <p className="mb-2 text-sm font-semibold">{title}</p>
-                                <p className="text-sm leading-6 text-gray-600">{formatNotificationBody(description)}</p>
+                                <div className="whitespace-pre-wrap text-sm leading-6 text-gray-600">{formatNotificationBody(description)}</div>
                                 <p className="mt-3 text-xs text-gray-400">Just now</p>
                             </div>
                         </div>

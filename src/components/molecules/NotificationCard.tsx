@@ -69,7 +69,7 @@ const NotificationCard = (props: NotificationCardProps) => {
                     )}
                 </div>
                 <div id={bodyId} className="mt-1">
-                    <p className="text-sm leading-6 text-gray-600">{formatNotificationBody(body)}</p>
+                    <div className="whitespace-pre-wrap text-sm leading-6 text-gray-600">{formatNotificationBody(body)}</div>
                 </div>
                 <div className={clsx("mt-3 flex items-center gap-2 pr-3 text-xs", recipientName === undefined ? "justify-between" : "justify-end")}>
                     {recipientName === undefined && <RelativeTime date={added_at} />}
