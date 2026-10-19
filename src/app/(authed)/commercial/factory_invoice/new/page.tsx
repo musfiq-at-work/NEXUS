@@ -36,7 +36,7 @@ const NewFactoryInvoicePage = () => {
     });
 
     // Handle form submission for all fields
-    const onSubmitAll =  handleSubmit(async (factoryInvoiceData) => {
+    const onSubmitAll = handleSubmit(async (factoryInvoiceData) => {
         try {
             setIsLoading(true);
             const payload = {
@@ -70,6 +70,10 @@ const NewFactoryInvoicePage = () => {
         }
         finally {
             setIsLoading(false);
+        }
+    }, () => {
+        if (!methods.getValues("details")?.length) {
+            toast.error("At least one shipment is required");
         }
     });
 

@@ -73,7 +73,11 @@ const EditFactoryInvoicePage = ({ params }: ParamsProp) => {
         finally {
             setIsLoadingSubmit(false);
         }
-    }), [id, updateFactoryInvoice, handleSubmit]);
+    }, () => {
+        if (!methods.getValues("details")?.length) {
+            toast.error("At least one shipment is required");
+        }
+    }), [id, updateFactoryInvoice, handleSubmit, methods]);
 
     const db_id = useWatch({ control, name: "db_id" });
 

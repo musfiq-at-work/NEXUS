@@ -43,7 +43,7 @@ export const FactoryInvoiceFormSchema = z.object({
     invoice_quantity: z.string().optional(),
     invoice_value: z.string().optional(),
     total_value: z.string().optional(),
-    details: z.array(FactoryInvoiceDetails).optional(),
+    details: z.array(FactoryInvoiceDetails).min(1, "At least one detail is required"),
 });
 
 export type FactoryInvoiceFormValues = z.infer<typeof FactoryInvoiceFormSchema>;

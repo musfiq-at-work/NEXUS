@@ -472,7 +472,7 @@ export const factoryInvoiceRouter = createTRPCRouter({
                     // Update factory invoice date in TNA
                     await tx.$executeRaw`
                         UPDATE commercial_tna_planning_details AS CTPD
-                            SET actual_date = FI.invoice_date
+                            SET actual_date = FI.added_at
                         FROM commercial_tna_planning AS CTP,
                             factory_invoice AS FI,
                             commercial_tna_templates_actions AS CTTA,

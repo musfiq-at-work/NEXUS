@@ -110,6 +110,25 @@ export const factoryPaymentRouter = createTRPCRouter({
                             INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
                         GROUP BY RID.rdl_invoice_id
                     ),
+                    TT_CROSS_PAY_CHECK AS (
+                        SELECT
+                            COUNT(*) > 0 AS CROSS_PAY_EXISTS,
+                            RID.rdl_invoice_id
+                        FROM cross_payment_details AS CPD
+                            INNER JOIN factory_invoice AS FI ON FI.id = CPD.factory_invoice_id
+                            INNER JOIN rdl_invoice_details AS RID ON RID.factory_invoice_id = FI.id
+                        GROUP BY RID.rdl_invoice_id
+                    ),
+                    LC_CROSS_PAY_CHECK AS (
+                        SELECT
+                            COUNT(*) > 0 AS CROSS_PAY_EXISTS,
+                            DSD.document_submissions_id
+                        FROM cross_payment_details AS CPD
+                            INNER JOIN factory_invoice AS FI ON FI.id = CPD.factory_invoice_id
+                            INNER JOIN rdl_invoice_details AS RID ON RID.factory_invoice_id = FI.id
+                            INNER JOIN document_submissions_details AS DSD ON DSD.rdl_invoice_id = RID.rdl_invoice_id
+                        GROUP BY DSD.document_submissions_id
+                    ),
                     FACTORY_PAYMENTS_LIST AS (
                         SELECT  
                             CASE
@@ -141,7 +160,11 @@ export const factoryPaymentRouter = createTRPCRouter({
                             CASE
                                 WHEN PR.term_id = ${TT_ID} THEN COALESCE(TT_COUNT.TOTAL_INVOICE_COUNT, 0) - COALESCE(TT_PAY.PAID_COUNT, 0)
                                 WHEN PR.term_id = ${LC_ID} THEN COALESCE(LC_COUNT.TOTAL_INVOICE_COUNT, 0) - COALESCE(LC_PAY.PAID_COUNT, 0)
-                            END AS PENDING_COUNT
+                            END AS PENDING_COUNT,
+                            CASE
+                                WHEN PR.term_id = 1 THEN COALESCE(TT_CPC.CROSS_PAY_EXISTS, FALSE)
+                                WHEN PR.term_id = 2 THEN COALESCE(LC_CPC.CROSS_PAY_EXISTS, FALSE)
+                            END AS HAS_CROSS_PAYMENT
                         FROM proceed_realization AS PR
                             INNER JOIN terms AS T ON T.id = PR.term_id
                             LEFT JOIN TT_DETAILS AS TTD ON PR.term_id = ${TT_ID} AND TTD.realization_id = PR.id 
@@ -154,6 +177,8 @@ export const factoryPaymentRouter = createTRPCRouter({
                             LEFT JOIN LC_PAYMENT AS LC_PAY ON PR.term_id = ${LC_ID} AND LC_PAY.document_submission_id = LCD.id
                             LEFT JOIN TT_INVOICE_COUNT AS TT_COUNT ON PR.term_id = ${TT_ID} AND TT_COUNT.rdl_invoice_id = TTD.RID
                             LEFT JOIN LC_INVOICE_COUNT AS LC_COUNT ON PR.term_id = ${LC_ID} AND LC_COUNT.document_submissions_id = LCD.id
+                            LEFT JOIN TT_CROSS_PAY_CHECK AS TT_CPC ON PR.term_id = 1 AND TT_CPC.rdl_invoice_id = TTD.RID
+                            LEFT JOIN LC_CROSS_PAY_CHECK AS LC_CPC ON PR.term_id = 2 AND LC_CPC.document_submissions_id = LCD.id
                         WHERE (
                             EXISTS (
                                 SELECT 1
@@ -187,7 +212,9 @@ export const factoryPaymentRouter = createTRPCRouter({
                             tt_count.total_invoice_count,
                             lc_count.total_invoice_count,
                             lcp.realized_amount,
-                            ttp.realized_amount
+                            ttp.realized_amount,
+                            TT_CPC.CROSS_PAY_EXISTS,
+                            LC_CPC.CROSS_PAY_EXISTS
                     )
                     SELECT *,
                         COUNT(*) OVER() AS TOTAL_COUNT
@@ -206,6 +233,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                     factory_paid_amount: currencyFormatter(Number(payments.factory_paid_amount), '$'),
                     rdl_invoice_value: currencyFormatter(Number(payments.rdl_invoice_value), '$'),
                     realized_amount: currencyFormatter(Number(payments.realized_amount), '$'),
+                    has_cross_payment: payments.has_cross_payment,
                     paid_count: payments.paid_count,
                     pending_count: payments.pending_count,
                 }));
@@ -321,6 +349,25 @@ export const factoryPaymentRouter = createTRPCRouter({
                         INNER JOIN factory_invoice AS FI ON FI.id = RID.factory_invoice_id
                         GROUP BY RID.rdl_invoice_id
                     ),
+                    TT_CROSS_PAY_CHECK AS (
+                        SELECT
+                            COUNT(*) > 0 AS CROSS_PAY_EXISTS,
+                            RID.rdl_invoice_id
+                        FROM cross_payment_details AS CPD
+                        INNER JOIN factory_invoice AS FI ON FI.id = CPD.factory_invoice_id
+                        INNER JOIN rdl_invoice_details AS RID ON RID.factory_invoice_id = FI.id
+                        GROUP BY RID.rdl_invoice_id
+                    ),
+                    LC_CROSS_PAY_CHECK AS (
+                        SELECT
+                            COUNT(*) > 0 AS CROSS_PAY_EXISTS,
+                            DSD.document_submissions_id
+                        FROM cross_payment_details AS CPD
+                        INNER JOIN factory_invoice AS FI ON FI.id = CPD.factory_invoice_id
+                        INNER JOIN rdl_invoice_details AS RID ON RID.factory_invoice_id = FI.id
+                        INNER JOIN document_submissions_details AS DSD ON DSD.rdl_invoice_id = RID.rdl_invoice_id
+                        GROUP BY DSD.document_submissions_id
+                    ),
                     FACTORY_PAYMENTS_BASE AS (
                         SELECT
                             CASE
@@ -353,6 +400,10 @@ export const factoryPaymentRouter = createTRPCRouter({
                                 WHEN PR.term_id = ${TT_ID} THEN COALESCE(TT_COUNT.TOTAL_INVOICE_COUNT, 0) - COALESCE(TT_PAY.PAID_COUNT, 0)
                                 WHEN PR.term_id = ${LC_ID} THEN COALESCE(LC_COUNT.TOTAL_INVOICE_COUNT, 0) - COALESCE(LC_PAY.PAID_COUNT, 0)
                             END AS PENDING_COUNT,
+                            CASE
+                                WHEN PR.term_id = ${TT_ID} THEN COALESCE(TT_CPC.CROSS_PAY_EXISTS, FALSE)
+                                WHEN PR.term_id = ${LC_ID} THEN COALESCE(LC_CPC.CROSS_PAY_EXISTS, FALSE)
+                            END AS HAS_CROSS_PAYMENT,
                             PR.TERM_ID,
                             PR.DOCUMENT_SUBMISSION_ID,
                             TTD.RID AS RDL_INVOICE_ID,
@@ -371,6 +422,8 @@ export const factoryPaymentRouter = createTRPCRouter({
                             LEFT JOIN LC_PAYMENT AS LC_PAY ON PR.term_id = ${LC_ID} AND LC_PAY.document_submission_id = LCD.id
                             LEFT JOIN TT_INVOICE_COUNT AS TT_COUNT ON PR.term_id = ${TT_ID} AND TT_COUNT.rdl_invoice_id = TTD.RID
                             LEFT JOIN LC_INVOICE_COUNT AS LC_COUNT ON PR.term_id = ${LC_ID} AND LC_COUNT.document_submissions_id = LCD.id
+                            LEFT JOIN TT_CROSS_PAY_CHECK AS TT_CPC ON PR.term_id = ${TT_ID} AND TT_CPC.rdl_invoice_id = TTD.RID
+                            LEFT JOIN LC_CROSS_PAY_CHECK AS LC_CPC ON PR.term_id = ${LC_ID} AND LC_CPC.document_submissions_id = LCD.id
                             INNER JOIN buyers AS B ON B.id = PR.buyer_id
                         WHERE (
                             EXISTS (
@@ -426,6 +479,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                             FPB.FACTORY_PAID_AMOUNT,
                             FPB.PAID_COUNT,
                             FPB.PENDING_COUNT,
+                            FPB.HAS_CROSS_PAYMENT,
                             CASE
                                 WHEN FPB.TERM_ID = ${TT_ID}
                                     AND FPB.INVOICE_NO = ${input.query}
@@ -532,6 +586,7 @@ export const factoryPaymentRouter = createTRPCRouter({
                     realized_amount: currencyFormatter(Number(payments.realized_amount), '$'),
                     paid_count: payments.paid_count,
                     pending_count: payments.pending_count,
+                    has_cross_payment: payments.has_cross_payment,
                 }));
 
                 return { factoryPayments, total };
