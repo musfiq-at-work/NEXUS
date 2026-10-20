@@ -214,6 +214,8 @@ model users {
   level_permission_history_level_permission_history_added_byTousers  level_permission_history[]                     @relation("level_permission_history_added_byTousers")
   levels_history                                                     levels_history[]
   notifications                                                      notifications[]
+  order_checklist_details_history                                    order_checklist_details_history[]
+  order_checklist_history                                            order_checklist_history[]
   order_styles_history                                               order_styles_history[]
   overseas_office_history_overseas_office_history_action_byTousers   overseas_office_history[]                      @relation("overseas_office_history_action_byTousers")
   payment_terms_history_payment_terms_history_action_byTousers       payment_terms_history[]                        @relation("payment_terms_history_action_byTousers")
@@ -972,6 +974,7 @@ model buyers {
   factory_invoice             factory_invoice[]
   handover_dates              handover_dates?
   lc_master                   lc_master[]
+  order_checklist             order_checklist[]
   proceed_realization         proceed_realization[]
   rdl_invoice                 rdl_invoice[]
   sales_contracts             sales_contracts[]
@@ -1226,6 +1229,7 @@ model buyer_orders {
   lc_amendment_orders              lc_amendment_orders[]
   lc_amendment_shipments           lc_amendment_shipments[]
   lc_orders                        lc_orders[]
+  order_checklist                  order_checklist[]
   order_styles                     order_styles[]
   sales_contract_amendment_details sales_contract_amendment_details[]
   sales_contract_details           sales_contract_details[]
@@ -1270,6 +1274,7 @@ model order_styles {
   serial           Int?
   photo_url        String?
   file_size        Int?
+  order_checklist  order_checklist[]
   fabrics          fabrics            @relation(fields: [fabric_id], references: [id], onUpdate: NoAction)
   buyer_orders     buyer_orders       @relation(fields: [order_id], references: [id], onUpdate: NoAction)
   products         products           @relation(fields: [product_id], references: [id], onUpdate: NoAction)
@@ -1320,6 +1325,7 @@ model shipment_details {
   factory_shipment_details         factory_shipment_details?
   lc_amendment_shipments           lc_amendment_shipments[]
   lc_shipments                     lc_shipments[]
+  order_checklist                  order_checklist[]
   rdl_invoice_shipment_details     rdl_invoice_shipment_details[]
   destinations                     destinations                      @relation(fields: [destination_id], references: [id], onUpdate: NoAction)
   order_styles                     order_styles                      @relation(fields: [order_style_id], references: [id], onUpdate: NoAction)
@@ -3110,6 +3116,68 @@ model error_logs {
   error_code     String?  @db.VarChar(100)
   user_id        String?  @db.Uuid
   error_message  String?
+}
+
+model order_checklist {
+  id                      String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  buyer_id                Int
+  order_id                String                    @db.Uuid
+  style_id                String                    @db.Uuid
+  shipment_id             String                    @db.Uuid
+  added_at                DateTime?                 @default(now()) @db.Timestamp(6)
+  buyers                  buyers                    @relation(fields: [buyer_id], references: [id], onUpdate: NoAction)
+  buyer_orders            buyer_orders              @relation(fields: [order_id], references: [id], onUpdate: NoAction)
+  shipment_details        shipment_details          @relation(fields: [shipment_id], references: [id], onUpdate: NoAction)
+  order_styles            order_styles              @relation(fields: [style_id], references: [id], onUpdate: NoAction)
+  order_checklist_details order_checklist_details[]
+}
+
+model order_checklist_history {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  order_checklist_id String?   @db.Uuid
+  buyer_id           Int?
+  order_id           String?   @db.Uuid
+  style_id           String?   @db.Uuid
+  shipment_id        String?   @db.Uuid
+  action_type        actions?
+  action_by          String    @db.Uuid
+  action_at          DateTime? @default(now()) @db.Timestamp(6)
+  users              users     @relation(fields: [action_by], references: [id], onUpdate: NoAction)
+}
+
+model order_checklist_details {
+  id                              String                            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  order_checklist_id              String                            @db.Uuid
+  serial_no                       Int
+  document_details                String
+  technical_check                 Boolean?                          @default(false)
+  technical_remarks               String?
+  technical_check_date            DateTime?                         @db.Date
+  qa_check                        Boolean?                          @default(false)
+  qa_remarks                      String?
+  qa_check_date                   DateTime?                         @db.Date
+  added_at                        DateTime?                         @default(now()) @db.Timestamp(6)
+  order_checklist                 order_checklist                   @relation(fields: [order_checklist_id], references: [id], onUpdate: NoAction)
+  order_checklist_details_history order_checklist_details_history[]
+}
+
+model order_checklist_details_history {
+  id                         String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  order_checklist_details_id String?                  @db.Uuid
+  order_checklist_id         String?                  @db.Uuid
+  serial_no                  Int?
+  document_details           String?
+  technical_check            Boolean?                 @default(false)
+  technical_remarks          String?
+  technical_check_date       DateTime?                @db.Date
+  qa_check                   Boolean?                 @default(false)
+  qa_remarks                 String?
+  qa_check_date              DateTime?                @db.Date
+  action_type                actions?
+  action_by                  String                   @db.Uuid
+  action_at                  DateTime?                @default(now()) @db.Timestamp(6)
+  users                      users                    @relation(fields: [action_by], references: [id], onUpdate: NoAction)
+  order_checklist_details    order_checklist_details? @relation(fields: [order_checklist_details_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
 }
 
 enum actions {

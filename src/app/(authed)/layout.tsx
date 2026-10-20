@@ -5,15 +5,15 @@ import ScrollToTopBottom from "~/components/organisms/ScrollToTopBottom";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
 
-  return (
-      <ProtectedRoute>
-        <TopBar />
-        <SideBarWrapper>
-          {children}
-          <ScrollToTopBottom />
-        </SideBarWrapper>
-      </ProtectedRoute>
-  );
+	return (
+		<ProtectedRoute>
+			<TopBar />
+			<SideBarWrapper>
+				{children}
+				<ScrollToTopBottom />
+			</SideBarWrapper>
+		</ProtectedRoute>
+	);
 };
 
 export default Layout;

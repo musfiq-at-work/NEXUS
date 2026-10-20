@@ -11,7 +11,7 @@ import { useState } from "react";
 const FactoryOrders = () => {
     const router = useRouter();
     const utils = api.useUtils();
-    // const [filter, setFilter] = useState(-1);
+    const [filter, setFilter] = useState(-1);
     
     const { page, limit, debouncedSearch, handleSearchChange, nextPage, prevPage } = useSearchablePagination();
 
@@ -19,7 +19,7 @@ const FactoryOrders = () => {
 
     // Fetch paginated data
     const {data: factoryOrders, isLoading} = api.factoryOrder.getFactoryOrders.useQuery({
-        // filter: filter,
+        filter: filter,
         limit,
         offset: page * limit,
     });
@@ -79,20 +79,20 @@ const FactoryOrders = () => {
                         </div>
                     ) : null
                 }
-                // filters={
-                //     <Filter 
-                //         filter={filter}
-                //         setFilter={setFilter}
-                //         label='Approval Status'
-                //         options={[
-                //             {label: 'ALL', value: -1}, 
-                //             {label: 'APPROVED', value: 3},
-                //             {label: 'LEVEL 1 AUTHORIZED', value: 2}, 
-                //             {label: 'PENDING', value: 1}, 
-                //             {label: 'INCOMPLETE', value: 0}, 
-                //         ]}
-                //     />
-                // }
+                filters={
+                    <Filter 
+                        filter={filter}
+                        setFilter={setFilter}
+                        label='Approval Status'
+                        options={[
+                            {label: 'ALL', value: -1}, 
+                            {label: 'APPROVED', value: 3},
+                            {label: 'LEVEL 1 AUTHORIZED', value: 2}, 
+                            {label: 'PENDING', value: 1}, 
+                            {label: 'INCOMPLETE', value: 0}, 
+                        ]}
+                    />
+                }
             >
                 <div className="w-full">
                     <Table

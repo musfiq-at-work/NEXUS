@@ -402,7 +402,7 @@ export const tnaPlanRouter = createTRPCRouter({
                                     WHERE TP.STYLE_ID = OS.ID
                                 )
                         )
-                        -- AND FO.approval_status = 2
+                        AND FO.approval_status = 2
                         ORDER BY O.ADDED_AT DESC;
                 `;
 

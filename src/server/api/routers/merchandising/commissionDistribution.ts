@@ -288,7 +288,7 @@ export const commissionDistributionRouter = createTRPCRouter({
                     AND BO.ID NOT IN (
                         SELECT order_id FROM commission_distributions
                     )
-                    -- AND FO.approval_status = 2
+                    AND FO.approval_status = 2
                     AND NOT EXISTS (
                         SELECT 1
                         FROM order_styles AS OS
@@ -718,18 +718,18 @@ export const commissionDistributionRouter = createTRPCRouter({
                 const userDepartment = ctx.user.department_id;
                 const isAdmin = userLevel === ADMIN_LEVEL_ID && userDepartment === ADMIN_DEPARTMENT_ID;
 
-                // const isFactoryOrderAuthorized = await ctx.db.$queryRaw<{approval_status: boolean}[]>`
-                //     SELECT FO.approval_status = 2 AS approval_status FROM commission_distributions AS CD
-                //         INNER JOIN factory_orders AS FO ON FO.order_id = CD.order_id
-                //     WHERE CD.id = ${input.id};
-                // `;
+                const isFactoryOrderAuthorized = await ctx.db.$queryRaw<{approval_status: boolean}[]>`
+                    SELECT FO.approval_status = 2 AS approval_status FROM commission_distributions AS CD
+                        INNER JOIN factory_orders AS FO ON FO.order_id = CD.order_id
+                    WHERE CD.id = ${input.id};
+                `;
 
-                // if(!isFactoryOrderAuthorized[0]?.approval_status && input.approval_status === true) {
-                //     throw new TRPCError({
-                //         code: "BAD_REQUEST",
-                //         message: "Authorize factory order first.",
-                //     });
-                // }
+                if(!isFactoryOrderAuthorized[0]?.approval_status && input.approval_status === true) {
+                    throw new TRPCError({
+                        code: "BAD_REQUEST",
+                        message: "Authorize factory order first.",
+                    });
+                }
 
                 const can_approve = await ctx.db.$queryRaw<{ can_approve: boolean }[]>`
                     SELECT 
@@ -929,36 +929,36 @@ export const commissionDistributionRouter = createTRPCRouter({
             }
         }),
         
-    // isFactoryOrderUnauthorized: protectedProcedure
-    //     .input(z.object({
-    //         id: z.string().min(1),
-    //     }))
-    //     .query(async ({ ctx, input }) => {
-    //         const can_view = ctx.permissions[m.COMMISSION_DISTRIBUTION]?.can_view;
+    isFactoryOrderUnauthorized: protectedProcedure
+        .input(z.object({
+            id: z.string().min(1),
+        }))
+        .query(async ({ ctx, input }) => {
+            const can_view = ctx.permissions[m.COMMISSION_DISTRIBUTION]?.can_view;
 
-    //         if (!can_view) {
-    //             throw new TRPCError({
-    //                 code: "FORBIDDEN",
-    //                 message: "You do not have permission to view Commission Distributions.",
-    //             });
-    //         }
+            if (!can_view) {
+                throw new TRPCError({
+                    code: "FORBIDDEN",
+                    message: "You do not have permission to view Commission Distributions.",
+                });
+            }
             
-    //         try {
-    //             const isFactoryOrderUnauthorized = await ctx.db.$queryRaw<{approval_status: boolean}[]>`
-    //                 SELECT 
-    //                     FO.approval_status <> 2 AS approval_status 
-    //                 FROM commission_distributions AS CD
-    //                     INNER JOIN factory_orders AS FO ON FO.order_id = CD.order_id
-    //                 WHERE CD.id = ${input.id};
-    //             `;
+            try {
+                const isFactoryOrderUnauthorized = await ctx.db.$queryRaw<{approval_status: boolean}[]>`
+                    SELECT 
+                        FO.approval_status <> 2 AS approval_status 
+                    FROM commission_distributions AS CD
+                        INNER JOIN factory_orders AS FO ON FO.order_id = CD.order_id
+                    WHERE CD.id = ${input.id};
+                `;
 
-    //             return isFactoryOrderUnauthorized[0]?.approval_status ?? false;
-    //         }
-    //         catch (error) {
-    //             await logError(error, ctx, input);
-    //             handlePrismaError(error);
-    //         }
-    //     }),
+                return isFactoryOrderUnauthorized[0]?.approval_status ?? false;
+            }
+            catch (error) {
+                await logError(error, ctx, input);
+                handlePrismaError(error);
+            }
+        }),
 
     isSalesContractApproved: protectedProcedure
         .input(z.object({

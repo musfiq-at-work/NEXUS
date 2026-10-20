@@ -14,7 +14,7 @@ import { notificationQueue } from "~/server/queues/notification.queue";
 export const factoryOrderRouter = createTRPCRouter({
     getFactoryOrders: protectedProcedure
         .input(z.object({
-            // filter: z.number().min(-1).default(-1),   
+            filter: z.number().min(-1).default(-1),   
             limit: z.number().min(1).default(15),
             offset: z.number().min(0).default(0),  
         }))
@@ -60,7 +60,7 @@ export const factoryOrderRouter = createTRPCRouter({
                             CASE
                                 WHEN COALESCE(SS.style_count, 0) = 0 THEN -1
                                 WHEN SS.incomplete_style_count > 0 THEN -1
-                                ELSE 0
+                                ELSE FO.approval_status
                             END AS approval_status,
                             BO.added_at
                         FROM buyer_orders BO
@@ -89,18 +89,18 @@ export const factoryOrderRouter = createTRPCRouter({
                         order_status.*,
                         COUNT(*) OVER() AS total_count
                     FROM order_status
+                    WHERE ${Number(input.filter)}::INTEGER = -1
+                        OR approval_status = CASE ${Number(input.filter)}::INTEGER
+                            WHEN 0 THEN -1
+                            WHEN 1 THEN 0
+                            WHEN 2 THEN 1
+                            WHEN 3 THEN 2
+                        END
                     ORDER BY added_at DESC, order_date DESC
                     LIMIT ${input.limit}
                     OFFSET ${input.offset};
                 `;
 
-                // WHERE ${Number(input.filter)}::INTEGER = -1
-                //     OR approval_status = CASE ${Number(input.filter)}::INTEGER
-                //         WHEN 0 THEN -1
-                //         WHEN 1 THEN 0
-                //         WHEN 2 THEN 1
-                //         WHEN 3 THEN 2
-                //     END
                 const totalCount = rows.length > 0 && rows[0] ? Number(rows[0].total_count) : 0;
 
                 const factoryOrders = rows.map(({ total_count: _, ...rest }) => rest);
@@ -157,7 +157,7 @@ export const factoryOrderRouter = createTRPCRouter({
                                 GROUP BY BOS.id, BOS.order_quantity
                                 HAVING COALESCE(SUM(SC.quantity), 0) < BOS.order_quantity
                             ) THEN -1
-                            ELSE 0
+                            ELSE FO.approval_status
                         END AS approval_status,
                         COUNT(*) OVER() AS total_count
                     FROM BUYER_ORDERS AS BO
@@ -875,29 +875,10 @@ export const factoryOrderRouter = createTRPCRouter({
             
             try {
                 // Check if the factory order is complete and get its approval status
-                // const authorizations = await ctx.db.$queryRaw<{is_complete: boolean, approval_status: number}[]>`
-                //     SELECT
-                //         os_sum.total_order_qty <= sid_sum.total_shipment_qty AS is_complete,
-                //         fo.approval_status
-                //     FROM factory_orders fo
-                //     JOIN (
-                //         SELECT order_id, SUM(order_quantity) AS total_order_qty
-                //         FROM order_styles
-                //         GROUP BY order_id
-                //     ) os_sum ON os_sum.order_id = fo.order_id
-                //     JOIN (
-                //         SELECT os.order_id, SUM(sid.quantity) AS total_shipment_qty
-                //         FROM order_styles os
-                //         JOIN shipment_details sd ON sd.order_style_id = os.id
-                //         JOIN shipment_item_details sid ON sid.shipment_detail_id = sd.id
-                //         GROUP BY os.order_id
-                //     ) sid_sum ON sid_sum.order_id = fo.order_id
-                //     WHERE fo.id = ${input.factoryOrderId};
-                // `;
-
-                const authorizations = await ctx.db.$queryRaw<{is_complete: boolean}[]>`
+                const authorizations = await ctx.db.$queryRaw<{is_complete: boolean, approval_status: number}[]>`
                     SELECT
-                        os_sum.total_order_qty <= sid_sum.total_shipment_qty AS is_complete
+                        os_sum.total_order_qty <= sid_sum.total_shipment_qty AS is_complete,
+                        fo.approval_status
                     FROM factory_orders fo
                     JOIN (
                         SELECT order_id, SUM(order_quantity) AS total_order_qty
@@ -913,6 +894,25 @@ export const factoryOrderRouter = createTRPCRouter({
                     ) sid_sum ON sid_sum.order_id = fo.order_id
                     WHERE fo.id = ${input.factoryOrderId};
                 `;
+
+                // const authorizations = await ctx.db.$queryRaw<{is_complete: boolean}[]>`
+                //     SELECT
+                //         os_sum.total_order_qty <= sid_sum.total_shipment_qty AS is_complete
+                //     FROM factory_orders fo
+                //     JOIN (
+                //         SELECT order_id, SUM(order_quantity) AS total_order_qty
+                //         FROM order_styles
+                //         GROUP BY order_id
+                //     ) os_sum ON os_sum.order_id = fo.order_id
+                //     JOIN (
+                //         SELECT os.order_id, SUM(sid.quantity) AS total_shipment_qty
+                //         FROM order_styles os
+                //         JOIN shipment_details sd ON sd.order_style_id = os.id
+                //         JOIN shipment_item_details sid ON sid.shipment_detail_id = sd.id
+                //         GROUP BY os.order_id
+                //     ) sid_sum ON sid_sum.order_id = fo.order_id
+                //     WHERE fo.id = ${input.factoryOrderId};
+                // `;
 
                 // Get the user's authorization permission for factory orders
                 const authorizationPermission = await ctx.db.$queryRaw<{department_id: number, level_id: number, approval_level: number}[]>`
@@ -933,121 +933,121 @@ export const factoryOrderRouter = createTRPCRouter({
             }
         }),
 
-    // approveFactoryOrder: protectedProcedure
-    //     .input(z.object({
-    //         factoryOrderId: z.string().min(1),
-    //         approval_status: z.number().min(0).max(2),
-    //         previous_approval_status: z.number().min(0).max(2),
-    //     }))
-    //     .mutation(async ({ ctx, input }) => {
-    //         try {
-    //             const isCommissionDistributionAuthorized = await ctx.db.$queryRaw<{approval_status: boolean}[]>`
-    //                 SELECT CD.approval_status FROM commission_distributions AS CD
-    //                     INNER JOIN factory_orders AS FO ON FO.order_id = CD.order_id
-    //                 WHERE FO.id = ${input.factoryOrderId};
-    //             `;
+    approveFactoryOrder: protectedProcedure
+        .input(z.object({
+            factoryOrderId: z.string().min(1),
+            approval_status: z.number().min(0).max(2),
+            previous_approval_status: z.number().min(0).max(2),
+        }))
+        .mutation(async ({ ctx, input }) => {
+            try {
+                const isCommissionDistributionAuthorized = await ctx.db.$queryRaw<{approval_status: boolean}[]>`
+                    SELECT CD.approval_status FROM commission_distributions AS CD
+                        INNER JOIN factory_orders AS FO ON FO.order_id = CD.order_id
+                    WHERE FO.id = ${input.factoryOrderId};
+                `;
 
-    //             if(isCommissionDistributionAuthorized[0]?.approval_status) {
-    //                 throw new TRPCError({
-    //                     code: "FORBIDDEN",
-    //                     message: "Factory Order with authorized commission distribution cannot be authorized or unauthorized.",
-    //                 });
-    //             }
+                if(isCommissionDistributionAuthorized[0]?.approval_status) {
+                    throw new TRPCError({
+                        code: "FORBIDDEN",
+                        message: "Factory Order with authorized commission distribution cannot be authorized or unauthorized.",
+                    });
+                }
 
-    //             const currentApprovalLevel = await ctx.db.factory_orders.findUnique({
-    //                 where: { id: input.factoryOrderId },
-    //                 select: { approval_status: true },
-    //             });
+                const currentApprovalLevel = await ctx.db.factory_orders.findUnique({
+                    where: { id: input.factoryOrderId },
+                    select: { approval_status: true },
+                });
 
 
-    //             const authorizationPermission = await ctx.db.$queryRaw<{approval_level: number}[]>`
-    //                 SELECT 
-    //                     approval_level
-    //                 FROM AUTHORIZATIONS 
-    //                 WHERE module_id = ${m.FACTORY_ORDERS}
-    //                     AND level_id = ${ctx.user.level_id}
-    //                     AND department_id = ${ctx.user.department_id}
-    //                 LIMIT 1;
-    //             `;
+                const authorizationPermission = await ctx.db.$queryRaw<{approval_level: number}[]>`
+                    SELECT 
+                        approval_level
+                    FROM AUTHORIZATIONS 
+                    WHERE module_id = ${m.FACTORY_ORDERS}
+                        AND level_id = ${ctx.user.level_id}
+                        AND department_id = ${ctx.user.department_id}
+                    LIMIT 1;
+                `;
 
-    //             if (!currentApprovalLevel) {
-    //                 throw new TRPCError({
-    //                     code: "NOT_FOUND",
-    //                     message: "Factory Order not found.",
-    //                 });
-    //             }
+                if (!currentApprovalLevel) {
+                    throw new TRPCError({
+                        code: "NOT_FOUND",
+                        message: "Factory Order not found.",
+                    });
+                }
 
-    //             if(currentApprovalLevel.approval_status !== input.previous_approval_status) {
-    //                 throw new TRPCError({
-    //                     code: "CONFLICT",
-    //                     message: "Factory Order approval status has been changed by another user. Try again.",
-    //                 });
-    //             }
+                if(currentApprovalLevel.approval_status !== input.previous_approval_status) {
+                    throw new TRPCError({
+                        code: "CONFLICT",
+                        message: "Factory Order approval status has been changed by another user. Try again.",
+                    });
+                }
 
-    //             // Check if the user has permission to Authorize / Unauthorize
-    //             if(currentApprovalLevel.approval_status === 0 && input.approval_status === 2) { 
-    //                 throw new TRPCError({
-    //                     code: "FORBIDDEN",
-    //                     message: "Factory Order is not 1st level authorized yet.",
-    //                 });
-    //             }
-    //             else if(authorizationPermission?.[0]?.approval_level === 1 && input.approval_status === 2) {
-    //                 throw new TRPCError({
-    //                     code: "FORBIDDEN",
-    //                     message: "You do not have permission to authorize factory order.",
-    //                 });
-    //             }
-    //             else if(authorizationPermission?.[0]?.approval_level === 1 && input.approval_status === 0 && currentApprovalLevel.approval_status === 2) {
-    //                 throw new TRPCError({
-    //                     code: "FORBIDDEN",
-    //                     message: "You do not have permission to Unauthorize Authorized factory orders.",
-    //                 });
-    //             }
+                // Check if the user has permission to Authorize / Unauthorize
+                if(currentApprovalLevel.approval_status === 0 && input.approval_status === 2) { 
+                    throw new TRPCError({
+                        code: "FORBIDDEN",
+                        message: "Factory Order is not 1st level authorized yet.",
+                    });
+                }
+                else if(authorizationPermission?.[0]?.approval_level === 1 && input.approval_status === 2) {
+                    throw new TRPCError({
+                        code: "FORBIDDEN",
+                        message: "You do not have permission to authorize factory order.",
+                    });
+                }
+                else if(authorizationPermission?.[0]?.approval_level === 1 && input.approval_status === 0 && currentApprovalLevel.approval_status === 2) {
+                    throw new TRPCError({
+                        code: "FORBIDDEN",
+                        message: "You do not have permission to Unauthorize Authorized factory orders.",
+                    });
+                }
 
-    //             // Update the approval status within a transaction
-    //             const approvedFactoryOrder = await transactionWithQueuedHistory(ctx.db, async (tx) => {
-    //                 const factoryOrder = await tx.factory_orders.update({
-    //                     where: { id: input.factoryOrderId },
-    //                     data: {
-    //                         approval_status: input.approval_status,
-    //                     },
-    //                 });
+                // Update the approval status within a transaction
+                const approvedFactoryOrder = await transactionWithQueuedHistory(ctx.db, async (tx) => {
+                    const factoryOrder = await tx.factory_orders.update({
+                        where: { id: input.factoryOrderId },
+                        data: {
+                            approval_status: input.approval_status,
+                        },
+                    });
 
-    //                 await tx.factory_orders_history.create({
-    //                     data: {
-    //                         factory_order_id: factoryOrder.id,
-    //                         factory_order_date: factoryOrder.factory_order_date,
-    //                         action_by: ctx.user.id,
-    //                         action_type: actions.UPDATE,
-    //                         order_id: factoryOrder.order_id,
-    //                         approval_status: input.approval_status,
-    //                     },
-    //                 });
+                    await tx.factory_orders_history.create({
+                        data: {
+                            factory_order_id: factoryOrder.id,
+                            factory_order_date: factoryOrder.factory_order_date,
+                            action_by: ctx.user.id,
+                            action_type: actions.UPDATE,
+                            order_id: factoryOrder.order_id,
+                            approval_status: input.approval_status,
+                        },
+                    });
 
-    //                 await notificationQueue.add("factory-order-submitted", {
-    //                     factoryOrderId: input.factoryOrderId,
-    //                     approval_status: input.approval_status,
-    //                     previous_approval_status: input.previous_approval_status,
-    //                     action_by: `${ctx.user.first_name} ${ctx.user.last_name}`,
-    //                     level_id: ctx.user.level_id,
-    //                 }, {
-    //                     attempts: 5,
-    //                     backoff: {
-    //                         type: "exponential",
-    //                         delay: 1000,
-    //                     },
-    //                 });
+                    await notificationQueue.add("factory-order-submitted", {
+                        factoryOrderId: input.factoryOrderId,
+                        approval_status: input.approval_status,
+                        previous_approval_status: input.previous_approval_status,
+                        action_by: `${ctx.user.first_name} ${ctx.user.last_name}`,
+                        level_id: ctx.user.level_id,
+                    }, {
+                        attempts: 5,
+                        backoff: {
+                            type: "exponential",
+                            delay: 1000,
+                        },
+                    });
 
-    //                 return factoryOrder;
-    //             }, {timeout: 30000});
+                    return factoryOrder;
+                }, {timeout: 30000});
 
-    //             return approvedFactoryOrder;
-    //         }
-    //         catch (error) {
-    //             await logError(error, ctx, input);
-    //             handlePrismaError(error);
-    //         }
-    // }),
+                return approvedFactoryOrder;
+            }
+            catch (error) {
+                await logError(error, ctx, input);
+                handlePrismaError(error);
+            }
+    }),
 
     deleteFactoryOrder: protectedProcedure
         .input(z.object({

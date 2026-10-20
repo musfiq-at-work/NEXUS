@@ -78,8 +78,11 @@ export { commissionDistributionReportRouter } from "./routers/reports/commission
 export { lcTransferReportRouter } from "./routers/reports/lcTransferReport";
 export { crossPaymentReportRouter } from "./routers/reports/crossPaymentReport";
 
-// Maintenance router
+// Maintenance routers
 export { errorLogsRouter } from "./routers/maintenance/error_logs";
 export { userSessionsRouter } from "./routers/maintenance/user_sessions";
 export { healthRouter } from "./routers/maintenance/health";
 export { notificationsRouter } from "./routers/maintenance/notifications";
+
+// Quality routes
+export { orderChecklistRouter } from "./routers/quality/orderChecklist";

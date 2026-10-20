@@ -210,7 +210,7 @@ async function deleteStyle(tx: Prisma.TransactionClient, styleId: string, userId
 export const buyerOrdersRouter = createTRPCRouter({
     getBuyerOrders: protectedProcedure
         .input(z.object({
-            // filter: z.number().min(-1).default(-1),   
+            filter: z.number().min(-1).default(-1),   
             limit: z.number().min(1).default(15),
             offset: z.number().min(0).default(0),  
         }))
@@ -257,9 +257,9 @@ export const buyerOrdersRouter = createTRPCRouter({
                             CASE
                                 WHEN COALESCE(SS.style_count, 0) = 0 THEN 'INCOMPLETE'
                                 WHEN SS.incomplete_style_count > 0 THEN 'INCOMPLETE'
-                                -- WHEN FO.approval_status = 2 THEN 'APPROVED'
-                                -- ELSE 'PENDING'
-                                ELSE 'COMPLETE'
+                                WHEN FO.approval_status = 2 THEN 'APPROVED'
+                                ELSE 'PENDING'
+                                -- ELSE 'COMPLETE'
                             END AS status
                         FROM buyer_orders BO
                         INNER JOIN teams T ON T.id = BO.team_id
@@ -288,17 +288,17 @@ export const buyerOrdersRouter = createTRPCRouter({
                         buyer_order_status.*,
                         COUNT(*) OVER() AS total_count
                     FROM buyer_order_status
+                    WHERE ${Number(input.filter)}::INTEGER = -1
+                        OR status = CASE ${Number(input.filter)}::INTEGER
+                            WHEN 0 THEN 'INCOMPLETE'
+                            WHEN 1 THEN 'PENDING'
+                            WHEN 2 THEN 'APPROVED'
+                        END
                     ORDER BY added_at DESC, order_date DESC
                     LIMIT ${input.limit}
                     OFFSET ${input.offset};
                 `;
 
-                // -- WHERE ${Number(input.filter)}::INTEGER = -1
-                // --     OR status = CASE ${Number(input.filter)}::INTEGER
-                // --         WHEN 0 THEN 'INCOMPLETE'
-                // --         WHEN 1 THEN 'PENDING'
-                // --         WHEN 2 THEN 'APPROVED'
-                // --     END
 
                 const total = result.length > 0 ? Number(result[0]?.total_count) : 0;
 
@@ -543,9 +543,9 @@ export const buyerOrdersRouter = createTRPCRouter({
                             GROUP BY BOS.id, BOS.order_quantity
                             HAVING COALESCE(SUM(SC.quantity), 0) < BOS.order_quantity
                         ) THEN 'INCOMPLETE'
-                        -- WHEN FO.approval_status = 2 THEN 'APPROVED'
-                        -- ELSE 'PENDING'
-                        ELSE 'COMPLETE'
+                        WHEN FO.approval_status = 2 THEN 'APPROVED'
+                        ELSE 'PENDING'
+                        -- ELSE 'COMPLETE'
                     END AS status,
                     COUNT(*) OVER() AS total_count
                 FROM BUYER_ORDERS BO

@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Form, Info, MessageBox, Wrapper } from "~/components";
+import { Button, Form, MessageBox, Wrapper } from "~/components";
 import React, { useEffect, useState } from "react";
 import { useFactoryOrderForm } from "../../config/useFactoryOrderForm";
 import { api } from "~/trpc/react";
@@ -89,43 +89,43 @@ const EditFactoryOrderPage = ({ params }: ParamsProp) => {
         }
     });
 
-    // const [canAuthorize, setCanAuthorize] = useState(false);
+    const [canAuthorize, setCanAuthorize] = useState(false);
 
-    // const { user, isAdmin } = useDecodedUser();
+    const { user, isAdmin } = useDecodedUser();
     const { data: authorizations, isLoading: isAuthorizationLoading } = api.factoryOrder.getAuthorizations.useQuery(
         { factoryOrderId: id }
     );
 
-    // const isFirstLevelAuthorized = authorizations?.authorizations?.approval_status === 1;
-    // const isAuthorized = authorizations?.authorizations?.approval_status === 2;
-    // const approvalLevel = authorizations?.authorizationPermission?.approval_level ?? 0;
+    const isFirstLevelAuthorized = authorizations?.authorizations?.approval_status === 1;
+    const isAuthorized = authorizations?.authorizations?.approval_status === 2;
+    const approvalLevel = authorizations?.authorizationPermission?.approval_level ?? 0;
 
-    // useEffect(() => {
-    //     setCanAuthorize(
-    //         !(
-    //             isAuthorizationLoading 
-    //             || !authorizations?.authorizations?.is_complete 
-    //             || (
-    //                 !(
-    //                     user?.department_id === authorizations?.authorizationPermission?.department_id 
-    //                     && user?.level_id === authorizations?.authorizationPermission?.level_id
-    //                 )
-    //             )
-    //         )
-    //     )
-    // }, [isAuthorizationLoading, authorizations, user]);
+    useEffect(() => {
+        setCanAuthorize(
+            !(
+                isAuthorizationLoading 
+                || !authorizations?.authorizations?.is_complete 
+                || (
+                    !(
+                        user?.department_id === authorizations?.authorizationPermission?.department_id 
+                        && user?.level_id === authorizations?.authorizationPermission?.level_id
+                    )
+                )
+            )
+        )
+    }, [isAuthorizationLoading, authorizations, user]);
 
-    // const setAuthorization = api.factoryOrder.approveFactoryOrder.useMutation({
-    //     onSuccess: async () => {
-    //         setError(null);
-    //         toast.success("Authorization status updated successfully!");
-    //         await Promise.all([
-    //             utils.factoryOrder.getFactoryOrders.invalidate(),
-    //             utils.factoryOrder.searchFactoryOrders.invalidate(),
-    //             utils.factoryOrder.getAuthorizations.invalidate({ factoryOrderId: id }),
-    //         ])
-    //     },
-    // });
+    const setAuthorization = api.factoryOrder.approveFactoryOrder.useMutation({
+        onSuccess: async () => {
+            setError(null);
+            toast.success("Authorization status updated successfully!");
+            await Promise.all([
+                utils.factoryOrder.getFactoryOrders.invalidate(),
+                utils.factoryOrder.searchFactoryOrders.invalidate(),
+                utils.factoryOrder.getAuthorizations.invalidate({ factoryOrderId: id }),
+            ])
+        },
+    });
 
 
     const hasPermission = api.evPermissions.getEvPermissions.useQuery(
@@ -133,20 +133,20 @@ const EditFactoryOrderPage = ({ params }: ParamsProp) => {
     );
 
 
-    // const onSetAuthorization = async (status: number) => {
-    //     try {
-    //         await setAuthorization.mutateAsync({
-    //             factoryOrderId: id,
-    //             approval_status: status,
-    //             previous_approval_status: authorizations?.authorizations?.approval_status ?? 0,
-    //         });
-    //     }
-    //     catch (error) {
-    //         const message = parseTRPCError(error);
-    //         toast.error(`Error updating authorization status: ${message}`);
-    //         setError(message);
-    //     }
-    // };
+    const onSetAuthorization = async (status: number) => {
+        try {
+            await setAuthorization.mutateAsync({
+                factoryOrderId: id,
+                approval_status: status,
+                previous_approval_status: authorizations?.authorizations?.approval_status ?? 0,
+            });
+        }
+        catch (error) {
+            const message = parseTRPCError(error);
+            toast.error(`Error updating authorization status: ${message}`);
+            setError(message);
+        }
+    };
 
     return (
         <Wrapper heading='Update Factory Order'
@@ -172,31 +172,31 @@ const EditFactoryOrderPage = ({ params }: ParamsProp) => {
                 validationError={validationError.factoryOrder ?? {}}
                 error={error}
                 control={control}
-                disabled={!can_update}
-                // disabled={!can_update || authorizations?.authorizations?.approval_status === 2}
+                // disabled={!can_update}
+                disabled={!can_update || authorizations?.authorizations?.approval_status === 2}
             />
 
             <StylesDetails 
                 methods={methods}
                 validationError={validationError.factoryOrder ?? {}}
-                disabled={!can_update}
-                // disabled={!can_update || authorizations?.authorizations?.approval_status === 2}
+                // disabled={!can_update}
+                disabled={!can_update || authorizations?.authorizations?.approval_status === 2}
             />
 
             {/* Shipment Portal anchor */}
             <div id='shipment_details_portal'/>
 
-            {/* <MessageBox 
+            <MessageBox 
                 message="This Factory Order is First Level Authorized, and ready for final authorization." 
                 active={authorizations?.authorizations?.approval_status === 1} 
                 type="primary" 
-            /> */}
+            />
 
-            {/* <MessageBox 
+            <MessageBox 
                 message="Factory order has been approved, and cannot be updated or deleted." 
                 active={authorizations?.authorizations?.approval_status === 2} 
                 type="secondary" 
-            /> */}
+            />
 
             <MessageBox 
                 message="Factory order / Buyer order is incomplete." 
@@ -220,16 +220,16 @@ const EditFactoryOrderPage = ({ params }: ParamsProp) => {
                         || isLoadingSubmit 
                         || !can_update 
                         || !hasPermission.data
-                        && (isCommissionDistributionAuthorized ?? false)
-                        // && (
-                        //     authorizations?.authorizations?.approval_status === 2 
-                        //     || (isCommissionDistributionAuthorized ?? false)
-                        // )
+                        // && (isCommissionDistributionAuthorized ?? false)
+                        && (
+                            authorizations?.authorizations?.approval_status === 2 
+                            || (isCommissionDistributionAuthorized ?? false)
+                        )
                     }
                 />
             </div>
 
-            {/* <div className='flex flex-row justify-start gap-8 ml-8 mb-8'>
+            <div className='flex flex-row justify-start gap-8 ml-8 mb-8'>
                 {isAuthorized ? (
                     <div className="flex flex-row justify-start">
                         <Button 
@@ -291,7 +291,7 @@ const EditFactoryOrderPage = ({ params }: ParamsProp) => {
                         </div>
                     )
                 )}
-            </div> */}
+            </div>
         </Wrapper>
     )
 };
