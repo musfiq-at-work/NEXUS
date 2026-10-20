@@ -205,7 +205,7 @@ const EditFactoryOrderPage = ({ params }: ParamsProp) => {
             />
 
             <MessageBox 
-                message="Commission distribution for this order has been authorized. Factory order can't be updated." 
+                message="Commission distribution for this order has been authorized. Factory order can't be authorized or unauthorized." 
                 active={!!isCommissionDistributionAuthorized} 
                 type="warning" 
             />

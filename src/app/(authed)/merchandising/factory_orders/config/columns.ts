@@ -6,7 +6,7 @@ export const tableHeaders= [
     { key: 'order_date', label: 'Order Date', type: 'date' },
     { key: 'factory_order_date', label: 'Factory Order Date', type: 'date' },
     { key: 'department', label: 'Department' },
-    { key: 'approval_status', label: 'Completion            Status', type: 'chip', chips: {
+    { key: 'approval_status', label: 'Approval Status', type: 'chip', chips: {
             '-1': { label: 'INCOMPLETE', type: 'error' },
             // '0': { label: 'COMPLETE', type: 'success' },
             '0': { label: 'PENDING', type: 'warning' },

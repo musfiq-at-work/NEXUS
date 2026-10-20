@@ -582,7 +582,7 @@ export const buyerOrdersRouter = createTRPCRouter({
                     OR OS.style ILIKE '%' || ${input.query} || '%'
                     OR SD.buyer_po ILIKE '%' || ${input.query} || '%'
                 )
-                GROUP BY BO.ID, b.buyer_name, bd.department, s.season_name, T.team_name --, FO.approval_status
+                GROUP BY BO.ID, b.buyer_name, bd.department, s.season_name, T.team_name, FO.approval_status
                 ORDER BY BO.added_at DESC, BO.order_date DESC
                 LIMIT ${input.limit}    
                 OFFSET ${input.offset};

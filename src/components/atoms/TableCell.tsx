@@ -10,7 +10,7 @@ type TableCellProps = {
 
 const TableCell = ({children, className, colSpan, fixedLength = true}: TableCellProps) => {
     const variant = {
-        fixed: "min-w-[175px]",
+        fixed: "min-w-[160px]",
         auto: "min-w-none"
     }[fixedLength ? 'fixed' : 'auto'];
 

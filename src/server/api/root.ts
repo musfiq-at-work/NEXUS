@@ -50,12 +50,15 @@ export const appRouter = createTRPCRouter({
 	factory: factoryRouter,
 	buyers: buyerRouter,
 	seasons: seasonsRouter,
+
+	// system routers
 	handoverDates: handoverDatesRouter,
 	tnaBaseAction: tnaBaseActionRouter,
 	scContactPerson: scContactPersonRouter,
 	toleranceLevel: toleranceLevelRouter,
-	commissionPercentage: commissionPercentageRouter,
 	earlySettlementPercentage: earlySettlementPercentageRoute,
+	commissionPercentage: commissionPercentageRouter,
+	notifications: notificationsRouter,
 
 	// merchandising routers
 	buyerOrders: buyerOrdersRouter,
@@ -100,7 +103,6 @@ export const appRouter = createTRPCRouter({
 	errorLogs: errorLogsRouter,
 	userSessions: userSessionsRouter,
 	health: healthRouter,
-	notifications: notificationsRouter,
 
 	// quality
 	quality: orderChecklistRouter,

@@ -151,7 +151,7 @@ const GenericFormTableRow = <T extends FieldValues, >(props: Props<T>) => {
                                     <>
                                         <textarea rows={1}
                                             className={clsx(
-                                                "w-full min-w-[175px] overflow-hidden rounded-lg p-2 outline-none focus:border-secondary-accent", 
+                                                "w-full min-w-[160px] overflow-hidden rounded-lg p-2 outline-none focus:border-secondary-accent", 
                                                 validationMessage ? "border-2 border-red-500" : "",
                                                 (col?.disabled || disabled) ? "text-gray-600" : "border-gray-300 emboss-inner"
                                             )}

@@ -38,6 +38,7 @@ export { toleranceLevelRouter } from "./routers/system/toleranceLevel";
 export { commissionPercentageRouter } from "./routers/system/commissionPercentage";
 export { earlySettlementPercentageRoute } from "./routers/system/earlySettlementPercentage";
 export { scContactPersonRouter } from "./routers/system/scContactPerson";
+export { notificationsRouter } from "./routers/system/notifications";
 
 // Merchandising routers
 export { buyerOrdersRouter } from "./routers/merchandising/buyerOrders";
@@ -82,7 +83,6 @@ export { crossPaymentReportRouter } from "./routers/reports/crossPaymentReport";
 export { errorLogsRouter } from "./routers/maintenance/error_logs";
 export { userSessionsRouter } from "./routers/maintenance/user_sessions";
 export { healthRouter } from "./routers/maintenance/health";
-export { notificationsRouter } from "./routers/maintenance/notifications";
 
 // Quality routes
 export { orderChecklistRouter } from "./routers/quality/orderChecklist";

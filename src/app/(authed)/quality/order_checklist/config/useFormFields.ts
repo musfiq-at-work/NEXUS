@@ -15,7 +15,7 @@ export const useFormFields = ({buyerId, orderId, styleId}: Props): Field<keyof O
     const buyers = api.buyers.getAllBuyersByTeam.useQuery().data ?? [];
 
     const orders = api.quality.getOrdersForChecklist.useQuery(
-        !!buyerId ? { buyerId } : skipToken
+        !!buyerId ? { buyerId: Number(buyerId) } : skipToken
     ).data || [];
 
     const styles = api.quality.getStyleForOrderChecklist.useQuery(
@@ -50,15 +50,15 @@ export const useFormFields = ({buyerId, orderId, styleId}: Props): Field<keyof O
         },
         {
             name: "po_id",
-            label: "Season",
-            placeholder: "Select season",
+            label: "Po",
+            placeholder: "Select PO",
             type: "select",
             options: po.map((p) => ({ label: p.buyer_po, value: p.id.toString() })),
         },
         {
             name: "factory_name",
-            label: "Remarks",
-            placeholder: "Enter remarks",
+            label: "Factory",
+            placeholder: "Enter Factory",
             optional: true,
             disabled: true
         },
