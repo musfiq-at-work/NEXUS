@@ -6,7 +6,7 @@ import { tableFormColumns as stylesTableFormColumns } from "../../styleConfig/ta
 import { api } from "~/trpc/react";
 import { toast } from "sonner";
 import { parseTRPCError } from "~/utils/parseTRPCError";
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback } from "react";
 import { skipToken } from "@tanstack/react-query";
 
 type Props = {
@@ -72,7 +72,9 @@ const StylesDetails = ({ methods, validationError, disabled = false }: Props) =>
             rows={styleFields}
             columns={stylesTableFormColumns}
             register={methods.register}
-            addRow={!hasCommissionDistribution ? stylesAddRow : () => toast.error("Cannot add new Style: Commission Distribution exists for this order.")}
+            addRow={!hasCommissionDistribution 
+                ? stylesAddRow 
+                : () => toast.error("Cannot add new shipment/style in this order because it has Commission Distribution.")}
             removeRow={stylesRemoveRow}
             disabled={disabled}
             methods={methods}

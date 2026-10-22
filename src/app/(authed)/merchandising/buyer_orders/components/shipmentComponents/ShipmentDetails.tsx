@@ -241,7 +241,9 @@ const ShipmentDetails = (props: props) => {
             rows={shipmentFields}
             columns={shipmentTableFormColumns}
             register={methods.register}
-            addRow={!hasCommissionDistribution ? addShipmentRow : () => toast.error("Cannot add new shipment: Commission Distribution exists for this order.")}
+            addRow={!hasCommissionDistribution 
+                ? addShipmentRow 
+                : () => toast.error("Cannot add new shipment/style in this order because it has Commission Distribution.")}
             removeRow={removeShipmentRow}
             copyRow={copyShipmentRow}
             disabled={disabled}
