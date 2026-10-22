@@ -6,23 +6,34 @@ import { type FieldArrayWithId, type FieldErrors } from "react-hook-form";
 import type { useOrderChecklistForm } from "../config/useOrderChecklistForm";
 import TableHeader, { type TableHeaderType } from "~/components/organisms/table/TableHeader";
 import type { OrderChecklistFormValues } from "../config/formSchema";
-import { formFields as shipmentTableFormFields } from "../listConfig/tableFormFields";
-import type { GetEarlySettlementPoTotalsTypes } from "~/types/merchandisingAPITypes";
+import { useTableFormFields } from "../listConfig/tableFormFields";
+import { formatDateForInput } from "~/utils/localDateString";
 
 type ShipmentRow = FieldArrayWithId<OrderChecklistFormValues>;
 
 type Props = {
-    isLoading?: boolean;
     columns: TableHeaderType<ShipmentRow>[];
     rows: ShipmentRow[];
     disabled?: boolean;
-    name: string;
+    name: 'details';
     methods: ReturnType<typeof useOrderChecklistForm>['methods'];
     validationError: FieldErrors<OrderChecklistFormValues>;
 }
 
 const TableForm = (props: Props) => {
-    const {columns, rows, disabled = false, name, methods, validationError} = props;
+    const { columns, rows, disabled = false, name, methods, validationError } = props;
+
+    const fields = useTableFormFields();
+
+    const handleCheckboxChange = (fieldName: string, checked: boolean, index: number) => {
+        if (fieldName !== 'technical_check' && fieldName !== 'qa_check') return;
+
+        const dateField = fieldName === 'technical_check' ? 'technical_check_date' : 'qa_check_date';
+        methods.setValue(`details.${index}.${dateField}`, checked ? formatDateForInput(new Date()) : '', {
+            shouldDirty: true,
+            shouldValidate: true,
+        });
+    };
 
     return (
         <>
@@ -37,13 +48,15 @@ const TableForm = (props: Props) => {
                             {rows.map((row, index) => (
                                 <GenericFormTableRow
                                     key={row.id}
-                                    fields={shipmentTableFormFields()}
+                                    fields={fields}
                                     register={methods.register}
                                     disabled={disabled}
-                                    validationError={validationError.details?.[index] ?? {}}
+                                    validationError={validationError.details ?? {}}
                                     name={name}
                                     control={methods.control}
                                     index={index}
+                                    canDelete={false}
+                                    onCheckboxChange={handleCheckboxChange}
                                 />
                             ))}
                         </TableBody>

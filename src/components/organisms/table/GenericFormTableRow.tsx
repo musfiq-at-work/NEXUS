@@ -20,15 +20,16 @@ type Props<T extends FieldValues> = {
     copyRow?: (index: number) => void;
     className?: string;
     canDelete?: boolean;
+    onCheckboxChange?: (fieldName: string, checked: boolean, index: number) => void;
 }
 
 const GenericFormTableRow = <T extends FieldValues, >(props: Props<T>) => {
-    const {fields, register, removeRow, disabled = false, validationError, name, control, index, handleAction, copyRow, className, canDelete = true} =  props;
+    const {fields, register, removeRow, disabled = false, validationError, name, control, index, handleAction, copyRow, className, canDelete = true, onCheckboxChange} =  props;
 
     return (
         <TableRow key={index} className={className}>
             {fields.map((col, colIndex) => (
-                <TableCell key={colIndex} fixedLength={col.type !== 'checkbox'} className={col.freeze ? 'freeze-col' : ''}>
+                <TableCell key={colIndex} fixedLength={col.type !== 'checkbox' && col.name !== 'serial_no'} className={col.freeze ? 'freeze-col' : ''}>
                     {(() => {
                         const fieldName = `${name}.${index}.${col.name}`;
                         const validationMessage = validationError?.[index]?.[col.name]?.message;
@@ -106,7 +107,10 @@ const GenericFormTableRow = <T extends FieldValues, >(props: Props<T>) => {
                                         render={({ field }) => (
                                             <CheckBox
                                                 value={field.value}
-                                                onChange={field.onChange}
+                                                onChange={(checked) => {
+                                                    field.onChange(checked);
+                                                    onCheckboxChange?.(col.name, checked, index);
+                                                }}
                                                 disabled={isDisabled}
                                             />
                                         )}

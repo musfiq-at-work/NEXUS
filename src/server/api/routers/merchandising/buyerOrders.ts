@@ -476,7 +476,7 @@ export const buyerOrdersRouter = createTRPCRouter({
                     await tx.buyer_orders_history.create({
                         data: {
                             buyer_order_id: deletedBuyerOrder.id,
-                            action_type: 'DELETE',
+                            action_type: actions.DELETE,
                             action_by: ctx.user.id,
                             ref_no: deletedBuyerOrder.ref_no,
                             buyer_id: deletedBuyerOrder.buyer_id,

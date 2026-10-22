@@ -1,9 +1,16 @@
+import { useDecodedUser } from "~/hooks";
 import type { OrderFormDetailsValues } from "../config/formSchema";
 import type { BaseField } from "~/types/form";
+import { safeNumber } from "~/utils/numbers";
 
 export type Field<T extends keyof OrderFormDetailsValues> = BaseField<T>;
 
-export const formFields = (): Field<keyof OrderFormDetailsValues>[] => {
+export const useTableFormFields = (): Field<keyof OrderFormDetailsValues>[] => {
+    const { user, isAdmin } = useDecodedUser();
+
+    const isTechnicalUser = safeNumber(user?.department_id) === 7;
+    const isQaUser = safeNumber(user?.department_id) === 4;
+
     return [
         {
             name: "serial_no",
@@ -27,13 +34,15 @@ export const formFields = (): Field<keyof OrderFormDetailsValues>[] => {
             placeholder: "Enter Destination",
             type: 'checkbox',
             optional: true,
+            disabled: !(isTechnicalUser || isAdmin)
         },
         {
             name: "technical_remarks",
             label: "Remarks",
             placeholder: "Enter Remarks",
-            type: 'text',
+            type: 'textarea',
             optional: true,
+            disabled: !(isTechnicalUser || isAdmin)
         },
         {
             name: "technical_check_date",
@@ -41,6 +50,7 @@ export const formFields = (): Field<keyof OrderFormDetailsValues>[] => {
             placeholder: "Enter date",
             type: 'date',
             optional: true,
+            disabled: true,
         },
         {
             name: "qa_check",
@@ -48,13 +58,15 @@ export const formFields = (): Field<keyof OrderFormDetailsValues>[] => {
             placeholder: "QA",
             type: 'checkbox',
             optional: true,
+            disabled: !(isQaUser || isAdmin)
         },
         {
             name: "qa_remarks",
             label: "Remarks",
             placeholder: "Enter Remarks",
-            type: 'text',
+            type: 'textarea',
             optional: true,
+            disabled: !(isQaUser || isAdmin)
         },
         {
             name: "qa_check_date",
@@ -62,6 +74,7 @@ export const formFields = (): Field<keyof OrderFormDetailsValues>[] => {
             placeholder: "Enter Date",
             type: 'date',
             optional: true,
+            disabled: true,
         },
     ]
 }

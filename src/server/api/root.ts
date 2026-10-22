@@ -105,7 +105,7 @@ export const appRouter = createTRPCRouter({
 	health: healthRouter,
 
 	// quality
-	quality: orderChecklistRouter,
+	orderChecklist: orderChecklistRouter,
 });
 
 // export type definition of API

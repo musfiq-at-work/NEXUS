@@ -1,5 +1,5 @@
 export const tableFormColumns = [
-    { key: 'sl', label: 'SL' },
+    { key: 'serial_no', label: 'SL' },
     { key: 'document_details', label: 'Document Details' },
     { key: 'technical_check', label: 'Technical' },
     { key: 'technical_remarks', label: 'Technical Remarks' },

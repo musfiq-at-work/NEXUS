@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { parseTRPCError } from "~/utils/parseTRPCError";
 import { useOrderChecklistForm } from "../config/useOrderChecklistForm";
 import { useRouter } from "next/navigation";
-import ListDetails from "../components/shipmentDetails";
 
 const NewOrderChecklistPage = () => {
     const router = useRouter();
@@ -20,40 +19,36 @@ const NewOrderChecklistPage = () => {
     // TRPC utils    
     const utils = api.useUtils();
 
-    // const addEarlySettlement = api.earlySettlement.addEarlySettlement.useMutation({
-    //     onSuccess: async () => {
-    //         setError(null);
-    //         toast.success("Order Checklist added successfully!");
-    //         await Promise.all([
-    //             utils.earlySettlement.getEarlySettlements.invalidate(),
-    //             utils.earlySettlement.searchEarlySettlements.invalidate(),
-    //             utils.earlySettlement.getPoDetails.invalidate(),
-    //             utils.earlySettlement.getOrderForEarlySettlement.invalidate(),
-    //         ]);
-    //     }
-    // });
+    const addOrderChecklist = api.orderChecklist.addOrderChecklist.useMutation({
+        onSuccess: async () => {
+            setError(null);
+            toast.success("Order Checklist added successfully!");
+            await utils.orderChecklist.invalidate();
+        }
+    });
 
-    // // Handle form submission for all fields
-    // const onSubmitAll =  handleSubmit(async (earlySettlement) => {
-    //     try {
-    //         setIsLoading(true);
-    //         const payload = {
-    //             order_id: earlySettlement.order_id,
-    //             remarks: earlySettlement.remarks,
-    //             buyer_id: earlySettlement.buyer_id
-    //         };
+    // Handle form submission for all fields
+    const onSubmitAll =  handleSubmit(async (orderChecklist) => {
+        try {
+            setIsLoading(true);
+            const payload = {
+                buyer_id: Number(orderChecklist.buyer_id),
+                order_id: orderChecklist.order_id,
+                style_id: orderChecklist.style_id,
+                shipment_id: orderChecklist.po_id,
+            };
 
-    //         const newId = await addEarlySettlement.mutateAsync(payload);
-    //         router.push(`/quality/order_checklist/edit/${newId}`);
-    //     }
-    //     catch (error) {
-    //         const message = parseTRPCError(error);
-    //         toast.error(`Failed to add Order Checklist: ${message}`);
-    //     }
-    //     finally {
-    //         setIsLoading(false);
-    //     }
-    // });
+            const newId = await addOrderChecklist.mutateAsync(payload);
+            router.push(`/quality/order_checklist/edit/${newId}`);
+        }
+        catch (error) {
+            const message = parseTRPCError(error);
+            toast.error(`Failed to add Order Checklist: ${message}`);
+        }
+        finally {
+            setIsLoading(false);
+        }
+    });
 
     return (
         <Wrapper heading='Add Order Checklist' >
@@ -67,19 +62,14 @@ const NewOrderChecklistPage = () => {
                 control={control}
             />
 
-            <ListDetails 
-                methods={methods} 
-                validationError={validationError.details ?? {}}
-            />
-
-            {/* <div className="w-full flex flex-row justify-end">
+            <div className="w-full flex flex-row justify-end">
                 <Button type="button" 
                     onClick={() => onSubmitAll()}
                     label={"Add Order Checklist"} 
                     className="text-lg tracking-wide mt-6 max-w-80 m-8"
                     disabled={isLoading}
                 />
-            </div> */}
+            </div>
         </Wrapper>
     );
 };

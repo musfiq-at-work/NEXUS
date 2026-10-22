@@ -3,7 +3,6 @@ import { useRouter } from "next/navigation";
 import { plusIcon } from "~/assets";
 import { Button, SearchField, Table, Wrapper, Popup } from "~/components";
 import { api } from "~/trpc/react";
-import { toast } from "sonner";
 import { tableHeaders } from "./config/columns";
 import { useSearchablePagination, useModulePermissions, useDeleteConfirmation } from "~/hooks";
 
@@ -11,46 +10,40 @@ const OrderChecklist = () => {
     const router = useRouter();
     const utils = api.useUtils();
 
-    const { page, limit, debouncedSearch, handleSearchChange, nextPage, prevPage } = useSearchablePagination();
+    const { page, limit, debouncedSearch, handleSearchChange, nextPage, prevPage, setPage } = useSearchablePagination();
 
     const { can_add, can_update, can_delete } = useModulePermissions();
 
-    // Fetch paginated data
-    // const {data: earlySettlements, isLoading} = api.earlySettlement.getEarlySettlements.useQuery({
-    //     limit,
-    //     offset: page * limit,
-    // });
+    const checklistQuery = api.orderChecklist.getOrderChecklists.useQuery(
+        { limit, offset: page * limit },
+        { enabled: !debouncedSearch }
+    );
 
-    // const buyerOrdersList = earlySettlements?.earlySettlements ?? [];
-    // const total = earlySettlements?.total ?? 0;
-    
-    // Search query (enabled only when there's a search term)
-    // const searchQuery = api.earlySettlement.searchEarlySettlements.useQuery(
-    //     { query: debouncedSearch, limit, offset: page * limit },
-    //     { enabled: debouncedSearch.length > 0 }
-    // );
+    const searchQuery = api.orderChecklist.searchOrderChecklists.useQuery(
+        { query: debouncedSearch, limit, offset: page * limit },
+        { enabled: debouncedSearch.length > 0 }
+    );
 
-    // const editURL = '/merchandising/early_settlement/edit/';
+    const activeQuery = debouncedSearch ? searchQuery : checklistQuery;
+    const orderChecklists = activeQuery.data?.orderChecklists ?? [];
+    const total = activeQuery.data?.total ?? 0;
 
-    // const deleteMutation = api.earlySettlement.deleteEarlySettlement.useMutation({
-    //     onSuccess: async () => {
-    //         toast.success("Early Settlement deleted successfully!");
-    //         await Promise.all([
-    //             utils.earlySettlement.getEarlySettlements.invalidate(),
-    //             utils.earlySettlement.searchEarlySettlements.invalidate(),
-    //             utils.earlySettlement.getPoDetails.invalidate(),
-    //             utils.earlySettlement.getOrderForEarlySettlement.invalidate(),
-    //         ]);
-    //     },
-    // });
+    const printURL = `/pdf/order_checklist`;
+    const editURL = '/quality/order_checklist/edit/';
 
-    // const { 
-    //     deleteID, isLoadingDelete, deleteClicked, setDeleteClicked, handleDeleteClicked, handleDeleteConfirmed 
-    // } = useDeleteConfirmation({
-    //     mutation: deleteMutation,
-    //     successMessage: 'Early Settlement deleted successfully',
-    //     payloadBuilder: id => ({ id }),
-    // });
+    const deleteMutation = api.orderChecklist.deleteOrderChecklist.useMutation({
+        onSuccess: async () => {
+            if (page > 0 && orderChecklists.length === 1) setPage(page - 1);
+
+            await utils.orderChecklist.invalidate();
+        },
+    });
+
+    const { deleteID, isLoadingDelete, deleteClicked, setDeleteClicked, handleDeleteClicked, handleDeleteConfirmed } = useDeleteConfirmation({
+        mutation: deleteMutation,
+        successMessage: 'Order Checklist deleted successfully!',
+        payloadBuilder: id => ({ id }),
+    });
 
     return (
         <>
@@ -59,7 +52,7 @@ const OrderChecklist = () => {
                 subSectionLeft={
                     <SearchField
                         placeholder="Search Order Checklist..."
-                        infoText="Buyer Name, Order Reference, Style, PO, Department, Season, and Team name."
+                        infoText="Buyer Name, Order Reference, Style, PO, and Factory Name."
                         handleSearchChange={handleSearchChange}
                     />
                 }
@@ -76,42 +69,37 @@ const OrderChecklist = () => {
                     ) : null
                 }
             >
-                <p>hi</p>
-                {/* <div className="w-full">
+                <div className="w-full">
+                    {activeQuery.error && <p role="alert" className="p-4 text-red-500">{activeQuery.error.message}</p>}
                     <Table
-                        data={searchQuery.data?.earlySettlements && !!debouncedSearch 
-                            ? searchQuery.data.earlySettlements : buyerOrdersList
-                        }
-                        isLoading={isLoading || searchQuery.isLoading}
+                        data={orderChecklists}
+                        isLoading={activeQuery.isLoading}
                         columns={tableHeaders}
                         nextPage={nextPage}
                         prevPage={prevPage}
-                        total={searchQuery.data?.earlySettlements && searchQuery.data.earlySettlements.length > 0 
-                            ? searchQuery.data.total ?? 0 : total
-                        }
+                        total={total}
                         deleteFunction={handleDeleteClicked}
                         page={page}
                         limit={limit}
                         editURL={editURL}
                         allowDelete={can_delete}
                         allowEdit={can_update}
+                        allowPrint={true}
+                        printURL={printURL}
                         view={!can_update}
                     />
-                </div> */}
+                </div>
             </Wrapper>
-            {/* <Popup
+            <Popup
                 open={deleteClicked}
                 onClose={() => setDeleteClicked(false)}
                 heading="Confirm Deletion"
-                description={`Are you sure you want to delete Early Settlement of "${(
-                    searchQuery.data?.earlySettlements && !!debouncedSearch 
-                        ? searchQuery.data.earlySettlements : buyerOrdersList
-                ).find(order => order.id === deleteID)?.ref_no}"?`}
+                description={`Are you sure you want to delete the Order Checklist for "${orderChecklists.find(checklist => checklist.id === deleteID)?.ref_no}" and all its checklist details?`}
                 actionLabel="DELETE"
                 negativeAction={true}
                 loading={isLoadingDelete}
                 action={handleDeleteConfirmed}
-            /> */}
+            />
         </>
     )
 }
