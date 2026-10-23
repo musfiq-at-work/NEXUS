@@ -86,3 +86,4 @@ export { healthRouter } from "./routers/maintenance/health";
 
 // Quality routes
 export { orderChecklistRouter } from "./routers/quality/orderChecklist";
+export { ppMeetingRouter } from "./routers/quality/ppMeeting";

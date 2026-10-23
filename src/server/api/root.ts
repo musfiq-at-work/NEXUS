@@ -13,7 +13,8 @@ import {
 	orderSummaryReportRouter, debitNotesRouter, crossPaymentsRouter, commercialTnaTemplatesRouter, activityReportRouter, 
 	commercialTnaPlanRouter, exportSummaryReportRouter, commissionPercentageRouter, earlySettlementPercentageRoute, 
 	errorLogsRouter, userSessionsRouter, lcScClosingRouter, earlySettlementRouter, commissionDistributionReportRouter, 
-	lcTransferReportRouter, crossPaymentReportRouter, healthRouter, notificationsRouter, orderChecklistRouter,
+	lcTransferReportRouter, crossPaymentReportRouter, healthRouter, notificationsRouter, orderChecklistRouter, 
+	ppMeetingRouter, 
 } from '.';
 
 // All routers added in /api/routers should be manually added here.
@@ -106,6 +107,7 @@ export const appRouter = createTRPCRouter({
 
 	// quality
 	orderChecklist: orderChecklistRouter,
+	ppMeeting: ppMeetingRouter,
 });
 
 // export type definition of API

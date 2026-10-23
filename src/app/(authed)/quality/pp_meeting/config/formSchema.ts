@@ -10,30 +10,34 @@ export const productionPlanFormSchema = z.object({
     sewing_date: z.string().optional(),
     finishing_date: z.string().optional(),
     plan_inspection_date: z.string().optional(),
-})
+});
 
 export type ProductionPlanValues = z.infer<typeof productionPlanFormSchema>;
 
 export const approvalStatusFormSchema = z.object({
     db_id: z.string().optional(),
-    buyer_id: z.number().min(0, "Buyer is required"),
-    order_id: z.string().min(1, "Order is required"),
-    style_id: z.string().min(1, "Style is required"),
-    po_id: z.string().min(1, "PO is required"),
-    factory_name: z.string().optional(),
-    details: z.array(productionPlanFormSchema).optional(),
-})
+    status_name: z.string().optional(),
+    approval_status: z.number().min(-1).max(1),
+});
 
 export type ApprovalFormValues = z.infer<typeof approvalStatusFormSchema>;
 
 export const preProductionMeetingFormSchema = z.object({
     db_id: z.string().optional(),
-    buyer_id: z.number().min(0, "Buyer is required"),
-    order_id: z.string().min(1, "Order is required"),
-    style_id: z.string().min(1, "Style is required"),
-    po_id: z.string().min(1, "PO is required"),
-    factory_name: z.string().optional(),
-    details: z.array(productionPlanFormSchema).optional(),
-})
+    factory_id: z.number({ required_error: "Factory is required", invalid_type_error: "Factory is required" }).int().positive("Factory is required"),
+    order_id: z.string().uuid("Order is required"),
+    style_id: z.string().uuid("Style is required"),
+    first_shipment_date: z.string().optional(),
+    item: z.string().optional(),
+    fabric_description: z.string().optional(),
+    required_gsm: z.string().optional(),
+    order_quantity: z.string().optional(),
+    daily_production_plan: z.number({ required_error: "Daily production plan is required", invalid_type_error: "Daily production plan is required" })
+        .int("Daily production plan must be a whole number")
+        .positive("Daily production plan must be greater than zero")
+        .max(2147483647, "Daily production plan is too large"),
+    productionPlans: z.array(productionPlanFormSchema).optional(),
+    approvalStatus: z.array(approvalStatusFormSchema).optional(),
+});
 
 export type PreProductionFormValues = z.infer<typeof preProductionMeetingFormSchema>;
