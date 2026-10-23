@@ -121,7 +121,8 @@ const sideBarConfig: Record<number, {href: string;}> = {
     [m.NOTIFICATIONS]: { href: "/maintenance/notifications" },
 
     // Quality Module
-    [m.ORDER_CHECKLIST]: {href: "/quality/order_checklist"}
+    [m.ORDER_CHECKLIST]: {href: "/quality/order_checklist"},
+    [m.PP_MEETING]:  {href: "/quality/pp_meeting"}
 };
 
 export default sideBarConfig;
