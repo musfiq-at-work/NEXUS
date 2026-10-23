@@ -28,7 +28,7 @@ const NewOrderChecklistPage = () => {
     });
 
     // Handle form submission for all fields
-    const onSubmitAll =  handleSubmit(async (orderChecklist) => {
+    const onSubmitAll = handleSubmit(async (orderChecklist) => {
         try {
             setIsLoading(true);
             const payload = {
