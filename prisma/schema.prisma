@@ -3209,21 +3209,21 @@ model approval_status_history {
 }
 
 model pre_production_meeting {
-  id                        String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  meeting_date              DateTime?         @default(dbgenerated("CURRENT_DATE")) @db.Date
-  factory_id                Int
-  style_id                  String            @db.Uuid
-  daily_production_plan     Int?
-  pps_view_front_image      String?
-  pps_view_back_image       String?
-  size_set_view_front_image String?
-  size_set_view_back_image  String?
-  attendance_list_image     String?
-  added_at                  DateTime?         @default(now()) @db.Timestamp(6)
-  approval_status           approval_status[]
-  factories                 factories         @relation(fields: [factory_id], references: [id], onUpdate: NoAction)
-  order_styles              order_styles      @relation(fields: [style_id], references: [id], onUpdate: NoAction)
-  production_plan           production_plan[]
+  id                                     String                                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  meeting_date                           DateTime?                                @default(dbgenerated("CURRENT_DATE")) @db.Date
+  factory_id                             Int
+  style_id                               String                                   @db.Uuid
+  daily_production_plan                  Int?
+  attendance_list_image                  String?
+  added_at                               DateTime?                                @default(now()) @db.Timestamp(6)
+  overall_comments                       String?
+  attendance_list_photo                  String?
+  approval_status                        approval_status[]
+  factories                              factories                                @relation(fields: [factory_id], references: [id], onUpdate: NoAction)
+  order_styles                           order_styles                             @relation(fields: [style_id], references: [id], onUpdate: NoAction)
+  pre_production_meeting_pps_images      pre_production_meeting_pps_images[]
+  pre_production_meeting_size_set_images pre_production_meeting_size_set_images[]
+  production_plan                        production_plan[]
 }
 
 model pre_production_meeting_history {
@@ -3273,6 +3273,22 @@ model production_plan_history {
   action_by                 String    @db.Uuid
   action_at                 DateTime? @default(now()) @db.Timestamp(6)
   users                     users     @relation(fields: [action_by], references: [id], onUpdate: NoAction)
+}
+
+model pre_production_meeting_pps_images {
+  id                        String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pre_production_meeting_id String                 @db.Uuid
+  url                       String
+  added_at                  DateTime?              @default(now()) @db.Timestamp(6)
+  pre_production_meeting    pre_production_meeting @relation(fields: [pre_production_meeting_id], references: [id], onUpdate: NoAction, map: "pre_production_meeting_pps_image_pre_production_meeting_id_fkey")
+}
+
+model pre_production_meeting_size_set_images {
+  id                        String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pre_production_meeting_id String                 @db.Uuid
+  url                       String
+  added_at                  DateTime?              @default(now()) @db.Timestamp(6)
+  pre_production_meeting    pre_production_meeting @relation(fields: [pre_production_meeting_id], references: [id], onUpdate: NoAction, map: "pre_production_meeting_size_set__pre_production_meeting_id_fkey")
 }
 
 enum actions {

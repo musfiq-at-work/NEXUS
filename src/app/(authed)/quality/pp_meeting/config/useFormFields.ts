@@ -15,34 +15,22 @@ export const useFormFields = (props: Props) => {
     const { factoryId, orderId, styleId } = props;
 
     const factoriesQuery = api.factory.getAllFactories.useQuery();
+    const factories = factoriesQuery.data ?? [];
 
     const ordersQuery = api.ppMeeting.getOrdersForPPMeeting.useQuery(
         factoryId ? { factoryId } : skipToken
     );
-
     const orders = ordersQuery.data ?? [];
     const selectedOrder = orders.find((order) => order.id === orderId);
     
     const stylesQuery = api.ppMeeting.getStyleForPPMeeting.useQuery(
         selectedOrder ? { orderId: selectedOrder.id } : skipToken
     );
-
-    const factories = factoriesQuery.data ?? [];
     const styles = stylesQuery.data ?? [];
+    
     const selectedStyle = selectedOrder ? styles.find((style) => style.id === styleId) : undefined;
     const queryError = factoriesQuery.error ?? ordersQuery.error ?? stylesQuery.error;
     const isLoadingOptions = factoriesQuery.isFetching || ordersQuery.isFetching || stylesQuery.isFetching;
-    let emptyMessage: string | null = null;
-
-    if (!queryError && !isLoadingOptions) {
-        if (factories.length === 0) {
-            emptyMessage = "No factories are available.";
-        } else if (factoryId && ordersQuery.isSuccess && orders.length === 0) {
-            emptyMessage = "No orders with styles available for a PP meeting were found for this factory.";
-        } else if (selectedOrder && stylesQuery.isSuccess && styles.length === 0) {
-            emptyMessage = "All styles in this order already have a PP meeting.";
-        }
-    }
 
     const formFields: Field<keyof PreProductionFormValues>[] = [
         {
@@ -59,7 +47,6 @@ export const useFormFields = (props: Props) => {
             placeholder: "Select Order",
             type: "select",
             options: orders.map((o) => ({ label: o.ref_no, value: o.id.toString() })),
-            disabled: !factoryId || ordersQuery.isFetching || orders.length === 0,
         },
         {
             name: 'style_id',
@@ -67,7 +54,6 @@ export const useFormFields = (props: Props) => {
             placeholder: "Select Style",
             type: "select",
             options: styles.map((s) => ({ label: s.style, value: s.id })),
-            disabled: !selectedOrder || stylesQuery.isFetching || styles.length === 0,
         },
         {
             name: "first_shipment_date",
@@ -113,5 +99,5 @@ export const useFormFields = (props: Props) => {
         },
     ];
 
-    return { formFields, selectedStyle, queryError, isLoadingOptions, emptyMessage };
+    return { formFields, selectedStyle, queryError, isLoadingOptions };
 };

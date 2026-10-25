@@ -74,3 +74,25 @@ CREATE TABLE APPROVAL_STATUS_HISTORY (
     ACTION_BY UUID NOT NULL REFERENCES USERS(ID) ON DELETE RESTRICT,
     ACTION_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE PRE_PRODUCTION_MEETING_PPS_IMAGES (
+    ID UUID PRIMARY KEY DEFAULT GEN_RANDOM_UUID(),
+    PRE_PRODUCTION_MEETING_ID UUID NOT NULL REFERENCES pre_production_meeting(ID) ON DELETE RESTRICT,
+    URL TEXT NOT NULL,
+    ADDED_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE PRE_PRODUCTION_MEETING_SIZE_SET_IMAGES (
+    ID UUID PRIMARY KEY DEFAULT GEN_RANDOM_UUID(),
+    PRE_PRODUCTION_MEETING_ID UUID NOT NULL REFERENCES pre_production_meeting(ID) ON DELETE RESTRICT,
+    URL TEXT NOT NULL,
+    ADDED_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+alter table pre_production_meeting drop COLUMN pps_view_back_image;
+alter table pre_production_meeting drop COLUMN pps_view_front_image;
+alter table pre_production_meeting drop COLUMN size_set_view_back_image;
+alter table pre_production_meeting drop COLUMN size_set_view_front_image;
+
+alter table pre_production_meeting add column overall_comments text;
+alter table pre_production_meeting add column attendance_list_photo text;

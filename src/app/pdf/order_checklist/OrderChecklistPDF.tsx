@@ -44,7 +44,7 @@ const OrderChecklistPDF = (props: Props) => {
                 <RenaissanceLogo />
                 <PrintByAndDate />
                 <ReportTitle title="ORDER CHECKLIST" />
-                <HeaderPart data={checklistHeader} />
+                <HeaderPart data={checklistHeader} variant="between"/>
                 <ChecklistTable details={data.details} />
                 <Signature signatures={["Technical Check by", "QA Check By"]} />
                 <Text

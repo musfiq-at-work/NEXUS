@@ -24,7 +24,7 @@ export const usePreProductionMeetingForm = () => {
     const orderId = useWatch({ control, name: 'order_id' });
     const styleId = useWatch({ control, name: 'style_id' });
     
-    const { formFields, selectedStyle, queryError, isLoadingOptions, emptyMessage } = useFormFields({ factoryId, orderId, styleId });
+    const { formFields, selectedStyle, queryError, isLoadingOptions } = useFormFields({ factoryId, orderId, styleId });
 
     useEffect(() => {
         resetField('order_id');
@@ -46,5 +46,5 @@ export const usePreProductionMeetingForm = () => {
         setValue('order_quantity', selectedStyle ? String(selectedStyle.order_quantity) : '');
     }, [selectedStyle, setValue]);
 
-    return { methods, handleSubmit, formFields, validationError, control, queryError, isLoadingOptions, emptyMessage, selectedStyle };
+    return { methods, handleSubmit, formFields, validationError, control, queryError, isLoadingOptions, selectedStyle };
 };

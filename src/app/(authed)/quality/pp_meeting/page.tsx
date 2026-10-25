@@ -10,7 +10,9 @@ import { useSearchablePagination, useModulePermissions } from "~/hooks";
 const PreProductionMeetingList = () => {
     const router = useRouter();
     const { page, limit, debouncedSearch, handleSearchChange, nextPage, prevPage } = useSearchablePagination();
-    const { can_add } = useModulePermissions();
+
+    const { can_add, can_update, can_delete } = useModulePermissions();
+
     const meetingsQuery = api.ppMeeting.getPPMeetings.useQuery({
         limit,
         offset: page * limit,
@@ -19,6 +21,9 @@ const PreProductionMeetingList = () => {
 
     const meetings = meetingsQuery.data?.meetings ?? [];
     const total = meetingsQuery.data?.total ?? 0;
+
+    const editURL = '/quality/pp_meeting/edit';
+    const printURL = `/pdf/pp_meeting`;
 
     return (
         <Wrapper
@@ -56,6 +61,12 @@ const PreProductionMeetingList = () => {
                         total={total}
                         page={page}
                         limit={limit}
+                        editURL={editURL}
+                        allowDelete={can_delete}
+                        allowEdit={can_update}
+                        view={!can_update}
+                        allowPrint={true}
+                        printURL={printURL}
                     />
                 )}
             </div>

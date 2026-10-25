@@ -54,9 +54,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 # Ensure the upload directory exists and is writable by nextjs user
 # We do this as root BEFORE switching to the nextjs user
-RUN mkdir -p /app/public/uploads/style_photos && \
-    chown -R nextjs:nodejs /app/public/uploads && \
-    chmod -R 755 /app/public/uploads
+RUN mkdir -p /app/public/uploads/style_photos /app/public/pp_meeting/pps_views /app/public/pp_meeting/size_set_views /app/public/pp_meeting/attendance_lists && \
+    chown -R nextjs:nodejs /app/public/uploads /app/public/pp_meeting && \
+    chmod -R 755 /app/public/uploads /app/public/pp_meeting
 
 # Switch to non-root user
 USER nextjs

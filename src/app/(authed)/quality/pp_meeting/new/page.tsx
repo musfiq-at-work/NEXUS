@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Form, Wrapper } from "~/components";
+import { Form, Wrapper } from "~/components";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -11,9 +11,16 @@ import { usePreProductionMeetingForm } from "../config/usePreProductionMeetingFo
 const NewPreProductionMeetingPage = () => {
     const router = useRouter();
     const utils = api.useUtils();
-    const { methods, handleSubmit, formFields, validationError, control, queryError, isLoadingOptions, emptyMessage, selectedStyle } = usePreProductionMeetingForm();
+    const { methods, handleSubmit, formFields, validationError, control, queryError, isLoadingOptions, selectedStyle } = usePreProductionMeetingForm();
     const [error, setError] = useState<string | null>(null);
-    const addPPMeeting = api.ppMeeting.addPPMeeting.useMutation();
+    const addPPMeeting = api.ppMeeting.addPPMeeting.useMutation({
+        onSuccess: async () => {
+            setError(null);
+            toast.success('Pre Production Meeting added successfully!');
+            void utils.ppMeeting.invalidate();
+        }
+    });
+    
     const isSubmitting = methods.formState.isSubmitting || addPPMeeting.isPending;
 
     const onSubmit = handleSubmit(async (meeting) => {
@@ -27,21 +34,19 @@ const NewPreProductionMeetingPage = () => {
         setError(null);
 
         try {
-            await addPPMeeting.mutateAsync({
+            const id = await addPPMeeting.mutateAsync({
                 factory_id: meeting.factory_id,
                 style_id: meeting.style_id,
                 daily_plan_quantity: meeting.daily_production_plan,
             });
+
+            router.push(`/quality/pp_meeting/edit/${id}`);
         } catch (error) {
             const message = parseTRPCError(error);
             setError(message);
             toast.error(`Failed to add Pre Production Meeting: ${message}`);
             return;
         }
-
-        toast.success('Pre Production Meeting added successfully!');
-        void utils.ppMeeting.invalidate();
-        router.push('/quality/pp_meeting');
     });
 
     return (
