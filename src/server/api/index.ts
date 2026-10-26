@@ -30,6 +30,7 @@ export { tnaActionsRouter } from "./routers/library/tnaActions";
 export { factoryRouter } from "./routers/library/factory";
 export { buyerRouter } from "./routers/library/buyer";
 export { seasonsRouter } from "./routers/library/seasons";
+export { sampleTypesRouter } from "./routers/library/sampleTypes";
 
 // System routers
 export { handoverDatesRouter } from "./routers/system/handoverDates";

@@ -89,8 +89,12 @@ const PhotoSection = (props: Props) => {
                     const normalized = await normalizeToJpeg(file);
                     const compressed = await compressImage(normalized, MAX_SIZE_KB);
 
-                    if (!compressed.type || !(await canLoadImage(compressed))) throw new Error('Invalid or corrupted image.');
-                    if (compressed.size > MAX_SIZE_KB * 1024) throw new Error(`The image could not be compressed below ${MAX_SIZE_KB} KB. Try a smaller image.`);
+                    if (!compressed.type || !(await canLoadImage(compressed))) 
+                        throw new Error('Invalid or corrupted image.');
+
+                    if (compressed.size > MAX_SIZE_KB * 1024) 
+                        throw new Error(`The image could not be compressed below ${MAX_SIZE_KB} KB. Try a smaller image.`);
+
                     if (!isMounted.current) break;
 
                     const preview = URL.createObjectURL(compressed);
@@ -136,11 +140,16 @@ const PhotoSection = (props: Props) => {
 
         try {
             const params = new URLSearchParams({ meetingId, section, imageId: image.id });
-            await readResponse(await fetch(`/api/pp_meeting?${params.toString()}`, { method: 'DELETE', headers: getAuthHeaders() }));
+            await readResponse(await fetch(`/api/pp_meeting?${params.toString()}`, 
+                { method: 'DELETE', headers: getAuthHeaders() }
+            ));
 
             utils.ppMeeting.getPPMeetingById.setData({ id: meetingId }, (previous) => {
                 if (!previous) return previous;
-                if (isAttendancePhoto) return { ...previous, attendance_list_photo: null };
+                if (isAttendancePhoto) return { 
+                    ...previous, 
+                    attendance_list_photo: null 
+                };
 
                 return { ...previous, [imageKey]: previous[imageKey].filter((photo) => photo.id !== image.id) };
             });
@@ -170,7 +179,9 @@ const PhotoSection = (props: Props) => {
             const data = await readResponse(await fetch('/api/pp_meeting', { method: 'POST', headers: getAuthHeaders(), body: formData }));
             const uploadedImages = data.images;
             const firstImage = uploadedImages?.[0];
-            if (!uploadedImages || !firstImage) throw new Error('The upload response did not include the saved images. Refresh the meeting before trying again.');
+            
+            if (!uploadedImages || !firstImage) 
+                throw new Error('The upload response did not include the saved images. Refresh the meeting before trying again.');
 
             utils.ppMeeting.getPPMeetingById.setData({ id: meetingId }, (previous) => {
                 if (!previous) return previous;

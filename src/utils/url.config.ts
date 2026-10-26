@@ -54,6 +54,7 @@ const sideBarConfig: Record<number, {href: string;}> = {
     [m.FOB_TYPES]: { href: "/library/fob_types" },
     [m.PAYMENT_TERMS]: { href: "/library/payment_terms" },
     [m.FREIGHT_TERMS]: { href: "/library/freight_terms" },
+    [m.SAMPLE_TYPES]: { href: "/library/sample_types" },
     
     // System Tweaks Module
     [m.TNA_BASE_ACTION]: { href: "/system/tna_base_action" },

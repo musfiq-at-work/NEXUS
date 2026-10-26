@@ -96,3 +96,18 @@ alter table pre_production_meeting drop COLUMN size_set_view_front_image;
 
 alter table pre_production_meeting add column overall_comments text;
 alter table pre_production_meeting add column attendance_list_photo text;
+
+CREATE TABLE SAMPLE_TYPES (
+    ID INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    NAME VARCHAR(50) NOT NULL,
+    ADDED_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE SAMPLE_TYPES_HISTORY (
+    ID INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    SAMPLE_TYPES_ID INT,
+    NAME VARCHAR(50) NOT NULL,
+    ACTION_TYPE ACTIONS,
+    ACTION_BY UUID NOT NULL REFERENCES USERS(ID) ON DELETE RESTRICT,
+    ACTION_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
