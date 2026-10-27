@@ -46,6 +46,8 @@ yarn-error.log*
 .idea
 
 # user files
+/uploads/sample_checklist/
+/public/sample_checklist/
 /src/app/public/uploads/*
 /public/pp_meeting/pps_views/*
 !/public/pp_meeting/pps_views/.gitkeep

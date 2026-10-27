@@ -240,6 +240,7 @@ model users {
   sales_contract_contact_person_history                              sales_contract_contact_person_history[]
   sales_contract_details_history                                     sales_contract_details_history[]
   sales_contracts_history                                            sales_contracts_history[]
+  sample_check_list_history                                          sample_check_list_history[]
   sample_types_history                                               sample_types_history[]
   seasons_history                                                    seasons_history[]
   shipment_details_history                                           shipment_details_history[]
@@ -618,6 +619,7 @@ model colors {
   name                  String                  @unique(map: "unique_colors") @db.VarChar(75)
   added_at              DateTime?               @default(now()) @db.Timestamp(6)
   production_plan       production_plan[]
+  sample_check_list     sample_check_list[]
   shipment_item_details shipment_item_details[]
 }
 
@@ -698,6 +700,7 @@ model factories {
   pre_production_meeting pre_production_meeting[]
   rdl_invoice_details    rdl_invoice_details[]
   sales_contracts        sales_contracts[]
+  sample_check_list      sample_check_list[]
 
   @@index([name], map: "idx_factories_name")
 }
@@ -984,6 +987,7 @@ model buyers {
   proceed_realization         proceed_realization[]
   rdl_invoice                 rdl_invoice[]
   sales_contracts             sales_contracts[]
+  sample_check_list           sample_check_list[]
   seasons                     seasons[]
   shipment_tolerance_level    shipment_tolerance_level?
   teams                       teams[]
@@ -1287,6 +1291,7 @@ model order_styles {
   product_types          product_types            @relation(fields: [product_type_id], references: [id], onUpdate: NoAction)
   fabric_suppliers       fabric_suppliers         @relation(fields: [supplier_id], references: [id], onUpdate: NoAction)
   pre_production_meeting pre_production_meeting[]
+  sample_check_list      sample_check_list[]
   shipment_details       shipment_details[]
   tna_plans              tna_plans[]
 
@@ -3293,9 +3298,10 @@ model pre_production_meeting_size_set_images {
 }
 
 model sample_types {
-  id       Int       @id @default(autoincrement())
-  name     String    @db.VarChar(50)
-  added_at DateTime? @default(now()) @db.Timestamp(6)
+  id                Int                 @id @default(autoincrement())
+  name              String              @db.VarChar(50)
+  added_at          DateTime?           @default(now()) @db.Timestamp(6)
+  sample_check_list sample_check_list[]
 }
 
 model sample_types_history {
@@ -3306,6 +3312,169 @@ model sample_types_history {
   action_by       String    @db.Uuid
   action_at       DateTime? @default(now()) @db.Timestamp(6)
   users           users     @relation(fields: [action_by], references: [id], onUpdate: NoAction)
+}
+
+model sample_check_list {
+  id                                         String                                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sample_check_date                          DateTime?                                    @default(dbgenerated("CURRENT_DATE")) @db.Date
+  buyer_id                                   Int
+  factory_id                                 Int
+  style_id                                   String                                       @db.Uuid
+  color_id                                   Int
+  sample_type                                Int
+  sample_size                                String?                                      @db.VarChar(50)
+  sample_quantity                            Int?
+  fabric                                     String?
+  trims_accessories                          String?
+  workmanship                                String?
+  fitting                                    String?
+  measurement                                String?
+  pattern                                    String?
+  print_emb                                  String?
+  wash                                       String?
+  main_label                                 Int?
+  main_label_position                        Int?
+  size_label                                 Int?
+  size_label_position                        Int?
+  care_label                                 Int?
+  care_label_position                        Int?
+  risk_area                                  String?
+  added_at                                   DateTime?                                    @default(now()) @db.Timestamp(6)
+  buyers                                     buyers                                       @relation(fields: [buyer_id], references: [id], onUpdate: NoAction)
+  colors                                     colors                                       @relation(fields: [color_id], references: [id], onUpdate: NoAction)
+  factories                                  factories                                    @relation(fields: [factory_id], references: [id], onUpdate: NoAction)
+  sample_types                               sample_types                                 @relation(fields: [sample_type], references: [id], onUpdate: NoAction)
+  order_styles                               order_styles                                 @relation(fields: [style_id], references: [id], onUpdate: NoAction)
+  sample_check_list_fabric_images            sample_check_list_fabric_images[]
+  sample_check_list_fitting_images           sample_check_list_fitting_images[]
+  sample_check_list_labels_images            sample_check_list_labels_images[]
+  sample_check_list_measurement_images       sample_check_list_measurement_images[]
+  sample_check_list_other_images             sample_check_list_other_images[]
+  sample_check_list_pattern_images           sample_check_list_pattern_images[]
+  sample_check_list_print_images             sample_check_list_print_images[]
+  sample_check_list_risk_area_images         sample_check_list_risk_area_images[]
+  sample_check_list_trims_accessories_images sample_check_list_trims_accessories_images[]
+  sample_check_list_wash_images              sample_check_list_wash_images[]
+  sample_check_list_workmanship_images       sample_check_list_workmanship_images[]
+}
+
+model sample_check_list_fabric_images {
+  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sample_check_list_id String            @db.Uuid
+  url                  String
+  added_at             DateTime?         @default(now()) @db.Timestamp(6)
+  sample_check_list    sample_check_list @relation(fields: [sample_check_list_id], references: [id], onUpdate: NoAction)
+}
+
+model sample_check_list_fitting_images {
+  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sample_check_list_id String            @db.Uuid
+  url                  String
+  added_at             DateTime?         @default(now()) @db.Timestamp(6)
+  sample_check_list    sample_check_list @relation(fields: [sample_check_list_id], references: [id], onUpdate: NoAction)
+}
+
+model sample_check_list_history {
+  id                  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sample_check_date   DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  buyer_id            Int?
+  factory_id          Int?
+  style_id            String?   @db.Uuid
+  color_id            Int?
+  sample_type         Int?
+  sample_size         String?   @db.VarChar(50)
+  sample_quantity     Int?
+  fabric              String?
+  trims_accessories   String?
+  workmanship         String?
+  fitting             String?
+  measurement         String?
+  pattern             String?
+  print_emb           String?
+  wash                String?
+  main_label          Int?
+  main_label_position Int?
+  size_label          Int?
+  size_label_position Int?
+  care_label          Int?
+  care_label_position Int?
+  risk_area           String?
+  action_type         actions?
+  action_by           String    @db.Uuid
+  action_at           DateTime? @default(now()) @db.Timestamp(6)
+  users               users     @relation(fields: [action_by], references: [id], onUpdate: NoAction)
+}
+
+model sample_check_list_labels_images {
+  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sample_check_list_id String            @db.Uuid
+  url                  String
+  added_at             DateTime?         @default(now()) @db.Timestamp(6)
+  sample_check_list    sample_check_list @relation(fields: [sample_check_list_id], references: [id], onUpdate: NoAction)
+}
+
+model sample_check_list_measurement_images {
+  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sample_check_list_id String            @db.Uuid
+  url                  String
+  added_at             DateTime?         @default(now()) @db.Timestamp(6)
+  sample_check_list    sample_check_list @relation(fields: [sample_check_list_id], references: [id], onUpdate: NoAction)
+}
+
+model sample_check_list_other_images {
+  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sample_check_list_id String            @db.Uuid
+  url                  String
+  added_at             DateTime?         @default(now()) @db.Timestamp(6)
+  sample_check_list    sample_check_list @relation(fields: [sample_check_list_id], references: [id], onUpdate: NoAction)
+}
+
+model sample_check_list_pattern_images {
+  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sample_check_list_id String            @db.Uuid
+  url                  String
+  added_at             DateTime?         @default(now()) @db.Timestamp(6)
+  sample_check_list    sample_check_list @relation(fields: [sample_check_list_id], references: [id], onUpdate: NoAction)
+}
+
+model sample_check_list_print_images {
+  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sample_check_list_id String            @db.Uuid
+  url                  String
+  added_at             DateTime?         @default(now()) @db.Timestamp(6)
+  sample_check_list    sample_check_list @relation(fields: [sample_check_list_id], references: [id], onUpdate: NoAction)
+}
+
+model sample_check_list_risk_area_images {
+  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sample_check_list_id String            @db.Uuid
+  url                  String
+  added_at             DateTime?         @default(now()) @db.Timestamp(6)
+  sample_check_list    sample_check_list @relation(fields: [sample_check_list_id], references: [id], onUpdate: NoAction)
+}
+
+model sample_check_list_trims_accessories_images {
+  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sample_check_list_id String            @db.Uuid
+  url                  String
+  added_at             DateTime?         @default(now()) @db.Timestamp(6)
+  sample_check_list    sample_check_list @relation(fields: [sample_check_list_id], references: [id], onUpdate: NoAction, map: "sample_check_list_trims_accessories_i_sample_check_list_id_fkey")
+}
+
+model sample_check_list_wash_images {
+  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sample_check_list_id String            @db.Uuid
+  url                  String
+  added_at             DateTime?         @default(now()) @db.Timestamp(6)
+  sample_check_list    sample_check_list @relation(fields: [sample_check_list_id], references: [id], onUpdate: NoAction)
+}
+
+model sample_check_list_workmanship_images {
+  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sample_check_list_id String            @db.Uuid
+  url                  String
+  added_at             DateTime?         @default(now()) @db.Timestamp(6)
+  sample_check_list    sample_check_list @relation(fields: [sample_check_list_id], references: [id], onUpdate: NoAction)
 }
 
 enum actions {
