@@ -48,6 +48,7 @@ const NewRDLInvoicePage = () => {
                 pi_no: rdlInvoiceData.pi_no,
                 remarks: rdlInvoiceData.remarks,
                 container_no: rdlInvoiceData.container_no,
+                contact_no: rdlInvoiceData.contact_no,
                 discount: rdlInvoiceData.discount ? safeNumber(rdlInvoiceData.discount) : undefined,
                 details: (rdlInvoiceData.details ?? []).map((detail) => ({
                     factory_id: safeNumber(detail.factory_id),

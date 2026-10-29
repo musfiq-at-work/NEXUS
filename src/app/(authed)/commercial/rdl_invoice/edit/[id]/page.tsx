@@ -63,6 +63,7 @@ const EditRDLInvoicePage = ({ params }: ParamsProp) => {
                 pi_no: rdlInvoiceData.pi_no,
                 remarks: rdlInvoiceData.remarks,
                 container_no: rdlInvoiceData.container_no,
+                contact_no: rdlInvoiceData.contact_no,
                 discount: rdlInvoiceData.discount,
                 details: (rdlInvoiceData.details ?? []).map((detail) => ({
                     db_id: detail.db_id,

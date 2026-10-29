@@ -24,7 +24,7 @@ const EditOrderChecklistPage = (props: ParamsProp) => {
     const updateOrderChecklist = api.orderChecklist.updateOrderChecklist.useMutation({
         onSuccess: async () => {
             setError(null);
-            toast.success("Order Checklist updated successfully!");
+            toast.success("File Review Checklist updated successfully!");
             await utils.orderChecklist.invalidate();
         },
     });
@@ -48,22 +48,22 @@ const EditOrderChecklistPage = (props: ParamsProp) => {
         } catch (error) {
             const message = parseTRPCError(error);
             setError(message);
-            toast.error(`Failed to update Order Checklist: ${message}`);
+            toast.error(`Failed to update File Review Checklist: ${message}`);
         }
     });
 
-    if (isLoading) return <Wrapper heading="Order Checklist"><Loader /></Wrapper>;
+    if (isLoading) return <Wrapper heading="File Review Checklist"><Loader /></Wrapper>;
 
     if (queryError || !orderChecklist) {
-        return <Wrapper heading="Order Checklist">
+        return <Wrapper heading="File Review Checklist">
             <p role="alert" className="p-8 text-red-500">
-                {queryError?.message ?? 'Order Checklist not found.'}
+                {queryError?.message ?? 'File Review Checklist not found.'}
             </p>
         </Wrapper>;
     }
 
     return (
-        <Wrapper heading={can_update ? 'Update Order Checklist' : 'View Order Checklist'}
+        <Wrapper heading={can_update ? 'Update File Review Checklist' : 'View File Review Checklist'}
             subSectionRight={
                 can_view ? (
                     <div className="w-50 mb-3">
@@ -79,7 +79,7 @@ const EditOrderChecklistPage = (props: ParamsProp) => {
                 
             <Form
                 fields={formFields}
-                buttonLabel="Update Order Checklist"
+                buttonLabel="Update File Review Checklist"
                 register={methods.register}
                 validationError={validationError}
                 error={error}
@@ -98,7 +98,7 @@ const EditOrderChecklistPage = (props: ParamsProp) => {
                     <Button
                         type="button"
                         onClick={() => onSubmitAll()}
-                        label="Update Order Checklist"
+                        label="Update File Review Checklist"
                         className="text-lg tracking-wide mt-6 max-w-80 m-8"
                         disabled={updateOrderChecklist.isPending}
                     />

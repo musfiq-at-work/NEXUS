@@ -43,22 +43,19 @@ export const useSampleChecklistForm = (checklist?: SampleChecklist) => {
         },
     });
 
-    const { control, setValue } = methods;
-    const [buyerId, factoryId, orderId, styleId] = useWatch({ control, name: ["buyer_id", "factory_id", "order_id", "style_id"] });
+    const { control, getValues, setValue } = methods;
+    const [buyerId, factoryId, styleId] = useWatch({ control, name: ["buyer_id", "factory_id", "style_id"] });
     const buyersQuery = api.buyers.getAll.useQuery();
     const factoriesQuery = api.factory.getAllFactories.useQuery();
     const sampleTypesQuery = api.sampleTypes.getAllSampleType.useQuery();
-    const ordersQuery = api.sampleChecklist.getOrders.useQuery(buyerId && factoryId ? { buyerId, factoryId } : skipToken);
-    const selectedOrder = ordersQuery.data?.find((order) => order.id === orderId);
-    const stylesQuery = api.sampleChecklist.getStyles.useQuery(selectedOrder ? { orderId: selectedOrder.id, buyerId, factoryId } : skipToken);
+    const stylesQuery = api.sampleChecklist.getStyles.useQuery(buyerId && factoryId ? { buyerId, factoryId } : skipToken);
     const selectedStyle = stylesQuery.data?.find((style) => style.id === styleId);
     const optionsQuery = api.sampleChecklist.getStyleOptions.useQuery(selectedStyle ? { styleId: selectedStyle.id } : skipToken);
 
-    const queryError = buyersQuery.error ?? factoriesQuery.error ?? sampleTypesQuery.error ?? ordersQuery.error ?? stylesQuery.error ?? optionsQuery.error;
+    const queryError = buyersQuery.error ?? factoriesQuery.error ?? sampleTypesQuery.error ?? stylesQuery.error ?? optionsQuery.error;
     const isLoadingOptions = buyersQuery.isFetching ||
         factoriesQuery.isFetching ||
         sampleTypesQuery.isFetching ||
-        ordersQuery.isFetching ||
         stylesQuery.isFetching ||
         optionsQuery.isFetching;
 
@@ -79,18 +76,18 @@ export const useSampleChecklistForm = (checklist?: SampleChecklist) => {
             disabled: factoriesQuery.isFetching,
         },
         {
-            name: "order_id",
-            label: "Order Ref",
-            type: "select",
-            options: ordersQuery.data?.map((order) => ({ label: order.ref_no, value: order.id })),
-            disabled: !buyerId || !factoryId || ordersQuery.isFetching,
-        },
-        {
             name: "style_id",
             label: "Style",
             type: "select",
-            options: stylesQuery.data?.map((style) => ({ label: style.style, value: style.id })),
-            disabled: !selectedOrder || stylesQuery.isFetching,
+            options: stylesQuery.data?.map((style) => ({ label: `${style.style} (${style.buyer_orders.ref_no})`, value: style.id })),
+            disabled: !buyerId || !factoryId || stylesQuery.isFetching,
+        },
+        {
+            name: "order_id",
+            label: "Order Ref",
+            type: "select",
+            options: selectedStyle ? [{ label: selectedStyle.buyer_orders.ref_no, value: selectedStyle.order_id }] : [],
+            disabled: true,
         },
         {
             name: "color_id",
@@ -118,9 +115,15 @@ export const useSampleChecklistForm = (checklist?: SampleChecklist) => {
     ];
 
     const resetDependentFields = (name: keyof SampleChecklistFormValues) => {
-        if (name === "buyer_id" || name === "factory_id") setValue("order_id", "", { shouldDirty: true });
-        if (name === "buyer_id" || name === "factory_id" || name === "order_id") setValue("style_id", "", { shouldDirty: true });
-        if (name === "buyer_id" || name === "factory_id" || name === "order_id" || name === "style_id") {
+        if (name === "buyer_id" || name === "factory_id") {
+            setValue("order_id", "", { shouldDirty: true });
+            setValue("style_id", "", { shouldDirty: true });
+        }
+        if (name === "style_id") {
+            const style = stylesQuery.data?.find((style) => style.id === getValues("style_id"));
+            setValue("order_id", style?.order_id ?? "", { shouldDirty: true, shouldValidate: true });
+        }
+        if (name === "buyer_id" || name === "factory_id" || name === "style_id") {
             setValue("color_id", 0, { shouldDirty: true });
             setValue("sample_size", "", { shouldDirty: true });
         }

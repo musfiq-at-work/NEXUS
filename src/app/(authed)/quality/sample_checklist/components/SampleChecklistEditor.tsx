@@ -37,7 +37,7 @@ const SampleChecklistEditor = (props: SampleChecklistEditorProps) => {
     const onSubmit = methods.handleSubmit(async (values) => {
         if (!canSave || saveChecklist.isPending) return;
         if (!selectedStyle || isLoadingOptions || queryError) {
-            setError("Select an available buyer, factory, order, and style before saving the checklist.");
+            setError("Select an available buyer, factory, and style before saving the checklist.");
             return;
         }
         setError(null);

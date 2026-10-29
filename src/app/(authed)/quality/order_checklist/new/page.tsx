@@ -22,7 +22,7 @@ const NewOrderChecklistPage = () => {
     const addOrderChecklist = api.orderChecklist.addOrderChecklist.useMutation({
         onSuccess: async () => {
             setError(null);
-            toast.success("Order Checklist added successfully!");
+            toast.success("File Review Checklist added successfully!");
             await utils.orderChecklist.invalidate();
         }
     });
@@ -43,7 +43,7 @@ const NewOrderChecklistPage = () => {
         }
         catch (error) {
             const message = parseTRPCError(error);
-            toast.error(`Failed to add Order Checklist: ${message}`);
+            toast.error(`Failed to add File Review Checklist: ${message}`);
         }
         finally {
             setIsLoading(false);
@@ -51,10 +51,10 @@ const NewOrderChecklistPage = () => {
     });
 
     return (
-        <Wrapper heading='Add Order Checklist' >
+        <Wrapper heading='Add File Review Checklist' >
             <Form 
                 fields={formFields} 
-                buttonLabel="Add Order Checklist" 
+                buttonLabel="Add File Review Checklist" 
                 register={methods.register}
                 isLoading={isLoading}
                 validationError={validationError ?? {}}
@@ -65,7 +65,7 @@ const NewOrderChecklistPage = () => {
             <div className="w-full flex flex-row justify-end">
                 <Button type="button" 
                     onClick={() => onSubmitAll()}
-                    label={"Add Order Checklist"} 
+                    label={"Add File Review Checklist"} 
                     className="text-lg tracking-wide mt-6 max-w-80 m-8"
                     disabled={isLoading}
                 />
