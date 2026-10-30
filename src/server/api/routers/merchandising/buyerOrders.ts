@@ -75,7 +75,11 @@ async function deleteShipment(tx: Prisma.TransactionClient, shipmentId: string, 
         where: {
             shipment_details_id: shipmentId
         }
-    })
+    });
+
+    await tx.early_settlement_details.deleteMany({
+        where: {shipment_details_id: shipmentId}
+    });
 
     const existingCommissionDistributionDetails = await tx.commission_distributions_details.findMany({
         where: { shipment_details_id: shipmentId },

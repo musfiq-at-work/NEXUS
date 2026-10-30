@@ -6,6 +6,8 @@ import { m } from "~/utils/moduleMap";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { actions, type Prisma, type PrismaClient, type users } from "@prisma/client";
 import { ADMIN_DEPARTMENT_ID, ADMIN_LEVEL_ID } from "~/utils/config";
+import { getPPMeetingOrderAccess as getOrderAccess } from "~/server/_utils/ppMeetingAccess";
+import { technicalCheckSchema } from "~/utils/orderChecklist";
 
 const checkListArray = [
     { document_details: 'Risk Assessment Report' },
@@ -225,31 +227,46 @@ export const orderChecklistRouter = createTRPCRouter({
 
     getStyleForOrderChecklist: protectedProcedure
         .input(z.object({
-            orderId: z.string()
+            buyerId: z.number().int().positive()
         }))
         .query(async ({ctx, input}) => {
+            if (!ctx.permissions[m.ORDER_CHECKLIST]?.can_add) {
+                throw new TRPCError({ code: 'FORBIDDEN', message: 'You do not have permission to add File Review Checklists.' });
+            }
+
             return await ctx.db.order_styles.findMany({
                 where: {
-                    order_id: input.orderId,
+                    buyer_orders: { ...getOrderAccess(ctx.user), buyer_id: input.buyerId },
                     order_checklist: {
                         none: {}
                     }
                 },
                 select: {
                     id: true,
-                    style: true
-                }
+                    style: true,
+                    order_id: true,
+                    buyer_orders: { select: { ref_no: true, factories: { select: { name: true } } } },
+                },
+                orderBy: [{ style: 'asc' }, { buyer_orders: { ref_no: 'asc' } }, { serial: 'asc' }],
             })
         }),
     
     getShipmentForOrderChecklist: protectedProcedure
         .input(z.object({
-            styleId: z.string()
+            styleId: z.string().uuid()
         }))
         .query(async ({ctx, input}) => {
+            if (!ctx.permissions[m.ORDER_CHECKLIST]?.can_add) {
+                throw new TRPCError({ code: 'FORBIDDEN', message: 'You do not have permission to add File Review Checklists.' });
+            }
+
             return await ctx.db.shipment_details.findMany({
                 where: {
                     order_style_id: input.styleId,
+                    order_styles: {
+                        buyer_orders: getOrderAccess(ctx.user),
+                        order_checklist: { none: {} },
+                    },
                     order_checklist: {
                         none: {}
                     }
@@ -263,10 +280,10 @@ export const orderChecklistRouter = createTRPCRouter({
 
     addOrderChecklist: protectedProcedure
         .input(z.object({
-            buyer_id: z.number().min(0, "Buyer is required"),
-            order_id: z.string().min(1, "Order is required"),
-            style_id: z.string().min(1, "Style is required"),
-            shipment_id: z.string().min(1, "PO is required"),
+            buyer_id: z.number().int().positive("Buyer is required"),
+            order_id: z.string().uuid("Order is required"),
+            style_id: z.string().uuid("Style is required"),
+            shipment_id: z.string().uuid("PO is required"),
         }))
         .mutation(async ({ctx, input}) => {
             const can_add = ctx.permissions[m.ORDER_CHECKLIST]?.can_add;
@@ -280,6 +297,28 @@ export const orderChecklistRouter = createTRPCRouter({
 
             try {
                 return await transactionWithQueuedHistory(ctx.db, async (tx) => {
+                    await tx.$queryRaw`SELECT id FROM order_styles WHERE id = ${input.style_id}::uuid FOR UPDATE`;
+                    const style = await tx.order_styles.findFirst({
+                        where: {
+                            id: input.style_id,
+                            order_id: input.order_id,
+                            buyer_orders: { ...getOrderAccess(ctx.user), buyer_id: input.buyer_id },
+                            order_checklist: { none: {} },
+                        },
+                        select: { id: true },
+                    });
+                    if (!style) {
+                        throw new TRPCError({ code: 'BAD_REQUEST', message: 'This style is unavailable for a File Review Checklist. Refresh the buyer and style selections.' });
+                    }
+
+                    const shipment = await tx.shipment_details.findFirst({
+                        where: { id: input.shipment_id, order_style_id: style.id, order_checklist: { none: {} } },
+                        select: { id: true },
+                    });
+                    if (!shipment) {
+                        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Select an available PO belonging to the selected style.' });
+                    }
+
                     const orderChecklist = await tx.order_checklist.create({
                         data: {
                             buyer_id: input.buyer_id,
@@ -318,14 +357,14 @@ export const orderChecklistRouter = createTRPCRouter({
             id: z.string().uuid(),
             details: z.array(z.object({
                 id: z.string().uuid(),
-                technical_check: z.boolean(),
+                technical_check: technicalCheckSchema,
                 technical_remarks: z.string().optional(),
                 technical_check_date: z.string().date().or(z.literal('')),
                 qa_check: z.boolean(),
                 qa_remarks: z.string().optional(),
                 qa_check_date: z.string().date().or(z.literal('')),
             }).strict().superRefine((detail, ctx) => {
-                if (detail.technical_check && !detail.technical_check_date) {
+                if (detail.technical_check === 1 && !detail.technical_check_date) {
                     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['technical_check_date'], message: 'Technical check date is required' });
                 }
 
@@ -370,7 +409,7 @@ export const orderChecklistRouter = createTRPCRouter({
                             data: {
                                 technical_check: detail.technical_check,
                                 technical_remarks: detail.technical_remarks,
-                                technical_check_date: detail.technical_check ? new Date(detail.technical_check_date) : null,
+                                technical_check_date: detail.technical_check === 1 ? new Date(detail.technical_check_date) : null,
                                 qa_check: detail.qa_check,
                                 qa_remarks: detail.qa_remarks,
                                 qa_check_date: detail.qa_check ? new Date(detail.qa_check_date) : null,

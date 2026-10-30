@@ -6,54 +6,51 @@ import { skipToken } from "@tanstack/react-query";
 export type Field<T extends keyof PreProductionFormValues> = BaseField<T>;
 
 interface Props {
-    factoryId: number | undefined;
-    orderId: string | undefined;
+    buyerId: number | undefined;
     styleId: string | undefined;
 }
 
 export const useFormFields = (props: Props) => {
-    const { factoryId, orderId, styleId } = props;
+    const { buyerId, styleId } = props;
 
-    const factoriesQuery = api.factory.getAllFactories.useQuery();
-    const factories = factoriesQuery.data ?? [];
-
-    const ordersQuery = api.ppMeeting.getOrdersForPPMeeting.useQuery(
-        factoryId ? { factoryId } : skipToken
-    );
-    const orders = ordersQuery.data ?? [];
-    const selectedOrder = orders.find((order) => order.id === orderId);
-    
-    const stylesQuery = api.ppMeeting.getStyleForPPMeeting.useQuery(
-        selectedOrder ? { orderId: selectedOrder.id } : skipToken
-    );
+    const buyersQuery = api.buyers.getAllBuyersByTeam.useQuery();
+    const stylesQuery = api.ppMeeting.getStyleForPPMeeting.useQuery(buyerId ? { buyerId } : skipToken);
     const styles = stylesQuery.data ?? [];
-    
-    const selectedStyle = selectedOrder ? styles.find((style) => style.id === styleId) : undefined;
-    const queryError = factoriesQuery.error ?? ordersQuery.error ?? stylesQuery.error;
-    const isLoadingOptions = factoriesQuery.isFetching || ordersQuery.isFetching || stylesQuery.isFetching;
+
+    const selectedStyle = styles.find((style) => style.id === styleId);
+    const queryError = buyersQuery.error ?? stylesQuery.error;
+    const isLoadingOptions = buyersQuery.isFetching || stylesQuery.isFetching;
 
     const formFields: Field<keyof PreProductionFormValues>[] = [
         {
-            name: "factory_id",
-            label: "Factory",
-            placeholder: "Select factory",
+            name: "buyer_id",
+            label: "Buyer",
+            placeholder: "Select buyer",
             type: "select",
-            options: factories.map((f) => ({ label: f.name, value: f.id })),
-            disabled: factoriesQuery.isFetching,
-        },
-        {
-            name: "order_id",
-            label: "Order Ref",
-            placeholder: "Select Order",
-            type: "select",
-            options: orders.map((o) => ({ label: o.ref_no, value: o.id.toString() })),
+            options: buyersQuery.data?.map((buyer) => ({ label: buyer.buyer_name, value: buyer.id })),
+            disabled: buyersQuery.isFetching,
         },
         {
             name: 'style_id',
             label: 'Style',
             placeholder: "Select Style",
             type: "select",
-            options: styles.map((s) => ({ label: s.style, value: s.id })),
+            options: styles.map((style) => ({ label: `${style.style} (${style.buyer_orders.ref_no})`, value: style.id })),
+            disabled: !buyerId || stylesQuery.isFetching,
+        },
+        {
+            name: "order_id",
+            label: "Order Ref",
+            type: "select",
+            options: selectedStyle ? [{ label: selectedStyle.buyer_orders.ref_no, value: selectedStyle.order_id }] : [],
+            disabled: true,
+        },
+        {
+            name: "factory_id",
+            label: "Factory",
+            type: "select",
+            options: selectedStyle ? [{ label: selectedStyle.buyer_orders.factories.name, value: selectedStyle.buyer_orders.factory_id }] : [],
+            disabled: true,
         },
         {
             name: "first_shipment_date",

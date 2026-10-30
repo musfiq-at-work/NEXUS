@@ -25,6 +25,10 @@ export type ApprovalFormValues = z.infer<typeof approvalStatusFormSchema>;
 
 export const preProductionMeetingFormSchema = z.object({
     db_id: z.string().optional(),
+    buyer_id: z.number({
+        required_error: "Buyer is required",
+        invalid_type_error: "Buyer is required"
+    }).int().positive("Buyer is required"),
     factory_id: z.number({ 
         required_error: "Factory is required", 
         invalid_type_error: "Factory is required" 

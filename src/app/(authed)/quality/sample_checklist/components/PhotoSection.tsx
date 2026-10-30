@@ -102,11 +102,12 @@ const PhotoSection = (props: PhotoSectionProps) => {
     const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
     const isBusy = useRef(false);
     const isMounted = useRef(true);
     const previewUrls = useRef(new Set<string>());
     const utils = api.useUtils();
-    const isDisabled = disabled || isProcessing || isUploading;
+    const isDisabled = disabled || isProcessing || isUploading || deletingId !== null;
 
     useEffect(() => {
         const urls = previewUrls.current;
@@ -159,6 +160,37 @@ const PhotoSection = (props: PhotoSectionProps) => {
         setPendingImages((previous) => previous.filter((item) => item.id !== image.id));
     };
 
+    const handleDelete = async (image: SampleChecklistImage) => {
+        if (disabled || isBusy.current) return;
+        isBusy.current = true;
+        setDeletingId(image.id);
+
+        try {
+            const params = new URLSearchParams({ checklistId, section, imageId: image.id });
+            const response = await fetch(`/api/sample_checklist?${params.toString()}`, { method: "DELETE", headers: getAuthHeaders() });
+            const json: unknown = await response.json();
+            const result = sampleChecklistImagesResponseSchema.safeParse(json);
+            if (!response.ok || !result.success || !result.data.success) {
+                throw new Error(result.success ? (result.data.message ?? "Failed to delete photo.") : "Failed to delete photo.");
+            }
+
+            const relation = sampleChecklistSections.find((item) => item.name === section)?.relation;
+            if (relation) {
+                utils.sampleChecklist.getSampleChecklistById.setData({ id: checklistId }, (previous) => {
+                    if (!previous) return previous;
+                    return { ...previous, [relation]: previous[relation].filter((photo) => photo.id !== image.id) };
+                });
+            }
+
+            toast.success("Photo deleted successfully!");
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Failed to delete photo.");
+        } finally {
+            isBusy.current = false;
+            if (isMounted.current) setDeletingId(null);
+        }
+    };
+
     const handleUpload = async () => {
         if (disabled || isBusy.current || !pendingImages.length) return;
         isBusy.current = true;
@@ -195,7 +227,6 @@ const PhotoSection = (props: PhotoSectionProps) => {
             });
             if (isMounted.current) setPendingImages([]);
             toast.success("Photos uploaded successfully!");
-            void utils.sampleChecklist.getSampleChecklistById.invalidate({ id: checklistId });
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Failed to upload photos.");
         } finally {
@@ -207,8 +238,24 @@ const PhotoSection = (props: PhotoSectionProps) => {
     return (
         <div className="mt-4">
             <div className="flex flex-wrap items-start gap-4">
-                {images.map((image) => (
-                    <SavedPhoto key={image.id} image={image} title={title} checklistId={checklistId} section={section} />
+                {images.map((image, index) => (
+                    <div key={image.id} className="relative w-fit max-w-full">
+                        <SavedPhoto image={image} title={title} checklistId={checklistId} section={section} />
+                        {!disabled && (
+                            <button
+                                type="button"
+                                aria-label={`Delete ${title} photo ${index + 1}`}
+                                aria-busy={deletingId === image.id}
+                                title="Delete photo"
+                                onClick={() => handleDelete(image)}
+                                disabled={isDisabled}
+                                className="absolute top-1 right-1 cursor-pointer rounded bg-white/70 p-1 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                <Image src={clearIcon.src} alt="Delete" width={24} height={24} />
+                            </button>
+                        )}
+                        {deletingId === image.id && <p role="status" className="mt-2 text-sm text-gray-500">Deleting photo...</p>}
+                    </div>
                 ))}
                 {pendingImages.map((image) => (
                     <div key={image.id} className="relative w-fit max-w-full">

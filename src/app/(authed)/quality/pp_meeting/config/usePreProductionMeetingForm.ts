@@ -9,6 +9,8 @@ export const usePreProductionMeetingForm = () => {
     const methods = useForm<PreProductionFormValues>({
         resolver: zodResolver(preProductionMeetingFormSchema),
         defaultValues: {
+            buyer_id: 0,
+            factory_id: 0,
             order_id: '',
             style_id: '',
             first_shipment_date: '',
@@ -19,26 +21,22 @@ export const usePreProductionMeetingForm = () => {
         },
     });
 
-    const { handleSubmit, formState: { errors: validationError }, control, resetField, setValue } = methods;
-    const factoryId = useWatch({ control, name: 'factory_id' });
-    const orderId = useWatch({ control, name: 'order_id' });
+    const { handleSubmit, formState: { errors: validationError }, control, setValue } = methods;
+    const buyerId = useWatch({ control, name: 'buyer_id' });
     const styleId = useWatch({ control, name: 'style_id' });
     
-    const { formFields, selectedStyle, queryError, isLoadingOptions } = useFormFields({ factoryId, orderId, styleId });
+    const { formFields, selectedStyle, queryError, isLoadingOptions } = useFormFields({ buyerId, styleId });
 
     useEffect(() => {
-        resetField('order_id');
-        resetField('style_id');
-    }, [factoryId, resetField]);
-
-    useEffect(() => {
-        resetField('style_id');
-    }, [orderId, resetField]);
+        setValue('style_id', '');
+    }, [buyerId, setValue]);
 
     useEffect(() => {
         const firstShipmentDate = selectedStyle?.shipment_details[0]?.factory_shipment_details?.exfactory_date;
         const fabric = selectedStyle?.fabrics;
 
+        setValue('order_id', selectedStyle?.order_id ?? '');
+        setValue('factory_id', selectedStyle?.buyer_orders.factory_id ?? 0);
         setValue('first_shipment_date', firstShipmentDate ? formatDateForInput(firstShipmentDate) : '');
         setValue('item', selectedStyle?.products.name ?? '');
         setValue('fabric_description', fabric?.description ?? fabric?.name ?? '');

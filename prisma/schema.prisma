@@ -3163,13 +3163,13 @@ model order_checklist_details {
   order_checklist_id              String                            @db.Uuid
   serial_no                       Int
   document_details                String
-  technical_check                 Boolean?                          @default(false)
   technical_remarks               String?
   technical_check_date            DateTime?                         @db.Date
   qa_check                        Boolean?                          @default(false)
   qa_remarks                      String?
   qa_check_date                   DateTime?                         @db.Date
   added_at                        DateTime?                         @default(now()) @db.Timestamp(6)
+  technical_check                 Int?                              @default(0)
   order_checklist                 order_checklist                   @relation(fields: [order_checklist_id], references: [id], onUpdate: NoAction)
   order_checklist_details_history order_checklist_details_history[]
 }
@@ -3180,7 +3180,7 @@ model order_checklist_details_history {
   order_checklist_id         String?                  @db.Uuid
   serial_no                  Int?
   document_details           String?
-  technical_check            Boolean?                 @default(false)
+  technical_check            Int?                     @default(0)
   technical_remarks          String?
   technical_check_date       DateTime?                @db.Date
   qa_check                   Boolean?                 @default(false)
@@ -3319,7 +3319,7 @@ model sample_check_list {
   sample_check_date                          DateTime?                                    @default(dbgenerated("CURRENT_DATE")) @db.Date
   buyer_id                                   Int
   factory_id                                 Int
-  style_id                                   String                                       @db.Uuid
+  style_id                                   String?                                      @db.Uuid
   color_id                                   Int
   sample_type                                Int
   sample_size                                String?                                      @db.VarChar(50)
@@ -3340,11 +3340,13 @@ model sample_check_list {
   care_label_position                        Int?
   risk_area                                  String?
   added_at                                   DateTime?                                    @default(now()) @db.Timestamp(6)
+  with_order                                 Boolean?                                     @default(true)
+  style_no_manual                            String?                                      @db.VarChar(50)
   buyers                                     buyers                                       @relation(fields: [buyer_id], references: [id], onUpdate: NoAction)
   colors                                     colors                                       @relation(fields: [color_id], references: [id], onUpdate: NoAction)
   factories                                  factories                                    @relation(fields: [factory_id], references: [id], onUpdate: NoAction)
   sample_types                               sample_types                                 @relation(fields: [sample_type], references: [id], onUpdate: NoAction)
-  order_styles                               order_styles                                 @relation(fields: [style_id], references: [id], onUpdate: NoAction)
+  order_styles                               order_styles?                                @relation(fields: [style_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
   sample_check_list_fabric_images            sample_check_list_fabric_images[]
   sample_check_list_fitting_images           sample_check_list_fitting_images[]
   sample_check_list_labels_images            sample_check_list_labels_images[]
@@ -3402,6 +3404,8 @@ model sample_check_list_history {
   action_type         actions?
   action_by           String    @db.Uuid
   action_at           DateTime? @default(now()) @db.Timestamp(6)
+  with_order          Boolean?
+  style_no_manual     String?   @db.VarChar(50)
   users               users     @relation(fields: [action_by], references: [id], onUpdate: NoAction)
 }
 

@@ -22,12 +22,13 @@ const sections = [
 
 const checklistId = "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa";
 const actionBy = "bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb";
-const orderAccess = { buyer_id: 7 };
+const checklistAccess = { buyer_id: 7 };
 const snapshot = { buyer_id: 7, factory_id: 8, fabric: "Fabric comment", main_label: -1, size_label: 0, sample_check_date: new Date("2026-10-27") };
 
-type FixtureOptions = { visible?: boolean; failure?: "images" | "parent" | "commit" };
+type FixtureOptions = { visible?: boolean; manual?: boolean; failure?: "images" | "parent" | "commit" };
 
 const createFixture = async (context: TestContext, options: FixtureOptions = {}) => {
+    const recordSnapshot = options.manual ? { ...snapshot, with_order: false, style_id: null, style_no_manual: "MANUAL-STYLE" } : snapshot;
     const workingDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "nexus-sample-checklist-"));
     context.mock.method(process, "cwd", () => workingDirectory);
     context.after(async () => {
@@ -58,11 +59,11 @@ const createFixture = async (context: TestContext, options: FixtureOptions = {})
             return [{ id: checklistId }];
         },
         sample_check_list: {
-            findFirst: async (args: { where: { id: string; order_styles: { buyer_orders: unknown } } }) => {
+            findFirst: async (args: { where: { id: string; buyer_id: number } }) => {
                 events.push("access");
                 assert.equal(args.where.id, checklistId);
-                assert.deepEqual(args.where.order_styles.buyer_orders, orderAccess);
-                return options.visible === false ? null : snapshot;
+                assert.equal(args.where.buyer_id, checklistAccess.buyer_id);
+                return options.visible === false ? null : recordSnapshot;
             },
             findUniqueOrThrow: async () => images,
             update: async (args: { data: Record<string, unknown> }) => {
@@ -103,7 +104,7 @@ const createFixture = async (context: TestContext, options: FixtureOptions = {})
         },
     } as unknown as PrismaClient;
 
-    const remove = () => deleteSampleChecklist(db, { id: checklistId, orderAccess, actionBy });
+    const remove = () => deleteSampleChecklist(db, { id: checklistId, checklistAccess, actionBy });
     const assertPhotosIntact = async () => {
         for (const [index, filePath] of filePaths.entries()) assert.equal(await fs.readFile(filePath, "utf8"), `photo-${index}`);
         assert.equal(await fs.readFile(unrelatedFile, "utf8"), "another checklist photo");
@@ -128,6 +129,13 @@ void test("already missing image files do not prevent checklist deletion", async
     await fixture.remove();
     assert.equal(fixture.state.recordExists, false);
     assert.equal(fixture.state.imageRowsExist, false);
+});
+
+void test("a without-order checklist removes every photo and preserves its manual style in history", async (context) => {
+    const fixture = await createFixture(context, { manual: true });
+    await fixture.remove();
+    assert.equal(fixture.state.recordExists, false);
+    assert.deepEqual(fixture.state.history, [{ ...snapshot, with_order: false, style_id: null, style_no_manual: "MANUAL-STYLE", action_by: actionBy, action_type: "DELETE" }]);
 });
 
 void test("an inaccessible checklist cannot delete images, records or history", async (context) => {

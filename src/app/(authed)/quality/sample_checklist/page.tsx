@@ -79,7 +79,7 @@ const SampleChecklistList = () => {
                 open={deleteClicked}
                 onClose={() => setDeleteClicked(false)}
                 heading="Confirm Deletion"
-                description={`Are you sure you want to delete the Sample Checklist for "${selectedChecklist?.style ?? ""}" (Order ${selectedChecklist?.ref_no ?? ""}) and all its attached images?`}
+                description={`Are you sure you want to delete the Sample Checklist for "${selectedChecklist?.style ?? ""}" ${selectedChecklist?.with_order ? `(Order ${selectedChecklist.ref_no})` : "(Without Order)"} and all its attached images?`}
                 actionLabel="DELETE"
                 negativeAction={true}
                 loading={isLoadingDelete}

@@ -99,7 +99,12 @@ const PhotoSection = (props: Props) => {
 
                     const preview = URL.createObjectURL(compressed);
                     previewUrls.current.add(preview);
-                    processed.push({ id: String(nextImageId.current++), file: compressed, preview });
+                    processed.push({ 
+                        id: String(nextImageId.current++), 
+                        file: compressed, 
+                        preview 
+                    });
+
                 } catch (error) {
                     if (!isMounted.current) break;
                     toast.error(`${file.name}: ${error instanceof Error ? error.message : 'Image processing failed. Please try another image.'}`);
@@ -155,7 +160,6 @@ const PhotoSection = (props: Props) => {
             });
 
             toast.success('Photo deleted successfully!');
-            void utils.ppMeeting.getPPMeetingById.invalidate({ id: meetingId });
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Failed to delete photo. Please try again.');
         } finally {
@@ -176,7 +180,12 @@ const PhotoSection = (props: Props) => {
             formData.append('section', section);
             pendingImages.forEach((image) => formData.append('files', image.file));
 
-            const data = await readResponse(await fetch('/api/pp_meeting', { method: 'POST', headers: getAuthHeaders(), body: formData }));
+            const data = await readResponse(await fetch('/api/pp_meeting', { 
+                method: 'POST', 
+                headers: getAuthHeaders(), 
+                body: formData 
+            }));
+            
             const uploadedImages = data.images;
             const firstImage = uploadedImages?.[0];
             
@@ -200,7 +209,6 @@ const PhotoSection = (props: Props) => {
             if (isMounted.current) setPendingImages([]);
 
             toast.success('Photos uploaded successfully!');
-            void utils.ppMeeting.getPPMeetingById.invalidate({ id: meetingId });
         } catch (error) {
             toast.error(error instanceof Error ? error.message : 'Failed to upload photos. Please try again.');
         } finally {

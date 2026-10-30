@@ -12,7 +12,7 @@ const NewOrderChecklistPage = () => {
     const router = useRouter();
 
     // Form setup
-    const { methods, handleSubmit, formFields, validationError, control } = useOrderChecklistForm();
+    const { methods, handleSubmit, formFields, validationError, control, selectedStyle, queryError, isLoadingOptions } = useOrderChecklistForm();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -29,6 +29,13 @@ const NewOrderChecklistPage = () => {
 
     // Handle form submission for all fields
     const onSubmitAll = handleSubmit(async (orderChecklist) => {
+        if (addOrderChecklist.isPending) return;
+        if (!selectedStyle || isLoadingOptions || queryError) {
+            setError("Select an available buyer, style, and PO before adding the File Review Checklist.");
+            return;
+        }
+        setError(null);
+
         try {
             setIsLoading(true);
             const payload = {
@@ -43,6 +50,7 @@ const NewOrderChecklistPage = () => {
         }
         catch (error) {
             const message = parseTRPCError(error);
+            setError(message);
             toast.error(`Failed to add File Review Checklist: ${message}`);
         }
         finally {
@@ -58,7 +66,7 @@ const NewOrderChecklistPage = () => {
                 register={methods.register}
                 isLoading={isLoading}
                 validationError={validationError ?? {}}
-                error={error}
+                error={queryError?.message ?? error}
                 control={control}
             />
 
@@ -67,7 +75,7 @@ const NewOrderChecklistPage = () => {
                     onClick={() => onSubmitAll()}
                     label={"Add File Review Checklist"} 
                     className="text-lg tracking-wide mt-6 max-w-80 m-8"
-                    disabled={isLoading}
+                    disabled={isLoading || isLoadingOptions || !!queryError}
                 />
             </div>
         </Wrapper>

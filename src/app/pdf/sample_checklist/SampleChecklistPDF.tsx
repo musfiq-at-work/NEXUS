@@ -15,17 +15,20 @@ registerPdfFonts();
 const SampleChecklistPDF = (props: SampleChecklistPDFProps) => {
     const { data, images } = props;
     const { user } = useDecodedUser();
+    const orderRef = data.with_order ? (data.order_styles?.buyer_orders.ref_no ?? "-") : "-";
+    const style = data.with_order ? (data.order_styles?.style ?? "-") : (data.style_no_manual ?? "-");
 
     const headerData: HeaderData = [
         [
             { label: "Buyer", value: data.buyers.buyer_name },
             { label: "Factory", value: data.factories.name },
-            { label: "Order Ref", value: data.order_styles.buyer_orders.ref_no },
-            { label: "Style", value: data.order_styles.style },
+            { label: "Order Ref", value: orderRef },
+            { label: "Style", value: style },
             { label: "Color", value: data.colors.name },
         ],
         [
             { label: "Date", value: formatPDFDate(data.sample_check_date) },
+            { label: "With Order", value: data.with_order ? "With Order" : "Without Order" },
             { label: "Sample Type", value: data.sample_types.name },
             { label: "Sample Size", value: (data.sample_size ?? "").trim() || "-" },
             { label: "Sample Quantity", value: data.sample_quantity?.toLocaleString("en-US") ?? "-" },
@@ -34,7 +37,7 @@ const SampleChecklistPDF = (props: SampleChecklistPDFProps) => {
 
     return (
         <Document
-            title={`Sample Checklist - ${data.order_styles.buyer_orders.ref_no} - ${data.order_styles.style}`}
+            title={data.with_order ? `Sample Checklist - ${orderRef} - ${style}` : `Sample Checklist - ${style}`}
             author="RDL Nexus"
             subject="Sample Checklist Report"
             keywords="Sample Checklist, Quality, PDF, RDL Nexus, ERP"

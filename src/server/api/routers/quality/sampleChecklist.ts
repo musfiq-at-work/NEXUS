@@ -4,6 +4,7 @@ import { z } from "zod";
 import { handlePrismaError, logError } from "~/server/_utils/handleTRPCErrors";
 import { getPPMeetingOrderAccess as getOrderAccess } from "~/server/_utils/ppMeetingAccess";
 import { sampleChecklistImagesInclude } from "~/server/_utils/sampleChecklist";
+import { getSampleChecklistAccess, getSampleChecklistBuyerAccess } from "~/server/_utils/sampleChecklistAccess";
 import { deleteSampleChecklist } from "~/server/_utils/deleteSampleChecklist";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { m } from "~/utils/moduleMap";
@@ -41,10 +42,11 @@ export const sampleChecklistRouter = createTRPCRouter({
 
             const query = input.query?.trim();
             const where: Prisma.sample_check_listWhereInput = {
-                order_styles: { buyer_orders: getOrderAccess(ctx.user) },
+                ...getSampleChecklistAccess(ctx.user),
                 ...(query
                     ? {
                           OR: [
+                                { style_no_manual: { contains: query, mode: "insensitive" } },
                                 { 
                                     buyers: { 
                                         buyer_name: { 
@@ -104,6 +106,9 @@ export const sampleChecklistRouter = createTRPCRouter({
                     where,
                     select: {
                         id: true,
+                        with_order: true,
+                        style_id: true,
+                        style_no_manual: true,
                         sample_check_date: true,
                         sample_size: true,
                         sample_quantity: true,
@@ -150,18 +155,22 @@ export const sampleChecklistRouter = createTRPCRouter({
             ]);
 
             return {
-                checklists: records.map((record) => ({
-                    id: record.id,
-                    sample_check_date: record.sample_check_date,
-                    buyer_name: record.buyers.buyer_name,
-                    factory_name: record.factories.name,
-                    ref_no: record.order_styles.buyer_orders.ref_no,
-                    style: record.order_styles.style,
-                    color: record.colors.name,
-                    sample_type: record.sample_types.name,
-                    sample_size: record.sample_size,
-                    sample_quantity: record.sample_quantity,
-                })),
+                checklists: records.map((record) => {
+                    const withOrder = record.with_order ?? !!record.style_id;
+                    return {
+                        id: record.id,
+                        with_order: withOrder,
+                        sample_check_date: record.sample_check_date,
+                        buyer_name: record.buyers.buyer_name,
+                        factory_name: record.factories.name,
+                        ref_no: withOrder ? (record.order_styles?.buyer_orders.ref_no ?? "-") : "-",
+                        style: withOrder ? (record.order_styles?.style ?? "-") : (record.style_no_manual ?? "-"),
+                        color: record.colors.name,
+                        sample_type: record.sample_types.name,
+                        sample_size: record.sample_size,
+                        sample_quantity: record.sample_quantity,
+                    };
+                }),
                 total,
             };
         }),
@@ -180,10 +189,8 @@ export const sampleChecklistRouter = createTRPCRouter({
 
             const checklist = await ctx.db.sample_check_list.findFirst({
                 where: { 
+                    ...getSampleChecklistAccess(ctx.user),
                     id: input.id, 
-                    order_styles: { 
-                        buyer_orders: getOrderAccess(ctx.user) 
-                    } 
                 },
                 include: {
                     ...sampleChecklistImagesInclude,
@@ -226,7 +233,8 @@ export const sampleChecklistRouter = createTRPCRouter({
                 message: "Sample Checklist not found." 
             });
 
-            return { ...checklist, order_id: checklist.order_styles.order_id };
+            const withOrder = checklist.with_order ?? !!checklist.style_id;
+            return { ...checklist, with_order: withOrder, order_id: withOrder ? (checklist.order_styles?.order_id ?? "") : "" };
         }),
 
     getOrders: checklistProcedure
@@ -331,6 +339,28 @@ export const sampleChecklistRouter = createTRPCRouter({
             return { colors, sizes: [...new Set(shipments.map((shipment) => shipment.buyer_department_sizes.size))] };
         }),
 
+    getManualOptions: checklistProcedure
+        .input(z.object({ buyerId: z.number().int().positive() }))
+        .query(async ({ ctx, input }) => {
+            const buyer = await ctx.db.buyers.findFirst({
+                where: { ...getSampleChecklistBuyerAccess(ctx.user), id: input.buyerId },
+                select: { id: true },
+            });
+            if (!buyer) throw new TRPCError({ code: "NOT_FOUND", message: "Buyer not found." });
+
+            const [colors, sizes] = await Promise.all([
+                ctx.db.colors.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }),
+                ctx.db.buyer_department_sizes.findMany({
+                    where: { buyer_departments: { buyer_brands: { buyer_id: input.buyerId } } },
+                    distinct: ["size"],
+                    select: { size: true },
+                    orderBy: { size: "asc" },
+                }),
+            ]);
+
+            return { colors, sizes: sizes.map((size) => size.size) };
+        }),
+
     deleteSampleChecklist: protectedProcedure
         .input(z.object({ 
             id: z.string().uuid() 
@@ -346,7 +376,7 @@ export const sampleChecklistRouter = createTRPCRouter({
             try {
                 return await deleteSampleChecklist(ctx.db, { 
                     id: input.id, 
-                    orderAccess: getOrderAccess(ctx.user), 
+                    checklistAccess: getSampleChecklistAccess(ctx.user),
                     actionBy: ctx.user.id 
                 });
             } catch (error) {
@@ -356,9 +386,9 @@ export const sampleChecklistRouter = createTRPCRouter({
         }),
 
     saveSampleChecklist: checklistProcedure
-        .input(sampleChecklistFormSchema.extend({ 
+        .input(sampleChecklistFormSchema.and(z.object({
             id: z.string().uuid().optional() 
-        }))
+        })))
         .mutation(async ({ ctx, input }) => {
             const { id, order_id, sample_check_date, ...values } = input;
             const permission = input.id ? "can_update" : "can_add";
@@ -375,10 +405,8 @@ export const sampleChecklistRouter = createTRPCRouter({
                     if (input.id) {
                         const existing = await tx.sample_check_list.findFirst({
                             where: { 
+                                ...getSampleChecklistAccess(ctx.user),
                                 id: input.id, 
-                                order_styles: { 
-                                    buyer_orders: getOrderAccess(ctx.user) 
-                                } 
                             },
                             select: { 
                                 id: true 
@@ -391,8 +419,52 @@ export const sampleChecklistRouter = createTRPCRouter({
                         });
                     }
 
+                    const [buyer, factory, sampleType, color] = await Promise.all([
+                        tx.buyers.findFirst({ where: { ...getSampleChecklistBuyerAccess(ctx.user), id: input.buyer_id }, select: { id: true } }),
+                        tx.factories.findUnique({ where: { id: input.factory_id }, select: { id: true } }),
+                        tx.sample_types.findUnique({ where: { id: input.sample_type }, select: { id: true } }),
+                        tx.colors.findUnique({ where: { id: input.color_id }, select: { id: true } }),
+                    ]);
+                    if (!buyer || !factory || !sampleType || !color) {
+                        throw new TRPCError({ code: "BAD_REQUEST", message: "Select an available buyer, factory, sample type, and color." });
+                    }
+
+                    if (input.with_order) {
+                        const style = await tx.order_styles.findFirst({
+                            where: {
+                                id: input.style_id,
+                                order_id,
+                                buyer_orders: { ...getOrderAccess(ctx.user), buyer_id: input.buyer_id, factory_id: input.factory_id },
+                            },
+                            select: { id: true },
+                        });
+                        if (!style) throw new TRPCError({ code: "BAD_REQUEST", message: "Select a style belonging to the selected buyer, factory, and order." });
+
+                        const styleColor = await tx.shipment_item_details.findFirst({
+                            where: { color_id: input.color_id, shipment_details: { order_style_id: style.id } },
+                            select: { id: true },
+                        });
+                        if (!styleColor) throw new TRPCError({ code: "BAD_REQUEST", message: "Select a color available in the selected style." });
+
+                        if (input.sample_size) {
+                            const size = await tx.shipment_details.findFirst({
+                                where: { order_style_id: style.id, buyer_department_sizes: { size: input.sample_size } },
+                                select: { id: true },
+                            });
+                            if (!size) throw new TRPCError({ code: "BAD_REQUEST", message: "Select a size available in the selected style." });
+                        }
+                    } else if (input.sample_size) {
+                        const size = await tx.buyer_department_sizes.findFirst({
+                            where: { size: input.sample_size, buyer_departments: { buyer_brands: { buyer_id: input.buyer_id } } },
+                            select: { id: true },
+                        });
+                        if (!size) throw new TRPCError({ code: "BAD_REQUEST", message: "Select a size belonging to the selected buyer." });
+                    }
+
                     const data = { 
                         ...values, 
+                        style_id: input.with_order ? input.style_id : null,
+                        style_no_manual: input.with_order ? null : input.style_no_manual,
                         sample_check_date: new Date(`${sample_check_date}T00:00:00.000Z`) 
                     };
 

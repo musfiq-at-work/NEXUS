@@ -27,7 +27,7 @@ const NewPreProductionMeetingPage = () => {
         if (addPPMeeting.isPending) return;
 
         if (!selectedStyle || isLoadingOptions || queryError) {
-            setError('Select an available factory, order, and style before adding the PP meeting.');
+            setError('Select an available buyer and style before adding the PP meeting.');
             return;
         }
 
@@ -35,6 +35,7 @@ const NewPreProductionMeetingPage = () => {
 
         try {
             const id = await addPPMeeting.mutateAsync({
+                buyer_id: meeting.buyer_id,
                 factory_id: meeting.factory_id,
                 style_id: meeting.style_id,
                 daily_plan_quantity: meeting.daily_production_plan,

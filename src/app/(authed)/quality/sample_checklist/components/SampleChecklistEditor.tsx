@@ -36,7 +36,7 @@ const SampleChecklistEditor = (props: SampleChecklistEditorProps) => {
 
     const onSubmit = methods.handleSubmit(async (values) => {
         if (!canSave || saveChecklist.isPending) return;
-        if (!selectedStyle || isLoadingOptions || queryError) {
+        if ((values.with_order && !selectedStyle) || isLoadingOptions || queryError) {
             setError("Select an available buyer, factory, and style before saving the checklist.");
             return;
         }
@@ -94,7 +94,7 @@ const SampleChecklistEditor = (props: SampleChecklistEditorProps) => {
                                         value={field.value}
                                         onChange={(value) => {
                                             if (value === field.value) return;
-                                            field.onChange(value ?? (typeof field.value === "number" ? 0 : ""));
+                                            field.onChange(value ?? (typeof field.value === "boolean" ? true : typeof field.value === "number" ? 0 : ""));
                                             resetDependentFields(header.name);
                                         }}
                                         error={errors[header.name]?.message}
@@ -116,10 +116,10 @@ const SampleChecklistEditor = (props: SampleChecklistEditorProps) => {
                                         min={0}
                                         max={2147483647}
                                         step={1}
-                                        value={field.value ?? ""}
-                                        onChange={(event) => field.onChange(event.target.value === "" ? null : event.target.valueAsNumber)}
+                                        value={Number.isFinite(field.value) ? field.value : ""}
+                                        onChange={(event) => field.onChange(event.target.valueAsNumber)}
                                         error={errors.sample_quantity?.message}
-                                        optional
+                                        required
                                         disabled={disabled}
                                     />
                                 )}

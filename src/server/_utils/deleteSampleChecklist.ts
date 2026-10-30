@@ -7,13 +7,15 @@ import { getSampleChecklistImagePath } from "./sampleChecklistImageStorage";
 
 type DeleteSampleChecklistInput = {
     id: string;
-    orderAccess: Prisma.buyer_ordersWhereInput;
+    checklistAccess: Prisma.sample_check_listWhereInput;
     actionBy: string;
 };
 
 type RemovedImage = { filePath: string; buffer: Buffer };
 
 const historySelect = {
+    with_order: true,
+    style_no_manual: true,
     sample_check_date: true,
     buyer_id: true,
     factory_id: true,
@@ -44,7 +46,7 @@ const isMissingFile = (error: unknown) => {
 };
 
 export const deleteSampleChecklist = async (db: PrismaClient, input: DeleteSampleChecklistInput) => {
-    const { id, orderAccess, actionBy } = input;
+    const { id, checklistAccess, actionBy } = input;
     const removedImages: RemovedImage[] = [];
 
     try {
@@ -54,7 +56,7 @@ export const deleteSampleChecklist = async (db: PrismaClient, input: DeleteSampl
                 await tx.$queryRaw`SELECT id FROM sample_check_list WHERE id = ${id}::uuid FOR UPDATE`;
 
                 const checklist = await tx.sample_check_list.findFirst({
-                    where: { id, order_styles: { buyer_orders: orderAccess } },
+                    where: { ...checklistAccess, id },
                     select: historySelect,
                 });
                 if (!checklist) throw new TRPCError({ code: "NOT_FOUND", message: "Sample Checklist not found." });

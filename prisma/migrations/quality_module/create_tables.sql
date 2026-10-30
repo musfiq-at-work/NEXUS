@@ -247,3 +247,14 @@ CREATE TABLE SAMPLE_CHECK_LIST_OTHER_IMAGES (
     URL TEXT NOT NULL,
     ADDED_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+alter table sample_check_list add column with_order BOOLEAN DEFAULT false;
+
+alter table sample_check_list add column style_no_manual VARCHAR(50);
+
+ALTER TABLE sample_check_list ALTER COLUMN style_id DROP NOT NULL;
+ALTER TABLE sample_check_list ALTER COLUMN with_order SET DEFAULT TRUE;
+UPDATE sample_check_list SET with_order = TRUE
+WHERE style_id IS NOT NULL AND NULLIF(BTRIM(style_no_manual), '') IS NULL;
+ALTER TABLE sample_check_list_history ADD COLUMN with_order BOOLEAN;
+ALTER TABLE sample_check_list_history ADD COLUMN style_no_manual VARCHAR(50);

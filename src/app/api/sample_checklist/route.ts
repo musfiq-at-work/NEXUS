@@ -2,7 +2,8 @@ import { randomUUID } from "crypto";
 import { mkdir, open, readFile, unlink } from "fs/promises";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { getPPMeetingOrderAccess } from "~/server/_utils/ppMeetingAccess";
+import { deleteSampleChecklistImage } from "~/server/_utils/deleteSampleChecklistImage";
+import { getSampleChecklistAccess } from "~/server/_utils/sampleChecklistAccess";
 import { getSampleChecklistImageDirectory, getSampleChecklistImagePath } from "~/server/_utils/sampleChecklistImageStorage";
 import { createTRPCContext } from "~/server/api/trpc";
 import { MAX_SIZE_KB } from "~/utils/images/imageCompression";
@@ -55,7 +56,7 @@ export async function POST(req: Request) {
             throw new TRPCError({ code: "BAD_REQUEST", message: "Send images as multipart form data." });
         });
         const { checklistId, section } = uploadSchema.parse({ checklistId: formData.get("checklistId"), section: formData.get("section") });
-        const where = { id: checklistId, order_styles: { buyer_orders: getPPMeetingOrderAccess(ctx.user) } };
+        const where = { ...getSampleChecklistAccess(ctx.user), id: checklistId };
         const checklist = await ctx.db.sample_check_list.findFirst({ where, select: { id: true } });
         if (!checklist) throw new TRPCError({ code: "NOT_FOUND", message: "Sample Checklist not found." });
 
@@ -125,8 +126,8 @@ export async function GET(req: Request) {
         const { checklistId, section, imageId } = imageSchema.parse(Object.fromEntries(new URL(req.url).searchParams));
         const checklist = await ctx.db.sample_check_list.findFirst({
             where: {
+                ...getSampleChecklistAccess(ctx.user),
                 id: checklistId,
-                order_styles: { buyer_orders: getPPMeetingOrderAccess(ctx.user) },
                 [getImageRelation(section)]: { some: { id: imageId } },
             },
             select: { id: true },
@@ -148,6 +149,18 @@ export async function GET(req: Request) {
         if (typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT") {
             return Response.json({ success: false, message: "Image file not found." }, { status: 404 });
         }
+        return errorResponse(error);
+    }
+}
+
+export async function DELETE(req: Request) {
+    try {
+        const ctx = await getImageContext(req, "can_update");
+        const input = imageSchema.parse(Object.fromEntries(new URL(req.url).searchParams));
+        await deleteSampleChecklistImage(ctx.db, { ...input, checklistAccess: getSampleChecklistAccess(ctx.user) });
+
+        return Response.json({ success: true, message: "Photo deleted successfully." });
+    } catch (error) {
         return errorResponse(error);
     }
 }

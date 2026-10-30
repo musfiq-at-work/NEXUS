@@ -42,6 +42,7 @@ export const sampleChecklistLabelOptions = [
     { label: "N/A", value: 0 },
     { label: "OK", value: 1 },
     { label: "MISSING", value: -1 },
+    { label: "NOT OKAY", value: -2 },
 ];
 
 export const sampleChecklistImageSchema = z.object({ id: z.string().uuid(), url: z.string() });

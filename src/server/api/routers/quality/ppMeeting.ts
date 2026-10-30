@@ -413,7 +413,7 @@ export const ppMeetingRouter = createTRPCRouter({
 
     getStyleForPPMeeting: protectedProcedure
         .input(z.object({
-            orderId: z.string().uuid()
+            buyerId: z.number().int().positive()
         }))
         .query(async ({ctx, input}) => {
             if (!ctx.permissions[m.PP_MEETING]?.can_add) {
@@ -425,8 +425,7 @@ export const ppMeetingRouter = createTRPCRouter({
 
             return await ctx.db.order_styles.findMany({
                 where: {
-                    order_id: input.orderId,
-                    buyer_orders: getOrderAccess(ctx.user),
+                    buyer_orders: { ...getOrderAccess(ctx.user), buyer_id: input.buyerId },
                     pre_production_meeting: {
                         none: {}
                     }
@@ -434,6 +433,8 @@ export const ppMeetingRouter = createTRPCRouter({
                 select: {
                     id: true,
                     style: true,
+                    order_id: true,
+                    buyer_orders: { select: { ref_no: true, factory_id: true, factories: { select: { name: true } } } },
                     order_quantity: true,
                     products: { select: { name: true } },
                     fabrics: { select: { name: true, description: true, value: true, unit: true } },
@@ -446,12 +447,13 @@ export const ppMeetingRouter = createTRPCRouter({
                         take: 1,
                     },
                 },
-                orderBy: { style: 'asc' },
+                orderBy: [{ style: 'asc' }, { buyer_orders: { ref_no: 'asc' } }, { serial: 'asc' }],
             })
         }),
 
     addPPMeeting: protectedProcedure
         .input(z.object({
+            buyer_id: z.number().int().positive(),
             factory_id: z.number().int().positive(),
             style_id: z.string().uuid(),
             daily_plan_quantity: z.number().int().positive().max(2147483647)
@@ -468,10 +470,11 @@ export const ppMeetingRouter = createTRPCRouter({
 
             try {
                 return await transactionWithQueuedHistory(ctx.db, async (tx) => {
+                    await tx.$queryRaw`SELECT id FROM order_styles WHERE id = ${input.style_id}::uuid FOR UPDATE`;
                     const style = await tx.order_styles.findFirst({
                         where: {
                             id: input.style_id,
-                            buyer_orders: { ...getOrderAccess(ctx.user), factory_id: input.factory_id },
+                            buyer_orders: { ...getOrderAccess(ctx.user), buyer_id: input.buyer_id, factory_id: input.factory_id },
                             pre_production_meeting: { none: {} },
                         },
                         select: { id: true },
@@ -480,7 +483,7 @@ export const ppMeetingRouter = createTRPCRouter({
                     if (!style) {
                         throw new TRPCError({
                             code: 'BAD_REQUEST',
-                            message: 'This style is unavailable for a PP meeting at the selected factory. Refresh the order and style selections.',
+                            message: 'This style is unavailable for a PP meeting for the selected buyer and factory. Refresh the style selection.',
                         });
                     }
 
