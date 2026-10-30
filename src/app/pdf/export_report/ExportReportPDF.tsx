@@ -14,6 +14,7 @@ type GetPDFDataOutput = ExportReportOutput['getExportReport'];
 registerPdfFonts();
 
 interface SelectedFields {
+    season?: boolean;
 	buyers?: boolean;
 	brand?: boolean;
 	factory_name?: boolean;
@@ -33,23 +34,29 @@ interface ExportReportPDFProps {
 	selectedFields?: SelectedFields;
 }
 
-const ExportReportPDF = ({ data, fromDate, toDate, selectedFields }: ExportReportPDFProps) => {
-	const width = 1000 / ((selectedFields?.buyers ? 2 : 0) + 
-		(selectedFields?.factory_name ? 2 : 0) +
-		(selectedFields?.brand ? 1 : 0) + 
-		(selectedFields?.department ? 1 : 0) +
-		(selectedFields?.productTypes ? 1 : 0) +
-		(selectedFields?.teams ? 1 : 0) + 
-		(selectedFields?.quantity ? 1 : 0) + 
-		(selectedFields?.rdl_value ? 1 : 0) + 
-		(selectedFields?.factory_value ? 1 : 0) + 
-		(selectedFields?.commission_value ? 1 : 0)
-	);
+const ExportReportPDF = (props: ExportReportPDFProps) => {
+    const { data, fromDate, toDate, selectedFields } = props;
+
+    const width = 1000 / ((selectedFields?.buyers ? 2 : 0) +
+        (selectedFields?.season ? 1 : 0) +
+        (selectedFields?.factory_name ? 2 : 0) +
+        (selectedFields?.brand ? 1 : 0) +
+        (selectedFields?.department ? 1 : 0) +
+        (selectedFields?.productTypes ? 1 : 0) +
+        (selectedFields?.teams ? 1 : 0) +
+        (selectedFields?.quantity ? 1 : 0) +
+        (selectedFields?.rdl_value ? 1 : 0) +
+        (selectedFields?.factory_value ? 1 : 0) +
+        (selectedFields?.commission_value ? 1 : 0)
+    );
 
 	const tableColumns = [
 		...((selectedFields?.buyers) ? 
 			[{ key: 'buyer_name', label: 'Buyer', width: width * 2 }] : []
 		),
+        ...((selectedFields?.season) ?
+            [{ key: 'season_name', label: 'Season', width }] : []
+        ),
 		...((selectedFields?.factory_name) ? 
 			[{ key: 'factory_name', label: 'Factory', width: width * 2 }] : []
 		),

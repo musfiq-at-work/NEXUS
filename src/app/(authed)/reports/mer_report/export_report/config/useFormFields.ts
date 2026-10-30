@@ -10,8 +10,19 @@ interface PropsType {
     brand_ids?: number[];
 }
 
-export const useFormFields = ({buyer_ids, brand_ids}: PropsType): Field<keyof ExportReportFormValues>[] => {
+export const useFormFields = (props: PropsType): Field<keyof ExportReportFormValues>[] => {
+    const { buyer_ids, brand_ids } = props;
+
     const buyers = api.buyers.getAllBuyersByTeam.useQuery().data ?? [];
+    const seasonBuyerIds = buyer_ids?.length ? buyer_ids : buyers.map((buyer) => buyer.id);
+
+    const seasons = [
+        { id: -1, season_name: "All" },
+        { id: -2, season_name: "None" },
+        ...(api.seasons.getSeasonsByBuyers.useQuery(
+            seasonBuyerIds.length > 0 ? seasonBuyerIds : skipToken
+        ).data ?? []),
+    ];
 
     const factories = [
         { id: -1, name: "All" },
@@ -71,6 +82,14 @@ export const useFormFields = ({buyer_ids, brand_ids}: PropsType): Field<keyof Ex
             placeholder: "Select buyers, or leave blank for all",
             type: "multiselect",
             options: buyers.map((buyer) => ({ label: buyer.buyer_name, value: buyer.id })),
+            optional: true,
+        },
+        {
+            name: "season_ids",
+            label: "Select Seasons",
+            placeholder: "Select seasons, or leave blank for none",
+            type: "multiselect",
+            options: seasons.map((season) => ({ label: season.season_name, value: season.id.toString() })),
             optional: true,
         },
         {

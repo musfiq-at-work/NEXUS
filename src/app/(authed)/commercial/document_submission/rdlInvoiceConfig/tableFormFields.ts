@@ -55,6 +55,7 @@ export const formFields = ({rdlInvoice, isEdit}: {rdlInvoice: RDLInvoiceProp[] |
             name: "received_rdl_value",
             label: "Received RDL Value",
             placeholder: "Enter RDL value",
+            type: 'number'
         },
     ]
 }
